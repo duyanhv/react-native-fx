@@ -1,0 +1,14 @@
+# dependencies
+node_modules/
+
+# build outputs
+packages/*/build/
+
+# expo / native
+.expo/
+*.log
+.DS_Store
+
+# os / editor
+.idea/
+*.tsbuildinfo

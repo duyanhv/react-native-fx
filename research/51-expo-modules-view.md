@@ -1,0 +1,82 @@
+# Expo Modules view base
+Status: researched
+Phase: v1
+Feeds: 50-api-and-presets.md, structure.{ios,android}.md
+Owns: the native-view authoring base (the boundary). Mechanics → structure.{ios,android}.
+
+## Why this matters
+
+Every fx component is a native view, and the **Expo Modules API** is the decided
+substrate: its `View {}` DSL is the most ergonomic way to author a Fabric-backed native
+view, it handles registration (no hand-written Codegen), and its SwiftUI/Compose hosting
+infrastructure is exactly what the `hosted` substrate needs. This doc pins how that DSL
+works and the boundary rules; the per-platform view code lives in `structure.*`.
+
+## The boundary, in one rule
+
+The JS↔native boundary is **thin and async** — config, semantic events, discrete
+imperatives, never per-frame. That is why Expo Modules suffices and **no hand-written
+JSI / C++ / HybridObject** is needed (the thin boundary is the reason). fx targets
+**Fabric** from day one (so it's on JSI under the hood) without authoring it.
+
+## The View DSL
+
+- **`Prop(name) { (view, value) -> }`** — a setter; Expo coerces JS → native type.
+  Setters **only stash** into a `pending` struct.
+- **`OnViewDidUpdateProps { view -> }`** — fires **once** after the whole prop batch;
+  the place to **apply** the resolved config (the two-phase rule — apply once from a
+  coherent snapshot, never per-setter).
+- **`Events("onX", …)`** + an `EventDispatcher` per event — the semantic native→JS push
+  channel (`onPress*`, `onTransitionEnd`, `onLoad`/`onError`).
+- **`AsyncFunction(name) { (view, …args) -> }`** — runs on the UI thread, attached to the
+  React ref; the imperative channel (`setUniform`, `setHighlight`, `fire`, `snapshot`).
+
+## Two phases, two substrates
+
+The same `ExpoView` base serves both substrates: a `hosted` node mounts a SwiftUI/
+Compose host inside the `ExpoView`; an `expo-view` node hosts the interactive render
+surface directly. Props stash in phase 1; `OnViewDidUpdateProps` applies once in phase 2
+— select the lowering (per `02`), write uniforms, sync the recognizer/clock.
+
+## Cross-boundary typing
+
+- **String unions** (`shader` id, `composition`, `interactionMode`) → `Enumerable`
+  enums; Expo coerces and rejects unknown values at the boundary.
+- **Uniforms** cross as a typed `Record` (`@Field` struct with defaults) → native
+  defensively defaults any missing field.
+- **Colors** cross as hex strings / native color types (built-in coercion).
+- JS binding via **`requireNativeView('ReactNativeFx', 'FxView')`** (SDK 52+; the SDK 56
+  floor makes this the path, not the legacy `requireNativeViewManager`).
+
+## Decisions
+
+1. **Expo Modules + Fabric is the substrate**; **no JSI/C++/HybridObject** for the
+   boundary — the thin async boundary is why it isn't needed, and the hosting infra is
+   Expo's.
+2. **Two-phase props** — `Prop` setters stash; `OnViewDidUpdateProps` applies once from a
+   coherent snapshot.
+3. **`AsyncFunction` is the imperative channel** (UI-thread, ref-attached); **`Events`**
+   the semantic push channel.
+4. **Coerce at the boundary** — `Enumerable` enums for string unions, a `Record` for
+   uniforms (defensively defaulted), built-in color coercion.
+5. **`requireNativeView` from `expo`** (SDK 52+); one module name, one+ native view
+   classes.
+6. **No `collapsable={false}` on the native view** (never layout-only); only a JS-side
+   children container that must survive needs it.
+
+## Open questions
+
+- **Hosted-view authoring** — the exact Expo path to mount a SwiftUI/Compose host inside
+  an `ExpoView` and pass props/children (ties to `01`, `structure.*`, expo/expo#46549).
+- **One native view class vs several** — a single `FxView` switching on `node`, or a
+  class per substrate (hosted vs expo-view); affects registration.
+- **Record coercion of absent uniforms** — confirm `@Field` defaults fill omitted fields
+  on the pinned SDK.
+
+## Sources
+
+- `_legacy/01-expo-modules-view.md` — the full DSL findings (`Prop`/`Events`/
+  `AsyncFunction`/`OnViewDidUpdateProps`, two-phase rule, `Enumerable`/`Record`,
+  `requireNativeView`, flattening).
+- Expo Modules API docs (module-api); `structure.{ios,android}.md` — the per-platform
+  `ExpoView` subclasses.
