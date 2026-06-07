@@ -26,6 +26,15 @@ Do not comment to restate the name, narrate line by line, or leave commented-out
 
 When you suppress a lint or type rule, the suppression itself needs a comment. Write `// @ts-expect-error <reason>` or `// biome-ignore lint/<rule>: <reason>` with a real reason, never bare.
 
+### Never reference internal planning artifacts in code comments
+
+Shipped code is read by app developers and by the next contributor in the file — not by someone holding the research tree. Keep the planning layer out of code comments entirely:
+
+- **No references to research docs, the decision ledger, the architecture or data-layer docs, the blueprint, build-unit ids, or ledger ids.** Not `(data-layer §9 D2)`, not `research/0-spine/02`, not `U1-002`, not `SHIP-001`, not `architecture §2.2`. That provenance lives in the task and research layer (`research/7-implementation/`), and it rots the moment a doc is renumbered.
+- **Cross-reference code, not docs.** Point at a related type, function, or sibling source file by name — `{@link FxSurfaceView}` in TSDoc, `` `FxSurfaceView` `` in Swift/Kotlin, or a plain path to a real source file. Never at a planning document.
+- **State the reason, not its source.** Write the constraint or platform quirk itself so the comment stands on its own. The one sanctioned external link is to a *public* issue or vendor bug that explains a workaround — a GitHub/Apple/Android tracker URL, never an internal path.
+- **Describe behavior, not project status.** A note that a thing is a deliberate partial implementation is fine when it stops the next reader from "completing" it wrongly; tying it to a build-unit id or a doc section is not.
+
 ## TypeScript and TSDoc
 
 Document the public TypeScript API with [TSDoc](https://tsdoc.org). The audience is the app developer reading your types in their editor, so the docblock is part of the product.

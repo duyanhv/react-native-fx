@@ -34,12 +34,12 @@ A fresh session: read in order, then construct.
 ## Lifecycle
 
 - [x] spec'd
-- [ ] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
-- [ ] reviewed
-- [ ] docs-closed — SHIP-001 true in `52`; IMPL-001 true in `architecture`/`data-layer`
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
+- [x] reviewed — [reviews/U1-001.md](../../reviews/U1-001.md) (approved; 3 TSDoc fixes applied)
+- [ ] docs-closed — **partial:** SHIP-001 closed (`resolved` in ledger; `package.json` matches `52`); IMPL-001 carried (`implementation-pending`) — closes when RT-010 (U1-002) + REAL-002 (device) land
 - [ ] merged
 
 `device-verified`: N/A — pure scaffolding, runs headless.

@@ -1,0 +1,16 @@
+apply plugin: 'com.android.library'
+apply plugin: 'expo-module-gradle-plugin'
+
+group = 'expo.modules.reactnativefx'
+version = '0.1.0'
+
+// The expo-module-gradle-plugin supplies the Kotlin, compileSdk, and React
+// Native wiring; this module only declares its namespace and minSdk floor.
+// Curated .agsl assets ship under src/main/assets/shaders and are compiled at
+// runtime by RuntimeShader.
+android {
+  namespace 'expo.modules.reactnativefx'
+  defaultConfig {
+    minSdkVersion 24
+  }
+}

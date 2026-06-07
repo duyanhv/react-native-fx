@@ -1,35 +1,22 @@
-import { useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
-import { ShaderView, type ShaderId } from 'react-native-fx';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
-const SHADERS: ShaderId[] = ['dots', 'fractal-clouds', 'ink-smoke', 'liquid-chrome', 'loop'];
-
+// The interactive shader demo is parked while the package is restructured. The
+// native surface (FxSurfaceView) and its Metal pixels are intact; the demo
+// returns once the public `<Fx>` component that renders them is built.
 export default function App() {
-  const [index, setIndex] = useState(0);
-  const shader = SHADERS[index];
-
   return (
     <SafeAreaView style={styles.container}>
-      <ShaderView shader={shader} intensity={1} interactionMode="active" style={styles.shader} />
-      <Pressable style={styles.bar} onPress={() => setIndex((i) => (i + 1) % SHADERS.length)}>
-        <Text style={styles.label}>
-          {index + 1}/{SHADERS.length}   {shader}   ·   tap to change
-        </Text>
-      </Pressable>
+      <View style={styles.center}>
+        <Text style={styles.title}>react-native-fx</Text>
+        <Text style={styles.subtitle}>Scaffold ready · effect demo returns with {'<Fx>'}</Text>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  shader: { flex: 1 },
-  bar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: 18,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  label: { color: '#fff', fontSize: 15, textAlign: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  title: { color: '#fff', fontSize: 22, fontWeight: '600' },
+  subtitle: { color: '#9aa0a6', fontSize: 14, marginTop: 8, textAlign: 'center' },
 });

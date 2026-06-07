@@ -42,6 +42,7 @@ consumes both by ID.
 | — | subtask-protocol | the authority chain + cross-check protocol + subtask template for turning a unit into a verifiable subtask | researched |
 | — | decision-ledger | the cross-plane index of in-flight decisions — status, owner, blocker, close condition per entry | researched |
 | — | progress | the durable execution tracker — one row per subtask (state, type, device, consumes/closes, proof); lifecycle rules in `subtask-protocol` | researched |
+| — | [HOW-TO-CONTINUE](./HOW-TO-CONTINUE.md) | the human pick-up guide — current state, the two ways to push the build forward, verify/build commands, the map | living |
 
 A planned `implementation-plan.md` — the ordered build phases that consume the ledger's IDs via `Consumes:` / `Closes:` — is referenced but not yet created. Until it exists, its pending decisions live in `decision-ledger.md`.
 

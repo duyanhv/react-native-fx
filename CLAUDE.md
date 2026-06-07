@@ -20,7 +20,10 @@ The [research](./research) folder is the source of truth. Read it for the reason
 
 ## Operating rules
 
-- Before you write code or a doc, read the guide in [guides](./guides) that owns the work and follow it exactly. The guides are binding and override your defaults: `Code Style Guide` for formatting and naming, `Code Comments Guide` for comments, `Writing Style Guide` for prose, `Testing Guide` for tests, `Device Verification Guide` for device proof, `Contributing Guide` for commands and the merge bar.
+- **[agents](./agents) and [guides](./guides) are binding, not advisory — strictly enforced at the `implemented`, `commented`, and `reviewed` gates.** Before you write code or a doc, read the guide that owns the work and follow it exactly; the guides and the session protocol override your defaults. A change that breaks one is not done, however green the build.
+  - `Code Style Guide` — **naming and declaration**: `Fx`-prefixed native classes, full words over abbreviations, verb-led functions, explicit return / access level / typed imports, file name matches primary export. Do not hand-format.
+  - `Code Comments Guide` — **comments on every function, type, and non-obvious line**: comment the iceberg (why/constraint/threading), third-person declarative. **Never reference internal planning artifacts in code comments** — no research-doc paths, ledger ids, build-unit ids (`U1-002`), or doc-section refs (`data-layer §9`, `architecture §2.2`). Cross-reference code symbols and sibling source files only; provenance lives in the task/research layer, never in shipped code.
+  - `Writing Style Guide` (prose) · `Testing Guide` (tests) · `Device Verification Guide` (device proof) · `Contributing Guide` (commands, merge bar).
 - Match the surrounding code's idiom, naming, and comment density.
 - Pin platform mechanics in `research/5-realization/structure.{ios,android}.md` before you build them; a mechanic lives in exactly one place.
 - Keep the render loop paused when the view is off-window or the app is backgrounded.
@@ -28,7 +31,9 @@ The [research](./research) folder is the source of truth. Read it for the reason
 
 ### Session protocol
 
-AI agents follow the [agents/session-protocol.md](./agents/session-protocol.md) for starting and ending every session. The build plan is in [research/7-implementation](./research/7-implementation). The task list is in [research/7-implementation/progress.md](./research/7-implementation/progress.md).
+AI agents **must** follow the [agents/session-protocol.md](./agents/session-protocol.md) for starting and ending every session — it is binding, not optional. The build plan is in [research/7-implementation](./research/7-implementation). The task list is in [research/7-implementation/progress.md](./research/7-implementation/progress.md).
+
+To start an agent on the next task, paste [agents/cold-start-prompt.md](./agents/cold-start-prompt.md) into a fresh session. To pick the project up by hand, read [research/7-implementation/HOW-TO-CONTINUE.md](./research/7-implementation/HOW-TO-CONTINUE.md).
 
 ## Style and tooling
 

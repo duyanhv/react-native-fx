@@ -130,7 +130,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 
 | id | status | source | decision / pending work | blocks | close condition |
 |---|---|---|---|---|---|
-| SHIP-001 | implementation-pending | `52` | `package.json` — the root-only `exports` map, the `files` allowlist (including both shader asset trees), `publishConfig` public, and corrected metadata (drop `FxShader`). | any publish; `IMPL-001` | `package.json` matches `52` |
+| SHIP-001 | resolved | `52` | `package.json` — the root-only `exports` map, the `files` allowlist (including both shader asset trees), `publishConfig` public, and corrected metadata (drop `FxShader`). | any publish; `IMPL-001` | `package.json` matches `52` — **done (U1-001):** root `exports`, `files` allowlist shipping both asset trees, `publishConfig` public, `FxShader` dropped; `npm pack --dry-run` verified |
 | SHIP-002 | open | `53` | The runtime guard UX when no rung is satisfiable — a no-op, a static fallback, or a dev warning. | — | the no-rung degradation behavior recorded in `53` |
 | SHIP-003 | open | `53` | A bare React Native + Fabric example in CI so the install path does not rot. | — | a bare example wired into CI |
 | SHIP-004 | deferred | `53` | A config plugin, introduced only when a real V2 native mod forces it. | — | a V2 native mod triggers it |
@@ -139,7 +139,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 
 | id | status | source | decision / pending work | blocks | close condition |
 |---|---|---|---|---|---|
-| IMPL-001 | implementation-pending | `6-ship` review; `52`/`53`/`51`; blueprint Unit 1 | The package-identity and scaffolding pass: rename `FxShader*` natives to `Fx*` + substrate-specific view classes; add the Android module + `android` platform to `expo-module.config.json`; rename the podspec to `react-native-fx` with `resource_bundles`; create `packages/android/` (`.agsl`); restructure `packages/src/` into the layered `surface`/`motion`/`effects`/`presets`/`manifest`/`runtime` + root `index.ts`. **Deferred by choice this round** (the skeleton stays as-is until implementation formally starts). | a research-aligned, publishable package | the package builds and describes itself per `52`/`53`/`51`; Consumes `SHIP-001`, `REAL-002`, `RT-010` |
+| IMPL-001 | implementation-pending | `6-ship` review; `52`/`53`/`51`; blueprint Unit 1 | The package-identity and scaffolding pass: rename `FxShader*` natives to `Fx*` + substrate-specific view classes; add the Android module + `android` platform to `expo-module.config.json`; rename the podspec to `ReactNativeFx` with `resource_bundles`; create `packages/android/` (`.agsl`); restructure `packages/src/` into the layered `surface`/`motion`/`effects`/`presets`/`manifest`/`runtime` + root `index.ts`. **Scaffolding pass done (U1-001, headless):** identity rename, podspec `ReactNativeFx`, `android` platform + module skeleton, layered `src/` + root `index.ts`; `tsc`/`build` green. **Residual before close:** the substrate-specific view-class registration (`RT-010`, U1-002) and the native build/autolink proof (`REAL-002`, device). | a research-aligned, publishable package | the package builds and describes itself per `52`/`53`/`51`; Consumes `SHIP-001` (resolved), `REAL-002`, `RT-010` |
 
 ## Reconciliation with plane 7 (materialized, pending closure)
 

@@ -43,7 +43,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U1-001 | Unit 1 | implement | in-progress | no | IMPL-001 | SHIP-001, IMPL-001 | — | headless build; [spec](./tasks/U1-001-package-scaffolding/) |
+| U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
 | U1-002 | Unit 1 | implement | todo | no | RT-010 | RT-010 | U1-001 | headless build; `FxNativeView` + substrate view classes register |
 | U1-003 | Unit 1 | device-verify | todo | yes | — | SURF-010, RT-011, RT-005 | U1-002 | device: `previousProps` value-equality skips work; `@Field` defaults; recycle reset |
 | U1-004 | Unit 1 | implement | todo | no | — | SHIP-003 | U1-001 | headless: bare RN + Fabric example green in CI |
@@ -89,6 +89,22 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DEF-011 | 4-runtime | implement | blocked | yes | — | RT-003 | V2 | drag/tilt (G3) axis-aware claiming |
 | DEF-012 | 4-runtime | ratify | blocked | no | — | RT-012 | V2 | generalize beyond presence to declarative state |
 | DEF-013 | 6-ship | implement | blocked | no | — | SHIP-004 | trigger: V2 native mod | config plugin |
+
+## U1-001 — package scaffolding
+
+Type: `implement` · State: `docs-pending` · Closes: SHIP-001, IMPL-001 · [task](./tasks/U1-001-package-scaffolding/)
+
+Through `reviewed` ([review](./reviews/U1-001.md), approved). `docs-closed` is **partial**:
+
+- **SHIP-001 — closed.** `package.json` matches `52` (root `exports`, `files` allowlist shipping
+  both shader trees, `publishConfig` public, `FxShader` dropped); `npm pack --dry-run` verified.
+- **IMPL-001 — carried (stays `implementation-pending`).** The scaffolding pass landed headless,
+  but IMPL-001 closes only when its consumed rows do: **RT-010** (substrate-view registration —
+  U1-002; itself a `rework`) and **REAL-002** (native build / metallib resolves — device, U3-005).
+
+So U1-001 is **complete-blocked on IMPL-001**, not on its own work. Two ways forward (owner's call):
+merge U1-001 now coupled to U1-002 + the device gate, or re-scope IMPL-001's `Closes:` onto the
+task that lands RT-010/REAL-002 so U1-001 completes on SHIP-001 alone.
 
 ## U4-001 — wrapper mechanic
 

@@ -13,11 +13,11 @@ struct FxUniforms {
   var touch = SIMD2<Float>(0.5, 0.5)
 }
 
-// A native Metal-backed view: it hosts an MTKView, owns the render loop and
-// uniforms, and attaches a cooperative press recognizer. JS configures it; the
-// native side renders. JS never drives frames.
-final class FxShaderView: ExpoView, MTKViewDelegate {
-  // Semantic events to JS (names must match Events(...) in FxShaderModule).
+// The expo-view substrate: a native Metal-backed surface that hosts an MTKView,
+// owns the render loop and uniforms, and attaches a cooperative press recognizer.
+// JS configures it; the native side renders. JS never drives frames.
+final class FxSurfaceView: ExpoView, MTKViewDelegate {
+  // Semantic events to JS (names must match Events(...) in FxModule).
   // Prefixed to avoid colliding with React Native's reserved `topPress` event.
   let onShaderPress = EventDispatcher()
   let onShaderPressIn = EventDispatcher()
@@ -33,7 +33,7 @@ final class FxShaderView: ExpoView, MTKViewDelegate {
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in applyResolvedConfig().
-  private var pendingShader = "aurora"
+  private var pendingShader = "fractal-clouds"
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
 
@@ -69,14 +69,15 @@ final class FxShaderView: ExpoView, MTKViewDelegate {
     addSubview(metalView)
   }
 
-  // Curated shaders compile into default.metallib inside the FxShaderShaders bundle.
+  // Curated shaders compile into default.metallib inside the FxShaders bundle.
   private func loadShaderLibrary(device: MTLDevice) -> MTLLibrary? {
     if let bundle = shadersBundle() {
       if let library = try? device.makeDefaultLibrary(bundle: bundle) {
         return library
       }
       if let url = bundle.url(forResource: "default", withExtension: "metallib"),
-        let library = try? device.makeLibrary(URL: url) {
+        let library = try? device.makeLibrary(URL: url)
+      {
         return library
       }
     }
@@ -84,10 +85,10 @@ final class FxShaderView: ExpoView, MTKViewDelegate {
   }
 
   private func shadersBundle() -> Bundle? {
-    let host = Bundle(for: FxShaderView.self)
+    let host = Bundle(for: FxSurfaceView.self)
     let bases = [host.resourceURL, Bundle.main.resourceURL, host.bundleURL, Bundle.main.bundleURL]
     for base in bases.compactMap({ $0 }) {
-      let url = base.appendingPathComponent("FxShaderShaders.bundle")
+      let url = base.appendingPathComponent("FxShaders.bundle")
       if let bundle = Bundle(url: url) {
         return bundle
       }
