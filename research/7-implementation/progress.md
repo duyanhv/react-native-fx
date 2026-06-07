@@ -46,7 +46,8 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
 | U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
 | U1-003 | Unit 1 | device-verify | blocked | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | scenario handoff written; blocked on runnable app/device execution; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
-| U1-004 | Unit 1 | implement | in-progress | no | — | SHIP-003 | U1-001 | bare fixture built; iOS autolink+compile proven locally (BUILD SUCCEEDED); CI authored; library `podspecPath` fix; CI run + Android compile pending; [detail](#u1-004--bare-fabric-example-in-ci) |
+| U1-004 | Unit 1 | implement | in-progress | no | — | SHIP-003 | U1-001 | bare fixture built; iOS autolink+compile proven locally (BUILD SUCCEEDED); CI authored; library `podspecPath` fix; CI run pending; [detail](#u1-004--bare-fabric-example-in-ci) |
+| U1-005 | Unit 1 | implement | todo | no | — | — | — | Android library build-readiness: `packages/android/build.gradle` fails gradle config (`versionName` / `release` component missing) — never compiled. Surfaced by U1-004; make it configure + `assembleDebug`, then wire the Android compile into CI. |
 | U2-001 | Unit 2 | implement | todo | no | SPINE-013 | SPINE-013 | — | headless: `select()` planned-rung tests |
 | U2-002 | Unit 2 | rework | todo | no | SPINE-003 | SPINE-003 | — | headless: `tsc` on reconciled UniformSpec |
 | U3-001 | Unit 3 | implement | todo | yes | FX-004 | RT-009 | U1-002, U2-001 | device: hosted fill/material/shader/symbol render |
@@ -202,16 +203,21 @@ Progress (native install path proven locally; CI run pending):
   podspec from Expo's scanner and fx never links on iOS. Makes autolinking install-method-agnostic;
   should be recorded as a library config change (IMPL-001 / RT-010 area). See task notes.
 - **CI:** `.github/workflows/ci.yml` has `typescript` + `swift` (library, locally green) + `bare-ios`
-  + `bare-android` (install → autolink assert → native compile; macOS job downloads the Xcode-26
-  Metal toolchain). Authored from locally-verified commands; first GitHub run still to confirm,
-  esp. the Android `assembleDebug` (not compiled locally — follows Reanimated's proven shape).
+  (install → Metal-toolchain download → `pod install` → `Podfile.lock` assert → `xcodebuild`) +
+  `bare-android` (install → autolink assert, package id + module class). Authored from
+  locally-verified commands; first GitHub run still to confirm.
+- **Android compile deferred (finding):** `./gradlew assembleDebug` fails at gradle configuration —
+  `packages/android/build.gradle` is a scaffold (missing `versionName` / publishable `release`
+  component) and has never compiled. Out of U1-004 scope; tracked as **U1-005**. iOS provides the
+  mandatory compile; the Android CI job is autolink-resolve only.
 
 Proof:
-- headless: package build/lint (green) plus CI bare-fixture jobs: iOS autolink (`Podfile.lock`) +
-  compile **proven locally**; Android autolink resolve proven locally, compile **pending first CI run**.
+- headless: package build/lint (green); CI `bare-ios` — iOS autolink (`Podfile.lock`) + native
+  compile **proven locally**; CI `bare-android` — autolink resolve (package + module class)
+  **proven locally**. Android native compile deferred to U1-005.
 - device: N/A — U1-003 owns runtime/device verification.
-- docs: `53` open question "Bare + Fabric CI"; decision-ledger SHIP-003. Plus a new library-config
-  note for `apple.podspecPath`.
+- docs: `53` open question "Bare + Fabric CI"; decision-ledger SHIP-003. Plus the `apple.podspecPath`
+  library-config change recorded in its IMPL-001 / RT-010 row before docs-close.
 
 ## Maintenance
 

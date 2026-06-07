@@ -79,10 +79,11 @@ Subtask: bare Fabric example in CI (blueprint Unit 1 shipping/install gate)
 
 - **headless:** package build and lint still pass; CI creates/checks a bare RN + Fabric
   fixture with Expo Modules installed, verifies iOS and Android autolinking artifacts, and
-  compiles at least one native target. Preferred rung: Linux validates Android link
-  resolution and runs the Android compile/assemble check; macOS validates iOS link
-  resolution with `pod install` / Podfile.lock assertions. A full iOS compile is optional
-  unless CI cost permits it.
+  compiles at least one native target. Realized rung: **macOS compiles iOS** (`pod install`
+  → `Podfile.lock` assert → `xcodebuild`, the mandatory compile) and **Linux asserts Android
+  link resolution** (package id + module class). The Android `assembleDebug` is **deferred to
+  U1-005** — `packages/android` is a build scaffold that does not yet configure, so an Android
+  compile belongs with the Android-library build-readiness work, not this task.
 - **device:** N/A. U1-003 uses the resulting runnable app for SDK boundary observations.
 - **docs:** `53` open question "Bare + Fabric CI" resolved; decision-ledger SHIP-003 closed.
   Also: the `apple.podspecPath` addition to `packages/expo-module.config.json` (the autolink fix
@@ -107,9 +108,10 @@ Subtask: bare Fabric example in CI (blueprint Unit 1 shipping/install gate)
    generated Expo modules package lists, or the app Gradle dependency graph. Assert actual
    package/module identifiers from the generated files.
 6. **Compile at least one native target.** Link resolution on both platforms is mandatory.
-   A native compile/assemble check is mandatory for at least one platform so the install
-   path proves more than file generation. Prefer Android compile on Linux for cost; add
-   iOS compile on macOS only if the runner budget allows it.
+   A native compile is mandatory for at least one platform so the install path proves more
+   than file generation. Realized via **iOS** (`xcodebuild`); the Android `assembleDebug` is
+   **deferred to U1-005** because `packages/android` is not yet build-ready (gradle config
+   fails on missing `versionName` / `release` component — it has never compiled).
 7. **Keep the screen minimal.** The bare fixture may render a scaffold screen. Do not add
    public `react-native-fx` API exports to make the screen interesting.
 8. **Document the exact proof.** Update this task, `progress.md`, `53`, and the ledger with
