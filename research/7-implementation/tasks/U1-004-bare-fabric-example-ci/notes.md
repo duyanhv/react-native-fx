@@ -4,9 +4,23 @@
 
 - The CI workflow's bare-fixture jobs are authored from locally-verified commands but have not
   run on GitHub Actions yet. The **iOS** build + autolink + compile is proven locally; the
-  **Android** `assembleDebug` job follows the proven Reanimated shape + a locally-verified
-  autolink resolve, but its first real CI run still needs to be watched.
+  **Android** job is now an autolink-resolve check only (locally green) — see the Android-compile
+  finding below.
 - SHIP-003 stays open until the CI runs green and `53` records the decision.
+
+## Finding (2026-06-07): Android library does not build yet — Android compile deferred
+
+- Ran `./gradlew assembleDebug` on the fixture locally. It **failed at gradle configuration** of
+  `:react-native-fx` (before any Kotlin compiled): `'android.defaultConfig.versionName' is not
+  defined` and `SoftwareComponent with name 'release' not found`.
+- Root cause: `packages/android/build.gradle` is a deliberate minimal scaffold (namespace + minSdk
+  only); Expo SDK 56 Android autolinking expects a complete, publishable module build. The fx
+  Android library has never been compiled — likely more gaps past configuration.
+- This is **Android-library build-readiness, out of U1-004's scope** (U1-004 owns the CI/install
+  path, not the Android module's implementation). Tracked as a new task (see `progress.md`).
+- **Decision:** keep iOS as the mandatory native compile (proven); the Android CI job is now an
+  **autolink-resolve assertion only** (no `assembleDebug`), with a comment pointing at the
+  build-readiness work. iOS satisfies the spec's "compile at least one native target".
 
 ## What changed and why
 
@@ -53,10 +67,13 @@
 
 ### CI wiring
 
-- `.github/workflows/ci.yml` — `typescript` + `swift` (library checks, locally green) plus
-  `bare-ios` and `bare-android` jobs that build the fixture (install → autolink assert → native
-  compile). The earlier static `autolink-guard` (managed-example proxy) was removed; the bare jobs
-  are the real proof.
+- `.github/workflows/ci.yml` — `typescript` + `swift` (library checks, locally green) plus:
+  - `bare-ios` (macOS): install → Metal-toolchain download → `pod install` → assert
+    `ReactNativeFx` in `Podfile.lock` → `xcodebuild` simulator build. The real install-path proof.
+  - `bare-android` (ubuntu): install → assert fx autolinks for android (package id + module class).
+    **No `assembleDebug`** — deferred per the finding above; iOS owns the mandatory compile.
+- The earlier static `autolink-guard` (managed-example proxy) was removed; the bare jobs are the
+  real proof.
 
 ## Committed-fixture + lockfile decisions
 
@@ -66,4 +83,4 @@
 - `file:../packages` has no integrity hash (unlike a tarball), so `--frozen-lockfile` is safe; CI
   runs `bun run build` (lib) then `bun install` in `example-bare/` to regenerate the fx symlink.
 
-## Next: run the CI workflow on GitHub to confirm bare-ios + bare-android go green, then propagate the decision to `53` and close SHIP-003 (and record the `podspecPath` library change in the ledger).
+## Next: run the CI workflow on GitHub to confirm bare-ios (compile) + bare-android (autolink) go green, then propagate the decision to `53` and close SHIP-003 (record the `podspecPath` library change in the ledger). The Android native compile is a separate build-readiness task (see `progress.md`).

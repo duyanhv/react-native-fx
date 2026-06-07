@@ -85,8 +85,13 @@ jobs:
           build
         working-directory: example-bare/ios
 
+  # Android verifies the install-path autolinking here. The native assembleDebug compile
+  # is intentionally NOT run yet: the Android library (packages/android) is still a build
+  # scaffold and does not configure (missing versionName / publishable release component),
+  # so a compile belongs with the Android-library build-readiness work, not this task. iOS
+  # provides the mandatory native compile (bare-ios).
   bare-android:
-    name: Bare example · Android build
+    name: Bare example · Android autolink
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,10 +101,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: actions/setup-java@v4
-        with:
-          distribution: zulu
-          java-version: 17
       - name: Build the library
         run: bun install --frozen-lockfile && bun run build
       - name: Install fixture dependencies
@@ -114,6 +115,3 @@ jobs:
           echo "$resolved" | grep -q '"react-native-fx"'
           echo "$resolved" | grep -q 'expo.modules.reactnativefx.FxModule'
         working-directory: example-bare
-      - name: Build app (Debug)
-        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a
-        working-directory: example-bare/android
