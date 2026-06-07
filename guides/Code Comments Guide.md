@@ -35,6 +35,19 @@ Shipped code is read by app developers and by the next contributor in the file �
 - **State the reason, not its source.** Write the constraint or platform quirk itself so the comment stands on its own. The one sanctioned external link is to a *public* issue or vendor bug that explains a workaround — a GitHub/Apple/Android tracker URL, never an internal path.
 - **Describe behavior, not project status.** A note that a thing is a deliberate partial implementation is fine when it stops the next reader from "completing" it wrongly; tying it to a build-unit id or a doc section is not.
 
+### Mark a deliberate blank with `// TODO:`
+
+When you scaffold an empty module, type, or component as a placeholder for a later phase, open it with a `// TODO:` so the next reader knows the blank is intentional — not an oversight to "finish" blindly. The marker is greppable; the text carries the meaning:
+
+- **Explain the slot and the future-phase work** — what belongs here and what gets built later, in plain capability terms.
+- **Keep internal ids out**, same as every other comment: no build-unit id, ledger id, research-doc path, or doc-section ref. Which build unit owns the blank lives in `research/7-implementation/progress.md` (layer → unit), not in the code, so it does not rot in the source.
+
+```ts
+// TODO: the capability IR and the select() adapter — the dependency sink that
+// imports nothing from other src/ layers. Blank until the manifest layer is built.
+export {};
+```
+
 ## TypeScript and TSDoc
 
 Document the public TypeScript API with [TSDoc](https://tsdoc.org). The audience is the app developer reading your types in their editor, so the docblock is part of the product.
