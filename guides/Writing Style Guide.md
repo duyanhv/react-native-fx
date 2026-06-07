@@ -1,10 +1,10 @@
 # react-native-fx Writing Style Guide
 
-This guide gives editorial rules for writing clear, consistent react-native-fx prose: research notes, READMEs, skill references, and TSDoc comments. Aim for clarity, accuracy, and completeness.
+This guide gives editorial rules for react-native-fx prose: research notes, READMEs, and skill references. Aim for clarity, accuracy, and completeness.
 
 It mirrors the [Expo Documentation Writing Style Guide](https://github.com/expo/expo/blob/main/guides/Expo%20Documentation%20Writing%20Style%20Guide.md). This page covers the rules you hit most often; where it is silent, defer to Expo's guide and the [Google developer documentation style guide](https://developers.google.com/style).
 
-All docs are written in Markdown.
+For comments and docblocks in code, read the [Code Comments Guide](./Code%20Comments%20Guide.md). All docs are written in Markdown.
 
 ## Voice and tone
 
@@ -54,50 +54,37 @@ Use backticks only for code, identifiers, and commands.
 - Avoid Latin abbreviations. Write "for example", not "e.g."; write "that is", not "i.e."
 - Use external product casing as the industry does: iOS, Android, React Native, Metal, MetalKit, Swift, TypeScript, Expo Modules, CocoaPods, Xcode, npm, bun.
 
-## Glossary
+## Vocabulary
 
-Use these terms consistently. They are the vocabulary of the thesis (see [research](../research)).
+The product vocabulary — the capability names, the primitives, the substrates, the planes and domains — lives in one place: [research/README.md](../research/README.md), with the capability manifest in [research/0-spine/02-capability-ir-and-lowering.md](../research/0-spine/02-capability-ir-and-lowering.md). That is the single source of truth, and it is the naming authority across the codebase and the docs. Do not redefine those terms here or anywhere else; a second glossary only rots out of sync with the first.
 
-- **ShaderView** — the public, interactable native view that renders a Metal shader. The product.
-- **Interactable** — the shader surface responds to native touch as one native unit (it emits `onPress*`, accepts `setUniform`/`setHighlight`). It does not make arbitrary React Native children individually touchable.
-- **Curated shader** — a build-time `.metal` function the library ships and selects by id. The library author writes shaders; the app developer does not.
-- **Uniform** — a value passed to the fragment shader. `time` and `resolution` are injected natively; semantic uniforms come from props.
-- **Surface** — the Metal-backed view (`MTKView` / `CAMetalLayer`).
-- **Composition mode** — how React Native children layer with the surface: `background`, `overlay`, or `surface`.
-- **Glass** — the secondary, system-material alternative (`UIVisualEffectView` / `UIGlassEffect`). Not the core.
+When you write a term, match its canonical casing. Write the package name **react-native-fx** in lowercase. Write native types in their code casing: `FxShaderView`, `FxShaderModule`.
 
-Write the package name **react-native-fx** in lowercase. Write native types in their code casing: `FxShaderView`, `FxShaderModule`.
+## Document shapes
 
-## TSDoc and code comments
+fx docs follow a small set of shapes so the body of work stays scannable and consistent.
 
-Document the public TypeScript API with [TSDoc](https://tsdoc.org). Match the comment density and idiom of the surrounding code.
+### Research documents
 
-- Write docblocks in the **third-person declarative**, not the second-person imperative.
-  - Correct: Pushes a uniform value to the shader on the next frame.
-  - Incorrect: Push a uniform value to the shader.
-- **Document the iceberg below the surface** — failure modes, side effects, preconditions, and threading. Parameters and return types are already visible; explain what is not.
-- Write useful parameter descriptions. Teach the reader something. If you have nothing useful to add, leave it out — quality over quantity.
-- Wrap docblocks to fit the file's column width (100 columns for TypeScript).
-- Leave off the period when a description is a single phrase. Use periods for subsequent sentences.
-
-Useful tags: `@param`, `@returns`, `@throws`, `@default`, `@example`, `@platform ios`, `@deprecated`.
-
-## Research document template
-
-Every file in [research](../research) follows this shape so the docs stay scannable:
+Every file in [research](../research) opens with a short status block, then leads with why the doc exists. The status lines fx uses:
 
 ```md
 # <title>
 Status: open | researched | prototyped | verified
-Feeds: <skill reference(s)>
+Phase: <optional — the roadmap phase, e.g. v1 (decorative) · v2 (interactive)>
+Feeds: <the docs or skill references this one feeds>
+Owns: <optional — the IR node or concern this doc is authoritative for>
 
 ## Why this matters
-## Research questions
-## Findings
-## Decisions
-## Open questions
-## Sources
+
+<one or two paragraphs: the unknown this doc resolves and what depends on it>
 ```
+
+After "Why this matters", use whatever sections the doc needs — research questions, findings, decisions, open questions, sources. Keep the source of truth in `research/`; do not add a competing architecture or roadmap doc at the repo root.
+
+### Skill references
+
+End-user usage docs live under [skills/react-native-fx](../skills/react-native-fx) as a router plus self-contained references. The `SKILL.md` is the router: read it first, then load only the reference that matches the task. Each file in **references/** stands on its own — a reader should not need the others to follow it. Keep a short "non-negotiable rules" list near the top, and never invent an API: if a surface is not in the references, say so rather than guess.
 
 ## References
 

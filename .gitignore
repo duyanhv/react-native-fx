@@ -12,3 +12,4 @@ packages/*/build/
 # os / editor
 .idea/
 *.tsbuildinfo
+references/
