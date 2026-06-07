@@ -47,7 +47,9 @@ jobs:
   # consumer's autolinking + native build keeps working on the pinned toolchain.
   bare-ios:
     name: Bare example · iOS build
-    runs-on: macos-latest
+    # RN 0.85's Swift packages require Swift 6.2 (Xcode 26); macos-latest still ships
+    # Xcode 16.x / Swift 6.1, so pin the Xcode-26 runner.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
