@@ -40,13 +40,17 @@ GUIDES (binding, per gate — read the one for the gate you're on):
   verb-led functions, explicit return / access level / typed imports; file name = primary export).
   Do not hand-format; the formatters (Biome / swift-format) own whitespace.
 - guides/Code Comments Guide.md — comment the iceberg (why / constraint / threading), third-person
-  declarative. NEVER reference internal planning artifacts in code comments: no research-doc paths,
-  ledger ids, build-unit ids, or doc-section refs. Cross-reference code symbols and sibling source
-  files only.
+  declarative. Do NOT document every function — trivial ones (simple overrides, inits, obvious
+  accessors) stay bare, as they do in references/. NEVER reference internal planning artifacts in
+  code comments: no research-doc paths, ledger ids, build-unit ids, or doc-section refs.
+  Cross-reference code symbols and sibling source files only.
 - guides/Testing Guide.md      — Tier-1 headless for logic/data/FSM; Tier-3 for build verification.
 - guides/Device Verification Guide.md — when the task is device:yes.
 - guides/Contributing Guide.md  — commands and the merge bar.
 - guides/Writing Style Guide.md — when editing docs.
+- For any naming, declaration, or comment idiom the guides leave ambiguous, match the cloned
+  reference repos in references/ (Expo, React Native, gesture-handler, Reanimated, Nitro) — they
+  are the ground truth the guides abstract.
 
 GATE AGAINST THE HARD RULES FIRST (stop if the change breaches one): #1 native owns the frame loop
 (no per-frame JS); #2 agnostic names, platform-native defaults; #3 two substrates; #7 Expo Modules +

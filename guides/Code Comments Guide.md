@@ -1,6 +1,6 @@
 # react-native-fx Code Comments Guide
 
-This guide defines how you comment code in react-native-fx: when to write a comment, what to put in it, and the docblock conventions for each language. It mirrors the comment idiom shared across Expo, React Native, and Software Mansion — document the part the reader cannot see, and trust the code for the rest.
+This guide defines how you comment code in react-native-fx: when to write a comment, what to put in it, and the docblock conventions for each language. It mirrors the comment idiom shared across Expo, React Native, and Software Mansion — document the part the reader cannot see, and trust the code for the rest. Those repos are cloned under [`references/`](../references); when a convention here is ambiguous, read how they actually write it and match that — they are the ground truth this guide abstracts.
 
 For formatting and naming, read the [Code Style Guide](./Code%20Style%20Guide.md). For prose and documentation, read the [Writing Style Guide](./Writing%20Style%20Guide.md).
 
@@ -23,6 +23,8 @@ Write a comment when the reader genuinely cannot recover the information from th
 - A deliberate deviation from the obvious approach, so the next reader does not "fix" it back.
 
 Do not comment to restate the name, narrate line by line, or leave commented-out code in place. Delete dead code; git remembers it.
+
+**You are not required to document every function.** Skim `references/`: Expo, React Native, and Reanimated leave most trivial functions — simple overrides, initializers, obvious accessors — with no docblock at all (in a typical Expo Swift file roughly half the functions are bare). A `///` or TSDoc block earns its place only when it tells the reader something the signature does not. If it would just rephrase the name, omit it — a bare, well-named function is the idiom, not a gap.
 
 When you suppress a lint or type rule, the suppression itself needs a comment. Write `// @ts-expect-error <reason>` or `// biome-ignore lint/<rule>: <reason>` with a real reason, never bare.
 
@@ -59,7 +61,7 @@ Document the public TypeScript API with [TSDoc](https://tsdoc.org). The audience
 - **Write useful parameter descriptions.** Teach the reader something. If you have nothing useful to add, leave the `@param` out — quality over quantity.
 - **Cross-reference with `{@link}`.** Point to the related type or function by name so the editor links it.
 - **Wrap docblocks to the file's column width** (100 columns for TypeScript).
-- **Leave off the period for a single-phrase description.** Use periods once a description runs to more than one sentence.
+- **Leave off the period for a single-phrase description.** Use periods once a description runs to more than one sentence. This is an fx house preference — the references are mixed (both forms are common), so it is not a real-world mandate; keep it consistent within fx rather than treating a stray period as a defect.
 
 Useful tags: `@param`, `@returns`, `@throws`, `@default`, `@example`, `@platform ios`, `@deprecated`. Mark a platform-specific surface with `@platform`, and give `@deprecated` a migration path, not just a flag.
 

@@ -138,6 +138,7 @@ Android lands later (see [CLAUDE.md](../CLAUDE.md) and [research/5-realization/s
 
 ## References
 
+- [`references/`](../references) — Expo, React Native, gesture-handler, Reanimated, and Nitro, cloned. The living idiom this guide abstracts; when a naming or structural convention here is ambiguous, read how these repos actually write it and match that.
 - [Expo Swift Style Guide](https://github.com/expo/expo/blob/main/guides/Swift%20Style%20Guide.md) — the Swift guide this one mirrors.
 - [Biome](https://biomejs.dev) — the lint and format toolchain for TypeScript.
 - [swift-format](https://github.com/swiftlang/swift-format) — the Swift and Metal formatter.

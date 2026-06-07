@@ -1,6 +1,7 @@
 {
   "platforms": ["apple", "android"],
   "apple": {
+    "podspecPath": "ios/ReactNativeFx.podspec",
     "modules": ["FxModule"]
   },
   "android": {

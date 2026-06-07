@@ -45,12 +45,12 @@ the bottom. A row needs a detail block only when it is active or has more than a
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
 | U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
-| U1-003 | Unit 1 | device-verify | todo | yes | RT-010 | SURF-010, RT-010, RT-011, RT-005 | U1-002 | device: `previousProps` value-equality skips work; `@Field` defaults; recycle reset; SDK-verify registration ergonomics |
-| U1-004 | Unit 1 | implement | todo | no | — | SHIP-003 | U1-001 | headless: bare RN + Fabric example green in CI |
+| U1-003 | Unit 1 | device-verify | blocked | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | scenario handoff written; blocked on runnable app/device execution; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
+| U1-004 | Unit 1 | implement | in-progress | no | — | SHIP-003 | U1-001 | bare fixture built; iOS autolink+compile proven locally (BUILD SUCCEEDED); CI authored; library `podspecPath` fix; CI run + Android compile pending; [detail](#u1-004--bare-fabric-example-in-ci) |
 | U2-001 | Unit 2 | implement | todo | no | SPINE-013 | SPINE-013 | — | headless: `select()` planned-rung tests |
 | U2-002 | Unit 2 | rework | todo | no | SPINE-003 | SPINE-003 | — | headless: `tsc` on reconciled UniformSpec |
 | U3-001 | Unit 3 | implement | todo | yes | FX-004 | RT-009 | U1-002, U2-001 | device: hosted fill/material/shader/symbol render |
-| U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005, RT-004 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
+| U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
 | U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
@@ -67,7 +67,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U6-003 | Unit 6 | device-verify | todo | yes | — | MOT-002, REAL-001 | U6-001 | device: tune formulas feel right; M3 floor + fallback |
 | U7-001 | Unit 7 | implement | todo | yes | MOT-001 | — | U6-001 | device: presence FSM + deferred-unmount handshake |
 | U7-002 | Unit 7 | device-verify | todo | yes | — | MOT-001 | U7-001 | device: per-platform preset catalog filled, passes law test |
-| U8-001 | Unit 8 | implement | todo | yes | RT-006 | — | U1-002, U3-001 | device: press recognizer + SDF hit-test |
+| U8-001 | Unit 8 | implement | todo | yes | RT-006 | RT-005 | U1-002, U3-001 | device: press recognizer + SDF hit-test |
 | U8-002 | Unit 8 | device-verify | todo | yes | — | RT-001 | U8-001 | device: cancel path + full RNGH coexistence matrix |
 | U9-001 | Unit 9 | implement | todo | yes | RT-008 | — | U6-001, U7-001 | device: `Fx*` SharedObjects wired |
 | U9-002 | Unit 9 | device-verify | todo | yes | — | SPINE-009 | U4-001, U5-001, U7-001, U9-001 | device: identity holds across Fabric commits (the `05` test) |
@@ -157,6 +157,61 @@ Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run swift:lint` pass. `bun run test` passes with no tests found. These verify TS types/build/style and Swift formatting only. None prove native compilation or runtime registration — those are U1-003.
 - device: N/A
 - docs: `51` (decisions #5 — several views), `architecture.md` §2/§4 + `data-layer.md` §9 (fix default-view binding bugs). RT-010: docs reconciled; SDK-verify deferred.
+
+## U1-003 — SDK-verify Expo boundary behaviors
+
+Type: `device-verify` · State: `blocked` · Consumes: RT-010, RT-011 · Closes: SURF-010, RT-010, RT-011, RT-004 · [task](./tasks/U1-003-sdk-verify-boundary/)
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] scenario-written (four device scenarios defined)
+- [ ] device-verified (human gate — all four scenarios observed on device)
+- [ ] docs-closed (propagate results to source docs; close ledger rows)
+- [ ] reviewed
+- [ ] merged
+
+Proof:
+- headless: N/A — all claims require runtime/device observation.
+- device: four scenarios: cross-platform multi-view registration (RT-010), @Field Record coercion (RT-011), recycle reset (RT-004), previousProps value-equality for nested records (SURF-010). Blocked until U1-004 provides a runnable app, then human device execution moves it to `device-pending`.
+- docs: `51` (close open questions), `data-layer.md` §5.1 (ratify or rework memoization guidance), `31`/`53` (SDK recycle behavior), decision-ledger SURF-010 / RT-010 / RT-011 / RT-004, including RT-010's stale reconciliation note.
+
+## U1-004 — bare Fabric example in CI
+
+Type: `implement` · State: `in-progress` · Closes: SHIP-003 · [task](./tasks/U1-004-bare-fabric-example-ci/)
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [ ] headless-done (iOS proven locally; CI run + Android compile pending first GitHub run)
+- [ ] reviewed
+- [ ] docs-closed
+- [ ] merged
+
+Progress (native install path proven locally; CI run pending):
+- **Bare fixture built + verified locally:** `example-bare/` — literal bare RN 0.85.3 / New-Arch
+  app (bun, committed `ios/`+`android/`), Expo Modules via `install-expo-modules`,
+  `react-native-fx` as `file:../packages`. Both platforms autolink fx (iOS `Podfile.lock` →
+  `ReactNativeFx (0.1.0)`; Android resolver → `expo.modules.reactnativefx.FxModule`).
+  **iOS compile: BUILD SUCCEEDED, 0 errors** — `FxBareExample.app` built, fx Swift + Metal
+  (`FxShaders.metal` → bundled `default.metallib`) compiled in. Mandatory native-compile gate met.
+- **Library fix (carries into the package):** declared `apple.podspecPath` in
+  `packages/expo-module.config.json` — without it bun's `file:` file-symlink install hides the
+  podspec from Expo's scanner and fx never links on iOS. Makes autolinking install-method-agnostic;
+  should be recorded as a library config change (IMPL-001 / RT-010 area). See task notes.
+- **CI:** `.github/workflows/ci.yml` has `typescript` + `swift` (library, locally green) + `bare-ios`
+  + `bare-android` (install → autolink assert → native compile; macOS job downloads the Xcode-26
+  Metal toolchain). Authored from locally-verified commands; first GitHub run still to confirm,
+  esp. the Android `assembleDebug` (not compiled locally — follows Reanimated's proven shape).
+
+Proof:
+- headless: package build/lint (green) plus CI bare-fixture jobs: iOS autolink (`Podfile.lock`) +
+  compile **proven locally**; Android autolink resolve proven locally, compile **pending first CI run**.
+- device: N/A — U1-003 owns runtime/device verification.
+- docs: `53` open question "Bare + Fabric CI"; decision-ledger SHIP-003. Plus a new library-config
+  note for `apple.podspecPath`.
 
 ## Maintenance
 

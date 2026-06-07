@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same ref supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - name: Type-check
+        run: bunx tsc --noEmit
+        working-directory: packages
+      - run: bun run build
+      - run: bun run lint
+      - run: bun run test
+
+  swift:
+    name: Swift format
+    # swift-format ships with Xcode and is invoked through xcrun, so this peer runs on macOS.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run swift:lint
+        working-directory: packages
+
+  # The SHIP-003 install-path proof: build the bare RN + Fabric fixture so a real
+  # consumer's autolinking + native build keeps working on the pinned toolchain.
+  bare-ios:
+    name: Bare example · iOS build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the library
+        run: bun install --frozen-lockfile && bun run build
+      - name: Install fixture dependencies
+        run: bun install --frozen-lockfile
+        working-directory: example-bare
+      - name: Download the Metal toolchain
+        # Xcode 26+ ships the Metal compiler as a separate component; fx bundles .metal
+        # shaders. Harmless where the toolchain is already present.
+        run: xcodebuild -downloadComponent MetalToolchain
+        continue-on-error: true
+      - name: Install Pods
+        run: pod install
+        working-directory: example-bare/ios
+      - name: Assert react-native-fx autolinked (iOS)
+        run: grep -q "ReactNativeFx" Podfile.lock
+        working-directory: example-bare/ios
+      - name: Build app (Debug, simulator)
+        run: >
+          xcodebuild
+          -workspace FxBareExample.xcworkspace
+          -scheme FxBareExample
+          -configuration Debug
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          -quiet
+          build
+        working-directory: example-bare/ios
+
+  bare-android:
+    name: Bare example · Android build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Build the library
+        run: bun install --frozen-lockfile && bun run build
+      - name: Install fixture dependencies
+        run: bun install --frozen-lockfile
+        working-directory: example-bare
+      - name: Assert react-native-fx autolinked (Android)
+        # The in-tree Expo autolinker must resolve fx for android with its concrete module
+        # class, or the module never reaches the build. Assert both the package identifier
+        # and the registered module class, not just discovery.
+        run: |
+          resolved=$(node -e "require(require.resolve('expo-modules-autolinking', { paths: [require.resolve('expo/package.json')] }))(['resolve', '--platform', 'android', '--json'])")
+          echo "$resolved" | grep -q '"react-native-fx"'
+          echo "$resolved" | grep -q 'expo.modules.reactnativefx.FxModule'
+        working-directory: example-bare
+      - name: Build app (Debug)
+        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a
+        working-directory: example-bare/android
