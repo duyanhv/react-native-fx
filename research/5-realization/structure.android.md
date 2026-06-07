@@ -48,7 +48,8 @@ component.
 - **`hosted`** → `withFrameNanos` / `rememberInfiniteTransition` (Compose, on the
   `Choreographer`).
 - **`expo-view`** → a `Choreographer` frame callback driving the render. Pause on
-  `onDetachedFromWindow`/background (`31`).
+  `onDetachedFromWindow`/background (`31`). Resource release is a separate renderer-owned
+  lifecycle step, not part of ordinary detach.
 
 ### Render paths
 
@@ -69,8 +70,14 @@ component.
 
 ### Lifecycle
 
-- Clear backend resources and stop the `Choreographer` callback in
-  `onDetachedFromWindow` (`31`).
+- Pause frame callbacks in `onDetachedFromWindow` and while the app is backgrounded. Treat
+  detach as transient because React Native can move or reattach Android views without
+  destroying the renderer.
+- Release concrete renderer resources only when the backing render surface is destroyed or
+  invalidated by that backend's own lifecycle callback. If a backend releases resources after
+  an invalidation with no immediate replacement surface, lazily recreate them on the next
+  attach or surface-available callback. The shared `ExpoView` boundary does not clear backend
+  resources on ordinary detach.
 
 ### Version gates
 

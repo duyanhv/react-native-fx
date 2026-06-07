@@ -53,7 +53,9 @@ packages/
 │   │   └── themes.ts               [research: 50]
 │   │
 │   ├── runtime/                  ← JS BINDINGS (thin glue)
-│   │   ├── FxEffectView.tsx        requireNativeView wrappers
+│   │   ├── FxHostedView.tsx        default requireNativeView wrapper
+│   │   ├── FxSurfaceView.tsx       named requireNativeView wrapper
+│   │   ├── FxGroupView.tsx         named requireNativeView wrapper
 │   │   ├── FxPresenceView.tsx      [research: 54]
 │   │   ├── FxManagedView.tsx       [research: 33/57]
 │   │   └── FxPressableView.tsx     [research: 57]
@@ -62,7 +64,7 @@ packages/
 │
 ├── ios/                          ← iOS NATIVE
 │   ├── FxModule.swift              Expo Module [finding: multiple views, first=default]
-│   ├── FxNativeView.swift          ABSTRACT BASE (diff-based props, EventDispatcher, AsyncFunction)
+│   ├── FxNativeView.swift          ABSTRACT BASE (diff-based props, AsyncFunction surface, lifecycle)
 │   ├── FxHostedView.swift          FxEffectRenderer (hosted, decorative)
 │   ├── FxSurfaceView.swift         FxEffectRenderer (expo-view, interactive) + content motion wrapper
 │   ├── FxGroupView.swift           morph compound [research: 21/57]
@@ -95,7 +97,7 @@ packages/
 
 ## 2. The Expo Modules Boundary: `FxNativeView`
 
-`FxNativeView` is the **shared abstract base / pattern** — not a single switch-style orchestrator. It extends `ExpoFabricView` and provides the common boundary (diff-based props, EventDispatcher, AsyncFunction). Concrete registered classes are **substrate-specific** (`FxHostedView` / `FxSurfaceView`, blueprint Unit 1). The routing by `node.kind` happens in the JS adapter (`select()`), not in the native view — each component maps to a specific concrete view class.
+`FxNativeView` is the **shared abstract base / pattern** — not a single switch-style orchestrator. It extends `ExpoFabricView` and provides the common boundary (diff-based props, the `AsyncFunction` surface, lifecycle). The `EventDispatcher` *properties* live on each concrete view, not the base — Expo binds events by reflecting only the concrete type's own stored properties (`Mirror`), so a dispatcher declared on the base never wires. Concrete registered classes are **substrate-specific** (`FxHostedView` / `FxSurfaceView`, blueprint Unit 1). The routing by `node.kind` happens in the JS adapter (`select()`), not in the native view — each component maps to a specific concrete view class.
 
 > **[research: 51 §Two phases, two substrates, lines 38-44]** "FxNativeView is the shared abstract base / pattern; the concrete registered classes are substrate-specific (FxHostedView / FxSurfaceView, blueprint Unit 1)."
 > **[research: 51 §Decisions #5]** "likely several native view classes — substrate-specific (hosted vs expo-view, blueprint Unit 1), not a single FxView switching on node."
@@ -108,7 +110,7 @@ packages/
 | **`FxSurfaceView`** | `expo-view` | Interactive shaders + content motion wrapper | `FxNativeView` |
 | **`FxGroupView`** | `hosted` | Morph compound (glass) | `FxNativeView` |
 
-All three share the `FxNativeView` base: two-phase props, `EventDispatcher`, `AsyncFunction`. The adapter (JS side) dispatches to the correct concrete class based on `select()` output.
+All three share the `FxNativeView` base: two-phase props, lifecycle, and the `AsyncFunction` surface. Each concrete view declares its **own** `EventDispatcher` properties — Expo's event binding reflects only the concrete type, never the base. The adapter (JS side) dispatches to the correct concrete class based on `select()` output.
 
 > **[finding] `ExpoView` is a typealias for `ExpoFabricView`**
 > `ExpoFabricView` extends `RCTViewComponentView` (Fabric's native view base).
@@ -120,7 +122,7 @@ All three share the `FxNativeView` base: two-phase props, `EventDispatcher`, `As
 ```
 JS Component           →  requireNativeView           →  Concrete View
 ────────────              ─────────────────              ──────────────
-<Fx effect="...">     →  'ReactNativeFx', 'FxHostedView'  →  FxHostedView (decorative)
+<Fx effect="...">     →  'ReactNativeFx'                                  →  FxHostedView (decorative)
 <Fx interactionMode>  →  'ReactNativeFx', 'FxSurfaceView' →  FxSurfaceView (interactive)
 <FxPresence>          →  'ReactNativeFx', 'FxSurfaceView' →  FxSurfaceView (content motion)
 <FxView>              →  'ReactNativeFx', 'FxSurfaceView' →  FxSurfaceView (content motion)
@@ -207,7 +209,7 @@ public class FxModule: Module {
 
 JS binding:
 ```ts
-const FxHostedView  = requireNativeView('ReactNativeFx', 'FxHostedView');   // default (decorative)
+const FxHostedView  = requireNativeView('ReactNativeFx');                  // default (decorative)
 const FxSurfaceView = requireNativeView('ReactNativeFx', 'FxSurfaceView');  // interactive + content motion
 const FxGroupView   = requireNativeView('ReactNativeFx', 'FxGroupView');    // morph compound
 ```
@@ -215,8 +217,8 @@ const FxGroupView   = requireNativeView('ReactNativeFx', 'FxGroupView');    // m
 ### 2.3 Events + AsyncFunctions
 
 > **[research: 51 §The boundary, in one rule]** Events (push) + AsyncFunctions (pull). No per-frame JS.
-> **[finding] `EventDispatcher` is a callable object. `installEventDispatchers()` uses `Mirror` reflection on the view to find `EventDispatcher` properties and wires them to Fabric's event emitter. `normalizeEventName` strips "on" prefix and lowercases first letter.**
-> [ref: expo/ios/Core/Events/EventDispatcher.swift] [ref: expo/ios/Fabric/ExpoFabricView.swift:installEventDispatchers]
+> **[finding] `EventDispatcher` is a callable object. `installEventDispatchers()` uses `Mirror` reflection on the view to find `EventDispatcher` properties and wires them to Fabric's event emitter. `normalizeEventName` strips "on" prefix and lowercases first letter. `Mirror(reflecting: view).children` reflects only the concrete type's own stored properties — never a superclass's — and the Obj-C `responds(to:)` fallback does not apply to Swift `EventDispatcher` properties. So every `EventDispatcher` must be declared on the concrete registered view; one on the shared base is invisible to `installEventDispatcher` and silently never wires.**
+> [ref: expo/ios/Core/Events/EventDispatcher.swift:67-79] [ref: expo/ios/Fabric/ExpoFabricView.swift:installEventDispatchers]
 > **[finding] View-scoped `AsyncFunction`s auto-get main queue + owner (`takesOwner=true`). `AsyncFunctionDefinition.swift` wraps a sync closure; `ConcurrentFunctionDefinition.swift` uses Swift concurrency.**
 > [ref: expo/ios/Core/Functions/AsyncFunctionDefinition.swift]
 
@@ -225,6 +227,10 @@ const FxGroupView   = requireNativeView('ReactNativeFx', 'FxGroupView');    // m
 - `onStateChange({ state })` — FxView state transitions [research: 40]
 - `onPressIn/onPressOut/onPress` — interaction events (active mode) [research: 30]
 - `onLoad/onError` — BYO shader compilation result [research: 22]
+
+Native registered event names may be prefixed, for example `onFxLoad` / `onFxError`, when a
+bare semantic name collides with a React Native core event name. JS wrappers own the public
+semantic prop names.
 
 **AsyncFunctions** (imperative, UI-thread, ref-attached):
 - `setUniform({ key, value })` — controlled mode [research: 30]
@@ -241,7 +247,7 @@ From `research: 36`, the orchestrator owns or delegates to six stable native obj
 
 | Object | Owns | Reads | Emits | JS-Facing? |
 |--------|------|-------|-------|------------|
-| **`FxNativeView`** | Expo Modules boundary, diff-based props, routing to renderer or coordinator | resolved props from `updateProps` | — (routes events via `EventDispatcher`) | View (Fabric identity) |
+| **`FxNativeView`** | Expo Modules boundary, diff-based props, shared lifecycle and ref surface | resolved props from `updateProps` | — (concrete views declare `EventDispatcher`) | View (Fabric identity) |
 | **`FxEffectRenderer`** | effect layers, GPU surface (interactive); hosted SwiftUI/Compose or expo-view MTKView/RenderEffect | effect config, pointer uniforms (interactive) | `onLoad`, `onError`, `onPress*` | No (internal; events through view) |
 | **`FxPresenceCoordinator`** | lifecycle FSM (visible → entering → holding → exiting → done), deferred-unmount handshake | `visible` target | `onTransitionEnd({ phase })` via EventDispatcher | No (internal) |
 | **`FxAnimationDriver`** | interruptible native animation (spring/timing); content family (CASpringAnimation/SpringAnimation) and effect family (SwiftUI .animation/Compose animate*AsState) | targets, measurements from `FxLayoutObserver` | `onTransitionEnd` (completion) via coordinator | No (internal) |
@@ -269,8 +275,8 @@ Events flow back UP through the boundary only.
 JSX: <Fx effect="edge-glow" interactionMode="active" />
        │
        ▼
-src/runtime/FxEffectView.tsx
-  → requireNativeView('ReactNativeFx', 'FxHostedView')   // decorative; or FxSurfaceView for interactive
+src/runtime/FxHostedView.tsx / FxSurfaceView.tsx
+  → requireNativeView('ReactNativeFx')   // default view (decorative); or FxSurfaceView for interactive
        │
        ▼
 ios/FxHostedView.swift (extends FxNativeView) — decorative; or FxSurfaceView for interactive
@@ -540,7 +546,7 @@ ios/FxNativeView.swift  /  android/FxNativeView.kt  ──  (the abstract base, 
 |------|-----------|-------------|----------|
 | 1 | `FxNativeView` (Boundary) | `FxNativeView.swift/.kt` (base), `FxHostedView.swift/.kt`, `FxSurfaceView.swift/.kt`, `FxModule.swift/.kt` | — |
 | 2 | Manifest + `select()` | — | `src/manifest/` |
-| 3 | `FxEffectRenderer` (Pixels) | `FxHostedView.swift/.kt`, `FxSurfaceView.swift/.kt` | `src/runtime/FxEffectView.tsx` |
+| 3 | `FxEffectRenderer` (Pixels) | `FxHostedView.swift/.kt`, `FxSurfaceView.swift/.kt` | `src/runtime/FxHostedView.tsx`, `src/runtime/FxSurfaceView.tsx` |
 | 4 | Fabric-Invisible Layer | `FxSurfaceView.swift/.kt` (content motion wrapper) | `src/runtime/FxManagedView.tsx` |
 | 5 | `FxLayoutObserver` (Read) | `FxLayoutObserver.swift/.kt` | — |
 | 6 | `FxAnimationDriver` | `FxAnimationDriver.swift/.kt` | — |

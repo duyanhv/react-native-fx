@@ -710,7 +710,9 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
          │ imports: presets/ + effects/ + motion/
          ▼
 ┌── src/runtime/ ────────────────────────┐
-│ FxEffectView.tsx    (requireNativeView)│
+│ FxHostedView.tsx    (requireNativeView)│
+│ FxSurfaceView.tsx   (requireNativeView)│
+│ FxGroupView.tsx     (requireNativeView)│
 │ FxPresenceView.tsx  (requireNativeView)│
 │ FxManagedView.tsx   (requireNativeView)│
 │ FxPressableView.tsx (requireNativeView)│
@@ -885,7 +887,7 @@ Each JS component maps to a concrete view class: `<Fx effect>` → `FxHostedView
 
 ### D2: `requireNativeView` module name
 
-**Resolved**: Module name changed from `'FxShader'` to `'ReactNativeFx'`. JS bindings use `requireNativeView('ReactNativeFx', 'FxHostedView')` / `requireNativeView('ReactNativeFx', 'FxSurfaceView')` / `requireNativeView('ReactNativeFx', 'FxGroupView')`.
+**Resolved**: Module name changed from `'FxShader'` to `'ReactNativeFx'`. JS bindings use `requireNativeView('ReactNativeFx')` (default) / `requireNativeView('ReactNativeFx', 'FxSurfaceView')` / `requireNativeView('ReactNativeFx', 'FxGroupView')`.
 **Source**: [research: 51 §Cross-boundary typing]
 
 ### D3: `FxGroup`/`FxItem` Android without Liquid Glass

@@ -3,9 +3,11 @@ import MetalKit
 import QuartzCore
 import simd
 
-// Uniforms passed to the fragment shader. The field order MUST match the
-// `FxUniforms` struct in Shaders/*.metal.
-struct FxUniforms {
+/// Stores uniforms passed to the fragment shader.
+///
+/// The field order matches the `FxUniforms` struct in the Metal source so the
+/// native buffer can be copied directly into fragment argument memory.
+internal struct FxUniforms {
   var time: Float = 0
   var resolution: SIMD2<Float> = .zero
   var intensity: Float = 0.8
@@ -13,15 +15,23 @@ struct FxUniforms {
   var touch = SIMD2<Float>(0.5, 0.5)
 }
 
-// The expo-view substrate: a native Metal-backed surface that hosts an MTKView,
-// owns the render loop and uniforms, and attaches a cooperative press recognizer.
-// JS configures it; the native side renders. JS never drives frames.
-final class FxSurfaceView: ExpoView, MTKViewDelegate {
-  // Semantic events to JS (names must match Events(...) in FxModule).
-  // Prefixed to avoid colliding with React Native's reserved `topPress` event.
-  let onShaderPress = EventDispatcher()
-  let onShaderPressIn = EventDispatcher()
-  let onShaderPressOut = EventDispatcher()
+/// Renders the expo-view substrate through a Metal-backed `MTKView`.
+///
+/// JS configures semantic targets through props. Native owns the render loop,
+/// uniforms, lifecycle pausing, and cooperative press recognizer.
+internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
+  // MARK: - Events
+
+  /// Reports a completed shader press with a prefixed name that avoids React Native's reserved event.
+  internal let onShaderPress = EventDispatcher()
+  internal let onShaderPressIn = EventDispatcher()
+  internal let onShaderPressOut = EventDispatcher()
+
+  internal let onFxTransitionEnd = EventDispatcher()
+  internal let onFxLoad = EventDispatcher()
+  internal let onFxError = EventDispatcher()
+
+  // MARK: - Private state
 
   private let metalView = MTKView()
   private let device = MTLCreateSystemDefaultDevice()
@@ -32,26 +42,26 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
   private var uniforms = FxUniforms()
   private let startTime = CACurrentMediaTime()
 
-  // Stashed by prop setters, applied once per batch in applyResolvedConfig().
+  // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
   private var pendingShader = "fractal-clouds"
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
 
   private var pressRecognizer: UILongPressGestureRecognizer?
 
-  required init(appContext: AppContext? = nil) {
+  /// Initializes the Metal surface while keeping the loop paused until attachment.
+  internal required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
     setUpMetal()
   }
 
   deinit {
-    NotificationCenter.default.removeObserver(self)
-    metalView.delegate = nil
-    metalView.isPaused = true
+    tearDownMetal()
   }
 
-  // MARK: Setup
+  // MARK: - Setup
 
+  /// Creates the Metal view and command resources without starting frame production.
   private func setUpMetal() {
     guard let device else { return }
     commandQueue = device.makeCommandQueue()
@@ -69,7 +79,7 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     addSubview(metalView)
   }
 
-  // Curated shaders compile into default.metallib inside the FxShaders bundle.
+  /// Loads the compiled shader library from the bundled curated Metal assets.
   private func loadShaderLibrary(device: MTLDevice) -> MTLLibrary? {
     if let bundle = shadersBundle() {
       if let library = try? device.makeDefaultLibrary(bundle: bundle) {
@@ -84,6 +94,7 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     return device.makeDefaultLibrary()
   }
 
+  /// Resolves the resource bundle that contains the compiled Metal library.
   private func shadersBundle() -> Bundle? {
     let host = Bundle(for: FxSurfaceView.self)
     let bases = [host.resourceURL, Bundle.main.resourceURL, host.bundleURL, Bundle.main.bundleURL]
@@ -96,8 +107,15 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     return nil
   }
 
-  // MARK: Pipeline (cached per shader id)
+  /// Tears down the current Metal view attachment and stops future delegate callbacks.
+  private func tearDownMetal() {
+    metalView.delegate = nil
+    metalView.isPaused = true
+  }
 
+  // MARK: - Pipeline
+
+  /// Returns the cached render pipeline for a curated shader id.
   private func pipeline(for shaderId: String) -> MTLRenderPipelineState? {
     if let cached = pipelineCache[shaderId] {
       return cached
@@ -120,7 +138,7 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     return state
   }
 
-  // Curated id -> MSL fragment function name. Unknown id falls back to the default.
+  /// Maps a curated shader id to its Metal fragment function.
   private static func fragmentName(for shaderId: String) -> String {
     switch shaderId {
     case "fractal-clouds": return "fx_fractal_clouds"
@@ -132,20 +150,33 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     }
   }
 
-  // MARK: Props (stash now, apply in applyResolvedConfig)
+  // MARK: - Props
 
-  func setShader(_ value: String) { pendingShader = value }
-  func setIntensity(_ value: Double) { pendingIntensity = Float(value) }
-  func setInteractionMode(_ value: String) { pendingMode = value }
+  /// Stashes the shader target until Expo finishes the prop batch.
+  internal func setShader(_ value: String) {
+    pendingShader = value
+  }
 
-  func applyResolvedConfig() {
-    uniforms.intensity = pendingIntensity
+  /// Stashes the intensity target until Expo finishes the prop batch.
+  internal func setIntensity(_ value: Double) {
+    pendingIntensity = Float(value)
+  }
+
+  /// Stashes the interaction target until Expo finishes the prop batch.
+  internal func setInteractionMode(_ value: String) {
+    pendingMode = value
+  }
+
+  internal override func applyResolvedConfig() {
+    super.applyResolvedConfig()
+    uniforms.intensity = min(max(pendingIntensity, 0), 1)
     _ = pipeline(for: pendingShader)  // warm the cache
     updateInteraction(mode: pendingMode)
   }
 
-  // MARK: Interaction (active mode = cooperative press)
+  // MARK: - Interaction
 
+  /// Installs or removes the cooperative press recognizer for active interaction.
   private func updateInteraction(mode: String) {
     if mode == "active" {
       guard pressRecognizer == nil else { return }
@@ -161,6 +192,7 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     }
   }
 
+  /// Updates shader uniforms and semantic events for a press recognizer transition.
   @objc private func handlePress(_ recognizer: UILongPressGestureRecognizer) {
     updateTouch(recognizer)  // tracks the finger on .began and every .changed (drag)
     switch recognizer.state {
@@ -179,6 +211,7 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     }
   }
 
+  /// Converts the current touch location into shader UV coordinates.
   private func updateTouch(_ recognizer: UILongPressGestureRecognizer) {
     let location = recognizer.location(in: self)
     let width = max(Float(bounds.width), 1)
@@ -187,9 +220,10 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     uniforms.touch = SIMD2<Float>(Float(location.x) / width, 1 - Float(location.y) / height)
   }
 
-  // MARK: Render loop
+  // MARK: - Render loop
 
-  func draw(in view: MTKView) {
+  /// Encodes one full-screen triangle draw for the current shader target.
+  internal func draw(in view: MTKView) {
     guard let commandQueue,
       let state = pipeline(for: pendingShader),
       let drawable = view.currentDrawable,
@@ -211,26 +245,20 @@ final class FxSurfaceView: ExpoView, MTKViewDelegate {
     commandBuffer.commit()
   }
 
-  func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
-
-  // MARK: Lifecycle — run the loop only while on-window and foregrounded
-
-  override func didMoveToWindow() {
-    super.didMoveToWindow()
-    if window != nil {
-      NotificationCenter.default.addObserver(
-        self, selector: #selector(pauseLoop),
-        name: UIApplication.didEnterBackgroundNotification, object: nil)
-      NotificationCenter.default.addObserver(
-        self, selector: #selector(resumeLoop),
-        name: UIApplication.willEnterForegroundNotification, object: nil)
-      resumeLoop()
-    } else {
-      pauseLoop()
-      NotificationCenter.default.removeObserver(self)
-    }
+  /// Accepts drawable-size changes because per-frame uniforms read the current drawable size.
+  internal func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+    _ = size
   }
 
-  @objc private func pauseLoop() { metalView.isPaused = true }
-  @objc private func resumeLoop() { metalView.isPaused = (window == nil) }
+  // MARK: - Lifecycle
+
+  /// Pauses the Metal display link when the surface cannot be displayed.
+  internal override func pausePresentationLoop() {
+    metalView.isPaused = true
+  }
+
+  /// Resumes the Metal display link only while the surface is attached.
+  internal override func resumePresentationLoop() {
+    metalView.isPaused = (window == nil)
+  }
 }

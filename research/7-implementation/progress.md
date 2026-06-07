@@ -44,8 +44,8 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
-| U1-002 | Unit 1 | implement | todo | no | RT-010 | RT-010 | U1-001 | headless build; `FxNativeView` + substrate view classes register |
-| U1-003 | Unit 1 | device-verify | todo | yes | — | SURF-010, RT-011, RT-005 | U1-002 | device: `previousProps` value-equality skips work; `@Field` defaults; recycle reset |
+| U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
+| U1-003 | Unit 1 | device-verify | todo | yes | RT-010 | SURF-010, RT-010, RT-011, RT-005 | U1-002 | device: `previousProps` value-equality skips work; `@Field` defaults; recycle reset; SDK-verify registration ergonomics |
 | U1-004 | Unit 1 | implement | todo | no | — | SHIP-003 | U1-001 | headless: bare RN + Fabric example green in CI |
 | U2-001 | Unit 2 | implement | todo | no | SPINE-013 | SPINE-013 | — | headless: `select()` planned-rung tests |
 | U2-002 | Unit 2 | rework | todo | no | SPINE-003 | SPINE-003 | — | headless: `tsc` on reconciled UniformSpec |
@@ -138,6 +138,25 @@ Proof:
 - headless: `tsc` — the manifest types compile against the reconciled UniformSpec
 - device: N/A
 - docs: `02` §The schema, decision-ledger SPINE-003
+
+## U1-002 — FxNativeView abstract base + substrate view registration
+
+Type: `implement` · State: `headless-done` · Consumes: RT-010 · Closes: — · [task](./tasks/U1-002-native-view-boundary/)
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
+- [ ] reviewed
+- [ ] docs-closed
+- [ ] merged
+
+Proof:
+- headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run swift:lint` pass. `bun run test` passes with no tests found. These verify TS types/build/style and Swift formatting only. None prove native compilation or runtime registration — those are U1-003.
+- device: N/A
+- docs: `51` (decisions #5 — several views), `architecture.md` §2/§4 + `data-layer.md` §9 (fix default-view binding bugs). RT-010: docs reconciled; SDK-verify deferred.
 
 ## Maintenance
 

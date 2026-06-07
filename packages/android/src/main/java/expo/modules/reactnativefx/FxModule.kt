@@ -3,13 +3,63 @@ package expo.modules.reactnativefx
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
-// The Android peer of the iOS FxModule. The name `ReactNativeFx` is the
-// autolinking and `requireNativeView` identity, shared with iOS.
-//
-// Scaffolding: the Android skeleton. The base view, substrate views, renderers,
-// and curated .agsl assets are added as the boundary is built out.
+/**
+ * Registers the Android views exposed by the ReactNativeFx Expo module.
+ *
+ * The first view is Expo's default view and resolves through the bare module
+ * name. Additional substrate views resolve through their concrete view names.
+ */
 class FxModule : Module() {
+  /**
+   * Defines the module name, view registrations, props, events, and ref functions.
+   */
   override fun definition() = ModuleDefinition {
     Name("ReactNativeFx")
+
+    View(FxHostedView::class) {
+      Events("onFxTransitionEnd", "onFxLoad", "onFxError")
+
+      AsyncFunction("snapshot") { view: FxHostedView ->
+        return@AsyncFunction view.snapshot()
+      }
+
+      OnViewDidUpdateProps { view: FxHostedView ->
+        view.applyResolvedConfig()
+      }
+    }
+
+    View(FxSurfaceView::class) {
+      Events("onShaderPress", "onShaderPressIn", "onShaderPressOut", "onFxTransitionEnd", "onFxLoad", "onFxError")
+
+      Prop("shader") { view: FxSurfaceView, value: String ->
+        view.setShader(value)
+      }
+      Prop("intensity") { view: FxSurfaceView, value: Double ->
+        view.setIntensity(value)
+      }
+      Prop("interactionMode") { view: FxSurfaceView, value: String ->
+        view.setInteractionMode(value)
+      }
+
+      AsyncFunction("snapshot") { view: FxSurfaceView ->
+        return@AsyncFunction view.snapshot()
+      }
+
+      OnViewDidUpdateProps { view: FxSurfaceView ->
+        view.applyResolvedConfig()
+      }
+    }
+
+    View(FxGroupView::class) {
+      Events("onFxTransitionEnd", "onFxLoad", "onFxError")
+
+      AsyncFunction("snapshot") { view: FxGroupView ->
+        return@AsyncFunction view.snapshot()
+      }
+
+      OnViewDidUpdateProps { view: FxGroupView ->
+        view.applyResolvedConfig()
+      }
+    }
   }
 }
