@@ -50,7 +50,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
 | U2-001 | Unit 2 | implement | ready-to-merge | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; [detail](#u2-001--planned-rung-selection) |
 | U2-002 | Unit 2 | rework | ready-to-merge | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; [detail](#u2-002--uniformspec-schema-reconciliation) |
-| U3-001 | Unit 3 | implement | todo | yes | FX-004 | RT-009 | U1-002, U2-001 | device: hosted fill/material/shader/symbol render |
+| U3-001 | Unit 3 | implement | in-progress | yes | FX-004 | RT-009 | U1-002, U2-001 | spec'd; hosted fill/material/shader/symbol render on iOS + Android; [detail](#u3-001--hosted-effect-renderer) |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
@@ -161,6 +161,29 @@ Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run test` from `packages/` all pass. 17 Jest tests prove planned rungs are skipped, out-of-scope rungs are skipped, OS gating works, `wantInteractive` enforces expo-view, driver target matching works, and empty/guarded-out ladders degrade to `{ via: 'none' }`.
 - device: N/A.
 - docs: `02` selection rule updated with `planned` skip. decision-ledger SPINE-013 resolved.
+
+## U3-001 — hosted effect renderer
+
+Type: `implement` · State: `in-progress` · Device: yes · Consumes: FX-004 · Closes: RT-009 · [task](./tasks/U3-001-effect-renderer-hosted/)
+
+Checklist:
+- [x] spec'd
+- [ ] rules-gated
+- [ ] implemented
+- [ ] commented
+- [ ] headless-done
+- [ ] device-verified
+- [ ] docs-closed
+- [ ] reviewed
+- [ ] merged
+
+Proof:
+- headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run test` from `packages/`.
+  Renderer logic is device-gated — effects do not run headless.
+- device: four effect types render on iOS + Android (fill, material, shader, symbol).
+  Evidence in `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
+- docs: `51` RT-009 closed (hosted authoring path proven); `01` updated; `structure.ios.md`
+  / `structure.android.md` updated with hosted render mechanics.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration
 
