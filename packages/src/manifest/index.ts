@@ -1,3 +1,6 @@
+export type { SelectResult } from './select';
+
+export { select } from './select';
 export type {
   Asset,
   CapabilityManifest,
@@ -14,6 +17,3 @@ export type {
   UniformSpec,
   Via,
 } from './types';
-
-export { select } from './select';
-export type { SelectResult } from './select';

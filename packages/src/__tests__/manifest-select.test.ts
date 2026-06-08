@@ -357,9 +357,7 @@ describe('select()', () => {
   it('degrades to via: none when all rungs are planned or out-of-scope', () => {
     // content-distort on iOS: out-of-scope; on Android: planned
     expect(select(fixture.nodes['content-distort'], ios, { deviceOS: 18 }).via).toBe('none');
-    expect(select(fixture.nodes['content-distort'], android, { deviceOS: 34 }).via).toBe(
-      'none'
-    );
+    expect(select(fixture.nodes['content-distort'], android, { deviceOS: 34 }).via).toBe('none');
   });
 
   // ── non-driver nodes ignore target ─────────────────────────────

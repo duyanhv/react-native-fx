@@ -19,11 +19,7 @@ export type SelectResult = Lowering | { via: 'none' };
  *
  * Returns `{ via: 'none' }` when no rung qualifies — never throws.
  */
-export function select(
-  node: CapabilityNode,
-  platform: Platform,
-  ctx: SelectCtx
-): SelectResult {
+export function select(node: CapabilityNode, platform: Platform, ctx: SelectCtx): SelectResult {
   const target = ctx.target ?? 'effect';
   const features = ctx.features ?? [];
 
@@ -37,10 +33,7 @@ export function select(
     if (rung.requires.os > ctx.deviceOS) {
       continue;
     }
-    if (
-      rung.requires.feature &&
-      !features.includes(rung.requires.feature)
-    ) {
+    if (rung.requires.feature && !features.includes(rung.requires.feature)) {
       continue;
     }
     if (

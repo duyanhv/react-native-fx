@@ -13,12 +13,7 @@ export type Via = 'native' | 'shader' | 'draw' | 'lib' | 'none';
 export type Asset = 'metal' | 'agsl' | 'lottie' | 'none';
 
 /** the time source when the node animates. */
-export type Clock =
-  | 'timeline'
-  | 'display-link'
-  | 'frame-nanos'
-  | 'infinite-transition'
-  | 'none';
+export type Clock = 'timeline' | 'display-link' | 'frame-nanos' | 'infinite-transition' | 'none';
 
 export type Phase = 'v1' | 'v2';
 export type NodeKind = 'render-target' | 'modifier' | 'driver';
