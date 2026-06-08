@@ -1,3 +1,13 @@
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20"
+  }
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'expo-module-gradle-plugin'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
@@ -5,10 +15,9 @@ apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 group = 'expo.modules.reactnativefx'
 version = '0.1.0'
 
-// The expo-module-gradle-plugin supplies the Kotlin, compileSdk, and React
-// Native wiring; this module declares Compose and the minSdk floor.
-// Curated .agsl assets ship under src/main/assets/shaders and are compiled at
-// runtime by RuntimeShader.
+// The expo-module-gradle-plugin supplies Kotlin, compileSdk, and React Native
+// wiring. Compose is enabled here because FxHostedView embeds ComposeView.
+// Curated .agsl assets ship under src/main/assets/shaders.
 android {
   namespace 'expo.modules.reactnativefx'
   defaultConfig {
