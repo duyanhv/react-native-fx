@@ -50,7 +50,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
 | U2-001 | Unit 2 | implement | ready-to-merge | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; [detail](#u2-001--planned-rung-selection) |
 | U2-002 | Unit 2 | rework | ready-to-merge | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; [detail](#u2-002--uniformspec-schema-reconciliation) |
-| U3-001 | Unit 3 | implement | in-progress | yes | FX-004 | RT-009 | U1-002, U2-001, DOC-007, DOC-008 | spec'd; hosted mount + prop plumbing (RT-009) + fill/material first; shader blocked by DOC-007 (FX-004), symbol blocked by DOC-008 (FX-009); [detail](#u3-001--hosted-effect-renderer) |
+| U3-001 | Unit 3 | implement | in-progress | yes | FX-004 | RT-009 | U1-002, U2-001, DOC-007, DOC-008, U3-003 | spec'd; staged: RT-009 + fill (iOS+Android) + iOS material first; Android material gated by U3-003 (FX-003); shader by DOC-007; symbol iOS by DOC-008; [detail](#u3-001--hosted-effect-renderer) |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
@@ -180,9 +180,10 @@ Checklist:
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run test` from `packages/`.
   Renderer logic is device-gated — effects do not run headless.
-- device: RT-009 — hosted mount + prop/config path on iOS + Android. fill + material render on
-  both platforms (unblocked). shader after DOC-007/FX-004. symbol iOS after DOC-008/FX-009;
-  Android symbol deferred. Evidence in `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
+- device: RT-009 — hosted mount + prop/config path on iOS + Android. fill on both platforms
+  (unblocked). iOS material (unblocked); Android material gated by U3-003 / FX-003.
+  shader after DOC-007/FX-004. symbol iOS after DOC-008/FX-009; Android symbol deferred.
+  Evidence in `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
 - docs: `51` RT-009 closed (hosted authoring path proven); `structure.ios.md` /
   `structure.android.md` updated with hosted render mechanics.
 
