@@ -111,6 +111,20 @@ mounts the native view/prop. Unavailable degrades to a graceful no-op, never thr
 A bring-your-own effect registers as a `shader` node with developer `.metal`+`.agsl` and a
 uniform table (`22`); it flows through the identical preset/primitive/adapter path.
 
+## V1 shader catalog
+
+The V1 `ShaderId` catalog is `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`,
+`dots`, `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`.
+
+`fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, and `dots` are the implemented
+starter shaders. `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow` are V1
+catalog entries that need native MSL+AGSL implementations before package types/runtime
+expose them.
+
+Public shader uniforms stay shared and minimal in V1. `intensity` is the stable semantic
+override. `time`, `resolution`, `pressDepth`, and `touch` are native-owned values injected
+by the runtime.
+
 ## Decisions
 
 1. **Three explicit layers, platform-native behavior presets on top** — presets → primitives → builders;
@@ -127,7 +141,7 @@ uniform table (`22`); it flows through the identical preset/primitive/adapter pa
    three preset-like bundles on different owned surfaces (an honest domain split).
 4. **Props by default; compound only for real native layers** (`FxGroup`/`FxItem`).
 5. **Presets resolve in JS**; palettes/themes are pure config; `time`/`resolution` never in
-   the record.
+   the record. V1 shader uniforms are shared and minimal.
 6. **The component layer is the adapter** — `select()` over the manifest; degrades, never
    throws. **BYO reuses the `shader` node**, no separate API.
 
@@ -137,7 +151,6 @@ uniform table (`22`); it flows through the identical preset/primitive/adapter pa
   their native defaults (`56`, ties to the `42` preset set + `41`'s default catalog).
 - **`uniforms`/spec memoization** — inline literals re-resolve each render; document
   stable-ref guidance.
-- **Per-shader uniform typing source** — generate TS from the manifest (`02`) vs hand-maintain.
 - **Theme distribution** — consumer-authored palettes/themes as a shareable artifact (`52` `lab`).
 
 ## Sources

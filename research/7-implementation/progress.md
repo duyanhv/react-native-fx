@@ -31,7 +31,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-004 | 1-surface | ratify | todo | no | — | SURF-002 | — | docs: `56`/`6-ship` ship effect components? |
 | DOC-005 | 1-surface | ratify | todo | no | MOT-001 | SURF-003, SURF-004, SURF-005 | — | docs: `50`/`56`/`57` V1 preset/state/feedback vocab |
 | DOC-006 | 1-surface | ratify | todo | no | — | SURF-006 | — | docs: `57`/`21` FxGroup morph scope |
-| DOC-007 | 2-effects | ratify | todo | no | — | FX-001, FX-004 | — | docs: `20`/`22`/`50` mesh ergonomics, shader catalog |
+| DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) |
 | DOC-008 | 2-effects | ratify | todo | no | — | FX-009 | — | docs: `24` Android symbol scope |
 | DOC-009 | 3-motion | ratify | todo | no | — | MOT-003, MOT-005, MOT-006, MOT-009 | — | docs: `40`/`41`/`42` V1 motion vocab scope |
 | DOC-010 | 3-motion | ratify | todo | no | — | MOT-010 | — | docs: `41`/`42` reduce-motion policy |
@@ -50,11 +50,12 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
 | U2-001 | Unit 2 | implement | ready-to-merge | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; [detail](#u2-001--planned-rung-selection) |
 | U2-002 | Unit 2 | rework | ready-to-merge | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; [detail](#u2-002--uniformspec-schema-reconciliation) |
-| U3-001 | Unit 3 | implement | ready-to-merge | yes | FX-004 | RT-009 | U1-002, U2-001, DOC-007, DOC-008 | implemented; RT-009 closed; fill iOS+Android; material iOS; device-verified iOS 26+; [detail](#u3-001--hosted-effect-renderer) |
+| U3-001 | Unit 3 | implement | blocked | yes | FX-004 | RT-009 | U3-006, DOC-008 | RT-009/fill/material slice committed; full hosted renderer still blocked on shader catalog implementation + symbol scope; [detail](#u3-001--hosted-effect-renderer) |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
 | U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
+| U3-006 | Unit 3 | implement | todo | yes | FX-004 | — | DOC-007 | implement native MSL+AGSL support for `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`; expose unified `ShaderId` using the committed RT-009 hosted slice |
 
 ### V2 build — Units 4–9
 
@@ -164,7 +165,7 @@ Proof:
 
 ## U3-001 — hosted effect renderer
 
-Type: `implement` · State: `ready-to-merge` · Device: yes · Consumes: FX-004 · Closes: RT-009 · [task](./tasks/U3-001-effect-renderer-hosted/)
+Type: `implement` · State: `blocked` · Device: yes · Consumes: FX-004 · Closes: RT-009 · [task](./tasks/U3-001-effect-renderer-hosted/)
 
 Checklist:
 - [x] spec'd
@@ -172,9 +173,9 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [x] device-verified
-- [x] docs-closed
-- [x] reviewed
+- [ ] device-verified
+- [ ] docs-closed
+- [ ] reviewed
 - [ ] merged
 
 Proof:
@@ -182,7 +183,8 @@ Proof:
   Renderer logic is device-gated — effects do not run headless.
 - device: RT-009 — hosted mount + prop/config path on iOS + Android. fill on both platforms
   (unblocked). iOS material (unblocked); Android material gated by U3-003 / FX-003.
-  shader after DOC-007/FX-004. symbol iOS after DOC-008/FX-009; Android symbol deferred.
+  shader catalog implementation is blocked on U3-006. symbol iOS is blocked on
+  DOC-008/FX-009; Android symbol deferred.
   Evidence in `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
 - docs: `51` RT-009 intended close (hosted authoring path — device gate pending);
   `structure.android.md` records V1 deviation (plain View fill, Compose deferred);

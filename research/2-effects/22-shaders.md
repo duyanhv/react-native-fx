@@ -21,24 +21,38 @@ demotion from the old thesis lives here: shaders are *one capability*, not the c
 
 ## Semantic surface
 
-A curated `ShaderId` union with **typed per-shader uniforms**; `time`/`resolution`
-are native-injected and absent from every public type (so they can't be set):
+A curated `ShaderId` union with a shared minimal public uniform contract; `time`,
+`resolution`, `pressDepth`, and `touch` are native-owned and absent from every public type
+(so they can't be set):
 
 ```ts
-type ShaderId = 'aurora' | 'noise-field' | 'plasma' | 'caustics' | 'edge-glow';
+type ShaderId =
+  | 'fractal-clouds'
+  | 'ink-smoke'
+  | 'liquid-chrome'
+  | 'loop'
+  | 'dots'
+  | 'aurora'
+  | 'noise-field'
+  | 'plasma'
+  | 'caustics'
+  | 'edge-glow';
 // (mesh is a `fill` capability — native MeshGradient/AGSL — not a generative shader.)
 
-interface AuroraUniforms     { speed: number; intensity: number; colorA: string; colorB: string }
-interface NoiseFieldUniforms { scale: number; speed: number; contrast: number }
-interface EdgeGlowUniforms   { palette: string[]; speed: number; glowSize: number }
-// … one typed set per id; uniforms is Partial<ShaderUniforms[K]>, narrowed by id.
+interface ShaderUniforms {
+  intensity?: number;
+}
 ```
+
+The first five ids are implemented starter shaders in the package today. `aurora`,
+`noise-field`, `plasma`, `caustics`, and `edge-glow` are ratified V1 catalog entries, but
+they still need native MSL+AGSL implementations before package types/runtime expose them.
 
 Both substrates reach the consumer through the standard effect surface — `<Fx>` (`55`/`57`):
 
 ```tsx
-<Fx effect="edge-glow" />                                  // decorative (hosted)
-<Fx effect="plasma" interactionMode="active" onPress={…} />  // interactive surface (expo-view, 30)
+<Fx effect="fractal-clouds" />                           // decorative (hosted)
+<Fx effect="dots" interactionMode="active" onPress={…} />  // interactive surface (expo-view, 30)
 ```
 
 Because `shader` is `interaction: 'fx'`, the interactive form is the **`<Fx interactionMode>`
@@ -69,12 +83,13 @@ would later collapse to author-once.
 ## Surface consumption
 
 Mounted by `<Fx>` (the effect primitive); may be attached to `FxView` as decoration (it
-draws itself, samples nothing — safe over content). Feeds `effect=` ids `edge-glow` /
-`plasma` / `aurora` / `noise-field` / `caustics`.
+draws itself, samples nothing — safe over content). Feeds `effect=` ids
+`fractal-clouds` / `ink-smoke` / `liquid-chrome` / `loop` / `dots` / `aurora` /
+`noise-field` / `plasma` / `caustics` / `edge-glow`.
 
 ```tsx
-<Fx effect="edge-glow" />                                   // decorative, hosted
-<Fx effect="plasma" interactionMode="active" onPress={…} />   // interactive, expo-view (30)
+<Fx effect="fractal-clouds" />                              // decorative, hosted
+<Fx effect="dots" interactionMode="active" onPress={…} />     // interactive, expo-view (30)
 <FxView effect={fx.effect.glow()}><MyCard /></FxView>       // decoration on your content
 ```
 
@@ -113,17 +128,20 @@ events only — no per-frame pointer stream** (`04`/`35`).
 
 1. **`shader` is the only `interaction: 'fx'` render node** — it carries both a
    hosted decorative rung and an expo-view interactive rung; intended use selects.
-2. **Curated `ShaderId` + typed per-shader uniforms**; `time`/`resolution`
-   native-injected and unsettable; resolution in JS (`50`).
-3. **BYO is a `shader` node with author-supplied `.metal`+`.agsl`** — build-time
+2. **Curated V1 `ShaderId` catalog** — `fractal-clouds`, `ink-smoke`, `liquid-chrome`,
+   `loop`, `dots`, `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`.
+   The first five are implemented starter shaders; the last five are catalog entries that
+   require native implementation before package exposure.
+3. **Shared minimal public uniforms in V1** — semantic overrides such as `intensity`
+   resolve in JS (`50`); `time`, `resolution`, `pressDepth`, and `touch` stay native-owned
+   and unsettable.
+4. **BYO is a `shader` node with author-supplied `.metal`+`.agsl`** — build-time
    assets, not a runtime `source` prop. Curation is the front door.
-4. **Each curated shader is an MSL+AGSL pair** maintained by the library — the 2×
+5. **Each curated shader is an MSL+AGSL pair** maintained by the library — the 2×
    authoring cost is the price of cross-platform, and the compiler's future target.
 
 ## Open questions
 
-- **Final curated `ShaderId` set + uniform tables** — reconcile the historical sets
-  (`aurora/ripple/spotlight` vs `plasma/caustics`); pin the V1 catalog with `50`.
 - **Uniform struct alignment (needs-device)** — Swift↔MSL field order/stride, and the
   AGSL uniform binding equivalent; carried from `_legacy/08`.
 - **BYO asset contract** — how a developer registers a `.metal`+`.agsl` pair + uniform

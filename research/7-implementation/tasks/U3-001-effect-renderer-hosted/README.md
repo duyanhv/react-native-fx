@@ -1,8 +1,8 @@
 # U3-001 — hosted effect renderer
 
-Unit 3 · type: `implement` · state: `ready-to-merge` · device: yes
+Unit 3 · type: `implement` · state: `blocked` · device: yes
 Consumes: FX-004 · Closes: RT-009
-Blocked by: U1-002 (done), U2-001 (done), DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol)
+Blocked by: U3-006 (shader catalog implementation), DOC-008 (FX-009 — symbol scope)
 
 > Builds the V1 hosted rendering path — SwiftUI on iOS, Jetpack Compose on Android.
 > Mounts the platform-native host inside `FxHostedView` and renders fill on both
@@ -47,8 +47,8 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 - Done when:         RT-009 is satisfied: hosted mount + prop/config path proven on
                       both platforms. Effect coverage is incremental — fill (iOS + Android)
                       and iOS material first (unblocked); Android material out of scope
-                      (U3-003 / FX-003); shader after DOC-007/FX-004; symbol iOS-only after
-                      DOC-008/FX-009 closes (Android symbol deferred).
+                      (U3-003 / FX-003); shader catalog implementation after U3-006;
+                      symbol iOS-only after DOC-008/FX-009 closes (Android symbol deferred).
 ```
 
 ## Lifecycle
@@ -58,9 +58,9 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [x] device-verified
-- [x] docs-closed
-- [x] reviewed
+- [ ] device-verified
+- [ ] docs-closed
+- [ ] reviewed
 - [ ] merged
 
 ## Proof
@@ -74,9 +74,8 @@ Subtask: hosted effect renderer (blueprint Unit 3)
   - **material (iOS only):** `.glassEffect` on iOS 26+, `.ultraThinMaterial`/`.thinMaterial`/
     `.regularMaterial` fallback gated by intensity on earlier versions.
     Android material out of scope — owned by U3-003 / FX-003.
-  - **shader (blocked by DOC-007 / FX-004):** curated Metal shader through hosted
-    `.colorEffect` path, AGSL through hosted `RenderEffect`. Wait until shader catalog
-    (FX-004) is ratified.
+  - **shader:** catalog ratified by DOC-007 / FX-004. U3-006 blocks full completion until
+    it adds native MSL+AGSL support for the five additional catalog ids and package exposure.
   - **symbol (iOS blocked by DOC-008 / FX-009):** SF Symbol / Image render through
     hosted path. Android deferred per V1 scope (DOC-008).
 - docs: `51` RT-009 intended close (hosted authoring path — device gate pending);
@@ -99,10 +98,10 @@ Subtask: hosted effect renderer (blueprint Unit 3)
   fallback. Glass self-gestures (`interaction: 'self'`). Android material is out of scope
   for this task — owned by U3-003 / FX-003.
 
-- **shader (blocked by DOC-007 / FX-004):** the existing 5 curated Metal shaders
-  (`FxShaders.metal`) rendered through the hosted `.colorEffect` path on iOS;
-  AGSL shaders through hosted `RenderEffect` on Android. **Wait until the V1 shader
-  catalog and uniform contract (FX-004) is ratified.**
+- **shader:** DOC-007 ratified the 10-id V1 shader catalog and shared minimal uniform
+  contract. U3-006 blocks full completion until it adds native MSL+AGSL implementation for
+  `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`, plus package exposure for
+  the unified `ShaderId`.
 
 - **symbol (blocked by DOC-008 / FX-009):** SF Symbol / Image on iOS. **Android
   deferred — scope still open in `24` (DOC-008). Symbol proof is iOS-only for this
@@ -123,6 +122,7 @@ Subtask: hosted effect renderer (blueprint Unit 3)
   platforms.
 - **fill** renders on iOS + Android; **material** renders on iOS only (Android material
   deferred to U3-003 / FX-003).
-- **shader** renders on device after DOC-007 / FX-004 closes (separate evidence).
+- **shader** renders on device after U3-006 implements and exposes the full catalog
+  (separate evidence).
 - **symbol** renders on iOS after DOC-008 / FX-009 closes (separate evidence).
 - Device evidence recorded in `evidence/device.md`.

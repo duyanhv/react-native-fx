@@ -465,7 +465,7 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 
 | Effect ID | Composition | What fx draws |
 |-----------|-------------|---------------|
-| `edge-glow` | `background` / `overlay` | shader: edge-lit glow around view bounds, curated `fx_edge_glow` [research: 22] |
+| `edge-glow` | `background` / `overlay` | shader: edge-lit glow around view bounds; catalog entry pending native implementation [research: 22] |
 | `mesh-gradient` | `background` | fill: animated mesh gradient with palette, `MeshGradient` (iOS 18) / AGSL (Android 33) |
 | `glass` | `surface` | material: Liquid Glass (iOS 26) / blur+overlay (Android); see §10 |
 | `fractal-clouds` | `background` / `overlay` | shader: organic noise, slow drift, sky-to-cloud [ref: packages/ios/Shaders/FxShaders.metal:91] |
@@ -478,7 +478,10 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 | `plasma` | `background` / `overlay` | shader: [research: 22 §ShaderId] |
 | `caustics` | `background` / `overlay` | shader: [research: 22 §ShaderId] |
 
-> **[candidate] The current 5 shaders (`fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, `dots`) are a candidate V1 starter set (already implemented) coexisting with the reserved research vocabulary (`aurora`, `noise-field`, `plasma`, `caustics`, `edge-glow`). Pending ratification in `22`/`50` (ledger: FX-004, status = `open`). The research vocabulary names remain reserved for future curated shaders; neither set is yet a ratified effect ID catalog.**
+> **Ratified by DOC-007.** The V1 shader catalog contains all ten ids above. The current
+> package implements `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, and `dots`.
+> `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow` need native MSL+AGSL
+> implementations before package types/runtime expose them.
 
 ---
 
@@ -739,7 +742,7 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 | `loop` | `fx_loop` | Diagonal iridescent light streaks, edge glow | Yes |
 | `dots` | `fx_dots` | Wavy 3D dots, interactive finger bulge | Yes (`interactionMode: 'active'`) |
 
-### Reserved vocabulary (future curated)
+### Ratified catalog entries pending implementation
 
 | Shader ID | Research | Description |
 |-----------|----------|-------------|
@@ -755,12 +758,15 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 // V1 starter (implemented)
 type V1ShaderId = 'fractal-clouds' | 'ink-smoke' | 'liquid-chrome' | 'loop' | 'dots';
 
-// Future curated (reserved)
-type FutureShaderId = 'aurora' | 'noise-field' | 'plasma' | 'caustics' | 'edge-glow';
+// Ratified catalog entries pending native implementation
+type PendingShaderId = 'aurora' | 'noise-field' | 'plasma' | 'caustics' | 'edge-glow';
 
 // Unified
-type ShaderId = V1ShaderId | FutureShaderId;
+type ShaderId = V1ShaderId | PendingShaderId;
 ```
+
+The package currently exposes only `V1ShaderId`. It should expose the unified `ShaderId`
+after the five pending ids have native implementations on both platforms.
 
 ### Uniforms struct (shared across all curated shaders)
 
@@ -776,6 +782,10 @@ struct FxUniforms {
   float2 touch;         // native-set by recognizer, 0..1, y up
 };
 ```
+
+The V1 public shader uniform contract is shared and minimal: `intensity` is public;
+`time`, `resolution`, `pressDepth`, and `touch` are native-owned runtime values. Per-shader
+public uniform maps are out of V1.
 
 ---
 

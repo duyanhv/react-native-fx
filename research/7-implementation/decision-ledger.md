@@ -71,10 +71,10 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 
 | id | status | source | decision / pending work | blocks | close condition |
 |---|---|---|---|---|---|
-| FX-001 | open | `20`/`50` | Mesh control-point ergonomics (full `width×height` grid vs N-stop sugar); whether `drift` is mesh-only. | — | ergonomics decided against the preset catalog |
+| FX-001 | resolved | `20`/`50` | Mesh control-point ergonomics (full `width×height` grid vs N-stop sugar); whether `drift` is mesh-only. | — | **Resolved (DOC-007, 2026-06-08).** V1 exposes the full `width × height` mesh grid. N-stop auto-placement sugar stays out of V1. `drift` is mesh-only; plain gradients stay static unless a later capability adds explicit animated-gradient semantics. |
 | FX-002 | device-pending | `21` | `UIGlassEffect.Style` case set — `.regular`/`.clear` confirmed, `.identity` unverified. | — | a device check on Xcode 26 |
 | FX-003 | open | `21`/`structure.android` | Android glass fallback default (own-content blur vs `Haze`; `RenderEffect` is stale-prone) and `intensity` normalization to 0–1 across iOS `fractionComplete` and Android blur radius. | Android glass contract | the Android glass default + uniform mapping pinned |
-| FX-004 | open | `22`/`50` | The curated `ShaderId` V1 catalog and its uniforms (reconcile the historical sets). | shader shipping | the V1 shader catalog pinned with `50` |
+| FX-004 | resolved | `22`/`50` | The curated `ShaderId` V1 catalog and its uniforms (reconcile the historical sets). | shader shipping | **Resolved (DOC-007, 2026-06-08).** V1 catalog is `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, `dots`, `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`. Public V1 uniforms are shared/minimal (`intensity`); `time`, `resolution`, `pressDepth`, and `touch` stay native-owned. The last five ids require native implementation before package exposure (tracked by U3-006). |
 | FX-005 | device-pending | `22` | Uniform struct alignment Swift↔MSL field order/stride, and the AGSL binding equivalent. | — | on-device Metal/AGSL integration |
 | FX-006 | open | `22`/`03`/`53` | The BYO asset registration contract — `.metal`+`.agsl` pair, uniform table, build step, manifest entry. | BYO shipping | the BYO contract and build wiring defined |
 | FX-007 | deferred | `22` | Runtime shader compilation (possible on both platforms). | — | post-V1 feature |
@@ -162,9 +162,9 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | SURF-010 | `data-layer` §5.1 | native `previousProps` value-equality → no manual memo | **propagate** — verified on SDK 56; both primitive and nested Record props compare by value. Guidance ratified in `data-layer` §5.1. |
 | MOT-001 | `data-layer` §3 | the full preset catalog (iOS springs `[device-pending]`) | **device-verify** before source closure; then propagate confirmed values |
 | MOT-002 | `data-layer` §4 | `tune` = `speed`/`emphasis`/`distance` + scaling formulas | **device-verify** the spring constants; then propagate to `41` |
-| FX-001 | `data-layer` §1 | `fill` exposes the full `width×height` mesh grid + `drift` | **ratify** — `20` still asks full-grid vs N-stop sugar and whether `drift` is mesh-only; close both, then propagate |
+| FX-001 | `data-layer` §1 | `fill` exposes the full `width×height` mesh grid + `drift` | **resolved** — propagated to `20`/`50` (DOC-007). Full-grid mesh is V1; N-stop sugar is out of V1; `drift` is mesh-only. |
 | FX-003 | `data-layer` §1 | `intensity` 0–1; Android `RenderEffect` blur + `Haze` below 31 | **device-verify** `RenderEffect` staleness; **ratify** the intensity mapping |
-| FX-004 | `data-layer` §6 | a V1 shader starter set (5 implemented) + reserved vocabulary | **ratify** — a `[finding]` from the existing Metal file, not yet design; confirm before `22`/`50` |
+| FX-004 | `data-layer` §6 | a V1 shader starter set (5 implemented) + reserved vocabulary | **resolved** — propagated to `22`/`50` (DOC-007). The catalog has 10 ids; five are implemented starter shaders, and five need native implementation before package exposure. |
 | FX-006 | `data-layer` §7 | `registerShader` API + asset locations + build integration | **ratify** — BYO is still open; confirm the contract before propagating to `22` |
 | FX-009 | `data-layer` §9 (D4) | Android `symbol` = Lottie + AVD fallback, else `{via:'none'}` | **ratify** — realization still says `planned` / V1 scope open; confirm, then close `24` |
 | RT-008 | `data-layer` §9 (D1) + `architecture` §2 | the five-view object model | **propagate** the view model; residual driver family-split + scheduling stays open in `36` |

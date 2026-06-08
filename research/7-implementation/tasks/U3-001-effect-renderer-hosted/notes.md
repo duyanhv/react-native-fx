@@ -11,7 +11,9 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
 
 - **Spec'd** — created `tasks/U3-001-effect-renderer-hosted/README.md` from the subtask template.
   Consumes FX-004 (shader catalog), closes RT-009 (hosted authoring path).
-  Blockers: DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol).
+  Blockers: U3-006 (shader catalog implementation) and DOC-008 (FX-009 — symbol scope).
+  DOC-007 closed FX-004, but full U3-001 completion still waits for the runtime-visible
+  shader path.
   Related follow-up: U3-003 owns Android material / FX-003 (not a blocker).
 
 - **Staged scope** — implementation proceeds in unlock order:
@@ -20,7 +22,9 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
   - **fill (iOS + Android):** native gradient/mesh primitives on both platforms. Unblocked.
   - **material (iOS only):** UIGlassEffect / ultraThinMaterial. Unblocked on iOS.
     Android RenderEffect blur, intensity 0–1, staleness gated behind U3-003 / FX-003.
-  - **shader (both platforms):** blocked by DOC-007 / FX-004 until shader catalog ratified.
+  - **shader (both platforms):** DOC-007 ratified the shader catalog; U3-006 blocks full
+    completion until it implements native MSL+AGSL and package exposure for the five
+    additional ids.
   - **symbol (iOS only):** blocked by DOC-008 / FX-009. Android symbol deferred.
 
 - Existing infrastructure: `FxHostedView` (hosted substrate shell), `FxSurfaceView`
@@ -53,4 +57,9 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
   - **Headless checks all green:** `tsc` · `build` · `swift:lint` · `biome` · `jest` (18/18)
     · `git diff --check`.
 
-## Next: human device execution — run `bun run ios` and `bun run android`, verify fill + material render on screen, record `evidence/device.md`.
+## Committed partial slice
+
+- The RT-009 hosted mount/fill/material slice is committed on `integration/0.1.x`.
+- U3-001 remains blocked because shader and symbol coverage are still incomplete.
+
+## Next: Complete U3-006, then DOC-008/symbol path, then re-run device proof for the full hosted renderer.
