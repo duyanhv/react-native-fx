@@ -71,16 +71,17 @@ Subtask: hosted effect renderer (blueprint Unit 3)
   - **RT-009:** hosted mount + prop/config path working on iOS + Android — FxHostedView
     embeds a SwiftUI/Compose host and passes effect node id + uniforms as props.
   - **fill:** gradient/mesh fill renders as a hosted decorative layer on iOS + Android.
-  - **material (iOS only):** glass/material effect renders on iOS 26+ (UIGlassEffect)
-    and iOS 15+ (.ultraThinMaterial fallback). Android material out of scope —
-    owned by U3-003 / FX-003.
+  - **material (iOS only):** `.glassEffect` on iOS 26+, `.ultraThinMaterial`/`.thinMaterial`/
+    `.regularMaterial` fallback gated by intensity on earlier versions.
+    Android material out of scope — owned by U3-003 / FX-003.
   - **shader (blocked by DOC-007 / FX-004):** curated Metal shader through hosted
     `.colorEffect` path, AGSL through hosted `RenderEffect`. Wait until shader catalog
     (FX-004) is ratified.
   - **symbol (iOS blocked by DOC-008 / FX-009):** SF Symbol / Image render through
     hosted path. Android deferred per V1 scope (DOC-008).
 - docs: `51` RT-009 open question closed (hosted authoring path proven);
-  `structure.ios.md` / `structure.android.md` updated with hosted render mechanics
+  `structure.android.md` records V1 deviation (plain View fill, Compose deferred);
+  `structure.ios.md` records hosted material path with `.glassEffect` on iOS 26+.
 
 ## Scope
 

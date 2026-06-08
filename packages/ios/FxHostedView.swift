@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// A `UIHostingController` embeds a SwiftUI view selected by the `effect` prop.
 /// The host owns sizing and pointer-event passthrough; it never samples or wraps
-/// RN content (rule #4). Props stash in the two-phase Expo pattern and are
+/// RN content. Props stash in the two-phase Expo pattern and are
 /// applied once per batch in `applyResolvedConfig()`.
 internal final class FxHostedView: FxNativeView {
   // MARK: - Events
@@ -82,5 +82,12 @@ internal final class FxHostedView: FxNativeView {
 
   deinit {
     removeHost()
+  }
+}
+
+/// An inert placeholder for unknown effect ids.
+internal struct FxEmptyView: View {
+  var body: some View {
+    Color.clear
   }
 }

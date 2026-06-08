@@ -34,15 +34,15 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
     to `FxFillView` (LinearGradient / MeshGradient) or `FxMaterialView`
     (.glassEffect / .ultraThinMaterial). Host is sized to fill the container with AutoLayout.
     Deinit removes the host cleanly.
-  - **iOS `FxFillView.swift` + `FxMaterialView.swift`:** Self-contained SwiftUI views.
-    `FxFillView` uses `MeshGradient` on iOS 18+ with 3×3 point grid, `LinearGradient`
-    fallback. `FxMaterialView` targets `.glassEffect` on iOS 26+,
-    `.ultraThinMaterial` fallback.
+  - **iOS `FxMaterialView.swift`:** `.glassEffect()` on iOS 26+, intensity selects
+    `.ultraThinMaterial`/`.thinMaterial`/`.regularMaterial` on earlier versions.
+    No layer `.opacity()` — glass weight controlled by material style.
+    `FxEmptyView` moved to `FxHostedView.swift`.
   - **iOS `FxModule.swift`:** `Prop("effect")` and `Prop("intensity")` registered for
     `FxHostedView`.
-  - **Android `FxHostedView.kt`:** `ComposeView`-based Compose host. Same two-phase prop
-    pattern. `applyResolvedConfig()` dispatches to `FillEffect` composable
-    (Brush.linearGradient on Canvas). No material composable (out of scope).
+  - **Android `FxHostedView.kt`:** `FxFillView` — a plain `View` subclass drawing
+    `android.graphics.LinearGradient` in `onDraw()`. No Compose — the library-level
+    Compose compiler setup is deferred. `structure.android.md` records this V1 deviation.
   - **Android `FxModule.kt`:** `Prop("effect")` and `Prop("intensity")` registered for
     `FxHostedView`.
   - **TS `FxHostedView.tsx`:** `effect?: string` and `intensity?: number` added to

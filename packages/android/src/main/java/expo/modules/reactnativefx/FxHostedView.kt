@@ -56,7 +56,7 @@ class FxHostedView(
     removeHost()
 
     val view = when (effect) {
-      "fill" -> FillView(context, intensity)
+      "fill" -> FxFillView(context, intensity)
       else -> return
     }
 
@@ -80,7 +80,7 @@ class FxHostedView(
  * Intensity fades from invisible (0f) to full opacity (1f). Uses the
  * Android graphics [LinearGradient] shader, not Compose.
  */
-private class FillView(
+private class FxFillView(
   context: Context,
   intensity: Double
 ) : View(context) {

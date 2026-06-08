@@ -54,6 +54,11 @@ component.
 ### Render paths
 
 - **Compose generative**: `Brush` gradients, `Canvas`/`DrawScope`.
+  **V1 deviation (2026-06-08):** the hosted `fill` renderer uses a plain `View`
+  with `android.graphics.LinearGradient` drawn in `onDraw()` — no Compose.
+  The Compose compiler dependency at library level is deferred; the `hosted`
+  substrate's intended Compose path (`Brush.linearGradient`, `Canvas`/`DrawScope`)
+  is activated when the library-module Compose setup is resolved.
 - **Shader**: `RuntimeShader` (AGSL) applied via
   `RenderEffect.createRuntimeShaderEffect` + `Modifier.graphicsLayer`, or as a
   `ShaderBrush`.

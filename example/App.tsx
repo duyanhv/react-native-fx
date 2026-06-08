@@ -1,4 +1,4 @@
-// TODO: U3-001 temporary test screen — remove after device verification.
+// TODO: temporary test screen — remove after device verification.
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FxHostedView } from '../packages/src/runtime/FxHostedView';
 

@@ -184,8 +184,9 @@ Proof:
   (unblocked). iOS material (unblocked); Android material gated by U3-003 / FX-003.
   shader after DOC-007/FX-004. symbol iOS after DOC-008/FX-009; Android symbol deferred.
   Evidence in `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
-- docs: `51` RT-009 closed (hosted authoring path proven); `structure.ios.md` /
-  `structure.android.md` updated with hosted render mechanics.
+- docs: `51` RT-009 closed (hosted authoring path proven); `structure.android.md`
+  records V1 deviation (plain View fill, Compose deferred). `structure.ios.md`
+  records hosted material path.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration
 
