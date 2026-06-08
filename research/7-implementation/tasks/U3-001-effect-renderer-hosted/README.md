@@ -1,12 +1,12 @@
 # U3-001 — hosted effect renderer
 
-Unit 3 · type: `implement` · state: `todo` · device: yes
+Unit 3 · type: `implement` · state: `in-progress` · device: yes
 Consumes: FX-004 · Closes: RT-009
-Blocked by: U1-002 (done), U2-001 (done)
+Blocked by: U1-002 (done), U2-001 (done), DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol)
 
 > Builds the V1 hosted rendering path — SwiftUI on iOS, Jetpack Compose on Android.
 > Mounts the platform-native host inside `FxHostedView` and renders fill, material,
-> shader, and symbol effects as decorative layers. No interaction in V1.
+> and (once unblocked) shader and symbol effects as decorative layers. No interaction in V1.
 
 ## Start here (cold-start)
 
@@ -16,6 +16,10 @@ Blocked by: U1-002 (done), U2-001 (done)
    - `implemented` → `guides/Code Style Guide.md`
    - `commented` → `guides/Code Comments Guide.md`
    - `headless-done` → `guides/Testing Guide.md`
+   - `device-verified` → `guides/Device Verification Guide.md`
+   - `docs-closed` → `guides/Writing Style Guide.md`
+   - `reviewed` / `merged` → `guides/Contributing Guide.md`
+   - all gates → `agents/session-protocol.md`
 
 ## Authority links
 
@@ -31,20 +35,23 @@ Subtask: hosted effect renderer (blueprint Unit 3)
                       when native is too rigid.
 - Reference (HOW):   references/expo/... — Expo's Host/RNHostView mechanism
                       for mounting SwiftUI views inside RN
-- Guides:            Code Style Guide, Code Comments Guide, Testing Guide
+- Guides:            Code Style Guide, Code Comments Guide, Testing Guide,
+                      Device Verification Guide, Writing Style Guide,
+                      Contributing Guide, session-protocol
 - Rules gate:        #1 (native owns frames), #2 (agnostic names), #3 (hosted substrate
                       for decorative), #4 (don't host RN content to sample it),
                       #7 (Expo Modules + Fabric)
 - Device-verify:     yes — effects don't run headless. Each effect type must render
-                      on screen on both platforms.
-- Done when:         FxHostedView mounts and renders fill, material, shader, and
-                      symbol effects on iOS + Android. RT-009 close condition
-                      (hosted authoring path proven) satisfied.
+                      on screen on each platform where its decision is unblocked.
+- Done when:         RT-009 is satisfied: hosted mount + prop/config path proven on
+                      both platforms. Effect coverage is incremental — fill and material
+                      first (unblocked); shader after DOC-007/FX-004 closes; symbol
+                      after DOC-008/FX-009 closes (iOS) and DOC-008 (Android).
 ```
 
 ## Lifecycle
 
-- [ ] spec'd
+- [x] spec'd
 - [ ] rules-gated
 - [ ] implemented
 - [ ] commented
@@ -58,43 +65,58 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run test` from
   `packages/`. The renderer logic itself cannot be unit-tested — it is device-gated.
-- device: four effect types render on screen on iOS + Android:
-  1. `fill` — gradient/mesh fill visible as a background layer
-  2. `material` — glass/material effect visible (UIGlassEffect on iOS 26, RenderEffect blur on Android 31)
-  3. `shader` — curated Metal shader renders through the hosted path (hosted decorative, not expo-view interactive)
-  4. `symbol` — SF Symbol / Lottie renders on iOS (Android deferred per V1 scope)
-- docs: `51` RT-009 open question closed (hosted authoring path); `01` updated with working hosted implementation;
+- device:
+  - **RT-009:** hosted mount + prop/config path working on iOS + Android — FxHostedView
+    embeds a SwiftUI/Compose host and passes effect node id + uniforms as props.
+  - **fill:** gradient/mesh fill renders as a hosted decorative layer on iOS + Android.
+  - **material:** glass/material effect renders on iOS 26+ (UIGlassEffect) and
+    Android 31+ (RenderEffect blur).
+  - **shader (blocked by DOC-007 / FX-004):** curated Metal shader through hosted
+    `.colorEffect` path, AGSL through hosted `RenderEffect`. Wait until shader catalog
+    (FX-004) is ratified.
+  - **symbol (iOS blocked by DOC-008 / FX-009):** SF Symbol / Image render through
+    hosted path. Android deferred per V1 scope (DOC-008).
+- docs: `51` RT-009 open question closed (hosted authoring path proven);
   `structure.ios.md` / `structure.android.md` updated with hosted render mechanics
 
 ## Scope
 
 ### V1 (this task)
 
-- **iOS:** Mount a SwiftUI host inside `FxHostedView`. Implement `FxEffectRenderer` that renders
-  fill (gradient/mesh via SwiftUI), material (glass via `.glassEffect` or material), shader
-  (hosted Metal shader via `.colorEffect`), and symbol (SF Symbol / Image).
-  The existing `FxSurfaceView` + Metal infrastructure serves as the reference implementation
-  for the shader rendering; the hosted path reuses the same Metal shaders via a different
-  attachment mechanism (`.colorEffect` modifier vs MTKView).
+- **Hosted mount + prop plumbing (RT-009):** FxHostedView mounts a SwiftUI host (iOS) /
+  Compose host (Android). Props (effect node id, uniforms) cross the Expo boundary and
+  drive native rendering. This is the gate RT-009 closes — the authoring path, proven on
+  both platforms.
 
-- **Android:** Mount a Compose host inside the Android `FxHostedView`. Implement the equivalent
-  renderers: fill (Brush gradients), material (RenderEffect blur), shader (AGSL via `RenderEffect`
-  on API 33+), symbol (Lottie/AVD — or deferred per V1 Android scope in `24`).
+- **fill (unblocked):** native gradient/mesh via SwiftUI `LinearGradient`/`MeshGradient` (iOS)
+  and Compose `Brush` (Android). Uses existing native primitives — no pending decisions.
 
-- **Effect dispatch:** A single `FxEffectRenderer` that reads the node id from the manifest
-  (via `select()`) and dispatches to the correct native rendering path.
+- **material (unblocked):** `.glassEffect` / `.ultraThinMaterial` on iOS; `RenderEffect.blur`
+  on Android 31+. Intensity 0–1. Glass self-gestures (`interaction: 'self'`).
+
+- **shader (blocked by DOC-007 / FX-004):** the existing 5 curated Metal shaders
+  (`FxShaders.metal`) rendered through the hosted `.colorEffect` path on iOS;
+  AGSL shaders through hosted `RenderEffect` on Android. **Wait until the V1 shader
+  catalog and uniform contract (FX-004) is ratified.**
+
+- **symbol (blocked by DOC-008 / FX-009):** SF Symbol / Image on iOS. **Android
+  deferred — scope still open in `24` (DOC-008). Symbol proof is iOS-only for this
+  task; Android is a separate V1 or V2 item.**
 
 ### Out of scope
 
 - Interactive effect surfaces (V2, expo-view — Unit 3 V2 face)
 - Content-filter (rule #4, iOS — out-of-scope permanently)
 - BYO shader registration (U3-004)
-- Android symbol (pending DOC-008 scope decision)
+- Android symbol rendering (pending DOC-008 scope decision)
 - Performance optimization / many-hosted-boundaries bench (SPINE-012, U3-002)
 
 ## Done when
 
-- FxHostedView mounts a SwiftUI/Compose host and renders at least one effect per type
-  (fill, material, shader, symbol) on device.
-- RT-009 closed: the hosted authoring path is proven on both platforms.
+- **RT-009:** FxHostedView mounts a SwiftUI host (iOS) and Compose host (Android).
+  Effect node id + uniforms pass through props. Hosted authoring path proven on both
+  platforms.
+- **fill + material** render on device on iOS + Android.
+- **shader** renders on device after DOC-007 / FX-004 closes (separate evidence).
+- **symbol** renders on iOS after DOC-008 / FX-009 closes (separate evidence).
 - Device evidence recorded in `evidence/device.md`.
