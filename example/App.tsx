@@ -14,9 +14,14 @@ export default function App() {
         <Text style={styles.label}>fill · gradient, intensity 0.3</Text>
         <FxHostedView effect="fill" intensity={0.3} style={styles.box} />
 
-        <Text style={styles.label}>material · glass over fill (iOS only)</Text>
+        <Text style={styles.label}>material · glass over content (iOS only)</Text>
         <View style={styles.box}>
-          <FxHostedView effect="fill" intensity={0.8} style={styles.box} />
+          <View style={styles.cardContent}>
+            <View style={[styles.colorBlock, { backgroundColor: '#ff6b6b' }]} />
+            <View style={[styles.colorBlock, { backgroundColor: '#51cf66' }]} />
+            <View style={[styles.colorBlock, { backgroundColor: '#339af0' }]} />
+            <Text style={styles.cardText}>Hello from behind glass</Text>
+          </View>
           <FxHostedView
             effect="material"
             intensity={0.6}
@@ -37,4 +42,15 @@ const styles = StyleSheet.create({
   header: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 8 },
   label: { color: '#9aa0a6', fontSize: 13, marginTop: 8 },
   box: { width: 200, height: 150, backgroundColor: '#1a1a2e' },
+  cardContent: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    gap: 6,
+  },
+  colorBlock: { width: 50, height: 50, borderRadius: 8 },
+  cardText: { color: '#fff', fontSize: 14, fontWeight: '600', width: '100%', textAlign: 'center' },
 });
