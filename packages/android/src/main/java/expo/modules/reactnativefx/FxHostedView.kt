@@ -68,7 +68,8 @@ class FxHostedView(
     view.setContent {
       when (effect) {
         "fill" -> FillEffect(intensity = intensity.toFloat())
-        // Android material is out of scope — owned by U3-003 / FX-003.
+        // Android material is out of scope — the material rendering path
+        // and RenderEffect blur/intensity belong on Android's glass contract.
         else -> { /* empty — unknown effect id, render nothing */ }
       }
     }

@@ -54,4 +54,3 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
     · `git diff --check`.
 
 ## Next: human device execution — run `bun run ios` and `bun run android`, verify fill + material render on screen, record `evidence/device.md`.
-
