@@ -146,13 +146,13 @@ The driver node (`02`) lowers two ways, by **target**:
   upgrading to **M3 Expressive** `MotionScheme` springs where present (progressive
   enhancement). The native side of the eased-`transition` channel (`40`).
 
-### `symbol` — planned / optional (V1 scope open, `24`)
+### `symbol` — planned / optional (deferred from V1)
 - **AVD / Lottie** — `via:native`(AVD) or `via:lib`(Lottie) · `requires {os:21, hosted}` ·
-  **`status:planned`**. Whether Android ships `symbol` in V1 (via Lottie/AVD) or `symbol`
-  stays **iOS-only in V1** is an open scope decision owned by `24`. If it ships: no system
-  symbol vocabulary, so it is a per-platform-different **lowering / asset contract**, **not a
-  different public component** — the public surface stays `<Fx>` (`24`). Lottie is a
-  `via:'lib'` optional peer dependency (`53`).
+  **`status:planned`**. `symbol` stays **iOS-only in V1**; Android AVD/Lottie support is
+  deferred until a future task defines the asset contract and renderer. There is no system
+  symbol vocabulary, so the future Android path is a per-platform-different **lowering /
+  asset contract**, **not a different public component** — the public surface stays `<Fx>`
+  (`24`). Lottie remains a possible `via:'lib'` optional peer dependency (`53`).
 
 ### `content-distort` — planned (Android-only)
 - **AGSL via `RenderEffect`** — `requires {os:33, expo-view}` · `status:planned`.

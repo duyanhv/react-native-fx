@@ -10,7 +10,7 @@ for active or complex tasks. The rules (lifecycle, states, proof, the closure ru
 
 ## Legend
 
-- **state** (one per task): `todo · in-progress · blocked · headless-done · device-pending · docs-pending · ready-to-merge · merged`. `ready-to-merge` = **complete** (all gates but git); `merged` = integrated.
+- **state** (one per task): `todo · in-progress · blocked · headless-done · device-pending · docs-pending · ready-to-merge · merged`. `ready-to-merge` = **complete** (all gates through `docs-closed`; finishing commit not yet in); `merged` = complete **and** the finishing commit is in (on `integration/0.1.x`).
 - **type:** `implement` (code) · `ratify` (decide in source doc) · `device-verify` (device proof) · `rework` (fix inconsistency) · `doc-cleanup` (source alignment).
 - **device:** `yes` = has a non-headless gate (effects/animation/touch — will not run headless).
 - **consumes / closes:** decision-ledger ids this task reads / must close.
@@ -25,14 +25,14 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| DOC-001 | 1-surface | doc-cleanup | ready-to-merge | no | — | SURF-001, SURF-009 | — | `GlassView` dropped from `56`; `SpringTune` removed from `55`; SURF-001 + SURF-009 resolved |
+| DOC-001 | 1-surface | doc-cleanup | merged | no | — | SURF-001, SURF-009 | — | `GlassView` dropped from `56`; `SpringTune` removed from `55`; SURF-001 + SURF-009 resolved; [review](./reviews/v1-merge-batch-2026-06-08.md) |
 | DOC-002 | 0-spine | ratify | todo | no | — | SPINE-004, SPINE-005, SPINE-006, SPINE-007 | — | docs: `02` composition, feature-flags, partitioning, lib naming |
 | DOC-003 | 0-spine | ratify | todo | no | — | SPINE-001, SPINE-002 | — | docs: `00`/`50` curation/BYO threshold, palettes-as-artifact |
 | DOC-004 | 1-surface | ratify | todo | no | — | SURF-002 | — | docs: `56`/`6-ship` ship effect components? |
 | DOC-005 | 1-surface | ratify | todo | no | MOT-001 | SURF-003, SURF-004, SURF-005 | — | docs: `50`/`56`/`57` V1 preset/state/feedback vocab |
 | DOC-006 | 1-surface | ratify | todo | no | — | SURF-006 | — | docs: `57`/`21` FxGroup morph scope |
-| DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) |
-| DOC-008 | 2-effects | ratify | todo | no | — | FX-009 | — | docs: `24` Android symbol scope |
+| DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) · [review](./reviews/DOC-007.md) |
+| DOC-008 | 2-effects | ratify | merged | no | — | FX-009 | — | `symbol` iOS-only in V1; Android AVD/Lottie planned/deferred; [task](./tasks/DOC-008/) · [review](./reviews/v1-merge-batch-2026-06-08.md) |
 | DOC-009 | 3-motion | ratify | todo | no | — | MOT-003, MOT-005, MOT-006, MOT-009 | — | docs: `40`/`41`/`42` V1 motion vocab scope |
 | DOC-010 | 3-motion | ratify | todo | no | — | MOT-010 | — | docs: `41`/`42` reduce-motion policy |
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
@@ -44,18 +44,19 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
-| U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
-| U1-003 | Unit 1 | device-verify | ready-to-merge | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
-| U1-004 | Unit 1 | implement | ready-to-merge | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. [detail](#u1-004--bare-fabric-example-in-ci) |
-| U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
-| U2-001 | Unit 2 | implement | ready-to-merge | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; [detail](#u2-001--planned-rung-selection) |
-| U2-002 | Unit 2 | rework | ready-to-merge | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; [detail](#u2-002--uniformspec-schema-reconciliation) |
-| U3-001 | Unit 3 | implement | blocked | yes | FX-004 | RT-009 | U3-006, DOC-008 | RT-009/fill/material slice committed; full hosted renderer still blocked on shader catalog implementation + symbol scope; [detail](#u3-001--hosted-effect-renderer) |
+| U1-002 | Unit 1 | implement | merged | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; reviewed (batch); [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
+| U1-003 | Unit 1 | device-verify | merged | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; reviewed (batch); [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
+| U1-004 | Unit 1 | implement | merged | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. reviewed (batch). [detail](#u1-004--bare-fabric-example-in-ci) |
+| U1-005 | Unit 1 | implement | merged | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed (`e6c29c3`). CI Android autolink passes. reviewed (batch). |
+| U2-001 | Unit 2 | implement | merged | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; reviewed (batch); [detail](#u2-001--planned-rung-selection) |
+| U2-002 | Unit 2 | rework | merged | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; reviewed (batch); [detail](#u2-002--uniformspec-schema-reconciliation) |
+| U3-001 | Unit 3 | implement | merged | yes | — | RT-009 | U1-002, U2-001 | RT-009 + fill (iOS+Android) + iOS material; device-verified iOS 26+ (2026-06-08); shader → U3-006, symbol → U3-007; [detail](#u3-001--hosted-effect-renderer) · [review](./reviews/U3-001.md) |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
 | U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
-| U3-006 | Unit 3 | implement | todo | yes | FX-004 | — | DOC-007 | implement native MSL+AGSL support for `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`; expose unified `ShaderId` using the committed RT-009 hosted slice |
+| U3-006 | Unit 3 | implement | todo | yes | FX-004 | — | DOC-007, U3-001 | implement native MSL+AGSL support for `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`; expose unified `ShaderId` using the committed RT-009 hosted slice |
+| U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
 
 ### V2 build — Units 4–9
 
@@ -127,7 +128,7 @@ Proof:
 
 ## U2-002 — UniformSpec schema reconciliation
 
-Type: `rework` · State: `ready-to-merge` · Consumes: SPINE-003 · Closes: SPINE-003 · [task](./tasks/U2-002-uniformspec-reconciliation/task.md)
+Type: `rework` · State: `merged` · Consumes: SPINE-003 · Closes: SPINE-003 · [task](./tasks/U2-002-uniformspec-reconciliation/task.md)
 
 Checklist:
 - [x] spec'd
@@ -136,8 +137,8 @@ Checklist:
 - [x] `data-layer.md` provisional mismatch note removed
 - [x] TypeScript manifest types updated manually
 - [x] ledger SPINE-003 closed (true in `02`)
-- [ ] reviewed
-- [ ] merged
+- [x] reviewed
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bunx biome check .`, and `bun run test` from `packages/` all pass. `git diff --check` clean.
@@ -146,7 +147,7 @@ Proof:
 
 ## U2-001 — planned-rung selection
 
-Type: `implement` · State: `ready-to-merge` · Consumes: SPINE-013 · Closes: SPINE-013 · [task](./tasks/U2-001-planned-rung-selection/)
+Type: `implement` · State: `merged` · Consumes: SPINE-013 · Closes: SPINE-013 · [task](./tasks/U2-001-planned-rung-selection/)
 
 Checklist:
 - [x] spec'd
@@ -154,9 +155,9 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] reviewed
+- [x] reviewed
 - [x] docs-closed
-- [ ] merged
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run test` from `packages/` all pass. 17 Jest tests prove planned rungs are skipped, out-of-scope rungs are skipped, OS gating works, `wantInteractive` enforces expo-view, driver target matching works, and empty/guarded-out ladders degrade to `{ via: 'none' }`.
@@ -165,7 +166,11 @@ Proof:
 
 ## U3-001 — hosted effect renderer
 
-Type: `implement` · State: `blocked` · Device: yes · Consumes: FX-004 · Closes: RT-009 · [task](./tasks/U3-001-effect-renderer-hosted/)
+Type: `implement` · State: `merged` · Device: yes · Consumes: — · Closes: RT-009 · [task](./tasks/U3-001-effect-renderer-hosted/) · [review](./reviews/U3-001.md)
+
+Scope (Option A): U3-001 owns the hosted authoring path + fill + iOS material — the RT-009 slice.
+The shader rung moved to U3-006 and the iOS symbol rung to U3-007; those are separate tasks, not
+blockers on this one.
 
 Checklist:
 - [x] spec'd
@@ -173,26 +178,24 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified
-- [ ] docs-closed
-- [ ] reviewed
-- [ ] merged
+- [x] device-verified
+- [x] docs-closed
+- [x] reviewed
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run test` from `packages/`.
   Renderer logic is device-gated — effects do not run headless.
-- device: RT-009 — hosted mount + prop/config path on iOS + Android. fill on both platforms
-  (unblocked). iOS material (unblocked); Android material gated by U3-003 / FX-003.
-  shader catalog implementation is blocked on U3-006. symbol iOS is blocked on
-  DOC-008/FX-009; Android symbol deferred.
-  Evidence in `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
-- docs: `51` RT-009 intended close (hosted authoring path — device gate pending);
-  `structure.android.md` records V1 deviation (plain View fill, Compose deferred);
-  `structure.ios.md` records hosted material path.
+- device: RT-009 verified on iOS 26+ and Android (2026-06-08) — hosted mount + prop/config path;
+  fill on both platforms; iOS material via `.glassEffect()`. Android material → U3-003 / FX-003;
+  shader rung → U3-006; iOS symbol → U3-007. Evidence in
+  `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
+- docs: `51` RT-009 closed (hosted authoring path proven); `structure.android.md` records the V1
+  deviation (plain View fill, Compose deferred); `structure.ios.md` records the hosted material path.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration
 
-Type: `implement` · State: `headless-done` · Consumes: RT-010 · Closes: — · [task](./tasks/U1-002-native-view-boundary/)
+Type: `implement` · State: `merged` · Consumes: RT-010 · Closes: — · [task](./tasks/U1-002-native-view-boundary/)
 
 Checklist:
 - [x] spec'd
@@ -200,9 +203,9 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] reviewed
-- [ ] docs-closed
-- [ ] merged
+- [x] reviewed
+- [x] docs-closed
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run swift:lint` pass. `bun run test` passes with no tests found. These verify TS types/build/style and Swift formatting only. None prove native compilation or runtime registration — those are U1-003.
@@ -211,7 +214,7 @@ Proof:
 
 ## U1-003 — SDK-verify Expo boundary behaviors
 
-Type: `device-verify` · State: `ready-to-merge` · Consumes: RT-010, RT-011 · Closes: SURF-010, RT-010, RT-011, RT-004 · [task](./tasks/U1-003-sdk-verify-boundary/)
+Type: `device-verify` · State: `merged` · Consumes: RT-010, RT-011 · Closes: SURF-010, RT-010, RT-011, RT-004 · [task](./tasks/U1-003-sdk-verify-boundary/)
 
 Checklist:
 - [x] spec'd
@@ -219,8 +222,8 @@ Checklist:
 - [x] scenario-written (four device scenarios defined)
 - [x] device-verified (all four scenarios observed on iOS + Android, 2026-06-08)
 - [x] docs-closed (source docs reconciled, all four ledger rows resolved)
-- [ ] reviewed
-- [ ] merged
+- [x] reviewed
+- [x] merged
 
 Proof:
 - headless: N/A — all claims require runtime/device observation.
@@ -229,7 +232,7 @@ Proof:
 
 ## U1-004 — bare Fabric example in CI
 
-Type: `implement` · State: `ready-to-merge` · Closes: SHIP-003 · [task](./tasks/U1-004-bare-fabric-example-ci/)
+Type: `implement` · State: `merged` · Closes: SHIP-003 · [task](./tasks/U1-004-bare-fabric-example-ci/)
 
 Checklist:
 - [x] spec'd
@@ -238,8 +241,8 @@ Checklist:
 - [x] commented
 - [x] headless-done (CI green on GitHub — all 4 jobs; `bare-ios` on `macos-26` for Swift 6.2)
 - [x] docs-closed (SHIP-003 resolved in `53` and ledger; `apple.podspecPath` recorded)
-- [ ] reviewed
-- [ ] merged
+- [x] reviewed
+- [x] merged
 
 Progress (CI green — all 4 jobs on GitHub):
 - **Bare fixture built + verified locally:** `example-bare/` — literal bare RN 0.85.3 / New-Arch

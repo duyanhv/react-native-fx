@@ -235,10 +235,10 @@ const manifest: CapabilityManifest = {
     },
 
     // ──────────────────────────────────────────────────────────────
-    // symbol (render-target, self-gesturing, SF Symbols / AVD / Lottie)
+    // symbol (render-target, self-gesturing, SF Symbols; Android planned)
     // [research: 24-symbols.md §Lowering]
     symbol: {
-      id: 'symbol', kind: 'render-target', interaction: 'self', phase: 'v1',   // iOS-native; Android via lib
+      id: 'symbol', kind: 'render-target', interaction: 'self', phase: 'v1',   // iOS-native; Android planned
       uniforms: {
         name:       { type: 'enum',   default: 'heart', options: [] },  // SF Symbol name or drawable ref
         animation:  { type: 'enum',   default: 'bounce',
@@ -254,10 +254,11 @@ const manifest: CapabilityManifest = {
         ],
         android: [
           { via: 'native', primitive: 'AnimatedVectorDrawable', applyVia: 'AndroidView',
-            requires: { os: 21, substrate: 'hosted' }, note: 'AVD fallback, simple animations only' },
+            requires: { os: 21, substrate: 'hosted' }, status: 'planned',
+            note: 'future AVD fallback, simple animations only; Android symbol is deferred from V1' },
           { via: 'lib', asset: 'lottie', applyVia: 'Compose LottieAnimation',
             requires: { os: 21, substrate: 'hosted' }, status: 'planned',
-            note: 'Lottie as optional peer dependency; if absent → {via:"none"}' },
+            note: 'future Lottie optional peer dependency; Android symbol is deferred from V1' },
         ],
       },
     },
@@ -904,9 +905,12 @@ Each JS component maps to a concrete view class: `<Fx effect>` → `FxHostedView
 **Provisioned candidate (ledger: SURF-006, status = `open`). Pending source-doc closure in `57`/`21`.** `FxGroup`/`FxItem` is iOS-only V1 (`.glassEffect` + `GlassEffectContainer`, iOS 26+). Android uses `material` node with blur+overlay fallback, no `FxGroup` morphing. When both platforms have glass morph equivalents, `FxGroup` extends to Android.
 **Source**: [research: 21-materials-and-glass.md §Glass morphing] [research: structure.android.md §material]
 
-### D4: `symbol` Android = Lottie/AVD dependency
+### D4: `symbol` Android scope
 
-**Provisioned candidate (ledger: FX-009, status = `open`). Pending source-doc closure in `24`.** Lottie as optional peer dependency for Android. AVD is the native fallback for simple animations. If neither is installed, the `symbol` rung guards out → `{ via: 'none' }` (graceful).
+**Resolved (DOC-008, 2026-06-08).** `symbol` is iOS-only in V1 through `.symbolEffect`.
+Android AVD/Lottie support is planned/deferred and non-selectable; Android degrades to
+`{ via: 'none' }`. Future Android support must define the app-supplied asset contract and
+renderer before those rungs become selectable.
 **Source**: [research: 24-symbols.md §Lowering] [research: 02 §via:'lib' open question]
 
 ---

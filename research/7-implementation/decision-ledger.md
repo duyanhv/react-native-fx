@@ -79,7 +79,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | FX-006 | open | `22`/`03`/`53` | The BYO asset registration contract — `.metal`+`.agsl` pair, uniform table, build step, manifest entry. | BYO shipping | the BYO contract and build wiring defined |
 | FX-007 | deferred | `22` | Runtime shader compilation (possible on both platforms). | — | post-V1 feature |
 | FX-008 | deferred | `23` | An Android content-filter wrapper (touch-safe, draw-time). | — | resolved with `content-distort` scoping (V2) |
-| FX-009 | open | `24` | Android `symbol` scope — ship via Lottie/AVD or stay iOS-only in V1 — plus the cross-platform asset-sourcing contract. | the Android `symbol` rung (`REAL` renders it `status:planned`) | scope decided (ties `SPINE-007`) |
+| FX-009 | resolved | `24` | Android `symbol` scope — ship via Lottie/AVD or stay iOS-only in V1 — plus the cross-platform asset-sourcing contract. | the Android `symbol` rung (`REAL` renders it `status:planned`) | **Resolved (DOC-008, 2026-06-08).** `symbol` is iOS-only in V1 through `.symbolEffect`. Android AVD/Lottie support stays planned/deferred and non-selectable; Android degrades to `{via:'none'}`. The future Android asset contract does not ship in V1. SPINE-007 remains open for the broader `via:'lib'` naming convention. |
 
 ## Motion — owner: `3-motion`
 
@@ -166,7 +166,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | FX-003 | `data-layer` §1 | `intensity` 0–1; Android `RenderEffect` blur + `Haze` below 31 | **device-verify** `RenderEffect` staleness; **ratify** the intensity mapping |
 | FX-004 | `data-layer` §6 | a V1 shader starter set (5 implemented) + reserved vocabulary | **resolved** — propagated to `22`/`50` (DOC-007). The catalog has 10 ids; five are implemented starter shaders, and five need native implementation before package exposure. |
 | FX-006 | `data-layer` §7 | `registerShader` API + asset locations + build integration | **ratify** — BYO is still open; confirm the contract before propagating to `22` |
-| FX-009 | `data-layer` §9 (D4) | Android `symbol` = Lottie + AVD fallback, else `{via:'none'}` | **ratify** — realization still says `planned` / V1 scope open; confirm, then close `24` |
+| FX-009 | `data-layer` §9 (D4) | Android `symbol` = Lottie + AVD fallback, else `{via:'none'}` | **resolved** — propagated to `24` and `structure.android` (DOC-008). V1 is iOS-only; Android AVD/Lottie stays planned/deferred and non-selectable. |
 | RT-008 | `data-layer` §9 (D1) + `architecture` §2 | the five-view object model | **propagate** the view model; residual driver family-split + scheduling stays open in `36` |
 | RT-010 | `data-layer` §9 (D1/D2) + `architecture` §1 | one module `ReactNativeFx`, several named views; rename `FxShader`→`ReactNativeFx` | **propagate** — reconciled during U1-002; SDK-verified on U1-003. `architecture.md` already reflects several views (quoting `51 §Decisions #5`). Registration keying confirmed. |
 | RT-015 | `architecture` §2 / `data-layer` §1 | the wrapper-mechanic terms (container vs sublayer vs `addSublayer`) — internally inconsistent | **rework** — plane `7` mixed three descriptions; `33`/`34` decide the real target object, then reconcile `architecture`/`data-layer` |

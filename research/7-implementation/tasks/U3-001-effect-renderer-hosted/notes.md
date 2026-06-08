@@ -11,9 +11,8 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
 
 - **Spec'd** — created `tasks/U3-001-effect-renderer-hosted/README.md` from the subtask template.
   Consumes FX-004 (shader catalog), closes RT-009 (hosted authoring path).
-  Blockers: U3-006 (shader catalog implementation) and DOC-008 (FX-009 — symbol scope).
-  DOC-007 closed FX-004, but full U3-001 completion still waits for the runtime-visible
-  shader path.
+  Blocker: U3-006 (shader catalog implementation). DOC-007 closed FX-004; DOC-008 closed
+  FX-009 as iOS-only V1 symbol scope.
   Related follow-up: U3-003 owns Android material / FX-003 (not a blocker).
 
 - **Staged scope** — implementation proceeds in unlock order:
@@ -25,7 +24,7 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
   - **shader (both platforms):** DOC-007 ratified the shader catalog; U3-006 blocks full
     completion until it implements native MSL+AGSL and package exposure for the five
     additional ids.
-  - **symbol (iOS only):** blocked by DOC-008 / FX-009. Android symbol deferred.
+  - **symbol (iOS only):** scope ratified by DOC-008 / FX-009. Android symbol deferred.
 
 - Existing infrastructure: `FxHostedView` (hosted substrate shell), `FxSurfaceView`
   (Metal/MTKView reference), 5 curated Metal shaders in `FxShaders.metal`, `ShaderId`
@@ -60,6 +59,7 @@ Compose dependency availability depends on the expo-module-gradle-plugin.
 ## Committed partial slice
 
 - The RT-009 hosted mount/fill/material slice is committed on `integration/0.1.x`.
-- U3-001 remains blocked because shader and symbol coverage are still incomplete.
+- U3-001 remains blocked because shader coverage is still incomplete; iOS symbol proof
+  remains U3-001 work.
 
-## Next: Complete U3-006, then DOC-008/symbol path, then re-run device proof for the full hosted renderer.
+## Next: Complete U3-006, then implement/prove the iOS symbol path and re-run device proof for the full hosted renderer.
