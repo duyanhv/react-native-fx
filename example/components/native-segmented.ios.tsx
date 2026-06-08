@@ -8,7 +8,7 @@ export function NativeSegmented({
 	onChange,
 }: NativeSegmentedProps) {
 	return (
-		<Host matchContents>
+		<Host style={{ width: "100%", height: 36 }}>
 			<Picker
 				selection={selectedIndex}
 				onSelectionChange={(selection) =>

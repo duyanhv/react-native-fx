@@ -12,7 +12,7 @@ export function NativeSegmented({
 	onChange,
 }: NativeSegmentedProps) {
 	return (
-		<Host matchContents>
+		<Host style={{ width: "100%", height: 48 }}>
 			<SingleChoiceSegmentedButtonRow>
 				{options.map((label, index) => (
 					<SegmentedButton
