@@ -42,6 +42,26 @@ component.
 - Compose host via Expo's Android `RNHostView` equivalent. The auto-Host boundary
   (#46549) covers Android too. For decorative full-surface effects, keep the host
   non-intercepting so touches reach RN content below.
+- **Child layout on the plain-`View` host.** When the host swaps its decorative child
+  on a prop update (effect or `intensity` change recreates the inner render view), the
+  new child is added natively *outside* RN's layout pass. `ExpoView` defaults
+  `shouldUseAndroidLayout = false`, which swallows the child's `requestLayout()`, so a
+  child added after the host's initial layout never gets measured and renders at 0×0
+  (blank). The hosting `ExpoView` subclass therefore sets
+  `shouldUseAndroidLayout = true`, which re-runs `measureAndLayout()` (via `post`) on
+  every `requestLayout`. Because that flag alone "does not guarantee accurate layout"
+  (per `ExpoView`), the host also overrides `onLayout` to lay its decorative child
+  explicitly to the host bounds — mirroring `ExpoComposeView`'s hosting-child handling.
+  This reads the host's RN-assigned bounds; it never writes layout back to Yoga. This is
+  Android-local: iOS recreates the hosted controller the same way per prop batch, but
+  UIKit constraints re-size the new subview automatically, so only Android needs it.
+- **Discrete uniform change vs remount.** A discrete `intensity` change updates the *live*
+  child's uniform in place (`setIntensity` → `invalidate()`); the host remounts the child
+  only when the effect *id* actually changes. This is the Android realization of the
+  discrete-prop rule: a dragged slider mutates one uniform per frame instead of recreating
+  the view each tick, which would flash a blank frame, reset the shader clock
+  (`baseTimeNanos`), and reparse the AGSL. iOS reaches the same no-flicker outcome through
+  SwiftUI's reactive re-render, so the divergence is implementation-local.
 
 ### Clock (what advances `time`)
 

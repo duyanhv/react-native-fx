@@ -69,5 +69,57 @@ Supersedes the iOS/Android rendering descriptions above.
 - **Device finding:** an API-29 emulator confirms the degradation (no shader); render verification
   requires API 33+.
 
+### Post-review fixes #4 — Android remount blank (2026-06-08)
+
+Symptom (device, API 33+): `fractal-clouds` renders on first mount, but switching to any other
+shader **or** changing `intensity` blanks the preview box.
+
+- **Root cause.** Every prop batch, `FxHostedView.applyResolvedConfig` → `mountEffect` does
+  `removeHost()` + creates a **new** `FxShaderView` child. `FxHostedView` is an `ExpoView`
+  (`LinearLayout`) with the default `shouldUseAndroidLayout = false`, which swallows the new
+  child's `requestLayout()` (RN issue #17968) — so a child added *after* the host's initial RN
+  layout pass is never measured and renders at 0×0. The first child survives only because it is
+  present during the initial layout. Confirmed against `references/expo/.../ExpoView.kt:30-34`.
+- **Fix.** `FxHostedView` now sets `shouldUseAndroidLayout = true` (re-runs `measureAndLayout()`
+  on `requestLayout`) **and** overrides `onLayout` to lay the decorative child explicitly to the
+  host bounds — distilled from the only production usage, `ExpoComposeView.kt:71-96`. Reads
+  RN-assigned bounds; never writes layout to Yoga (rule #9). Pinned in `structure.android.md`
+  under Hosting mechanics.
+- **Parity note.** iOS recreates the hosted controller the same way per prop batch
+  (`FxHostedView.swift`); UIKit constraints re-size the new subview automatically, so the defect
+  is Android-local. The recreate-on-prop-batch design is unchanged on both platforms.
+
+**Unverified:** the fix is **not device-verified** — layout + AGSL are device-gated (API 33+).
+Headless Kotlin compile was not run this session (gradle build declined). Needs a human pass.
+
+**Secondary observation (not fixed):** recreating the view on an *intensity* change resets the
+native clock (`baseTimeNanos → 0`, animation restarts) and re-parses the AGSL each tap. The dead
+`FxShaderView.setIntensity` shows in-place update was the original intent. Candidate follow-up:
+reuse the child and mutate uniforms/shader-source in place instead of remounting.
+
+### Post-review fixes #5 — Android intensity flicker (2026-06-08)
+
+Symptom (device, API 33+): dragging the `intensity` slider makes the shader flicker.
+
+- **Root cause.** `mountEffect` recreated the whole `FxShaderView` (+ a fresh `RuntimeShader`
+  parse) on *every* prop batch, so a continuously-dragged slider remounted the child many times a
+  second. Each remount flashed a blank frame (new child momentarily 0×0), reset the native clock
+  (`baseTimeNanos → 0`, animation jump), and reparsed the AGSL on the main thread. `FxShaderView`'s
+  `setIntensity` existed but was dead — never reached because the remount destroyed the child first.
+- **Fix.** `FxHostedView` now tracks `mountedEffectId`; when only `intensity` changed (same effect
+  id, live child), it calls the child's `setIntensity` in place and returns, remounting only on an
+  actual effect-id change. Introduced an `internal interface FxEffectView { setIntensity }`
+  (in `FxNativeView.kt`) implemented by both `FxShaderView` and `FxFillView`, so the host dispatches
+  the in-place update without branching on concrete type. `FxFillView.alpha` became a `var` and
+  re-derives from the new intensity (via `alphaFor`); its gradient is intensity-independent so it is
+  not regenerated. `setIntensity` is now live, not dead code.
+- **Parity note.** iOS does not flicker — SwiftUI re-renders reactively and `TimelineView` keeps its
+  own clock — so the recreate-per-batch pattern is unchanged on iOS; the fix is Android-local. Pinned
+  in `structure.android.md` under Hosting mechanics.
+
+**Unverified:** device-gated (API 33+); headless Kotlin compile not run this session.
+
 Next: Device verification on iOS 17+ and **Android API 33+** (the API-29 emulator can only confirm
-degradation). Batches with U3-005 (REAL-002 metallib + REAL-003 AGSL asset loading).
+degradation). Batches with U3-005 (REAL-002 metallib + REAL-003 AGSL asset loading). On Android,
+verify both fixes: switch across all ten ids (no blank, no stale pixels) and drag intensity (no
+flicker, no clock jump); confirm `fill` intensity fades opacity smoothly.

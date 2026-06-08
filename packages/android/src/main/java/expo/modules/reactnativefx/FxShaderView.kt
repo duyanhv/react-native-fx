@@ -28,7 +28,7 @@ internal class FxShaderView(
   context: Context,
   shaderId: String,
   intensity: Double
-) : View(context) {
+) : View(context), FxEffectView {
   private val shader: RuntimeShader?
   private val paint = Paint()
   private var pendingIntensity: Float = intensity.toFloat()
@@ -95,7 +95,7 @@ internal class FxShaderView(
     canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
   }
 
-  fun setIntensity(value: Double) {
+  override fun setIntensity(value: Double) {
     pendingIntensity = value.toFloat()
     invalidate()
   }
