@@ -47,7 +47,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
 | U1-003 | Unit 1 | device-verify | ready-to-merge | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
 | U1-004 | Unit 1 | implement | headless-done | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs): iOS autolink+compile, Android autolink, ts, swift. Library `podspecPath` fix. docs-close (SHIP-003) pending; [detail](#u1-004--bare-fabric-example-in-ci) |
-| U1-005 | Unit 1 | implement | todo | no | — | — | — | Android library build-readiness (paused 2026-06-07). Root cause: `packages/android/build.gradle` `defaultConfig` missing `versionCode`/`versionName`. **Fix verified locally:** adding both clears gradle config AND `assembleDebug` compiles green (BUILD SUCCESSFUL, 3m24s). Remaining: commit the 2-line fix + re-enable the Android compile in CI. The fix is currently UNCOMMITTED in `packages/android/build.gradle`. Surfaced by U1-004. |
+| U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
 | U2-001 | Unit 2 | implement | todo | no | SPINE-013 | SPINE-013 | — | headless: `select()` planned-rung tests |
 | U2-002 | Unit 2 | rework | todo | no | SPINE-003 | SPINE-003 | — | headless: `tsc` on reconciled UniformSpec |
 | U3-001 | Unit 3 | implement | todo | yes | FX-004 | RT-009 | U1-002, U2-001 | device: hosted fill/material/shader/symbol render |
@@ -204,12 +204,10 @@ Progress (native install path proven locally; CI run pending):
   should be recorded as a library config change (IMPL-001 / RT-010 area). See task notes.
 - **CI:** `.github/workflows/ci.yml` has `typescript` + `swift` (library, locally green) + `bare-ios`
   (install → Metal-toolchain download → `pod install` → `Podfile.lock` assert → `xcodebuild`) +
-  `bare-android` (install → autolink assert, package id + module class). Authored from
-  locally-verified commands; first GitHub run still to confirm.
-- **Android compile deferred (finding):** `./gradlew assembleDebug` fails at gradle configuration —
-  `packages/android/build.gradle` is a scaffold (missing `versionName` / publishable `release`
-  component) and has never compiled. Out of U1-004 scope; tracked as **U1-005**. iOS provides the
-  mandatory compile; the Android CI job is autolink-resolve only.
+  `bare-android` (install → autolink assert, package id + module class). All 4 jobs green on
+  GitHub (`macos-26` for Swift 6.2).
+- **Proof:** CI green on GitHub — all 4 jobs pass. iOS autolink + native compile proven; Android
+  autolink proven. `apple.podspecPath` library-config change on main.
 
 Proof:
 - headless: package build/lint (green); CI `bare-ios` — iOS autolink (`Podfile.lock`) + native
