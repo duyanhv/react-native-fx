@@ -55,7 +55,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
 | U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
-| U3-006 | Unit 3 | implement | docs-pending | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; [detail](#u3-006--curated-shader-implementation) |
+| U3-006 | Unit 3 | implement | ready-to-merge | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); awaiting review + merge; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
 
 ### V2 build — Units 4–9
@@ -209,7 +209,7 @@ Checklist:
 - [x] commented
 - [x] headless-done
 - [x] device-verified
-- [ ] docs-closed
+- [x] docs-closed
 - [ ] reviewed
 - [ ] merged
 
@@ -227,8 +227,11 @@ Proof:
   - **iOS: PASS (2026-06-08)** — verified by the maintainer on iOS 17+; shaders render through the
     hosted Metal path. Evidence in `tasks/U3-006/evidence/device.md`. (REAL-002/REAL-003 ledger
     closures remain owned by U3-005.)
-- docs: after device verification, reconcile `22`, `structure.ios.md`,
-  `structure.android.md`, and this tracker so "package-exposed" means all ten rendered ids.
+- docs: **closed (2026-06-08).** `22` reconciled — all ten ids ship with native MSL+AGSL and are
+  package-exposed (the "first five only" wording is gone, Decision 2 updated). `structure.android.md`
+  carries the shipped hosted-shader mechanics (layout fix + discrete-uniform-in-place). `structure.ios.md`
+  hosted-shader mechanic reads true; the metallib-bundle-resolution detail stays with U3-005/REAL-002.
+  This tracker moved.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration
 

@@ -44,9 +44,9 @@ interface ShaderUniforms {
 }
 ```
 
-The first five ids are implemented starter shaders in the package today. `aurora`,
-`noise-field`, `plasma`, `caustics`, and `edge-glow` are ratified V1 catalog entries, but
-they still need native MSL+AGSL implementations before package types/runtime expose them.
+All ten ids ship in the package today. Each has a native MSL (iOS) + AGSL (Android)
+implementation on the hosted substrate, and the package types and runtime expose every id.
+The full catalog is device-verified on iOS 17+ and Android API 33+ (U3-006).
 
 Both substrates reach the consumer through the standard effect surface — `<Fx>` (`55`/`57`):
 
@@ -130,8 +130,8 @@ events only — no per-frame pointer stream** (`04`/`35`).
    hosted decorative rung and an expo-view interactive rung; intended use selects.
 2. **Curated V1 `ShaderId` catalog** — `fractal-clouds`, `ink-smoke`, `liquid-chrome`,
    `loop`, `dots`, `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`.
-   The first five are implemented starter shaders; the last five are catalog entries that
-   require native implementation before package exposure.
+   All ten ship with native MSL+AGSL implementations and are package-exposed,
+   device-verified on iOS and Android.
 3. **Shared minimal public uniforms in V1** — semantic overrides such as `intensity`
    resolve in JS (`50`); `time`, `resolution`, `pressDepth`, and `touch` stay native-owned
    and unsettable.
