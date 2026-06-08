@@ -2,8 +2,7 @@
 
 ## Unverified claims
 
-- None yet — this session only rewrites the task spec. The schema reconciliation and checks
-  still need to run.
+None — headless rework.
 
 ## What changed and why
 
@@ -15,4 +14,13 @@
 - Scoped the task to docs/types only: no selector changes, no codegen, no renderer work, and
   no public API expansion.
 
-## Next: reconcile `02`, `data-layer.md`, and `packages/src/manifest/types.ts`; run headless checks; close SPINE-003.
+- **Reconciled UniformSpec (2026-06-08):**
+  - Widened `02` UniformSpec.type to include `boolean` and `color[]` (line 102).
+  - Widened `packages/src/manifest/types.ts` UniformSpec.type to match.
+  - Removed `[provisional]` mismatch note from `data-layer.md` §1 — the extension is now
+    canonical.
+  - Resolved SPINE-003 in decision-ledger.md.
+  - U2-002 → ready-to-merge in progress.md.
+  - Headless checks all green: tsc, build, biome, jest (18 tests pass).
+
+## Next: reviewed + merged (human gates)

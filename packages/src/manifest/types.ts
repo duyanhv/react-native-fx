@@ -59,7 +59,7 @@ export interface Lowering {
 // ── one IR node (capability) ─────────────────────────────────────────
 
 export interface UniformSpec {
-  type: 'number' | 'color' | 'vec2' | 'vec4' | 'enum';
+  type: 'number' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
   default: unknown;
   range?: [number, number];
   options?: string[];

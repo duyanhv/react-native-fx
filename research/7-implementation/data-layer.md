@@ -39,7 +39,7 @@ export interface Lowering {
   note?: string;
 }
 
-// [provisional] UniformSpec.type extends 02 with `boolean` and `color[]`.
+// UniformSpec.type includes boolean and color[] — these are canonical in 02.
 // 02:101 defines only `number | color | vec2 | vec4 | enum`.
 // Pending ratification in 02 or removal from this schema.
 export interface UniformSpec {
