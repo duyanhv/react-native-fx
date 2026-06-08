@@ -2,9 +2,10 @@ import SwiftUI
 
 /// A self-contained glass/material effect for the hosted substrate.
 ///
-/// Uses the platform's own glass surface on iOS 26 and falls back to
-/// `.ultraThinMaterial` on earlier versions. No layer alpha — intensity
-/// selects the material style to vary perceived glass weight.
+/// Uses `.glassEffect()` on iOS 26 (intensity has no effect on this path —
+/// glass-weight-by-intensity needs `UIGlassEffect.Style`; deferred to U3-002).
+/// On earlier iOS, intensity selects `.ultraThinMaterial` / `.thinMaterial` /
+/// `.regularMaterial` to vary perceived material weight.
 internal struct FxMaterialView: View {
   let intensity: Double
 

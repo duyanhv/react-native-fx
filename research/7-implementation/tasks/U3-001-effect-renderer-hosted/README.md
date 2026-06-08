@@ -79,7 +79,7 @@ Subtask: hosted effect renderer (blueprint Unit 3)
     (FX-004) is ratified.
   - **symbol (iOS blocked by DOC-008 / FX-009):** SF Symbol / Image render through
     hosted path. Android deferred per V1 scope (DOC-008).
-- docs: `51` RT-009 open question closed (hosted authoring path proven);
+- docs: `51` RT-009 intended close (hosted authoring path — device gate pending);
   `structure.android.md` records V1 deviation (plain View fill, Compose deferred);
   `structure.ios.md` records hosted material path with `.glassEffect` on iOS 26+.
 
