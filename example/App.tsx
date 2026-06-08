@@ -1,5 +1,5 @@
 // TODO: U3-001 temporary test screen — remove after device verification.
-import { SafeAreaView, ScrollView, StyleSheet, Text } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FxHostedView } from '../packages/src/runtime/FxHostedView';
 
 export default function App() {
@@ -14,8 +14,15 @@ export default function App() {
         <Text style={styles.label}>fill · gradient, intensity 0.3</Text>
         <FxHostedView effect="fill" intensity={0.3} style={styles.box} />
 
-        <Text style={styles.label}>material · glass (iOS only)</Text>
-        <FxHostedView effect="material" intensity={0.6} style={styles.box} />
+        <Text style={styles.label}>material · glass over fill (iOS only)</Text>
+        <View style={styles.box}>
+          <FxHostedView effect="fill" intensity={0.8} style={styles.box} />
+          <FxHostedView
+            effect="material"
+            intensity={0.6}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
 
         <Text style={styles.label}>none · empty (no effect prop)</Text>
         <FxHostedView style={styles.box} />
