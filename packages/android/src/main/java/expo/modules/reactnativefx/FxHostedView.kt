@@ -57,6 +57,10 @@ class FxHostedView(
 
     val view = when (effect) {
       "fill" -> FxFillView(context, intensity)
+      "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
+      "aurora", "noise-field", "plasma", "caustics", "edge-glow" -> {
+        FxShaderView(context, effect, intensity)
+      }
       else -> return
     }
 

@@ -1,0 +1,35 @@
+uniform float time;
+uniform vec2 resolution;
+uniform float intensity;
+
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+    return a + b * cos(6.28318 * (c * t + d));
+}
+
+half4 main(float2 fragCoord) {
+    float aspect = resolution.x / max(resolution.y, 1.0);
+    vec2 uv = fragCoord / resolution;
+    uv.x *= aspect;
+    float t = time;
+    float bulge = 0.0;  // touch/pressDepth idle on the decorative hosted path
+    float grid = 15.0;
+    vec2 cell = uv * grid;
+    vec2 id = floor(cell);
+    vec2 f = fract(cell) - 0.5;
+    float wave = 0.5 * sin(id.x * 0.5 + t) + 0.5 * sin(id.y * 0.5 + t * 1.3);
+    float radius = 0.30 + 0.12 * wave + 0.28 * bulge;
+    float d = length(f);
+    float mask = smoothstep(radius, radius - 0.04, d);
+    float z = sqrt(max(radius * radius - d * d, 0.0)) / max(radius, 0.001);
+    vec3 normal = normalize(vec3(f, z));
+    vec3 lightDir = normalize(vec3(0.5, 0.6, 0.8));
+    float diff = clamp(dot(normal, lightDir), 0.0, 1.0);
+    vec3 base = palette(0.5 + 0.5 * wave + id.x * 0.02,
+                        vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.0, 0.33, 0.67));
+    vec3 col = vec3(0.02, 0.03, 0.05);
+    col = mix(col, base * (0.3 + 0.7 * diff), mask);
+    col += vec3(1.0) * pow(diff, 16.0) * mask * 0.6;
+    col += vec3(0.45, 0.75, 1.0) * bulge * mask * 0.9;
+    col *= intensity;
+    return half4(clamp(col, 0.0, 1.0), 1.0);
+}

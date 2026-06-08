@@ -55,7 +55,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
 | U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
-| U3-006 | Unit 3 | implement | in-progress | yes | FX-004, REAL-004 | — | — | spec'd + rules-gated; implement MSL for five pending ids, AGSL for all ten ids, hosted shader rendering, and unified `ShaderId`; [detail](#u3-006--curated-shader-implementation) |
+| U3-006 | Unit 3 | implement | headless-done | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders implemented; hosted dispatch wired on iOS + Android with <33 fallback; `ShaderId` widened to 10 ids; headless checks green; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
 
 ### V2 build — Units 4–9
@@ -195,7 +195,7 @@ Proof:
 
 ## U3-006 — curated shader implementation
 
-Type: `implement` · State: `in-progress` · Device: yes · Consumes: FX-004, REAL-004 · Closes: — · [task](./tasks/U3-006/)
+Type: `implement` · State: `headless-done` · Device: yes · Consumes: FX-004, REAL-004 · Closes: — · [task](./tasks/U3-006/)
 
 Scope: implement the committed V1 shader catalog on the hosted renderer slice. The public
 `ShaderId` widens only when all ten curated ids have native coverage: MSL for all ten ids on iOS
@@ -205,9 +205,9 @@ five ids too, not only `aurora` / `noise-field` / `plasma` / `caustics` / `edge-
 Checklist:
 - [x] spec'd
 - [x] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
+- [x] implemented
+- [x] commented
+- [x] headless-done
 - [ ] device-verified
 - [ ] docs-closed
 - [ ] reviewed
@@ -216,13 +216,15 @@ Checklist:
 Proof:
 - headless: from `packages/`, `bunx tsc --noEmit`, `bun run build`, `bun run lint`,
   `bun run swift:lint`, and `bun run test`; from the repo root, `git diff --check`.
+  All green (2026-06-08). 18 Jest tests pass; TS build produces widened ShaderId in `.d.ts`;
+  Biome clean; swift-format clean.
 - device: iOS 17+ and Android API 33+ render every curated shader id; `intensity` updates from a
   discrete prop; `time` advances natively while visible; shader switching has no stale pixels or
   crash; navigation/backgrounding pause and resume the native clock. Scenario written in
   `tasks/U3-006/evidence/headless.md`. Device verification batches with or follows U3-005 because
   iOS pixels depend on REAL-002 metallib bundling, and Android pixels depend on the REAL-003 AGSL
   runtime read path.
-- docs: after implementation and device proof, reconcile `22`, `structure.ios.md`,
+- docs: after device verification, reconcile `22`, `structure.ios.md`,
   `structure.android.md`, and this tracker so "package-exposed" means all ten rendered ids.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration

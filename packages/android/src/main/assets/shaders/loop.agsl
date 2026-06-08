@@ -1,0 +1,39 @@
+uniform float time;
+uniform vec2 resolution;
+uniform float intensity;
+
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+    return a + b * cos(6.28318 * (c * t + d));
+}
+
+vec3 prism(float h) {
+    h = fract(h);
+    vec3 blue = vec3(0.10, 0.30, 1.0);
+    vec3 orange = vec3(1.0, 0.45, 0.12);
+    vec3 white = vec3(1.0, 0.98, 0.95);
+    vec3 cyan = vec3(0.25, 0.85, 1.0);
+    if (h < 0.30) return mix(blue, orange, h / 0.30);
+    if (h < 0.50) return mix(orange, white, (h - 0.30) / 0.20);
+    if (h < 0.70) return mix(white, cyan, (h - 0.50) / 0.20);
+    return mix(cyan, blue, (h - 0.70) / 0.30);
+}
+
+half4 main(float2 fragCoord) {
+    vec2 uv = fragCoord / resolution;
+    float aspect = resolution.x / max(resolution.y, 1.0);
+    float t = time;
+    float d = uv.x * aspect - uv.y;
+    float phase = d * 26.0 - t * 1.5;
+    float stripe = pow(0.5 + 0.5 * sin(phase * 3.14159), 8.0);
+    vec3 color = prism(d * 0.55 + t * 0.04);
+    float vy = pow(clamp(abs(uv.y - 0.5) * 2.0, 0.0, 1.0), 1.5);
+    vec2 cc = uv - 0.5;
+    cc.x *= aspect;
+    float vr = pow(clamp(length(cc) * 1.4, 0.0, 1.0), 2.2);
+    float vig = max(vy, vr);
+    vec3 col = color * stripe * vig * 2.4;
+    col += color * 0.05 * vig;
+    col += vec3(0.012, 0.016, 0.03) * (0.4 + 0.6 * stripe);
+    col *= intensity;
+    return half4(clamp(col, 0.0, 1.0), 1.0);
+}

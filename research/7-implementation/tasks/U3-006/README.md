@@ -66,9 +66,9 @@ Subtask: curated shader implementation (blueprint Unit 3)
 
 - [x] spec'd
 - [x] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
+- [x] implemented
+- [x] commented
+- [x] headless-done
 - [ ] device-verified
 - [ ] docs-closed
 - [ ] reviewed
