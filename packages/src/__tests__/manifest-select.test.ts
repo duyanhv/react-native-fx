@@ -201,13 +201,13 @@ describe('select()', () => {
   // ── basic selection ────────────────────────────────────────────
 
   it('returns the first satisfiable rung', () => {
-    const result = select(fixture.nodes['shader'], ios, { deviceOS: 18 });
+    const result = select(fixture.nodes.shader, ios, { deviceOS: 18 });
     expect(result.via).toBe('shader');
     expect(result.requires.substrate).toBe('hosted');
   });
 
   it('returns the first rung whose OS guard holds', () => {
-    const result = select(fixture.nodes['fill'], ios, { deviceOS: 17 });
+    const result = select(fixture.nodes.fill, ios, { deviceOS: 17 });
     expect(result.via).toBe('native');
     expect(result.primitive).toBe('LinearGradient');
   });
@@ -255,13 +255,13 @@ describe('select()', () => {
   // ── OS guard ───────────────────────────────────────────────────
 
   it('skips rungs whose OS guard exceeds the device', () => {
-    const result = select(fixture.nodes['fill'], android, { deviceOS: 30 });
+    const result = select(fixture.nodes.fill, android, { deviceOS: 30 });
     expect(result.via).toBe('native');
     expect(result.primitive).toBe('Brush.sweepGradient');
   });
 
   it('returns none when all rungs are OS-guarded out', () => {
-    const result = select(fixture.nodes['fill'], ios, { deviceOS: 12 });
+    const result = select(fixture.nodes.fill, ios, { deviceOS: 12 });
     // MeshGradient needs 18, LinearGradient needs 13 — both exceed 12
     expect(result.via).toBe('none');
   });
@@ -269,7 +269,7 @@ describe('select()', () => {
   // ── wantInteractive ────────────────────────────────────────────
 
   it('skips hosted rungs for fx interaction when wantInteractive is true', () => {
-    const result = select(fixture.nodes['shader'], ios, {
+    const result = select(fixture.nodes.shader, ios, {
       deviceOS: 18,
       wantInteractive: true,
     });
@@ -278,7 +278,7 @@ describe('select()', () => {
   });
 
   it('returns hosted rung for fx interaction when wantInteractive is false', () => {
-    const result = select(fixture.nodes['shader'], ios, {
+    const result = select(fixture.nodes.shader, ios, {
       deviceOS: 18,
       wantInteractive: false,
     });
@@ -286,7 +286,7 @@ describe('select()', () => {
   });
 
   it('does not enforce expo-view for non-fx interaction nodes', () => {
-    const result = select(fixture.nodes['fill'], ios, {
+    const result = select(fixture.nodes.fill, ios, {
       deviceOS: 18,
       wantInteractive: true,
     });
@@ -298,13 +298,13 @@ describe('select()', () => {
   // ── driver target matching ─────────────────────────────────────
 
   it('matches driver rung by target (effect, default)', () => {
-    const result = select(fixture.nodes['motion'], ios, { deviceOS: 18 });
+    const result = select(fixture.nodes.motion, ios, { deviceOS: 18 });
     expect(result.target).toBe('effect');
     expect(result.primitive).toBe('SwiftUI .animation');
   });
 
   it('matches driver rung by explicit target: content', () => {
-    const result = select(fixture.nodes['motion'], ios, {
+    const result = select(fixture.nodes.motion, ios, {
       deviceOS: 18,
       target: 'content',
     });
@@ -365,7 +365,7 @@ describe('select()', () => {
   // ── non-driver nodes ignore target ─────────────────────────────
 
   it('ignores target for non-driver nodes', () => {
-    const result = select(fixture.nodes['shader'], ios, {
+    const result = select(fixture.nodes.shader, ios, {
       deviceOS: 18,
       target: 'content',
     });
