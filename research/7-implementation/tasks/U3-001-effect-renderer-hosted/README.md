@@ -2,7 +2,7 @@
 
 Unit 3 · type: `implement` · state: `in-progress` · device: yes
 Consumes: FX-004 · Closes: RT-009
-Blocked by: U1-002 (done), U2-001 (done), DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol), U3-003 (FX-003 — Android material)
+Blocked by: U1-002 (done), U2-001 (done), DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol)
 
 > Builds the V1 hosted rendering path — SwiftUI on iOS, Jetpack Compose on Android.
 > Mounts the platform-native host inside `FxHostedView` and renders fill on both
@@ -71,9 +71,9 @@ Subtask: hosted effect renderer (blueprint Unit 3)
   - **RT-009:** hosted mount + prop/config path working on iOS + Android — FxHostedView
     embeds a SwiftUI/Compose host and passes effect node id + uniforms as props.
   - **fill:** gradient/mesh fill renders as a hosted decorative layer on iOS + Android.
-  - **material (Android blocked by U3-003 / FX-003):** glass/material effect renders on
-    iOS 26+ (UIGlassEffect) and iOS 15+ (.ultraThinMaterial fallback). Android
-    RenderEffect blur, intensity 0–1, and staleness gated behind U3-003 / FX-003.
+  - **material (iOS only):** glass/material effect renders on iOS 26+ (UIGlassEffect)
+    and iOS 15+ (.ultraThinMaterial fallback). Android material out of scope —
+    owned by U3-003 / FX-003.
   - **shader (blocked by DOC-007 / FX-004):** curated Metal shader through hosted
     `.colorEffect` path, AGSL through hosted `RenderEffect`. Wait until shader catalog
     (FX-004) is ratified.
@@ -94,10 +94,9 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 - **fill (unblocked):** native gradient/mesh via SwiftUI `LinearGradient`/`MeshGradient` (iOS)
   and Compose `Brush` (Android). Uses existing native primitives — no pending decisions.
 
-- **material (iOS unblocked; Android blocked by U3-003 / FX-003):** `.glassEffect` /
-  `.ultraThinMaterial` on iOS 15+/26+. Glass self-gestures (`interaction: 'self'`).
-  Android `RenderEffect.blur`, intensity 0–1 normalization, and staleness belong to
-  U3-003 / FX-003 — this task only covers the iOS hosted material path.
+- **material (iOS only):** `.glassEffect` (iOS 26+) / `.ultraThinMaterial` (iOS 15+) as
+  fallback. Glass self-gestures (`interaction: 'self'`). Android material is out of scope
+  for this task — owned by U3-003 / FX-003.
 
 - **shader (blocked by DOC-007 / FX-004):** the existing 5 curated Metal shaders
   (`FxShaders.metal`) rendered through the hosted `.colorEffect` path on iOS;
@@ -121,7 +120,8 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 - **RT-009:** FxHostedView mounts a SwiftUI host (iOS) and Compose host (Android).
   Effect node id + uniforms pass through props. Hosted authoring path proven on both
   platforms.
-- **fill + material** render on device on iOS + Android.
+- **fill** renders on iOS + Android; **material** renders on iOS only (Android material
+  deferred to U3-003 / FX-003).
 - **shader** renders on device after DOC-007 / FX-004 closes (separate evidence).
 - **symbol** renders on iOS after DOC-008 / FX-009 closes (separate evidence).
 - Device evidence recorded in `evidence/device.md`.
