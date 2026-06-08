@@ -151,10 +151,14 @@ select(node, platform, ctx = { deviceOS, wantInteractive, target = 'effect' }):
   return { via: 'none' }                      # empty/guarded-out ladder ⇒ unavailable, never throw
 ```
 
-The `features` guard (line 145) ensures a rung like Android `shape-morph` (which
+The `features` guard (line 146) ensures a rung like Android `shape-morph` (which
 requires `feature: 'm3-expressive'`) is only selected when the runtime has
 confirmed the feature is present. If `features` is absent or empty, the rung is
 skipped and the ladder degrades.
+
+The `wantInteractive` clause is the load-bearing one: it is how a single node
+(e.g. `shader`) carries both a **hosted decorative** rung and an **expo-view
+interactive** rung, and the selector chooses by intended use. Decorative usage
 prefers the hosted rung (auto-Host passthrough, no G); interactive usage forces
 the expo-view rung (plain UIView, G runtime, host-safe hit-testing).
 
