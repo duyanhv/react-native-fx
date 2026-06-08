@@ -152,7 +152,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 
 | row | provisioned in | plane-`7` provisioned value | action |
 |---|---|---|---|
-| SPINE-003 | `data-layer` §1 | uniforms inlined per node; `motion` uses `properties` | **ratify/rework the schema** — `data-layer`'s `UniformSpec` adds `boolean`/`color[]` that `02`'s schema lacks; reconcile the type set in `02`, then propagate and generate the TS types |
+| SPINE-003 | `data-layer` §1 | uniforms inlined per node; `motion` uses `properties` | **resolved** — `02` widened to include `boolean`/`color[]` (U2-002). TypeScript types are manually maintained alongside the manifest per blueprint Unit 2, not generated. |
 | SPINE-007 | `data-layer` §8 (I7) | the manifest names the lib package via `applyVia`/`asset` (`Haze`, `lottie`) | **ratify** — `applyVia:'Haze'` appearing is not a closed naming convention; decide it, then propagate to `02` |
 | SURF-003 | `data-layer` §3/§5 | V1 vocab (`transient`/`sheet`/`modal`; `lift`; `native`; `edge-glow`/`mesh-gradient`/`glass`) | **ratify** the V1 set, then propagate to `50`/`56`; springs **device-verify** (→ MOT-001) |
 | SURF-004 | `data-layer` §5 | `lift` states `idle`/`selected` | **ratify** — confirm the V1 state set, then propagate to `57` |
