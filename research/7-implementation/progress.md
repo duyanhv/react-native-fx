@@ -49,7 +49,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-004 | Unit 1 | implement | ready-to-merge | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. [detail](#u1-004--bare-fabric-example-in-ci) |
 | U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
 | U2-001 | Unit 2 | implement | ready-to-merge | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; [detail](#u2-001--planned-rung-selection) |
-| U2-002 | Unit 2 | rework | todo | no | SPINE-003 | SPINE-003 | — | headless: `tsc` on reconciled UniformSpec |
+| U2-002 | Unit 2 | rework | in-progress | no | SPINE-003 | SPINE-003 | — | spec'd; widen `02`/manifest types for `boolean` + `color[]`; [detail](#u2-002--uniformspec-schema-reconciliation) |
 | U3-001 | Unit 3 | implement | todo | yes | FX-004 | RT-009 | U1-002, U2-001 | device: hosted fill/material/shader/symbol render |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
@@ -126,19 +126,20 @@ Proof:
 
 ## U2-002 — UniformSpec schema reconciliation
 
-Type: `rework` · State: `todo` · Consumes: SPINE-003 · Closes: SPINE-003
+Type: `rework` · State: `in-progress` · Consumes: SPINE-003 · Closes: SPINE-003 · [task](./tasks/U2-002-uniformspec-reconciliation/task.md)
 
 Checklist:
-- [ ] spec'd
+- [x] spec'd
 - [ ] rules-gated
-- [ ] `02` UniformSpec widened to match `data-layer` (`boolean`, `color[]`) — or `data-layer` narrowed
-- [ ] TS types regenerate from `02`
+- [ ] `02` UniformSpec widened to match `data-layer` (`boolean`, `color[]`)
+- [ ] `data-layer.md` provisional mismatch note removed
+- [ ] TypeScript manifest types updated manually
 - [ ] ledger SPINE-003 closed (true in `02`)
 
 Proof:
-- headless: `tsc` — the manifest types compile against the reconciled UniformSpec
+- headless: `bunx tsc --noEmit`, `bun run build`, `bunx biome check .`, and `bun run test` from `packages/`; `git diff --check` from the repo root.
 - device: N/A
-- docs: `02` §The schema, decision-ledger SPINE-003
+- docs: `02` §The schema, `data-layer.md` §1, decision-ledger SPINE-003
 
 ## U2-001 — planned-rung selection
 
