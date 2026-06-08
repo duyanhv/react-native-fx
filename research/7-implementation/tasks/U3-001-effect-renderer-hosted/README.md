@@ -60,7 +60,7 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 - [x] headless-done
 - [x] device-verified
 - [x] docs-closed
-- [ ] reviewed
+- [x] reviewed
 - [ ] merged
 
 ## Proof

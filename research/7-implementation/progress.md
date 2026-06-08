@@ -174,7 +174,7 @@ Checklist:
 - [x] headless-done
 - [x] device-verified
 - [x] docs-closed
-- [ ] reviewed
+- [x] reviewed
 - [ ] merged
 
 Proof:
