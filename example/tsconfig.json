@@ -3,8 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "react-native-fx": ["../src/index"],
-      "react-native-fx/*": ["../src/*"]
+      "react-native-fx": ["../packages/src/index"],
+      "react-native-fx/*": ["../packages/src/*"]
     }
   }
 }

@@ -28,7 +28,6 @@ config.resolver.nodeModulesPaths = [
 ];
 
 config.resolver.extraNodeModules = {
-  'react-native-fx': path.resolve(__dirname, '../packages'),
   react: path.resolve(exampleModules, 'react'),
   'react-native': path.resolve(exampleModules, 'react-native'),
   expo: path.resolve(exampleModules, 'expo'),

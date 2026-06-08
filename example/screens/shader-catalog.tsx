@@ -6,7 +6,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { FxHostedView } from "../../packages/src/runtime/FxHostedView";
+import { FxHostedView } from "react-native-fx";
 import { NativeSlider } from "../components/native-slider";
 import { useTheme } from "../components/theme";
 

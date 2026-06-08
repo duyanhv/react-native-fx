@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { FxHostedView } from "../../packages/src/runtime/FxHostedView";
+import { FxHostedView } from "react-native-fx";
 import { useTheme } from "../components/theme";
 
 export function FillMaterialScreen() {
