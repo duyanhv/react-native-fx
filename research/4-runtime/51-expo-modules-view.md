@@ -77,8 +77,10 @@ select the lowering (per `02`), write config, sync the recognizer/clock/animatio
 
 ## Open questions
 
-- **Hosted-view authoring** — the exact Expo path to mount a SwiftUI/Compose host inside
-  an `ExpoView` and pass props/children (ties to `01`, `structure.*`, expo/expo#46549).
+- ~~**Hosted-view authoring**~~ — **resolved: `FxHostedView` mounts a SwiftUI host via
+  `UIHostingController` (iOS) and a plain `View`-based renderer (Android). Props (`effect`,
+  `intensity`) cross the Expo boundary via `Prop`/`OnViewDidUpdateProps`. Verified on SDK 56,
+  iOS 26+ and Android (2026-06-08, U3-001). Compose deferred — V1 uses `View.onDraw()`.~~
 - ~~**One native view class vs several**~~ — **resolved: several** — three substrate-specific
   views (`FxHostedView`, `FxSurfaceView`, `FxGroupView`) registered under one module. SDK 56
   registration keying confirmed on iOS and Android (2026-06-08).

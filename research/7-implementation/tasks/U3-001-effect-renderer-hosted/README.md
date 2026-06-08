@@ -1,6 +1,6 @@
 # U3-001 — hosted effect renderer
 
-Unit 3 · type: `implement` · state: `in-progress` · device: yes
+Unit 3 · type: `implement` · state: `ready-to-merge` · device: yes
 Consumes: FX-004 · Closes: RT-009
 Blocked by: U1-002 (done), U2-001 (done), DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol)
 
@@ -58,8 +58,8 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified
-- [ ] docs-closed
+- [x] device-verified
+- [x] docs-closed
 - [ ] reviewed
 - [ ] merged
 
