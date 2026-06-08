@@ -1,22 +1,33 @@
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+// TODO: U3-001 temporary test screen — remove after device verification.
+import { SafeAreaView, ScrollView, StyleSheet, Text } from 'react-native';
+import { FxHostedView } from '../packages/src/runtime/FxHostedView';
 
-// The interactive shader demo is parked while the package is restructured. The
-// native surface (FxSurfaceView) and its Metal pixels are intact; the demo
-// returns once the public `<Fx>` component that renders them is built.
 export default function App() {
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.center}>
-        <Text style={styles.title}>react-native-fx</Text>
-        <Text style={styles.subtitle}>Scaffold ready · effect demo returns with {'<Fx>'}</Text>
-      </View>
+    <SafeAreaView style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.header}>U3-001 · hosted effect renderer</Text>
+
+        <Text style={styles.label}>fill · gradient (iOS + Android)</Text>
+        <FxHostedView effect="fill" intensity={0.8} style={styles.box} />
+
+        <Text style={styles.label}>fill · gradient, intensity 0.3</Text>
+        <FxHostedView effect="fill" intensity={0.3} style={styles.box} />
+
+        <Text style={styles.label}>material · glass (iOS only)</Text>
+        <FxHostedView effect="material" intensity={0.6} style={styles.box} />
+
+        <Text style={styles.label}>none · empty (no effect prop)</Text>
+        <FxHostedView style={styles.box} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  title: { color: '#fff', fontSize: 22, fontWeight: '600' },
-  subtitle: { color: '#9aa0a6', fontSize: 14, marginTop: 8, textAlign: 'center' },
+  root: { flex: 1, backgroundColor: '#0d0d0d' },
+  content: { padding: 16, gap: 16 },
+  header: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  label: { color: '#9aa0a6', fontSize: 13, marginTop: 8 },
+  box: { width: 200, height: 150, backgroundColor: '#1a1a2e' },
 });

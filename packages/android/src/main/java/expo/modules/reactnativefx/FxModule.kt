@@ -19,6 +19,13 @@ class FxModule : Module() {
     View(FxHostedView::class) {
       Events("onFxTransitionEnd", "onFxLoad", "onFxError")
 
+      Prop("effect") { view: FxHostedView, value: String ->
+        view.setEffect(value)
+      }
+      Prop("intensity") { view: FxHostedView, value: Double ->
+        view.setIntensity(value)
+      }
+
       AsyncFunction("snapshot") { view: FxHostedView ->
         return@AsyncFunction view.snapshot()
       }

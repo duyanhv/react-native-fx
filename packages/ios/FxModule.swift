@@ -12,6 +12,13 @@ public class FxModule: Module {
     View(FxHostedView.self) {
       Events("onFxTransitionEnd", "onFxLoad", "onFxError")
 
+      Prop("effect") { (view: FxHostedView, value: String) in
+        view.setEffect(value)
+      }
+      Prop("intensity") { (view: FxHostedView, value: Double) in
+        view.setIntensity(value)
+      }
+
       AsyncFunction("snapshot") { (view: FxHostedView) in
         return view.snapshot()
       }

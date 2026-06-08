@@ -54,10 +54,10 @@ Subtask: hosted effect renderer (blueprint Unit 3)
 ## Lifecycle
 
 - [x] spec'd
-- [ ] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
 - [ ] device-verified
 - [ ] docs-closed
 - [ ] reviewed

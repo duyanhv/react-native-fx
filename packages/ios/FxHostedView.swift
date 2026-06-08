@@ -1,12 +1,86 @@
 import ExpoModulesCore
+import SwiftUI
 
-// TODO: Hosts the platform-native decorative rendering surface once the hosted
-// effect renderer is built.
-/// Registers the hosted substrate as the module's default native view.
+/// Hosts the platform-native decorative rendering surface for the `hosted` substrate.
+///
+/// A `UIHostingController` embeds a SwiftUI view selected by the `effect` prop.
+/// The host owns sizing and pointer-event passthrough; it never samples or wraps
+/// RN content (rule #4). Props stash in the two-phase Expo pattern and are
+/// applied once per batch in `applyResolvedConfig()`.
 internal final class FxHostedView: FxNativeView {
   // MARK: - Events
 
   internal let onFxTransitionEnd = EventDispatcher()
   internal let onFxLoad = EventDispatcher()
   internal let onFxError = EventDispatcher()
+
+  // MARK: - Hosting state
+
+  private var hostingController: UIHostingController<AnyView>?
+  private var pendingEffect: String?
+  private var pendingIntensity: Double = 0.8
+
+  // MARK: - Props
+
+  internal func setEffect(_ value: String) {
+    pendingEffect = value
+  }
+
+  internal func setIntensity(_ value: Double) {
+    pendingIntensity = value
+  }
+
+  internal override func applyResolvedConfig() {
+    super.applyResolvedConfig()
+
+    guard let effect = pendingEffect else {
+      removeHost()
+      return
+    }
+
+    let view = makeSwiftUIView(for: effect, intensity: pendingIntensity)
+    mountHost(AnyView(view))
+  }
+
+  // MARK: - Effect dispatch
+
+  private func makeSwiftUIView(for effect: String, intensity: Double) -> any View {
+    switch effect {
+    case "fill":
+      return FxFillView(intensity: intensity)
+    case "material":
+      return FxMaterialView(intensity: intensity)
+    default:
+      return FxEmptyView()
+    }
+  }
+
+  // MARK: - Host lifecycle
+
+  private func mountHost(_ rootView: AnyView) {
+    removeHost()
+
+    let controller = UIHostingController(rootView: rootView)
+    controller.view.backgroundColor = .clear
+    controller.view.translatesAutoresizingMaskIntoConstraints = false
+
+    addSubview(controller.view)
+    NSLayoutConstraint.activate([
+      controller.view.leadingAnchor.constraint(equalTo: leadingAnchor),
+      controller.view.trailingAnchor.constraint(equalTo: trailingAnchor),
+      controller.view.topAnchor.constraint(equalTo: topAnchor),
+      controller.view.bottomAnchor.constraint(equalTo: bottomAnchor),
+    ])
+
+    hostingController = controller
+  }
+
+  private func removeHost() {
+    hostingController?.view.removeFromSuperview()
+    hostingController = nil
+  }
+
+  deinit {
+    removeHost()
+  }
 }
