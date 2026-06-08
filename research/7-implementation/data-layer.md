@@ -630,12 +630,12 @@ type Transition = {
 
 ---
 
-## §5.1 Memoization Guidance (M9) — Provisional Pending SDK Verification
+## §5.1 Memoization Guidance (M9)
 
 > **[research: 50 §Open questions] [research: 55 §Open questions]**
-> **[ledger: SURF-010 status = `implementation-pending`]** Inline builder literals create new objects each render. The native side handles re-configuration gracefully via per-prop equality checking (`previousProps`), so no manual memoization is required. React Compiler (recommended) handles it automatically.
+> **[ledger: SURF-010 status = `resolved`]** Inline builder literals create new objects each render. The native side handles re-configuration gracefully via per-prop equality checking (`previousProps`), so no manual memoization is required. React Compiler (recommended) handles it automatically.
 >
-> **Status: intended guidance pending SDK verification.** Record coercion of absent uniforms (`@Field` defaults) on the pinned SDK must be verified before this guidance is settled (51:85, RT-011). The native `previousProps` value-equality assumption depends on `Record` coercion filling omitted fields predictably.
+> **Verified on SDK 56, iOS + Android (2026-06-08).** `previousProps` compares both primitive props and nested `Record` props by value, not JS object reference. A fresh `{ valueA: 99 }` object with the same effective value does not trigger the native setter. `@Field` defaults fill absent fields predictably on both platforms.
 
 ### Native-side safety net
 
@@ -671,12 +671,11 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 
 ### Rule
 
-- **fx works with or without React Compiler** — native `previousProps` equality checking (diff-based, not reference-based) is intended to ensure unchanged props don't trigger native work
-- **Conditional (ledger: SURF-010, status = `implementation-pending`)**: the above is intended guidance pending SDK verification of `@Field` Record coercion filling omitted fields predictably (`51:85`, `RT-011`). If absent uniform fields aren't default-filled, value equality may fail and memoization becomes needed.
+- **fx works with or without React Compiler** — native `previousProps` equality checking (diff-based, not reference-based) ensures unchanged props don't trigger native work. Verified on SDK 56: both primitive and nested `Record` props compare by value.
 - **With React Compiler**: no action needed — automatic memoization
-- **Without React Compiler**: module-level constants for static presets are an optional optimization; inline builders are safe contingent on the Record coercion check above
-- **EffectStack and MotionSpec are value objects** — each `fx.effect.*` / `fx.motion.*` call returns a new immutable instance; the native side is intended to compare *values*, not references
-- **`useMemo`/`useCallback` are conditionally unnecessary** — contingent on RT-011 Record coercion verification
+- **Without React Compiler**: module-level constants for static presets are an optional optimization; inline builders are safe — `previousProps` value-equality skips unchanged nested records.
+- **EffectStack and MotionSpec are value objects** — each `fx.effect.*` / `fx.motion.*` call returns a new immutable instance; the native side compares *values*, not references
+- **`useMemo`/`useCallback` are unnecessary** — confirmed on SDK 56, both platforms
 
 ### Entity Diagram (What Goes Where)
 

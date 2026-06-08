@@ -65,7 +65,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | SURF-007 | deferred | `54` | A root overlay/portal for `transient`/`modal`. Lean: the app's job in V1. | — | revisit post-V1 only if placement proves insufficient |
 | SURF-008 | deferred | `55` | The `Fx.Stack` JSX-compound skin over the identical `EffectStack`. | — | build on real demand |
 | SURF-009 | open | `55`/`41` | The `SpringTune` shape — how spring/emphasis map to platform spring families. | — | resolved with `MOT-002` |
-| SURF-010 | device-pending | `50`/`54`/`55` | Memoization guidance — inline `uniforms`/`tune`/stack literals re-resolve each render; `data-layer` §5.1 claims native `previousProps` value-equality makes manual memo unnecessary. | — | the value-equality behavior for nested records proven on the pinned SDK; then the guidance documented (rework if references leak) |
+| SURF-010 | resolved | `50`/`54`/`55` | Memoization guidance — inline `uniforms`/`tune`/stack literals re-resolve each render; `data-layer` §5.1 claims native `previousProps` value-equality makes manual memo unnecessary. | — | **Verified on SDK 56, iOS + Android (2026-06-08).** `previousProps` compares both primitive and nested `Record` props by value. `@Field` defaults fill omitted fields. Guidance ratified in `data-layer` §5.1. |
 
 ## Effects — owner: `2-effects`
 
@@ -103,15 +103,15 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | RT-001 | device-pending | `30` | The cancel path and the full RNGH coexistence matrix (including `@gorhom/bottom-sheet` pan). | — | the device coexistence matrix passes |
 | RT-002 | deferred | `30` | Drag/tilt (G3) axis-aware claiming, resolved via `controlled` + RNGH relations. | — | post-V1 |
 | RT-003 | device-pending | `31` | GPU-loop device items — drawable-on-resume with no stall; one queue per view vs a shared singleton; on-demand vs continuous frames for the press/uniform path. | — | device benchmarks |
-| RT-004 | open | `31`/`53` | The Expo per-view recycling reset hook (a `prepareToRecycleView` equivalent on the pinned SDK). | — | the SDK capability confirmed and the reset routed |
+| RT-004 | resolved | `31`/`53` | The Expo per-view recycling reset hook (a `prepareToRecycleView` equivalent on the pinned SDK). | — | **Verified on SDK 56 (2026-06-08).** `shouldBeRecycled() = false` is sufficient — no reset hook needed. |
 | RT-005 | open | `32` | The SDF source — reuse the shader's shape uniform vs a separately declared hit-shape — and coordinate-unit normalization across `hitTest`/events/`setHighlight`. Lean: reuse the shader's shape. | — | the SDF source and coordinate space pinned |
 | RT-006 | device-pending | `32` | SDF feather/threshold tuning and per-frame `hitTest` cost under rapid touch. | — | device tuning and a cost check |
 | RT-007 | implementation-pending | `34` | The interruptible-spring retarget contract (no snap, no double-animation). | `FxAnimationDriver` (blueprint Unit 6) | the contract implemented and device-verified per platform |
 | RT-016 | device-pending | `34` | Animator sufficiency — whether `CASpringAnimation`/`dynamicanimation` give enough control, or a custom displacement integrator is needed (open in `34`). | the driver's primitive choice (RT-007) | on-device proof the platform animators handle the harder retarget cases, or a decision to build the integrator |
 | RT-008 | open | `36` | Runtime-object granularity — one driver with two families vs two objects; `FxEffectRenderer` decorative-vs-interactive split; shared vs per-object scheduling. Lean: one driver, two families, shared scheduling. | the object graph (Unit 9) | the object graph finalized at implementation |
 | RT-009 | open | `51`/`01` | The exact Expo path to author a hosted view (mount a SwiftUI/Compose host, pass props/children; expo/expo#46549). | the hosted substrate | the hosted authoring path proven |
-| RT-010 | open | `51` | One vs several native view classes. Lean: several substrate-specific (`FxHostedView`/`FxSurfaceView`); only registration ergonomics remain. | blueprint Unit 1, `IMPL-001` | registration ergonomics confirmed on SDK 56 |
-| RT-011 | device-pending | `51` | `@Field` `Record` coercion of absent uniforms on the pinned SDK. | — | implementation verification on device |
+| RT-010 | resolved | `51` | One vs several native view classes. Lean: several substrate-specific (`FxHostedView`/`FxSurfaceView`); only registration ergonomics remain. | blueprint Unit 1, `IMPL-001` | **Verified on SDK 56, iOS + Android (2026-06-08).** Three views resolve without duplicate-registration errors. Fast refresh clean. |
+| RT-011 | resolved | `51` | `@Field` `Record` coercion of absent uniforms on the pinned SDK. | — | **Verified on SDK 56, iOS + Android (2026-06-08).** `@Field` defaults fill omitted fields on both platforms. |
 | RT-012 | open | `35` | Whether the handshake generalizes to a general native-eased declarative-state primitive, or stays presence-specific in V1. | — | V1 stays presence-specific unless demand appears |
 | RT-013 | device-pending | `33` | Content-motion hosted-reachability (strictly `expo-view`?) and New-Architecture-only vs a Paper fallback. Lean: `expo-view` + New Arch only (SDK 56 floor). | — | confirmed on device |
 | RT-014 | device-pending | `33`/blueprint Unit 4 | The `mountChildComponentView` override that routes RN children into the fx-owned, Fabric-invisible container — the mechanic that makes the wrapper wrap anything. | the content wrapper (blueprint Units 4–7) | the override verified on Fabric on device |
@@ -159,7 +159,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | SURF-005 | `data-layer` §5 | `native` feedback | **ratify** — confirm, then propagate to `57` |
 | SURF-006 | `data-layer` §9 (D3) / §10 | `FxGroup` iOS-only V1; Android flat fallback | **ratify** — morph scope is still open; confirm before propagating to `57`/`21` |
 | SURF-009 | `data-layer` §8 (I2) | `SpringTune` removed — use `Transition.spring` + `tune` | **propagate** — a clean dedup; copy to `55`/`41`, then `resolved` |
-| SURF-010 | `data-layer` §5.1 | native `previousProps` value-equality → no manual memo | **device-verify** — prove value-equality skips work on the pinned SDK; **rework** if references leak through |
+| SURF-010 | `data-layer` §5.1 | native `previousProps` value-equality → no manual memo | **propagate** — verified on SDK 56; both primitive and nested Record props compare by value. Guidance ratified in `data-layer` §5.1. |
 | MOT-001 | `data-layer` §3 | the full preset catalog (iOS springs `[device-pending]`) | **device-verify** before source closure; then propagate confirmed values |
 | MOT-002 | `data-layer` §4 | `tune` = `speed`/`emphasis`/`distance` + scaling formulas | **device-verify** the spring constants; then propagate to `41` |
 | FX-001 | `data-layer` §1 | `fill` exposes the full `width×height` mesh grid + `drift` | **ratify** — `20` still asks full-grid vs N-stop sugar and whether `drift` is mesh-only; close both, then propagate |
@@ -168,7 +168,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | FX-006 | `data-layer` §7 | `registerShader` API + asset locations + build integration | **ratify** — BYO is still open; confirm the contract before propagating to `22` |
 | FX-009 | `data-layer` §9 (D4) | Android `symbol` = Lottie + AVD fallback, else `{via:'none'}` | **ratify** — realization still says `planned` / V1 scope open; confirm, then close `24` |
 | RT-008 | `data-layer` §9 (D1) + `architecture` §2 | the five-view object model | **propagate** the view model; residual driver family-split + scheduling stays open in `36` |
-| RT-010 | `data-layer` §9 (D1/D2) + `architecture` §1 | one module `ReactNativeFx`, several named views; rename `FxShader`→`ReactNativeFx` | **rework** — `architecture` still calls `FxNativeView` the single routing orchestrator, contradicting the several-views model; reconcile + SDK-verify registration, then close `51` |
+| RT-010 | `data-layer` §9 (D1/D2) + `architecture` §1 | one module `ReactNativeFx`, several named views; rename `FxShader`→`ReactNativeFx` | **propagate** — reconciled during U1-002; SDK-verified on U1-003. `architecture.md` already reflects several views (quoting `51 §Decisions #5`). Registration keying confirmed. |
 | RT-015 | `architecture` §2 / `data-layer` §1 | the wrapper-mechanic terms (container vs sublayer vs `addSublayer`) — internally inconsistent | **rework** — plane `7` mixed three descriptions; `33`/`34` decide the real target object, then reconcile `architecture`/`data-layer` |
 
 **Default to `ratify`/`rework` over `propagate` when in doubt.** The cost of laundering a plane-`7` guess into a source-of-truth decision is higher than a second look. RT-015 (the wrapper mechanic) is the standing example: a plane-`7` materialization that is internally inconsistent, not yet a decision — which is why it carries `rework`, not `propagate`.

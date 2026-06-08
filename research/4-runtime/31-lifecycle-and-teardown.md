@@ -61,14 +61,8 @@ destructor never fires, you have one of these cycles.*
 
 Fabric view-recycling is **on by default for general RN views**, but **Expo Modules
 views opt out** — `shouldBeRecycled() = false`, so fx's views are **never recycled**
-(verified, `33`/`35`). Recycling is therefore **not an active Expo-view hazard**; the
-reset rule is **defensive** — it also runs from the idempotent teardown path (it is safe
-to run twice) and guards any platform divergence. The contract stands: make
-prop-application **fully self-sufficient** (resolve the complete shader+uniform config
-from current props, never assume prior state); on rebind **keep** the expensive
-identity-stable resources (device/queue/library, and the same-id pipeline) but **reset**
-per-bind state (uniforms, animation clock, paused flag). Don't opt into Android
-`enableViewRecycling` in V1 — that would *introduce* the hazard fx otherwise avoids.
+(verified on SDK 56, iOS + Android, 2026-06-08). Recycling is therefore **not an active
+Expo-view hazard**; no per-view reset hook is needed.
 
 ## The content-motion runtime (same rules, different resources)
 
@@ -115,8 +109,9 @@ same contract:
   under many simultaneous surfaces.
 - **On-demand vs continuous for the press/uniform path** — does one frame per
   touch/`setUniform` feel responsive, or do interactive shaders need a short burst?
-- **Expo per-view recycling reset hook** — does the pinned SDK expose a
-  `prepareToRecycleView` equivalent to route to the reset? (`53`).
+- ~~**Expo per-view recycling reset hook**~~ — **resolved: unnecessary.** `shouldBeRecycled() = false`
+  is sufficient — Expo views are never recycled on SDK 56 (verified iOS + Android, 2026-06-08).
+  No reset hook is needed.
 
 ## Sources
 

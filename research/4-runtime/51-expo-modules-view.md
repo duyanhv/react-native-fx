@@ -79,11 +79,11 @@ select the lowering (per `02`), write config, sync the recognizer/clock/animatio
 
 - **Hosted-view authoring** — the exact Expo path to mount a SwiftUI/Compose host inside
   an `ExpoView` and pass props/children (ties to `01`, `structure.*`, expo/expo#46549).
-- ~~**One native view class vs several**~~ — **leaning several**: a class **per substrate**
-  (`hosted` vs `expo-view`, blueprint Unit 1), not a single `FxView` switching on `node`; the
-  remaining open part is the registration ergonomics on the pinned SDK.
-- **Record coercion of absent uniforms** — confirm `@Field` defaults fill omitted fields
-  on the pinned SDK.
+- ~~**One native view class vs several**~~ — **resolved: several** — three substrate-specific
+  views (`FxHostedView`, `FxSurfaceView`, `FxGroupView`) registered under one module. SDK 56
+  registration keying confirmed on iOS and Android (2026-06-08).
+- ~~**Record coercion of absent uniforms**~~ — **resolved: `@Field` defaults fill omitted
+  fields** — confirmed on SDK 56, iOS and Android (2026-06-08).
 
 ## Sources
 
