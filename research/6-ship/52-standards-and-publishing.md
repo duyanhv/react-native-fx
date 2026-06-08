@@ -136,7 +136,10 @@ The keystone packaging detail — each platform compiles/packages its own shader
    concern.
 8. **The `exports` map is the only stability contract — root export for V1**; subpath
    exports are optional V2 polish (verify Metro `exports` support; minimal bundle benefit).
-9. **Do not scope-split into `@react-native-fx/*` packages yet** — version coordination,
+9. **V1 curated shaders are hand-maintained MSL+AGSL pairs** — author the `.metal` and
+   `.agsl` implementation for each catalog id directly. The author-once compiler remains
+   additive V2 build-time codegen (`03`), not a prerequisite for the V1 catalog.
+10. **Do not scope-split into `@react-native-fx/*` packages yet** — version coordination,
    install friction, and premature boundaries before the product is stable. The only later
    split worth considering: `@react-native-fx/compiler` (the optional build-time shader/
    effect emitter, `03`) and `@react-native-fx/lab` (experimental effects/recipes — a home
@@ -149,8 +152,6 @@ The keystone packaging detail — each platform compiles/packages its own shader
   the pinned SDK 56 toolchain (carried from `_legacy/08`/`00`).
 - **AGSL asset packaging path** — exact Android assets vs res/raw location and the
   runtime read API; pin with `structure.android`.
-- **Single source for the curated shaders** — author once (GLSL/SkSL) → transpile to
-  MSL+AGSL, or hand-maintain the pair per effect? (Ties to `03` compiler.)
 - **`surface/` exports come from the ratified vocabulary (`50`/`54`–`57`), not the folder
   layout.** The component set is now pinned: `FxPresence` (`54`), `FxView`/`FxPressable`/
   `FxGroup`/`FxItem` (`57`), `<Fx>` single-or-stack (`55`), plus curated effect components

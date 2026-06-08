@@ -37,7 +37,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-010 | 3-motion | ratify | todo | no | — | MOT-010 | — | docs: `41`/`42` reduce-motion policy |
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
 | DOC-012 | 6-ship | ratify | todo | no | — | SHIP-002 | — | docs: `53` no-rung degradation UX |
-| DOC-013 | 2-effects | ratify | todo | no | — | REAL-004 | — | docs: `52` single-source shaders (ties compiler) |
+| DOC-013 | 2-effects | ratify | merged | no | — | REAL-004 | — | V1 curated shaders hand-maintain MSL+AGSL pairs; compiler remains additive V2; [task](./tasks/DOC-013/) · [review](./reviews/DOC-013.md) |
 
 ### V1 build — Units 1–3 + ship
 
@@ -55,7 +55,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
 | U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
-| U3-006 | Unit 3 | implement | todo | yes | FX-004 | — | DOC-007, U3-001 | implement native MSL+AGSL support for `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`; expose unified `ShaderId` using the committed RT-009 hosted slice |
+| U3-006 | Unit 3 | implement | todo | yes | FX-004, REAL-004 | — | DOC-007, DOC-013, U3-001 | implement hand-maintained MSL+AGSL support for `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`; expose unified `ShaderId` using the committed RT-009 hosted slice |
 | U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
 
 ### V2 build — Units 4–9

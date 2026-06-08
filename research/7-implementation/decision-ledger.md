@@ -124,7 +124,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | REAL-001 | device-pending | `structure.android` | Pin the concrete M3 Expressive floor. It is progressive enhancement over the standard spring, version-fluid until pinned. | Android motion defaults | a concrete minimum pinned and the standard-spring fallback verified |
 | REAL-002 | device-pending | `52`/`structure.ios` | CocoaPods emits `FxShaders.bundle` unmangled and `MTL_LIBRARY_OUTPUT_DIR` lands `default.metallib` at the bundle root on SDK 56. | iOS shader loading | build verification on the pinned toolchain |
 | REAL-003 | open | `52`/`structure.android` | The exact AGSL asset packaging path (assets vs res/raw) and the runtime read API. | Android shader loading | the path pinned with `structure.android` |
-| REAL-004 | open | `52`/`03` | Single source for the curated shaders — author once (GLSL/SkSL) and transpile, or hand-maintain the MSL+AGSL pair. | — | an authoring pipeline decided (ties `SPINE-008`) |
+| REAL-004 | resolved | `52`/`03` | Single source for the curated shaders — author once (GLSL/SkSL) and transpile, or hand-maintain the MSL+AGSL pair. | — | **Resolved (DOC-013, 2026-06-08).** V1 curated shaders are hand-maintained MSL+AGSL pairs. The author-once compiler remains additive V2 build-time codegen per `03`; SPINE-008 stays deferred for compiler IR/build-trigger details. |
 
 ## Ship — owner: `6-ship`
 
