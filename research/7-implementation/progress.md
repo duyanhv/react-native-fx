@@ -46,7 +46,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
 | U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
 | U1-003 | Unit 1 | device-verify | ready-to-merge | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
-| U1-004 | Unit 1 | implement | headless-done | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs): iOS autolink+compile, Android autolink, ts, swift. Library `podspecPath` fix. docs-close (SHIP-003) pending; [detail](#u1-004--bare-fabric-example-in-ci) |
+| U1-004 | Unit 1 | implement | ready-to-merge | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. [detail](#u1-004--bare-fabric-example-in-ci) |
 | U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
 | U2-001 | Unit 2 | implement | todo | no | SPINE-013 | SPINE-013 | — | headless: `select()` planned-rung tests |
 | U2-002 | Unit 2 | rework | todo | no | SPINE-003 | SPINE-003 | — | headless: `tsc` on reconciled UniformSpec |
@@ -100,12 +100,12 @@ Through `reviewed` ([review](./reviews/U1-001.md), approved). `docs-closed` is *
 - **SHIP-001 — closed.** `package.json` matches `52` (root `exports`, `files` allowlist shipping
   both shader trees, `publishConfig` public, `FxShader` dropped); `npm pack --dry-run` verified.
 - **IMPL-001 — carried (stays `implementation-pending`).** The scaffolding pass landed headless,
-  but IMPL-001 closes only when its consumed rows do: **RT-010** (substrate-view registration —
-  U1-002; itself a `rework`) and **REAL-002** (native build / metallib resolves — device, U3-005).
+  but IMPL-001 closes only when its consumed rows do. **RT-010** is now resolved (U1-003, 2026-06-08).
+  **REAL-002** (native build / metallib resolves — device, U3-005) remains the sole blocker.
+- **`apple.podspecPath`** declared in `packages/expo-module.config.json` (U1-004 finding) — makes
+  autolinking install-method-agnostic. Recorded in the IMPL-001 package-identity context.
 
-So U1-001 is **complete-blocked on IMPL-001**, not on its own work. Two ways forward (owner's call):
-merge U1-001 now coupled to U1-002 + the device gate, or re-scope IMPL-001's `Closes:` onto the
-task that lands RT-010/REAL-002 so U1-001 completes on SHIP-001 alone.
+So U1-001 is **complete-blocked on IMPL-001**, now gated only on REAL-002 (U3-005).
 
 ## U4-001 — wrapper mechanic
 
@@ -179,7 +179,7 @@ Proof:
 
 ## U1-004 — bare Fabric example in CI
 
-Type: `implement` · State: `headless-done` · Closes: SHIP-003 · [task](./tasks/U1-004-bare-fabric-example-ci/)
+Type: `implement` · State: `ready-to-merge` · Closes: SHIP-003 · [task](./tasks/U1-004-bare-fabric-example-ci/)
 
 Checklist:
 - [x] spec'd
@@ -187,11 +187,11 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done (CI green on GitHub — all 4 jobs; `bare-ios` on `macos-26` for Swift 6.2)
+- [x] docs-closed (SHIP-003 resolved in `53` and ledger; `apple.podspecPath` recorded)
 - [ ] reviewed
-- [ ] docs-closed
 - [ ] merged
 
-Progress (native install path proven locally; CI run pending):
+Progress (CI green — all 4 jobs on GitHub):
 - **Bare fixture built + verified locally:** `example-bare/` — literal bare RN 0.85.3 / New-Arch
   app (bun, committed `ios/`+`android/`), Expo Modules via `install-expo-modules`,
   `react-native-fx` as `file:../packages`. Both platforms autolink fx (iOS `Podfile.lock` →
@@ -210,12 +210,9 @@ Progress (native install path proven locally; CI run pending):
   autolink proven. `apple.podspecPath` library-config change on main.
 
 Proof:
-- headless: package build/lint (green); CI `bare-ios` — iOS autolink (`Podfile.lock`) + native
-  compile **proven locally**; CI `bare-android` — autolink resolve (package + module class)
-  **proven locally**. Android native compile deferred to U1-005.
+- headless: package build/lint (green); CI all 4 jobs green — iOS autolink + native compile proven; Android autolink proven.
 - device: N/A — U1-003 owns runtime/device verification.
-- docs: `53` open question "Bare + Fabric CI"; decision-ledger SHIP-003. Plus the `apple.podspecPath`
-  library-config change recorded in its IMPL-001 / RT-010 row before docs-close.
+- docs: `53` open question closed (Bare + Fabric CI); SHIP-003 resolved in ledger. `apple.podspecPath` library-config change recorded.
 
 ## Maintenance
 

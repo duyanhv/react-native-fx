@@ -82,7 +82,11 @@ mechanism for "this effect needs a newer OS" — handled as data, not as a plugi
 
 ## Open questions
 
-- **Bare + Fabric CI** — ship a bare RN example in CI so the install path doesn't rot.
+- ~~**Bare + Fabric CI**~~ — **resolved.** A bare React Native + Fabric example (`example-bare/`)
+  is wired into CI (`.github/workflows/ci.yml`). All 4 jobs pass on GitHub: TypeScript, Swift format,
+  bare iOS build (Metal toolchain → `pod install` → `xcodebuild` — proves native autolink + compile),
+  bare Android autolink (package id + module class resolve). Proven on `macos-26` with Swift 6.2
+  (2026-06-07, U1-004).
 - **Runtime guard UX** — when an effect has no satisfiable rung (e.g. AGSL below API 33
   with no fallback), what does the consumer see — a no-op, a static fallback, a dev
   warning? Tie to `50` and the `{via:'none'}` contract (`02`).
