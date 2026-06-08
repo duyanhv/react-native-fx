@@ -66,7 +66,6 @@ decision** (`6-ship`), **not a core architecture promise**:
 ```tsx
 <EdgeGlow intensity={0.8} />         // ≈ <Fx effect="edge-glow" intensity={0.8} />
 <MeshGradient palette="aurora" />
-<GlassView variant="regular" />     // material variant (not the public `effect` id)
 ```
 
 Optional thin sugar over `<Fx effect="…">`; the `effect=` preset is the canonical form.
@@ -82,7 +81,7 @@ Optional thin sugar over `<Fx effect="…">`; the `effect=` preset is the canoni
 3. **Three preset-like bundles** — `preset` (presentation), `feedback` (press), `effect`
    (visual) — on three owned surfaces; an honest domain split, not a reduction.
 4. **The canonical API is `<Fx effect="…">`.** If named effect components ship at all
-   (`EdgeGlow`/`MeshGradient`/`GlassView`), they are optional sugar over it — an **open ship
+   (`EdgeGlow`/`MeshGradient`), they are optional sugar over it — an **open ship
    decision** (`6-ship`), not a core promise, and only effects qualify (fx draws them whole).
    Escape is downward — `tune` → `motion`/`effect` overrides → builders.
 

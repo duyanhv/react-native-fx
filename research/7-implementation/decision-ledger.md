@@ -56,7 +56,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 
 | id | status | source | decision / pending work | blocks | close condition |
 |---|---|---|---|---|---|
-| SURF-001 | doc-cleanup | `56` | Whether `GlassView` stays a curated-effect-component candidate. Lean: remove (glass stays `<Fx effect="glass">`). | V1 API naming | `56` no longer lists un-ratified component names |
+| SURF-001 | resolved | `56` | Whether `GlassView` stays a curated-effect-component candidate. Lean: remove (glass stays `<Fx effect="glass">`). | V1 API naming | **Resolved (DOC-001, 2026-06-08).** `GlassView` removed from `56` — `56` no longer lists un-ratified component names. |
 | SURF-002 | open | `56`/`52` | Whether to ship the named effect-component sugar at all (`EdgeGlow`/`MeshGradient`/…). Lean: a small curated set, sugar over `<Fx effect="…">`. | the V1 export map (`SHIP-001`) | a ship decision recorded in `6-ship` |
 | SURF-003 | open | `50`/`56` | The V1 `preset`/`feedback`/`effect` value vocabularies (`transient`/`lift`/`native`/…), behavior-named. | the surface API | the V1 vocabulary pinned (pairs with `MOT-001`) |
 | SURF-004 | open | `57`/`40`/`56` | The `FxView` named-state vocabulary (`idle`/`selected`/…) and its `MotionSpec` map per preset. | `FxView` state API | the per-preset state set pinned |
@@ -64,7 +64,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | SURF-006 | open | `57`/`21` | `FxGroup` morph scope (which effects beyond glass support cross-item morph) and the `spacing`/merge-threshold contract. | the glass compound API | morph scope and merge semantics defined |
 | SURF-007 | deferred | `54` | A root overlay/portal for `transient`/`modal`. Lean: the app's job in V1. | — | revisit post-V1 only if placement proves insufficient |
 | SURF-008 | deferred | `55` | The `Fx.Stack` JSX-compound skin over the identical `EffectStack`. | — | build on real demand |
-| SURF-009 | open | `55`/`41` | The `SpringTune` shape — how spring/emphasis map to platform spring families. | — | resolved with `MOT-002` |
+| SURF-009 | resolved | `55`/`41` | The `SpringTune` shape — how spring/emphasis map to platform spring families. | — | **Resolved (DOC-001, 2026-06-08).** `SpringTune` removed from `55`; `Transition.spring` uses raw spring parameters. Canonical `tune` API (`speed`/`emphasis`/`distance`) covers intent adjustment (`data-layer.md` I2). |
 | SURF-010 | resolved | `50`/`54`/`55` | Memoization guidance — inline `uniforms`/`tune`/stack literals re-resolve each render; `data-layer` §5.1 claims native `previousProps` value-equality makes manual memo unnecessary. | — | **Verified on SDK 56, iOS + Android (2026-06-08).** `previousProps` compares both primitive and nested `Record` props by value. `@Field` defaults fill omitted fields. Guidance ratified in `data-layer` §5.1. |
 
 ## Effects — owner: `2-effects`
@@ -158,7 +158,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | SURF-004 | `data-layer` §5 | `lift` states `idle`/`selected` | **ratify** — confirm the V1 state set, then propagate to `57` |
 | SURF-005 | `data-layer` §5 | `native` feedback | **ratify** — confirm, then propagate to `57` |
 | SURF-006 | `data-layer` §9 (D3) / §10 | `FxGroup` iOS-only V1; Android flat fallback | **ratify** — morph scope is still open; confirm before propagating to `57`/`21` |
-| SURF-009 | `data-layer` §8 (I2) | `SpringTune` removed — use `Transition.spring` + `tune` | **propagate** — a clean dedup; copy to `55`/`41`, then `resolved` |
+| SURF-009 | `data-layer` §8 (I2) | `SpringTune` removed — use `Transition.spring` + `tune` | **resolved** — propagated to `55` (DOC-001). `41` already clean. |
 | SURF-010 | `data-layer` §5.1 | native `previousProps` value-equality → no manual memo | **propagate** — verified on SDK 56; both primitive and nested Record props compare by value. Guidance ratified in `data-layer` §5.1. |
 | MOT-001 | `data-layer` §3 | the full preset catalog (iOS springs `[device-pending]`) | **device-verify** before source closure; then propagate confirmed values |
 | MOT-002 | `data-layer` §4 | `tune` = `speed`/`emphasis`/`distance` + scaling formulas | **device-verify** the spring constants; then propagate to `41` |

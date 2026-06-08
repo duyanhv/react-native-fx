@@ -43,7 +43,7 @@ The builder has **value semantics** — each call returns a new immutable builde
 accumulates an ordered `EffectStack`:
 
 ```ts
-type Transition = { duration?: number; delay?: number; easing?: string; spring?: SpringTune };
+type Transition = { duration?: number; delay?: number; easing?: string; spring?: { stiffness?: number; damping?: number; mass?: number } };
 
 interface EffectStep {
   node: 'fill' | 'shader' | 'material' | 'filter' | 'symbol';  // render-targets + the filter modifier — NOT 'motion'
@@ -108,8 +108,9 @@ Same `fx` namespace, two sub-builders, two non-interchangeable types. `transitio
 
 - **The deferred JSX-compound skin** (`<Fx.Stack>`) over the identical `EffectStack` —
   build now or on demand? (deferred.)
-- **`SpringTune` shape** — how `spring`/`emphasis` map to platform spring families (shared
-  with `41`'s `tune`).
+- ~~**`SpringTune` shape**~~ — **resolved: `SpringTune` removed.** The canonical API is
+  `tune = { speed, emphasis, distance }` (`data-layer.md` I2). `Transition.spring` uses raw
+  spring parameters (`stiffeness`, `damping`, `mass`) for direct control.
 - **Memoization** — an inline-built stack rebuilds each render; document stable-ref/`useFx`.
 
 ## Sources

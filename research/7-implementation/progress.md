@@ -25,7 +25,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| DOC-001 | 1-surface | doc-cleanup | todo | no | — | SURF-001, SURF-009 | — | docs: `56`/`55`/`41` drop `GlassView` + `SpringTune` |
+| DOC-001 | 1-surface | doc-cleanup | ready-to-merge | no | — | SURF-001, SURF-009 | — | `GlassView` dropped from `56`; `SpringTune` removed from `55`; SURF-001 + SURF-009 resolved |
 | DOC-002 | 0-spine | ratify | todo | no | — | SPINE-004, SPINE-005, SPINE-006, SPINE-007 | — | docs: `02` composition, feature-flags, partitioning, lib naming |
 | DOC-003 | 0-spine | ratify | todo | no | — | SPINE-001, SPINE-002 | — | docs: `00`/`50` curation/BYO threshold, palettes-as-artifact |
 | DOC-004 | 1-surface | ratify | todo | no | — | SURF-002 | — | docs: `56`/`6-ship` ship effect components? |
