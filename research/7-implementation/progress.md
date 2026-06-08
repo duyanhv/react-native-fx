@@ -48,7 +48,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-003 | Unit 1 | device-verify | ready-to-merge | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
 | U1-004 | Unit 1 | implement | ready-to-merge | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. [detail](#u1-004--bare-fabric-example-in-ci) |
 | U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
-| U2-001 | Unit 2 | implement | todo | no | SPINE-013 | SPINE-013 | — | headless: `select()` planned-rung tests |
+| U2-001 | Unit 2 | implement | ready-to-merge | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; [detail](#u2-001--planned-rung-selection) |
 | U2-002 | Unit 2 | rework | todo | no | SPINE-003 | SPINE-003 | — | headless: `tsc` on reconciled UniformSpec |
 | U3-001 | Unit 3 | implement | todo | yes | FX-004 | RT-009 | U1-002, U2-001 | device: hosted fill/material/shader/symbol render |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
@@ -139,6 +139,25 @@ Proof:
 - headless: `tsc` — the manifest types compile against the reconciled UniformSpec
 - device: N/A
 - docs: `02` §The schema, decision-ledger SPINE-003
+
+## U2-001 — planned-rung selection
+
+Type: `implement` · State: `ready-to-merge` · Consumes: SPINE-013 · Closes: SPINE-013 · [task](./tasks/U2-001-planned-rung-selection/)
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
+- [ ] reviewed
+- [x] docs-closed
+- [ ] merged
+
+Proof:
+- headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run test` from `packages/` all pass. 17 Jest tests prove planned rungs are skipped, out-of-scope rungs are skipped, OS gating works, `wantInteractive` enforces expo-view, driver target matching works, and empty/guarded-out ladders degrade to `{ via: 'none' }`.
+- device: N/A.
+- docs: `02` selection rule updated with `planned` skip. decision-ledger SPINE-013 resolved.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration
 

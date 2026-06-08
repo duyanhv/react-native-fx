@@ -67,13 +67,6 @@
     "react-native": "0.85.3",
     "typescript": "~6.0.3"
   },
-  "jest": {
-    "preset": "jest-expo",
-    "roots": [
-      "<rootDir>/src"
-    ],
-    "passWithNoTests": true
-  },
   "peerDependencies": {
     "expo": "*",
     "react": "*",

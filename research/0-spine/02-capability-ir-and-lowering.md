@@ -140,6 +140,7 @@ matches the intended default, and let `requires` filter the rest.
 ```
 select(node, platform, ctx = { deviceOS, wantInteractive, target = 'effect' }):
   for rung in node.lower[platform]:          # ordered, best-first
+    if rung.status == 'planned':             continue
     if rung.status == 'out-of-scope':        continue
     if rung.requires.os > ctx.deviceOS:      continue
     if ctx.wantInteractive and node.interaction == 'fx'
