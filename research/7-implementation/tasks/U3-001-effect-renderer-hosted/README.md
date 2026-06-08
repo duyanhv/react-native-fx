@@ -46,8 +46,8 @@ Subtask: hosted effect renderer (blueprint Unit 3)
                       on screen on each platform where its decision is unblocked.
 - Done when:         RT-009 is satisfied: hosted mount + prop/config path proven on
                       both platforms. Effect coverage is incremental — fill (iOS + Android)
-                      and iOS material first (unblocked); Android material after U3-003 /
-                      FX-003; shader after DOC-007/FX-004; symbol iOS-only after
+                      and iOS material first (unblocked); Android material out of scope
+                      (U3-003 / FX-003); shader after DOC-007/FX-004; symbol iOS-only after
                       DOC-008/FX-009 closes (Android symbol deferred).
 ```
 

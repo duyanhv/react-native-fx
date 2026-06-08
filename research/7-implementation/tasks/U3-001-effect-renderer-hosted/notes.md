@@ -8,8 +8,8 @@ All claims — this is a device-verify task. Effects do not run headless.
 
 - **Spec'd** — created `tasks/U3-001-effect-renderer-hosted/README.md` from the subtask template.
   Consumes FX-004 (shader catalog), closes RT-009 (hosted authoring path).
-  Blockers: DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol),
-  U3-003 (FX-003 — Android material).
+  Blockers:   DOC-007 (FX-004 — shader catalog), DOC-008 (FX-009 — Android symbol).
+  Related follow-up: U3-003 owns Android material / FX-003 (not a blocker).
 
 - **Staged scope** — implementation proceeds in unlock order:
   - **RT-009 (hosted mount + prop path):** FxHostedView embeds SwiftUI/Compose host, passes
