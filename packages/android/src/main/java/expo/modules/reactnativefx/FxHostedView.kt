@@ -1,26 +1,24 @@
 package expo.modules.reactnativefx
 
 import android.content.Context
-import android.view.Gravity
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Shader
+import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 
 /**
  * Hosts the platform-native decorative rendering surface for the `hosted` substrate.
  *
- * A [ComposeView] embeds a composable selected by the `effect` prop. The host
- * owns sizing and touch passthrough; it never samples or wraps RN content (rule #4).
  * Props stash in the two-phase Expo pattern and are applied once per batch in
- * [applyResolvedConfig].
+ * [applyResolvedConfig]. The fill effect uses a plain [View] with gradient
+ * [LinearGradient] drawn in [onDraw] to avoid a Compose compiler dependency
+ * at the library level.
  */
 class FxHostedView(
   context: Context,
@@ -30,7 +28,7 @@ class FxHostedView(
   val onFxLoad by EventDispatcher<Unit>()
   val onFxError by EventDispatcher<Unit>()
 
-  private var composeView: ComposeView? = null
+  private var effectView: View? = null
   private var pendingEffect: String? = null
   private var pendingIntensity: Double = 0.8
 
@@ -51,68 +49,68 @@ class FxHostedView(
       return
     }
 
-    mountHost(effect, pendingIntensity)
+    mountEffect(effect, pendingIntensity)
   }
 
-  private fun mountHost(effect: String, intensity: Double) {
+  private fun mountEffect(effect: String, intensity: Double) {
     removeHost()
 
-    val view = ComposeView(context)
-    view.layoutParams = FrameLayout.LayoutParams(
-      FrameLayout.LayoutParams.MATCH_PARENT,
-      FrameLayout.LayoutParams.MATCH_PARENT
-    ).apply {
-      gravity = Gravity.FILL
+    val view = when (effect) {
+      "fill" -> FillView(context, intensity)
+      else -> return
     }
 
-    view.setContent {
-      when (effect) {
-        "fill" -> FillEffect(intensity = intensity.toFloat())
-        // Android material is out of scope — the material rendering path
-        // and RenderEffect blur/intensity belong on Android's glass contract.
-        else -> { /* empty — unknown effect id, render nothing */ }
-      }
-    }
-
+    view.layoutParams = ViewGroup.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT,
+      ViewGroup.LayoutParams.MATCH_PARENT
+    )
     addView(view)
-    composeView = view
+    effectView = view
   }
 
   private fun removeHost() {
-    composeView?.let {
-      removeView(it)
-      it.disposeComposition()
-    }
-    composeView = null
-  }
-
-  override fun onDetachedFromWindow() {
-    super.onDetachedFromWindow()
-    // Compose disposal is handled by removeHost; pause presentation on detach.
+    effectView?.let { removeView(it) }
+    effectView = null
   }
 }
 
 /**
- * A self-contained generative gradient fill for the hosted substrate.
+ * A plain [View] that draws a blue-to-purple linear gradient fill.
  *
- * Renders a linear gradient from blue to purple. [intensity] fades the
- * gradient from invisible (0f) to full opacity (1f).
+ * Intensity fades from invisible (0f) to full opacity (1f). Uses the
+ * Android graphics [LinearGradient] shader, not Compose.
  */
-@androidx.compose.runtime.Composable
-private fun FillEffect(intensity: Float) {
-  val colors = remember {
-    listOf(
-      Color(0.3f, 0.5f, 1.0f, 1.0f),
-      Color(0.6f, 0.3f, 0.9f, 1.0f)
-    )
+private class FillView(
+  context: Context,
+  intensity: Double
+) : View(context) {
+  private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+  private var gradient: LinearGradient? = null
+  private val alpha = (intensity * 255).toInt().coerceIn(0, 255)
+
+  override fun onDraw(canvas: Canvas) {
+    super.onDraw(canvas)
+    val shader = gradient ?: createGradient().also { gradient = it }
+    fillPaint.shader = shader
+    fillPaint.alpha = alpha
+    canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fillPaint)
   }
 
-  Canvas(modifier = Modifier.fillMaxSize()) {
-    val brush = Brush.linearGradient(
-      colors = colors,
-      start = Offset(0f, 0f),
-      end = Offset(size.width, size.height)
+  override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+    super.onSizeChanged(width, height, oldWidth, oldHeight)
+    gradient = null
+  }
+
+  private fun createGradient(): LinearGradient {
+    return LinearGradient(
+      0f, 0f,
+      width.toFloat(), height.toFloat(),
+      intArrayOf(
+        Color.rgb(77, 128, 255),
+        Color.rgb(153, 77, 230)
+      ),
+      null,
+      Shader.TileMode.CLAMP
     )
-    drawRect(brush = brush, alpha = intensity)
   }
 }
