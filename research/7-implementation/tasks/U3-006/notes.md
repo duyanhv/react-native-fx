@@ -2,11 +2,13 @@
 
 ## Unverified claims
 
-- **No successful on-device render yet on either platform.** This commit is a headless-done
-  checkpoint, not device-verified.
+- **Render path VERIFIED on both platforms (2026-06-08).** Android: all ten AGSL shaders on a
+  POCO F1 (API 35), both regression fixes confirmed live (no blank on switch, no flicker/clock-jump
+  on intensity drag). iOS: verified by the maintainer on iOS 17+ (hosted Metal path renders). See
+  `evidence/device.md`. The `device-verified` gate is met. REAL-002 (iOS metallib) and REAL-003
+  (Android AGSL read) ledger closures remain owned by U3-005, not U3-006.
 - **Android:** the `<API-33` degradation is verified on an API-29 emulator (`shader = null` →
-  blank, as designed). The render path is **unverified** — AGSL/`RuntimeShader` requires API 33+;
-  re-test on an API 33+ device.
+  blank, as designed).
 - **iOS:** shader render unverified; depends on REAL-002 (`FxShaders.bundle/default.metallib`
   actually bundling the `fx_stitchable_*` functions). The hosted box was black until the library
   was pointed at the fx bundle (fixes #3); on-device render still to confirm.

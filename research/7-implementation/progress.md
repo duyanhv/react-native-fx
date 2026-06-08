@@ -55,7 +55,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
 | U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
-| U3-006 | Unit 3 | implement | headless-done | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders implemented; hosted dispatch wired on iOS + Android with <33 fallback; `ShaderId` widened to 10 ids; headless checks green; [detail](#u3-006--curated-shader-implementation) |
+| U3-006 | Unit 3 | implement | docs-pending | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
 
 ### V2 build — Units 4–9
@@ -208,7 +208,7 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified
+- [x] device-verified
 - [ ] docs-closed
 - [ ] reviewed
 - [ ] merged
@@ -220,10 +220,13 @@ Proof:
   Biome clean; swift-format clean.
 - device: iOS 17+ and Android API 33+ render every curated shader id; `intensity` updates from a
   discrete prop; `time` advances natively while visible; shader switching has no stale pixels or
-  crash; navigation/backgrounding pause and resume the native clock. Scenario written in
-  `tasks/U3-006/evidence/headless.md`. Device verification batches with or follows U3-005 because
-  iOS pixels depend on REAL-002 metallib bundling, and Android pixels depend on the REAL-003 AGSL
-  runtime read path.
+  crash; navigation/backgrounding pause and resume the native clock. Scenario in
+  `tasks/U3-006/evidence/headless.md`.
+  - **Android: PASS (2026-06-08)** — all ten AGSL shaders on a POCO F1 (API 35); blank-on-switch and
+    intensity-drag flicker fixes both confirmed live.
+  - **iOS: PASS (2026-06-08)** — verified by the maintainer on iOS 17+; shaders render through the
+    hosted Metal path. Evidence in `tasks/U3-006/evidence/device.md`. (REAL-002/REAL-003 ledger
+    closures remain owned by U3-005.)
 - docs: after device verification, reconcile `22`, `structure.ios.md`,
   `structure.android.md`, and this tracker so "package-exposed" means all ten rendered ids.
 
