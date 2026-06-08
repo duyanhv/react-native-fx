@@ -45,7 +45,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
 | U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
-| U1-003 | Unit 1 | device-verify | blocked | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | scenario handoff written; blocked on runnable app/device execution; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
+| U1-003 | Unit 1 | device-verify | device-pending | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | scenario handoff written; CI/runnable app path is green; waiting on human device execution; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
 | U1-004 | Unit 1 | implement | headless-done | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs): iOS autolink+compile, Android autolink, ts, swift. Library `podspecPath` fix. docs-close (SHIP-003) pending; [detail](#u1-004--bare-fabric-example-in-ci) |
 | U1-005 | Unit 1 | implement | todo | no | — | — | — | Android library build-readiness (paused 2026-06-07). Root cause: `packages/android/build.gradle` `defaultConfig` missing `versionCode`/`versionName`. **Fix verified locally:** adding both clears gradle config AND `assembleDebug` compiles green (BUILD SUCCESSFUL, 3m24s). Remaining: commit the 2-line fix + re-enable the Android compile in CI. The fix is currently UNCOMMITTED in `packages/android/build.gradle`. Surfaced by U1-004. |
 | U2-001 | Unit 2 | implement | todo | no | SPINE-013 | SPINE-013 | — | headless: `select()` planned-rung tests |
@@ -161,7 +161,7 @@ Proof:
 
 ## U1-003 — SDK-verify Expo boundary behaviors
 
-Type: `device-verify` · State: `blocked` · Consumes: RT-010, RT-011 · Closes: SURF-010, RT-010, RT-011, RT-004 · [task](./tasks/U1-003-sdk-verify-boundary/)
+Type: `device-verify` · State: `device-pending` · Consumes: RT-010, RT-011 · Closes: SURF-010, RT-010, RT-011, RT-004 · [task](./tasks/U1-003-sdk-verify-boundary/)
 
 Checklist:
 - [x] spec'd
@@ -174,7 +174,7 @@ Checklist:
 
 Proof:
 - headless: N/A — all claims require runtime/device observation.
-- device: four scenarios: cross-platform multi-view registration (RT-010), @Field Record coercion (RT-011), recycle reset (RT-004), previousProps value-equality for nested records (SURF-010). Blocked until U1-004 provides a runnable app, then human device execution moves it to `device-pending`.
+- device: four scenarios: cross-platform multi-view registration (RT-010), @Field Record coercion (RT-011), recycle reset (RT-004), previousProps value-equality for nested records (SURF-010). CI now provides the runnable app/install path; human device execution records the observations and moves the task toward `docs-pending`.
 - docs: `51` (close open questions), `data-layer.md` §5.1 (ratify or rework memoization guidance), `31`/`53` (SDK recycle behavior), decision-ledger SURF-010 / RT-010 / RT-011 / RT-004, including RT-010's stale reconciliation note.
 
 ## U1-004 — bare Fabric example in CI
