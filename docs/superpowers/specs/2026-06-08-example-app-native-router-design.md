@@ -1,7 +1,9 @@
 # Example app: native router, native tabs/header, device theming, @expo/ui
 
 **Date:** 2026-06-08
-**Scope:** `example/` dev-harness app only. No changes to `packages/` (the library).
+**Scope:** primarily the `example/` dev-harness app. A small library packaging
+change in `packages/` is required so the example can consume it by package name
+(see "Library consumption" below).
 
 ## Problem
 
@@ -137,9 +139,32 @@ per `example/AGENTS.md`.
    code, so `expo run:ios` / `expo run:android` is required; Expo Go is already
    out (the app links the local `react-native-fx` module).
 
+## Library consumption (packages change)
+
+The example consumes the library **by package name**, mirroring the `references/`
+repos (nitro, react-native-runtimes); the old deep relative import into
+`../packages/src` does not work under Expo SDK 56 metro (it will not crawl files
+reached by a relative path escaping the project root). Required changes:
+
+- `packages/package.json`: add `"source": "src/index.ts"` and
+  `"react-native": "src/index.ts"`; remove the `exports` field (it pinned
+  resolution to an unbuilt `build/` and sealed the package). `main`/`types` stay
+  for npm publish.
+- `packages/src/index.ts`: export the runtime substrate views (`FxHostedView`,
+  `FxSurfaceView`, `FxGroupView`) from the public entry — promoting them from
+  internal to public API (an intentional, approved exception to the deferral in
+  the index's own comment), since the harness needs them.
+- `example/package.json`: depend on `"react-native-fx": "file:../packages"`.
+  bun copies it (hardlinked, no nested react/expo — singleton-safe); the metro
+  `react-native-fx` alias is removed. Library JS edits need `bun install` to
+  refresh the copy; native is always live via autolinking.
+- `example/tsconfig.json`: `paths` map `react-native-fx` → `../packages/src`.
+
 ## Migration of existing screens
 
-The `FxHostedView` usage is preserved exactly — only its container moves:
+The `FxHostedView` usage is preserved exactly; the import changes from a deep
+relative path to `import { FxHostedView } from "react-native-fx"`, and the
+container moves:
 
 - `FillMaterialScreen` → `screens/fill-material.tsx`, rendered by
   `app/(tasks)/[taskId].tsx` when `taskId === "U3-001"`.
