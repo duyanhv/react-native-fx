@@ -340,8 +340,16 @@ describe('select()', () => {
     expect(result.via).toBe('none');
   });
 
-  it('returns a rung from a non-empty ladder on the other platform', () => {
+  it('degrades to via: none when required feature is not available', () => {
     const result = select(fixture.nodes['shape-morph'], android, { deviceOS: 21 });
+    expect(result.via).toBe('none');
+  });
+
+  it('selects a rung when required feature is available', () => {
+    const result = select(fixture.nodes['shape-morph'], android, {
+      deviceOS: 21,
+      features: ['m3-expressive'],
+    });
     expect(result.via).toBe('native');
     expect(result.primitive).toBe('MaterialShapes (morph)');
   });

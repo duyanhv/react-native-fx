@@ -80,6 +80,9 @@ export interface SelectCtx {
   deviceOS: number;
   wantInteractive?: boolean;
   target?: 'content' | 'effect';
+  /** available feature flags (e.g. 'm3-expressive'). A rung whose requires.feature
+   *  is not in this set is skipped. */
+  features?: string[];
 }
 
 export interface CapabilityManifest {

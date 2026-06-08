@@ -143,6 +143,7 @@ select(node, platform, ctx = { deviceOS, wantInteractive, target = 'effect' }):
     if rung.status == 'planned':             continue
     if rung.status == 'out-of-scope':        continue
     if rung.requires.os > ctx.deviceOS:      continue
+    if rung.requires.feature and rung.requires.feature not in ctx.features:  continue
     if ctx.wantInteractive and node.interaction == 'fx'
        and rung.requires.substrate != 'expo-view':  continue   # only fx-managed interaction needs the G substrate
     if node.kind == 'driver' and rung.target and rung.target != ctx.target:  continue   # motion: match the rung's declared target, not its substrate
@@ -150,9 +151,10 @@ select(node, platform, ctx = { deviceOS, wantInteractive, target = 'effect' }):
   return { via: 'none' }                      # empty/guarded-out ladder ⇒ unavailable, never throw
 ```
 
-The `wantInteractive` clause is the load-bearing one: it is how a single node
-(e.g. `shader`) carries both a **hosted decorative** rung and an **expo-view
-interactive** rung, and the selector chooses by intended use. Decorative usage
+The `features` guard (line 145) ensures a rung like Android `shape-morph` (which
+requires `feature: 'm3-expressive'`) is only selected when the runtime has
+confirmed the feature is present. If `features` is absent or empty, the rung is
+skipped and the ladder degrades.
 prefers the hosted rung (auto-Host passthrough, no G); interactive usage forces
 the expo-view rung (plain UIView, G runtime, host-safe hit-testing).
 
