@@ -1,5 +1,15 @@
 # U3-006 notes
 
+## 2026-06-09
+
+- **`reviewed` gate passed.** Maintainer reviewed and confirmed U3-006 done. Checklist `reviewed`
+  ticked; `progress.md` detail-block `State:` corrected from the stale `headless-done` to
+  `ready-to-merge` (the table already read `ready-to-merge`). Only `merged` remained — the human gate.
+- **`merged` gate passed.** Maintainer authorized the finishing commit on `integration/0.1.x`;
+  `State:` and the `merged` checkbox flipped to done. U3-006 is now fully closed.
+- Next: close the REAL-002/IMPL-001/U1-001 loop — U3-006's iOS device pass is candidate evidence for
+  REAL-002, owned by U3-005.
+
 ## Unverified claims
 
 - **Render path VERIFIED on both platforms (2026-06-08).** Android: all ten AGSL shaders on a
