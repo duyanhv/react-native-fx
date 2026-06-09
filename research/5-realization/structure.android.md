@@ -81,7 +81,10 @@ component.
   is activated when the library-module Compose setup is resolved.
 - **Shader**: `RuntimeShader` (AGSL) applied via
   `RenderEffect.createRuntimeShaderEffect` + `Modifier.graphicsLayer`, or as a
-  `ShaderBrush`.
+  `ShaderBrush`. AGSL source files ship under `src/main/assets/shaders/` and are
+  read at runtime via `context.assets.open("shaders/<id>.agsl")`. No build-time
+  shader compile step is required. Below API 33 the shader rung guards out and
+  degrades to `{ via: 'none' }`.
 - **Filter/blur**: `RenderEffect` (`createBlurEffect`, color filter, chained).
 
 ### Touch contract (when on `expo-view`)

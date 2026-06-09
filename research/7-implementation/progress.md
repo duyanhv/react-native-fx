@@ -43,7 +43,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
+| U1-001 | Unit 1 | implement | merged | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 + IMPL-001 both resolved in source (IMPL-001 closed 2026-06-09 once REAL-002/U3-005 landed); docs-closed complete; merged on integration/0.1.x; [detail](#u1-001--package-scaffolding) |
 | U1-002 | Unit 1 | implement | merged | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; reviewed (batch); [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
 | U1-003 | Unit 1 | device-verify | merged | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; reviewed (batch); [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
 | U1-004 | Unit 1 | implement | merged | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. reviewed (batch). [detail](#u1-004--bare-fabric-example-in-ci) |
@@ -54,7 +54,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
-| U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
+| U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
 | U3-006 | Unit 3 | implement | merged | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); reviewed + confirmed by maintainer (2026-06-09); merged on integration/0.1.x; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
 
@@ -95,19 +95,20 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 ## U1-001 — package scaffolding
 
-Type: `implement` · State: `docs-pending` · Closes: SHIP-001, IMPL-001 · [task](./tasks/U1-001-package-scaffolding/)
+Type: `implement` · State: `merged` · Closes: SHIP-001, IMPL-001 · [task](./tasks/U1-001-package-scaffolding/)
 
-Through `reviewed` ([review](./reviews/U1-001.md), approved). `docs-closed` is **partial**:
+Through `reviewed` ([review](./reviews/U1-001.md), approved). `docs-closed` is **complete** — both `Closes:` rows true in source:
 
 - **SHIP-001 — closed.** `package.json` matches `52` (root `exports`, `files` allowlist shipping
   both shader trees, `publishConfig` public, `FxShader` dropped); `npm pack --dry-run` verified.
-- **IMPL-001 — carried (stays `implementation-pending`).** The scaffolding pass landed headless,
-  but IMPL-001 closes only when its consumed rows do. **RT-010** is now resolved (U1-003, 2026-06-08).
-  **REAL-002** (native build / metallib resolves — device, U3-005) remains the sole blocker.
+- **IMPL-001 — resolved (2026-06-09).** The scaffolding pass landed headless,
+  but IMPL-001 closes only when its consumed rows do. **RT-010** resolved (U1-003, 2026-06-08);
+  **REAL-002** resolved (U3-005, 2026-06-09 — build-verified, not device);
+  **SHIP-001** resolved (U1-001). All three consumed rows are closed.
 - **`apple.podspecPath`** declared in `packages/expo-module.config.json` (U1-004 finding) — makes
   autolinking install-method-agnostic. Recorded in the IMPL-001 package-identity context.
 
-So U1-001 is **complete-blocked on IMPL-001**, now gated only on REAL-002 (U3-005).
+So U1-001's `docs-closed` gate is **satisfied** — IMPL-001 (and all its consumed rows: SHIP-001, RT-010, REAL-002) are resolved in their source docs. **Merged on integration/0.1.x (2026-06-09).**
 
 ## U4-001 — wrapper mechanic
 
@@ -232,6 +233,39 @@ Proof:
   carries the shipped hosted-shader mechanics (layout fix + discrete-uniform-in-place). `structure.ios.md`
   hosted-shader mechanic reads true; the metallib-bundle-resolution detail stays with U3-005/REAL-002.
   This tracker moved.
+
+## U3-005 — shader asset packaging + runtime load proof
+
+Type: `device-verify` (hybrid — see below) · State: `merged` · Device: yes · Consumes: — · Closes: REAL-002, REAL-003 · [task](./tasks/U3-005/)
+
+Spec'd 2026-06-09. **Reframed:** the `device-verify` label undersells it — the dominant work
+is **doc-cleanup + closure-reconciliation**, with a thin device/build residual.
+
+- **REAL-002 (iOS metallib)** — close condition is "build verification on the pinned toolchain",
+  an **agent-ownable Tier-3 build-artifact check**, not the human device gate. Build-verified on
+  Xcode 26.5 / Swift 6.3.2 (2026-06-09): `FxShaders.bundle` emitted unmangled with
+  `default.metallib` (194 KB) at the bundle root. `structure.ios.md` §Render paths records the
+  `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR` mechanism and the `ShaderLibrary(url:)` hosted-path
+  loader. `52` Findings section records the resolution.
+- **REAL-003 (Android AGSL path)** — mis-statused `open`. The path is chosen and shipped
+  (`android/src/main/assets/shaders/*.agsl`, read via `context.assets.open(...)`) and device-proven
+  on U3-006 (POCO F1, API 35). Path recorded in `structure.android.md` §Render paths; `52` Open
+  questions cleared. Row resolved.
+- **No new device gate:** REAL-003's render is proven on U3-006; REAL-002 is a build check done on
+  the pinned toolchain. No fresh device run required.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] headless-done (REAL-002 build artifact verified on Xcode 26.5 / Swift 6.3.2 — `FxShaders.bundle/default.metallib` at bundle root)
+- [x] docs-closed (`structure.android.md` AGSL path; `structure.ios.md`/`52` bundle resolution + loader; REAL-002 + REAL-003 closed in source)
+- [x] reviewed (approved; ①/② toolchain-wording fixes applied + verified in the [review](./reviews/U3-005.md) addendum)
+- [x] merged
+
+Proof:
+- headless / build-verify: xcodebuild Debug-iphonesimulator on Xcode 26.5 / Swift 6.3.2 → `FxShaders.bundle` (unmangled) with `default.metallib` (194 KB) at root in build products.
+- device: no new run — Android render observed on U3-006; iOS render observed on U3-006. REAL-002 build verification satisfies the close condition.
+- docs: `structure.android.md` §Render paths (AGSL asset path + read API); `structure.ios.md`/`52` (bundle resolution + hosted-path loader); `52` Open questions cleared → Findings; decision-ledger REAL-002 + REAL-003 → resolved.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration
 

@@ -56,8 +56,13 @@ layout/hit-testing to a `UIHostingController`.
 - **Shader, expo-view**: `MTLRenderPipelineState` + `MTKView`. Runtime
   `makeLibrary(source:)` is available but build-time `.metallib` is the default.
 - `.metal` files in the target compile into `default.metallib` at build; functions
-  are referenced by name. Uniforms upload via `setFragmentBytes` (`<4 KB`) at buffer
-  index 0; `time`/`resolution` are native-injected each frame, never from JS.
+  are referenced by name. The podspec uses `resource_bundles` (not `source_files`,
+  because the pod is `static_framework`) with `MTL_LIBRARY_OUTPUT_DIR` redirecting
+  the compiled output to `FxShaders.bundle/default.metallib`. At runtime, the hosted
+  shader path resolves `ShaderLibrary(url:)` against `FxShaders.bundle`, falling
+  back to `ShaderLibrary.default`. Uniforms upload via `setFragmentBytes` (`<4 KB`)
+  at buffer index 0; `time`/`resolution` are native-injected each frame, never
+  from JS.
 
 ### Touch contract
 
