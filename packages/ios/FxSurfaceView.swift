@@ -49,10 +49,17 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   private var pressRecognizer: UILongPressGestureRecognizer?
 
-  /// Initializes the Metal surface while keeping the loop paused until attachment.
+  /// A Fabric-invisible container that holds RN children so Fabric cannot clobber
+  /// the animator's transform/opacity. The animator targets this container, not the
+  /// outer `FxSurfaceView` that Fabric tracks.
+  private let intermediateContainer = UIView()
+
+  /// Initializes the Metal surface and the intermediate container while keeping the loop paused until attachment.
   internal required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
+    setUpIntermediateContainer()
     setUpMetal()
+    bringSubviewToFront(metalView)
   }
 
   deinit {
@@ -60,6 +67,14 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   }
 
   // MARK: - Setup
+
+  /// Creates the intermediate container that holds RN children. Fabric does not track
+  /// this view, so its transform/opacity cannot be overwritten by React Native commits.
+  private func setUpIntermediateContainer() {
+    intermediateContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    intermediateContainer.frame = bounds
+    addSubview(intermediateContainer)
+  }
 
   /// Creates the Metal view and command resources without starting frame production.
   private func setUpMetal() {
@@ -170,8 +185,31 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   internal override func applyResolvedConfig() {
     super.applyResolvedConfig()
     uniforms.intensity = min(max(pendingIntensity, 0), 1)
-    _ = pipeline(for: pendingShader)  // warm the cache
+    updateEffectSurfaceVisibility()
     updateInteraction(mode: pendingMode)
+  }
+
+  // MARK: - Child routing
+
+  /// Routes Fabric-mounted children into the intermediate container so React Native
+  /// cannot overwrite the animator's transform/opacity.
+  internal override func mountChildComponentView(_ childComponentView: UIView, index: Int) {
+    intermediateContainer.insertSubview(childComponentView, at: index)
+  }
+
+  /// Removes a Fabric-mounted child from the intermediate container.
+  internal override func unmountChildComponentView(_ child: UIView, index: Int) {
+    child.removeFromSuperview()
+  }
+
+  // MARK: - Effect surface visibility
+
+  /// Hides the GPU surface when no effect is active so it never obscures the
+  /// content-motion container. The effect surface is shown only when a valid
+  /// shader pipeline is resolved.
+  private func updateEffectSurfaceVisibility() {
+    let hasActiveEffect = !pendingShader.isEmpty && pipeline(for: pendingShader) != nil
+    metalView.isHidden = !hasActiveEffect
   }
 
   // MARK: - Interaction

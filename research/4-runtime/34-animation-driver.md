@@ -104,6 +104,11 @@ immediately, and fires `onTransitionEnd` synchronously. The policy is recorded i
 - How are completion / state-change events emitted back across the thin async boundary
   (`onTransitionEnd`), and what is their ordering guarantee under rapid toggles?
 - Does the content driver and the effect driver share scheduling, or run independently?
+- **Effect↔content composition.** When both the GPU effect surface (`metalView` / shader
+  render node) and the content-motion intermediate container are active in the same
+  `FxSurfaceView`, how do they compose in z-order, hit-testing, and the combined
+  shader-and-motion case? This is the intersection of SPINE-004 (composition as API-layer
+  prop — background/overlay/surface) and the U3 V2 interactive surface. Not decided in V1.
 
 ## Open questions
 

@@ -156,10 +156,10 @@ The driver node (`02`) lowers two ways, by **target**:
 - **content target** — `ViewPropertyAnimator` / `androidx.dynamicanimation`
   `SpringAnimation` on the **intermediate container** `View` · `requires {os:21, expo-view}` ·
   `applyVia:View` · the animator owns timing. `FxSurfaceView` creates an intermediate
-  container `View` inside itself and overrides `mountChildComponentView` to route RN
-  children into this container rather than directly onto `FxSurfaceView`. The animator
-  targets the container's translation/scale/alpha; Fabric tracks only the outer
-  `FxSurfaceView` and never overwrites the container. Animates the container fx owns (`33`),
+  container `View` inside itself and overrides `addView` to route RN children into this
+  container rather than directly onto `FxSurfaceView`. The animator targets the container's
+  translation/scale/alpha; Fabric tracks only the outer `FxSurfaceView` and never
+  overwrites the container. Animates the container fx owns (`33`),
   translation/scale/alpha only ⇒ touch survives. **Caveat (`34`):** unlike iOS, property
   animators update the real view each frame, so touch tracks the **visual** position
   throughout — a deliberate platform divergence (the law). Spring defaults to the platform's
@@ -168,6 +168,11 @@ The driver node (`02`) lowers two ways, by **target**:
   enhancement — § version gates / open questions). `tune` adjusts within whichever is active.
   Presence (`42`/`54`) composes this rung via `FxPresenceCoordinator`; the unmount handshake
   is `35`.
+  **Effect surface visibility:** the effect surface is hidden when no effect is active
+  (`pendingShader` blank), so it never obscures the content-motion container. When the
+  Android shader renderer is implemented, the visibility rule controls the effect surface
+  view. The composition concern (SPINE-004, background/overlay/surface) intersects the
+  U3 V2 interactive surface and is not yet decided.
 - **effect target** — Compose `animate*AsState` / `updateTransition` / `keyframes` /
   `spring` (`requires {os:21, hosted}`); spring defaults to Compose's standard `spring()`,
   upgrading to **M3 Expressive** `MotionScheme` springs where present (progressive

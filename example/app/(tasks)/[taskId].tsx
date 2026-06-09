@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import type { DemoScreen } from "../../data/tasks";
 import { TASKS } from "../../data/tasks";
+import { ContentMotionScreen } from "../../screens/content-motion";
 import { FillMaterialScreen } from "../../screens/fill-material";
 import { ShaderCatalogScreen } from "../../screens/shader-catalog";
 import { TaskBlankScreen } from "../../screens/task-blank";
@@ -11,6 +12,8 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <FillMaterialScreen />;
 		case "shaders":
 			return <ShaderCatalogScreen />;
+		case "content-motion":
+			return <ContentMotionScreen />;
 		default:
 			return <TaskBlankScreen label={label} />;
 	}

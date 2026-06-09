@@ -149,6 +149,11 @@ The driver node (`02`) lowers two ways, by **target**:
   interaction proves to matter. Spring defaults to the iOS system spring (the law); `tune`
   adjusts within that family. Presence (`42`/`54`) composes this rung into enter/hold/exit
   via `FxPresenceCoordinator`; the deferred-unmount handshake is `35`.
+  **Effect surface visibility:** the `metalView` (GPU surface) is hidden when no effect is
+  active (`pendingShader` empty or invalid), so it never obscures the content-motion
+  container. The effect surface sits above the container in z-order; when both are active
+  the composition concern (SPINE-004, background/overlay/surface) intersects the U3 V2
+  interactive surface and is not yet decided.
 - **effect target** — `phaseAnimator`/`keyframeAnimator`/`.animation`
   (`requires {os:17 · 16 for .animation, hosted}`). Drive a hosted effect's own targets
   (intro/outro/state) — the native side of the eased-`transition` channel (`40`); JS sets

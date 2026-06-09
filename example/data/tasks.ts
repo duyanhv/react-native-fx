@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -58,5 +58,13 @@ export const TASKS: DeviceTask[] = [
 		what: "SF Symbol renders through the hosted path",
 		status: "todo",
 		screen: "blank",
+	},
+	{
+		id: "U4-002",
+		title: "mountChildComponentView override",
+		platform: "iOS · Android",
+		what: "RN child mounts into intermediate container; hit-test survives",
+		status: "in-progress",
+		screen: "content-motion",
 	},
 ];
