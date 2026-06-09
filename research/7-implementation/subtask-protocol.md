@@ -33,7 +33,11 @@ something the rules forbid, the rules win — that is what `reject` records.
 4. **Get the mechanic from `structure.*`.** The how-per-platform lives there, in one place —
    don't re-derive it in the subtask.
 5. **Consult the reference last, for HOW only.** `references/` + the `file:line` shows the
-   proven shape. It answers *how*, never *whether*.
+   proven shape. It answers *how*, never *whether*. **Diff the actual template code, never just
+   name a class** — a named precedent that was never diffed is how U4-002 shipped four device bugs.
+   For an unbuilt mechanic carrying real architectural risk (a flagged ledger question, a rule-#7
+   tension, an `fx-original` design), run the full **`agents/references-preflight.md`** at spec
+   time before coding.
 6. **Check the verification frontier.** If the claim is `device-verify pending` (the doc's
    Open questions, the blueprint README's open targets, the `05` falsification test), the
    subtask ends in a **device check**, not a unit test.
