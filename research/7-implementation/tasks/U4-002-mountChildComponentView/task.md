@@ -40,14 +40,16 @@ Implement the `mountChildComponentView` override on `FxSurfaceView` (iOS) and th
 
 - [x] spec'd
 - [x] rules-gated
-- [x] implemented
-- [x] commented
-- [x] TS+format-green
-- [x] native-compile-verified (iOS local xcodebuild BUILD SUCCESSFUL; Android local gradle BUILD SUCCESSFUL)
-- [ ] device-verified
-- [ ] docs-closed
-- [ ] reviewed
-- [ ] merged
+  - [x] implemented
+  - [x] commented
+  - [x] TS+format-green
+  - [x] native-compile-verified (iOS local xcodebuild BUILD SUCCESSFUL; Android local gradle BUILD SUCCESSFUL)
+  - [x] Android reimplemented — full ExpoBlurTargetView.kt family (onMeasure, updateViewLayout, removeAllViews, etc.)
+  - [x] iOS diagnostic logging added — superview guard deferred until cause is known
+  - [ ] device-verified (human gate; iOS console logs must answer diagnosis questions)
+  - [ ] docs-closed
+  - [ ] reviewed
+  - [ ] merged
 
 ## Proof
 

@@ -18,6 +18,15 @@ class FxSurfaceView(
   context: Context,
   appContext: AppContext
 ) : FxNativeView(context, appContext) {
+
+  /**
+   * The content-motion container holds a Fabric-mounted child tree; it is added outside
+   * RN's layout pass. Without this, ExpoView swallows the container's requestLayout() and
+   * the child renders at 0x0 (blank). true re-runs measureAndLayout() so the container
+   * fills the host bounds.
+   */
+  override val shouldUseAndroidLayout: Boolean = true
+
   /**
    * Reports a completed shader press with a prefixed name that avoids React Native's reserved event.
    */
@@ -46,7 +55,39 @@ class FxSurfaceView(
   }
 
   init {
-    addView(intermediateContainer)
+    super.addView(
+      intermediateContainer,
+      LayoutParams(
+        LayoutParams.MATCH_PARENT,
+        LayoutParams.MATCH_PARENT
+      )
+    )
+  }
+
+  /**
+   * Measures the host to the incoming specs and then measures the intermediate container
+   * with exact dimensions so the RN child tree receives a real size.
+   */
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    val width = View.MeasureSpec.getSize(widthMeasureSpec)
+    val height = View.MeasureSpec.getSize(heightMeasureSpec)
+    setMeasuredDimension(width, height)
+
+    intermediateContainer.measure(
+      View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+    )
+  }
+
+  /**
+   * Lays the intermediate container to the host bounds. Does NOT call super: the base
+   * `ExpoView` is a `LinearLayout`, and its `onLayout` iterates the (proxied) child
+   * accessors and casts each child to `LinearLayout.LayoutParams` — but the children live
+   * in the container with `FrameLayout.LayoutParams`, so delegating crashes. The container
+   * is already sized by `onMeasure`; laying it to the host bounds here is sufficient.
+   */
+  override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+    intermediateContainer.layout(0, 0, right - left, bottom - top)
   }
 
   /**
@@ -131,15 +172,39 @@ class FxSurfaceView(
     intermediateContainer.removeView(view)
   }
 
+  override fun updateViewLayout(view: View?, params: android.view.ViewGroup.LayoutParams?) {
+    if (view === intermediateContainer) {
+      super.updateViewLayout(view, toHostLayoutParams(params))
+      return
+    }
+    intermediateContainer.updateViewLayout(view, params)
+  }
+
   override fun removeViewAt(index: Int) {
     intermediateContainer.removeViewAt(index)
   }
+
+  override fun removeViews(start: Int, count: Int) = intermediateContainer.removeViews(start, count)
+
+  override fun removeViewsInLayout(start: Int, count: Int) = intermediateContainer.removeViewsInLayout(start, count)
+
+  override fun removeAllViews() = intermediateContainer.removeAllViews()
+
+  override fun removeAllViewsInLayout() = intermediateContainer.removeAllViewsInLayout()
 
   override fun getChildCount(): Int = intermediateContainer.childCount
 
   override fun getChildAt(index: Int): View? = intermediateContainer.getChildAt(index)
 
   override fun indexOfChild(child: View?): Int = intermediateContainer.indexOfChild(child)
+
+  // MARK: - Helpers
+
+  private fun toHostLayoutParams(params: android.view.ViewGroup.LayoutParams?): LayoutParams = when (params) {
+    null -> LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+    is LayoutParams -> params
+    else -> LayoutParams(params)
+  }
 
   // MARK: - Effect surface visibility
 

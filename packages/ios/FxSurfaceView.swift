@@ -43,7 +43,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
-  private var pendingShader = "fractal-clouds"
+  // Empty by default: a surface with no `shader` prop runs no effect, so the metalView
+  // stays hidden and never obscures the content-motion container. A non-empty default would
+  // render a shader the consumer never asked for (and hide the wrapped content behind it).
+  private var pendingShader = ""
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
 
@@ -197,19 +200,28 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     intermediateContainer.insertSubview(childComponentView, at: index)
   }
 
-  /// Removes a Fabric-mounted child from the intermediate container.
+  /// Removes a Fabric-mounted child from the intermediate container. The superview guard
+  /// defends against a stale or repeated unmount detaching a view fx no longer owns.
   internal override func unmountChildComponentView(_ child: UIView, index: Int) {
-    child.removeFromSuperview()
+    if child.superview == intermediateContainer {
+      child.removeFromSuperview()
+    }
   }
 
   // MARK: - Effect surface visibility
 
-  /// Hides the GPU surface when no effect is active so it never obscures the
-  /// content-motion container. The effect surface is shown only when a valid
-  /// shader pipeline is resolved.
+  /// True when a non-empty shader resolves to a usable pipeline.
+  private var hasActiveEffect: Bool {
+    !pendingShader.isEmpty && pipeline(for: pendingShader) != nil
+  }
+
+  /// Hides the GPU surface when no effect is active so it never obscures the content-motion
+  /// container, and pauses the display loop with it. A hidden but unpaused `MTKView` still ticks
+  /// its `CADisplayLink` every frame and congests the main thread (sluggish UI, laggy touch,
+  /// gesture-gate timeouts), so the loop runs only while an effect is actually drawing.
   private func updateEffectSurfaceVisibility() {
-    let hasActiveEffect = !pendingShader.isEmpty && pipeline(for: pendingShader) != nil
     metalView.isHidden = !hasActiveEffect
+    metalView.isPaused = !hasActiveEffect || window == nil
   }
 
   // MARK: - Interaction
@@ -295,8 +307,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     metalView.isPaused = true
   }
 
-  /// Resumes the Metal display link only while the surface is attached.
+  /// Resumes the Metal display link only while the surface is attached and an effect is active.
   internal override func resumePresentationLoop() {
-    metalView.isPaused = (window == nil)
+    metalView.isPaused = window == nil || !hasActiveEffect
   }
 }

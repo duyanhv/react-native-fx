@@ -138,11 +138,19 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
 The driver node (`02`) lowers two ways, by **target**:
 - **content target** — `CASpringAnimation`/`UIView.animate` on the **intermediate
   container's** `CALayer` · `requires {os:13, expo-view}` · `applyVia:CALayer` · the OS
-  animator owns timing. `FxSurfaceView` creates an intermediate container `UIView` inside
-  itself and overrides `mountChildComponentView` to route RN children into this container
-  rather than directly onto `FxSurfaceView`. The animator targets the container's
-  `CALayer` transform/opacity; Fabric tracks only the outer `FxSurfaceView` and never
-  overwrites the container. Transform/opacity only ⇒ touch survives. **Caveat (`34`):**
+  animator owns timing. `FxSurfaceView` hosts the children in a nested container and the
+  animator targets that container's `CALayer` transform/opacity; Fabric tracks only the
+  outer `FxSurfaceView` and never overwrites the container. Transform/opacity only ⇒ touch
+  survives. **Child routing follows the proven RCT/Expo nested-container pattern, not a
+  one-sided override.** RN itself hosts Fabric children one level down via `currentContainerView`
+  (`references/react-native` `RCTViewComponentView.mm`), and `expo-glass-effect`'s `GlassView.swift`
+  + gesture-handler's `RNGestureHandlerButtonComponentView.mm` ship it. Two valid realizations:
+  route children through the view's `contentView`/`currentContainerView` slot so the default
+  mount/unmount machinery targets the container automatically, **or** override
+  `mountChildComponentView` **and** `unmountChildComponentView` as a **symmetric pair** against
+  the *same* container — never mount alone (the default unmount asserts the child's superview is
+  the container). On unmount the child must `removeFromSuperview()` (RN asserts a detached child
+  has no superview — `SwiftUIHostingView.swift`). iOS has no child-accessor methods to proxy. **Caveat (`34`):**
   hit-testing reads the **model layer** (the target), so touch is correct at rest and,
   mid-flight, lands at the element's destination rather than its on-screen position. A
   `hitTest` override against the presentation layer is deferred to U6/U8 if mid-transition

@@ -63,8 +63,8 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U4-001 | Unit 4 | rework | device-pending | yes | RT-015 | RT-015 | U1-002 | RT-015 resolved — animator targets an intermediate container (a Fabric-untracked view inside `FxSurfaceView`); `33`/`34` decide, `structure.{ios,android}` pin, `architecture`/`data-layer`/`blueprint` reconciled; reviewed; device scenario written; **couples-merge with U4-002**; [detail](#u4-001--wrapper-mechanic) |
-| U4-002 | Unit 4 | device-verify | headless-done | yes | — | RT-014 | U4-001 | device: `mountChildComponentView` override on Fabric; rule-#7 verified clean Swift/Kotlin; effect surface visibility mechanic recorded; native compile verified (iOS xcodebuild + Android gradle); [detail](#u4-002--mountchildcomponentview-override) |
+| U4-001 | Unit 4 | rework | merged | yes | RT-015 | RT-015 | U1-002 | RT-015 resolved — animator targets an intermediate container (a Fabric-untracked view inside `FxSurfaceView`); `33`/`34` decide, `structure.{ios,android}` pin, consumers reconciled; device-verified via U4-002 run (2026-06-09); merged on integration/0.1.x; [detail](#u4-001--wrapper-mechanic) |
+| U4-002 | Unit 4 | device-verify | merged | yes | — | RT-014 | U4-001 | `mountChildComponentView` override (rule-#7 clean Swift/Kotlin); reimplemented to the `ExpoBlurTargetView`/`expo-glass` templates after a reference fan-out — fixed the Android `LinearLayout`-traversal crash, Android 0×0, iOS spurious default shader, iOS free-running MTKView loop; device-verified iOS + Android (2026-06-09); RT-014 closed; merged on integration/0.1.x; [detail](#u4-002--mountchildcomponentview-override) |
 | U5-001 | Unit 5 | implement | todo | yes | RT-013 | RT-013 | U4-001 | device: post-layout frame read natively |
 | U6-001 | Unit 6 | implement | todo | yes | RT-007 | RT-007 | U4-001, U5-001 | device: interruptible spring, no snap |
 | U6-002 | Unit 6 | device-verify | todo | yes | — | RT-016 | U6-001 | device: animators handle hard retarget, else build integrator |
@@ -113,7 +113,7 @@ So U1-001's `docs-closed` gate is **satisfied** — IMPL-001 (and all its consum
 
 ## U4-001 — wrapper mechanic
 
-Type: `rework` · State: `device-pending` · Consumes: RT-015 · Closes: RT-015
+Type: `rework` · State: `merged` · Consumes: RT-015 · Closes: RT-015
 
 Checklist:
 - [x] spec'd
@@ -121,8 +121,9 @@ Checklist:
 - [x] source docs reconciled (`33`, `34` decide the target object)
 - [x] `architecture.md` / `data-layer.md` / `blueprint.md` updated to match (consumers, not sources)
 - [x] device proof defined (scenario in `tasks/U4-001/evidence/device.md`)
-- [ ] device proof observed (human gate)
+- [x] device proof observed (maintainer-verified iOS + Android, 2026-06-09 — child mounts into the container, hit-test survives at rest; via the U4-002 device run)
 - [x] ledger RT-015 closed (true in `33`/`34`)
+- [x] merged (couple-merge with U4-002)
 
 Proof:
 - headless: N/A
@@ -131,27 +132,29 @@ Proof:
 
 ## U4-002 — mountChildComponentView override
 
-Type: `device-verify` · State: `headless-done` · Consumes: — · Closes: RT-014 · [task](./tasks/U4-002-mountChildComponentView/)
+Type: `device-verify` · State: `merged` · Consumes: — · Closes: RT-014 · [task](./tasks/U4-002-mountChildComponentView/)
 
 Checklist:
 - [x] spec'd
 - [x] rules-gated
-- [x] implemented
-- [x] commented
-- [x] TS+format-green (tsc/build/lint/test pass; swift-format clean)
-- [x] native-compile-verified (iOS local xcodebuild BUILD SUCCESSFUL; Android local gradle BUILD SUCCESSFUL)
-- [ ] device-verified (human gate)
-- [ ] docs-closed
-- [ ] reviewed
-- [ ] merged
+  - [x] implemented
+  - [x] commented
+  - [x] TS+format-green (tsc/build/lint/test pass; swift-format clean)
+  - [x] native-compile-verified (iOS local xcodebuild BUILD SUCCESSFUL; Android local gradle BUILD SUCCESSFUL)
+  - [x] Android reimplemented — full `ExpoBlurTargetView.kt` override family + the no-`super.onLayout` fix (the `LinearLayout`-traversal crash) + onMeasure/onLayout sizing (0×0 fix)
+  - [x] iOS reimplemented — symmetric mount/unmount + superview guard; spurious default shader (`pendingShader=""`) + free-running MTKView loop (pause when no effect) fixed; diagnostics removed
+  - [x] device-verified (maintainer, iOS + Android, 2026-06-09 — mount/unmount confirmed via logs; smooth show/hide; taps land; Android crash gone)
+  - [x] docs-closed (RT-014 mechanic + the corrected templates pinned in `structure.{ios,android}`; `33` fallback note; reference fan-out captured)
+  - [x] reviewed (diffed against `ExpoBlurTargetView`/`expo-glass` templates; root causes confirmed fixed)
+  - [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run swift:lint`, `bun run test` from `packages/` all pass. `git diff --check` clean.
 - native compile:
-  - **iOS:** `xcodebuild -workspace FxBareExample.xcworkspace -scheme FxBareExample -configuration Debug -sdk iphonesimulator` on Xcode 26.5 → BUILD SUCCESSFUL. The `mountChildComponentView(_:index:)` override signature matches the Expo/Fabric superclass; no mismatch, no compiler error.
-  - **Android:** `./gradlew :react-native-fx:compileDebugKotlin` → BUILD SUCCESSFUL. One fix required: `intermediateContainer` must be a `ViewGroup` (`FrameLayout`), not a plain `View`, because `addView`/`removeViewAt`/`getChildAt` are `ViewGroup` APIs. The compiler caught this immediately.
-- device: mount an RN child inside `<FxSurfaceView>` (no `shader` prop — `metalView` hidden), confirm it lands in the intermediate container, renders correctly (layout + draw), and hit-testing survives. The scenario must exercise layout, draw, and touch correctness; Android proxy methods (`getChildCount`/`getChildAt` → `intermediateContainer`) are a specific traversal risk. Mid-flight caveat per `34`.
-- docs: `structure.ios.md` / `structure.android.md` — intermediate container mechanic + effect surface visibility rule; `34` — open item about effect↔content composition.
+  - **iOS:** `xcodebuild` (Debug, iphonesimulator) on Xcode 26.5 → BUILD SUCCESSFUL. Diagnostic logging added to both `mountChildComponentView` and `unmountChildComponentView` to diagnose the "child won't unmount" symptom on device.
+  - **Android:** `./gradlew :react-native-fx:compileDebugKotlin` → BUILD SUCCESSFUL. Reimplemented to match `expo-blur` `ExpoBlurTargetView.kt` exactly: full `addView`/`removeView`/`updateViewLayout`/`onMeasure`/`onLayout` family with identity guards. `onMeasure` added (explicit `setMeasuredDimension` + `intermediateContainer.measure`) as the missing half of the 0×0 fix.
+- device: mount an RN child inside `<FxSurfaceView>` (no `shader` prop — `metalView` hidden), confirm it lands in the intermediate container, renders correctly (layout + draw, not 0×0), and hit-testing survives. The scenario must exercise layout, draw, and touch correctness. **iOS: capture console logs and answer:** (1) does `unmountChildComponentView` fire on hide? (2) if it fires, does `removeFromSuperview()` remove the child? (3) is there double-parenting (`self.subviews` vs `intermediateContainer.subviews`)? Mid-flight caveat per `34`.
+- docs: `structure.ios.md` / `structure.android.md` — intermediate container mechanic + effect surface visibility rule + explicit layout note; `34` — open item about effect↔content composition.
 
 ## U2-002 — UniformSpec schema reconciliation
 

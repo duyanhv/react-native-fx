@@ -156,11 +156,20 @@ The driver node (`02`) lowers two ways, by **target**:
 - **content target** — `ViewPropertyAnimator` / `androidx.dynamicanimation`
   `SpringAnimation` on the **intermediate container** `View` · `requires {os:21, expo-view}` ·
   `applyVia:View` · the animator owns timing. `FxSurfaceView` creates an intermediate
-  container `View` inside itself and overrides `addView` to route RN children into this
-  container rather than directly onto `FxSurfaceView`. The animator targets the container's
-  translation/scale/alpha; Fabric tracks only the outer `FxSurfaceView` and never
-  overwrites the container. Animates the container fx owns (`33`),
-  translation/scale/alpha only ⇒ touch survives. **Caveat (`34`):** unlike iOS, property
+  container `View` inside itself and hosts the RN children in it; the animator targets the
+  container's translation/scale/alpha. Fabric tracks only the outer `FxSurfaceView` and never
+  overwrites the container. Animates the container fx owns (`33`), translation/scale/alpha
+  only ⇒ touch survives. **Child routing must follow Expo's proven pattern, not a partial
+  override** — a naive `addView` + `getChild*` proxy violates Android's
+  `getChildAt(i).getParent() == this` invariant (and `SurfaceMountingManager`'s direct-`getChildAt`
+  fallback), which crashes on mount. Two sanctioned options: **(preferred)** route children via
+  Expo's `GroupView { AddChildView/GetChildCount/GetChildViewAt/RemoveChildViewAt }` ViewManager
+  DSL (`references/expo` `GroupViewManagerWrapper.kt`) — the framework-blessed seam; **or (if
+  overriding the `View` directly)** mirror `expo-blur`'s `ExpoBlurTargetView.kt` exactly: add the
+  container via `super.addView` guarded by identity; report the container's children from
+  `getChildCount`/`getChildAt`/`indexOfChild` with the container itself **excluded**; override the
+  **full** add / remove / `removeViewAt` / `removeAllViews` / `updateViewLayout` family (not just
+  `addView`); and size the container in `onMeasure`/`onLayout`. **Caveat (`34`):** unlike iOS, property
   animators update the real view each frame, so touch tracks the **visual** position
   throughout — a deliberate platform divergence (the law). Spring defaults to the platform's
   **standard** `androidx.dynamicanimation` `SpringForce` (always available, API 21); where
@@ -168,6 +177,11 @@ The driver node (`02`) lowers two ways, by **target**:
   enhancement — § version gates / open questions). `tune` adjusts within whichever is active.
   Presence (`42`/`54`) composes this rung via `FxPresenceCoordinator`; the unmount handshake
   is `35`.
+  **Explicit layout required.** The container is a `FrameLayout` holding the RN child tree; it
+  is added outside RN's layout pass. `FxSurfaceView` sets `shouldUseAndroidLayout = true`
+  (so Expo re-runs `measureAndLayout()`) and overrides `onLayout` to measure the container
+  with exact specs and then lay it to the host bounds. Without this, the container renders at
+  0×0 (blank). The same mechanic as the hosted renderer above — one mechanic, one home.
   **Effect surface visibility:** the effect surface is hidden when no effect is active
   (`pendingShader` blank), so it never obscures the content-motion container. When the
   Android shader renderer is implemented, the visibility rule controls the effect surface

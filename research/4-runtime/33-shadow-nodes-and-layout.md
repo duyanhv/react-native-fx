@@ -63,6 +63,19 @@ ride along as the container animates. The animator targets the intermediate cont
 the outer `FxSurfaceView` that Fabric tracks. This is a view, not a raw `CALayer`, so
 children mount as subviews and hit-testing survives at rest. (`34`/`35` build on this.)
 
+**Child-routing realization (proven precedent, not naive override).** Hosting Fabric-mounted
+children in a nested container is a shipping Expo/RCT pattern, but it must mirror the proven
+templates exactly — the per-platform mechanics and the references are pinned in
+`5-realization/structure.{ios,android}.md`. A one-sided override (mount without unmount on iOS;
+a partial `addView` + `getChild*` proxy on Android) breaks Fabric's mounting invariants and
+crashes — the templates (`expo-glass-effect`/`currentContainerView` on iOS, `expo-blur` or the
+`GroupView` ViewManager DSL on Android) are the contract. **Fallback if reparenting ever proves
+too fragile:** Reanimated avoids reparenting entirely, animating in place by participating in
+the committed props — but its mechanism is a C++ `UIManagerCommitHook` (rule #7 forbids it). The
+fx-legal analogue is to animate fx's *own* `expo-view` where fx is the sole writer of
+transform/opacity, so there is no Fabric prop to clobber — reserved as the alternative if the
+container model breaks down, not the V1/V2 default.
+
 ### The falsification test — source-audit verdict: PASS (device proof pending)
 
 Verified against Expo/RN source — a **source-audit** pass, not a device proof: **stable
