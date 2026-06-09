@@ -424,6 +424,11 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme, snackbar/bottom-sheet/dialog]**
 
+> **The per-platform shape, timing, and spring values in this table are device-pending and
+> owned by [MOT-001](../decision-ledger.md#motion).** They are provisioned values, not
+> ratified decisions. DOC-005 ratifies the adjacent vocabulary names (§5) only; the spring
+> magnitudes and geometries will be validated on device and propagated to `41`/`42` by MOT-001.
+
 ### Presence presets (FxPresence)
 
 > **[research: 42 §The presence preset catalog]**

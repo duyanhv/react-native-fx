@@ -145,10 +145,12 @@ by the runtime.
 6. **The component layer is the adapter** — `select()` over the manifest; degrades, never
    throws. **BYO reuses the `shader` node**, no separate API.
 
+## Decisions
+
+7. **V1 vocabulary ratified (DOC-005).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` · `sheet` · `modal` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+
 ## Open questions
 
-- **The preset vocabularies** — exactly which `preset`/`feedback`/`effect` values ship v1 and
-  their native defaults (`56`, ties to the `42` preset set + `41`'s default catalog).
 - **`uniforms`/spec memoization** — inline literals re-resolve each render; document
   stable-ref guidance.
 - **Theme distribution** — consumer-authored palettes/themes as a shareable artifact (`52` `lab`).

@@ -146,9 +146,10 @@ honored by the driver (`34`).
 
 - **The per-platform default catalog** — its *shape* is now defined (above); the **values**
   (each `(preset × phase)` row's source/shape/timing) are the device-filled open work, the
-  main deliverable.
-- **The behavior-preset vocabulary** — `transient`/`sheet`/`modal` confirmed; the rest
-  (re-derived from intent, behavior-named) pending.
+  main deliverable. **Owned by MOT-001** — the spring magnitudes and geometries will be
+  validated on device and propagated to `41`/`42`.
+- **The behavior-preset vocabulary** — ratified as `transient` · `sheet` · `modal` for V1
+  (DOC-005). `menu`/`tooltip` (anchor-origin) remain v2.
 - **Anchor rect (v2)** — the measurement contract is defined (above); the exact native
   read-timing and the child-anchor-rect path (`menu`/`tooltip`) remain open in `33`.
 - **Named states beyond binary `visible`** — multi-step intro→hold→outro; one-shot bursts.

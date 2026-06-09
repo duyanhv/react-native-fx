@@ -193,7 +193,9 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
 ## Open questions
 
 - The minimal animatable-property set and the `tune` vocabulary (`speed`/`emphasis`/
-  `distance` — enough?), and the `preset` value set (`transient`/`lift`/…) per component.
+  `distance` — enough?) and the `preset` value set per component.
+  **The V1 preset value set is ratified (DOC-005):** `transient` · `sheet` · `modal` (presence);
+  `lift` (state). The per-platform shape and timing defaults are device-pending, owned by MOT-001.
 - **Partial-override sugar (`edge`/`origin`) — deferred.** For now it's binary: `preset`
   (full platform default) *or* explicit `motion` (full uniform shape); no `edge="bottom"`
   middle ground. Reconsider as scoped `FxPresence` sugar only if demand is real (the risk is

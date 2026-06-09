@@ -58,9 +58,9 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 |---|---|---|---|---|---|
 | SURF-001 | resolved | `56` | Whether `GlassView` stays a curated-effect-component candidate. Lean: remove (glass stays `<Fx effect="glass">`). | V1 API naming | **Resolved (DOC-001, 2026-06-08).** `GlassView` removed from `56` — `56` no longer lists un-ratified component names. |
 | SURF-002 | open | `56`/`52` | Whether to ship the named effect-component sugar at all (`EdgeGlow`/`MeshGradient`/…). Lean: a small curated set, sugar over `<Fx effect="…">`. | the V1 export map (`SHIP-001`) | a ship decision recorded in `6-ship` |
-| SURF-003 | open | `50`/`56` | The V1 `preset`/`feedback`/`effect` value vocabularies (`transient`/`lift`/`native`/…), behavior-named. | the surface API | the V1 vocabulary pinned (pairs with `MOT-001`) |
-| SURF-004 | open | `57`/`40`/`56` | The `FxView` named-state vocabulary (`idle`/`selected`/…) and its `MotionSpec` map per preset. | `FxView` state API | the per-preset state set pinned |
-| SURF-005 | open | `57` | `FxPressable` `feedback` values (`native` plus any named variants). | `FxPressable` API | the feedback vocabulary pinned (+ defaults in `MOT-001`) |
+| SURF-003 | resolved | `50`/`56` | The V1 `preset`/`feedback`/`effect` value vocabularies (`transient`/`lift`/`native`/…), behavior-named. | the surface API | **Resolved (DOC-005, 2026-06-09).** V1 vocabulary ratified in `50`/`56`: `transient` · `sheet` · `modal` (presence); `lift` (state); `native` (feedback). Effect vocab already ratified by DOC-007. Per-platform spring magnitudes remain device-pending with MOT-001. |
+| SURF-004 | resolved | `57`/`40`/`56` | The `FxView` named-state vocabulary (`idle`/`selected`/…) and its `MotionSpec` map per preset. | `FxView` state API | **Resolved (DOC-005, 2026-06-09).** V1 state set for `lift` ratified in `57`/`41`: `idle` · `selected`. Per-platform spring magnitudes remain device-pending with MOT-001. |
+| SURF-005 | resolved | `57` | `FxPressable` `feedback` values (`native` plus any named variants). | `FxPressable` API | **Resolved (DOC-005, 2026-06-09).** V1 feedback value ratified in `57`: `native`. Per-platform spring magnitudes remain device-pending with MOT-001. |
 | SURF-006 | open | `57`/`21` | `FxGroup` morph scope (which effects beyond glass support cross-item morph) and the `spacing`/merge-threshold contract. | the glass compound API | morph scope and merge semantics defined |
 | SURF-007 | deferred | `54` | A root overlay/portal for `transient`/`modal`. Lean: the app's job in V1. | — | revisit post-V1 only if placement proves insufficient |
 | SURF-008 | deferred | `55` | The `Fx.Stack` JSX-compound skin over the identical `EffectStack`. | — | build on real demand |
@@ -154,9 +154,9 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 |---|---|---|---|
 | SPINE-003 | `data-layer` §1 | uniforms inlined per node; `motion` uses `properties` | **resolved** — `02` widened to include `boolean`/`color[]` (U2-002). TypeScript types are manually maintained alongside the manifest per blueprint Unit 2, not generated. |
 | SPINE-007 | `data-layer` §8 (I7) | the manifest names the lib package via `applyVia`/`asset` (`Haze`, `lottie`) | **resolved** — `02` Decision 13: `applyVia` = library name, `asset` = asset type, no version in manifest. |
-| SURF-003 | `data-layer` §3/§5 | V1 vocab (`transient`/`sheet`/`modal`; `lift`; `native`; `edge-glow`/`mesh-gradient`/`glass`) | **ratify** the V1 set, then propagate to `50`/`56`; springs **device-verify** (→ MOT-001) |
-| SURF-004 | `data-layer` §5 | `lift` states `idle`/`selected` | **ratify** — confirm the V1 state set, then propagate to `57` |
-| SURF-005 | `data-layer` §5 | `native` feedback | **ratify** — confirm, then propagate to `57` |
+| SURF-003 | `data-layer` §3/§5 | V1 vocab (`transient`/`sheet`/`modal`; `lift`; `native`; `edge-glow`/`mesh-gradient`/`glass`) | **resolved (DOC-005, 2026-06-09)** — V1 set ratified in `50`/`56`; springs remain device-verify (→ MOT-001) |
+| SURF-004 | `data-layer` §5 | `lift` states `idle`/`selected` | **resolved (DOC-005, 2026-06-09)** — V1 state set ratified in `57`/`41` |
+| SURF-005 | `data-layer` §5 | `native` feedback | **resolved (DOC-005, 2026-06-09)** — V1 feedback value ratified in `57` |
 | SURF-006 | `data-layer` §9 (D3) / §10 | `FxGroup` iOS-only V1; Android flat fallback | **ratify** — morph scope is still open; confirm before propagating to `57`/`21` |
 | SURF-009 | `data-layer` §8 (I2) | `SpringTune` removed — use `Transition.spring` + `tune` | **resolved** — propagated to `55` (DOC-001). `41` already clean. |
 | SURF-010 | `data-layer` §5.1 | native `previousProps` value-equality → no manual memo | **propagate** — verified on SDK 56; both primitive and nested Record props compare by value. Guidance ratified in `data-layer` §5.1. |

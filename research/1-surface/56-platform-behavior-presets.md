@@ -84,15 +84,16 @@ Optional thin sugar over `<Fx effect="…">`; the `effect=` preset is the canoni
    (`EdgeGlow`/`MeshGradient`), they are optional sugar over it — an **open ship
    decision** (`6-ship`), not a core promise, and only effects qualify (fx draws them whole).
    Escape is downward — `tune` → `motion`/`effect` overrides → builders.
+5. **V1 vocabulary ratified (DOC-005).** The behavior-preset values that ship in V1 are:
+   `transient` · `sheet` · `modal` (presence); `lift` (state). The feedback value is `native`.
+   The per-platform shape and timing defaults behind these presets are **device-pending**
+   and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
 
 ## Open questions
 
-- **The behavior-preset vocabulary** — the actual `preset`/`feedback` value sets
-  (`transient`/`lift`/…), re-derived from `42`'s presence-behavior findings but
-  **behavior-named**, and their per-platform shape+timing defaults (`41`'s default catalog);
-  fill on device.
 - **Ship the named effect-component sugar, or only `effect=`?** Lean: a small curated set.
 - **`FxView` state vocabulary** — the named states per `preset` (`idle`/`selected`/…; `40`).
+  Ratified as `idle` · `selected` for `lift` in `57` (DOC-005).
 
 ## Sources
 
