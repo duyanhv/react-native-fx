@@ -59,13 +59,21 @@ correct touch at rest; do not promise pixel-aligned touch on an in-flight elemen
 Continuous gesture-tracked motion (regime C) would need the model layer kept in sync every
 frame — another reason it stays out of scope here.
 
+**Future path:** making iOS track the visual position mid-animation would require a
+`hitTest` override against the presentation layer (`CALayer.presentation()`). This is
+feasible but is deferred to the interaction work (U6/U8) if mid-transition interaction
+proves to matter. For now, the model-layer caveat is acceptable for short presence
+envelopes (<300ms).
+
 ## Findings — verified against source (`references/`)
 
-- **The driver animates an fx-owned, Fabric-invisible layer.** `transform`/`opacity` are
-  Fabric props re-applied on every commit, so animating a Fabric-tracked view's layer
-  directly is clobbered (`33`). The content driver therefore targets the **intermediate
-  layer fx creates inside `FxNativeView`**, which Fabric does not track — not the tracked
-  view's `transform` prop.
+- **The driver animates an fx-owned, Fabric-invisible intermediate container.**
+  `transform`/`opacity` are Fabric props re-applied on every commit, so animating a
+  Fabric-tracked view's layer directly is clobbered (`33`). The content driver therefore
+  targets the **intermediate container inside `FxSurfaceView`** — a native view that
+  Fabric does not track, so Fabric cannot clobber its `transform`/`opacity`. The animator
+  targets the container, not the outer `FxSurfaceView`. This is a view, not a raw
+  `CALayer`, so children mount as subviews and hit-testing survives at rest.
 - **fx's default driver is not a worklet model.** Reanimated's driver is a per-frame JS
   worklet on a *separate Hermes runtime* with JSI shared-value listeners (Babel +
   serialization + runtime overhead). fx's own envelopes stay **declarative + native-eased**

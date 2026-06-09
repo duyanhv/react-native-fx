@@ -50,8 +50,8 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 ### Unit 4: The Intermediate Fabric-Invisible Layer (Clobber Mitigation)
 *   **Contract:** `33`, `04`
 *   **Precedent (battle-tested):** the Fabric clobber constraint — Fabric overwrites `transform`/`opacity` on tracked views. This is the *problem* fx must solve, not a pattern a lib demonstrates; no prior art exists.
-*   **Decision + flip-trigger:** **fx-original design** (derived from the `33` finding). `FxNativeView` creates a layout-transparent native container and overrides `mountChildComponentView` to route RN children into it (the mechanic that makes the wrapper wrap anything). The animator targets this container, which Fabric cannot see or clobber.
-*   **Shape · phase:** Native sublayer within `FxSurfaceView` · **V2**
+*   **Decision + flip-trigger:** **fx-original design** (derived from the `33` finding). `FxSurfaceView` creates a layout-transparent intermediate container and overrides `mountChildComponentView` to route RN children into it (the mechanic that makes the wrapper wrap anything). The animator targets this container, which Fabric cannot see or clobber.
+*   **Shape · phase:** Intermediate container inside `FxSurfaceView` · **V2**
 *   **Depends on:** Unit 1
 
 ### Unit 5: `FxLayoutObserver` (The Read)

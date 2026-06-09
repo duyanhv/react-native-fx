@@ -154,8 +154,12 @@ Each section expands the Android rungs from `02`.
 ### `motion`
 The driver node (`02`) lowers two ways, by **target**:
 - **content target** — `ViewPropertyAnimator` / `androidx.dynamicanimation`
-  `SpringAnimation` on the **wrapped container** `View` · `requires {os:21, expo-view}` ·
-  `applyVia:View` · the animator owns timing. Animates the host view fx owns (`33`),
+  `SpringAnimation` on the **intermediate container** `View` · `requires {os:21, expo-view}` ·
+  `applyVia:View` · the animator owns timing. `FxSurfaceView` creates an intermediate
+  container `View` inside itself and overrides `mountChildComponentView` to route RN
+  children into this container rather than directly onto `FxSurfaceView`. The animator
+  targets the container's translation/scale/alpha; Fabric tracks only the outer
+  `FxSurfaceView` and never overwrites the container. Animates the container fx owns (`33`),
   translation/scale/alpha only ⇒ touch survives. **Caveat (`34`):** unlike iOS, property
   animators update the real view each frame, so touch tracks the **visual** position
   throughout — a deliberate platform divergence (the law). Spring defaults to the platform's

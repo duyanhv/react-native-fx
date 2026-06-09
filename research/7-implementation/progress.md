@@ -38,6 +38,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
 | DOC-012 | 6-ship | ratify | todo | no | — | SHIP-002 | — | docs: `53` no-rung degradation UX |
 | DOC-013 | 2-effects | ratify | merged | no | — | REAL-004 | — | V1 curated shaders hand-maintain MSL+AGSL pairs; compiler remains additive V2; [task](./tasks/DOC-013/) · [review](./reviews/DOC-013.md) |
+| DOC-014 | 7-impl | doc-cleanup | todo | no | — | — | — | reconcile `architecture.md` §1 / `data-layer.md` §5.1 runtime src-trees to the real package bindings (`FxHostedView`/`FxSurfaceView`/`FxGroupView`) + ratified component set (`FxPresence`/`FxView`/`FxPressable`); drop the `FxPresenceView`/`FxManagedView`/`FxPressableView` phantoms (surfaced by U4-001) |
 
 ### V1 build — Units 1–3 + ship
 
@@ -62,7 +63,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U4-001 | Unit 4 | rework | todo | yes | RT-015 | RT-015 | U1-002 | device: child rides animated wrapper (see detail) |
+| U4-001 | Unit 4 | rework | device-pending | yes | RT-015 | RT-015 | U1-002 | RT-015 resolved — animator targets an intermediate container (a Fabric-untracked view inside `FxSurfaceView`); `33`/`34` decide, `structure.{ios,android}` pin, `architecture`/`data-layer`/`blueprint` reconciled; reviewed; device scenario written; **couples-merge with U4-002**; [detail](#u4-001--wrapper-mechanic) |
 | U4-002 | Unit 4 | device-verify | todo | yes | — | RT-014 | U4-001 | device: `mountChildComponentView` override on Fabric |
 | U5-001 | Unit 5 | implement | todo | yes | RT-013 | RT-013 | U4-001 | device: post-layout frame read natively |
 | U6-001 | Unit 6 | implement | todo | yes | RT-007 | RT-007 | U4-001, U5-001 | device: interruptible spring, no snap |
@@ -112,20 +113,21 @@ So U1-001's `docs-closed` gate is **satisfied** — IMPL-001 (and all its consum
 
 ## U4-001 — wrapper mechanic
 
-Type: `rework` · State: `todo` · Consumes: RT-015 · Closes: RT-015
+Type: `rework` · State: `device-pending` · Consumes: RT-015 · Closes: RT-015
 
 Checklist:
-- [ ] spec'd
-- [ ] rules-gated
-- [ ] source docs reconciled (`33`, `34` decide the target object)
-- [ ] `architecture.md` / `data-layer.md` updated to match (consumers, not sources)
-- [ ] device proof defined and observed
-- [ ] ledger RT-015 closed (true in `33`/`34`)
+- [x] spec'd
+- [x] rules-gated
+- [x] source docs reconciled (`33`, `34` decide the target object)
+- [x] `architecture.md` / `data-layer.md` / `blueprint.md` updated to match (consumers, not sources)
+- [x] device proof defined (scenario in `tasks/U4-001/evidence/device.md`)
+- [ ] device proof observed (human gate)
+- [x] ledger RT-015 closed (true in `33`/`34`)
 
 Proof:
 - headless: N/A
-- device: mount an RN child inside `FxSurfaceView`; confirm the child rides the animated wrapper and hit-testing survives mid-animation
-- docs: `33`, `34`, `architecture.md`, decision-ledger RT-015
+- device: mount an RN child inside `FxSurfaceView`; confirm the child rides the animated intermediate container and hit-testing survives at rest (mid-flight caveat per `34`)
+- docs: `33`, `34`, `architecture.md`, `data-layer.md`, `blueprint.md`, decision-ledger RT-015
 
 ## U2-002 — UniformSpec schema reconciliation
 

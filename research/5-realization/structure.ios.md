@@ -71,7 +71,8 @@ layout/hit-testing to a `UIHostingController`.
 - **`expo-view`**: `UILongPressGestureRecognizer(minimumPressDuration = 0)`,
   `cancelsTouchesInView = false`, delegate `shouldRecognizeSimultaneouslyWith → true`;
   read `location(in:)` each callback; spring back on `.cancelled`. `hitTest` override
-  carries the shaped/SDF pass-through. Full mechanics in `30`.
+  carries the shaped/SDF pass-through (U8) and the animated-container mid-flight caveat
+  (U4) — the same override composes both concerns. Full mechanics in `30`.
 - **Severing rule:** applying `.layerEffect` to live RN content requires hosting that
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.
@@ -135,12 +136,17 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
 
 ### `motion`
 The driver node (`02`) lowers two ways, by **target**:
-- **content target** — `CASpringAnimation`/`UIView.animate` on the **wrapped
+- **content target** — `CASpringAnimation`/`UIView.animate` on the **intermediate
   container's** `CALayer` · `requires {os:13, expo-view}` · `applyVia:CALayer` · the OS
-  animator owns timing. Animates the host view fx owns (`33`), transform/opacity only ⇒
-  touch survives. **Caveat (`34`):** hit-testing reads the **model layer** (the target),
-  so touch is correct at rest and, mid-flight, lands at the element's destination rather
-  than its on-screen position. Spring defaults to the iOS system spring (the law); `tune`
+  animator owns timing. `FxSurfaceView` creates an intermediate container `UIView` inside
+  itself and overrides `mountChildComponentView` to route RN children into this container
+  rather than directly onto `FxSurfaceView`. The animator targets the container's
+  `CALayer` transform/opacity; Fabric tracks only the outer `FxSurfaceView` and never
+  overwrites the container. Transform/opacity only ⇒ touch survives. **Caveat (`34`):**
+  hit-testing reads the **model layer** (the target), so touch is correct at rest and,
+  mid-flight, lands at the element's destination rather than its on-screen position. A
+  `hitTest` override against the presentation layer is deferred to U6/U8 if mid-transition
+  interaction proves to matter. Spring defaults to the iOS system spring (the law); `tune`
   adjusts within that family. Presence (`42`/`54`) composes this rung into enter/hold/exit
   via `FxPresenceCoordinator`; the deferred-unmount handshake is `35`.
 - **effect target** — `phaseAnimator`/`keyframeAnimator`/`.animation`
