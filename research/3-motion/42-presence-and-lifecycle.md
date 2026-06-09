@@ -113,6 +113,22 @@ geometry; `distance` only modulates the semantic (preset / measured) magnitudes.
 motion-map fallback is `userMotion[phase] ?? presetMotion[phase] ?? identity`; **no implicit
 reverse** (`41`).
 
+## Reduce-motion
+
+When the OS reduce-motion or animation-scale setting is active, the enter and exit
+phases are instant — the driver sets duration to 0 for all motion envelopes, snapping
+to the target frame with no interpolation. The `onTransitionEnd` event fires immediately
+after the snap.
+
+- **iOS:** `UIAccessibility.isReduceMotionEnabled`
+- **Android:** `Settings.Global.TRANSITION_ANIMATION_SCALE` = 0.0 (or
+  `ANIMATOR_DURATION_SCALE` = 0.0)
+
+The animated channels (`translateX/Y`, `scale`, `rotate`, `opacity`) all degrade to
+identity in a single frame. Presets (`transient`/`sheet`/`modal`) and explicit `motion`
+overrides are both subject to this degradation. This policy is recorded in `41` and
+honored by the driver (`34`).
+
 ## Decisions
 
 1. **A preset names a platform-native presentation behavior; the platform owns the shape.**
@@ -130,9 +146,10 @@ reverse** (`41`).
 
 - **The per-platform default catalog** — its *shape* is now defined (above); the **values**
   (each `(preset × phase)` row's source/shape/timing) are the device-filled open work, the
-  main deliverable.
-- **The behavior-preset vocabulary** — `transient`/`sheet`/`modal` confirmed; the rest
-  (re-derived from intent, behavior-named) pending.
+  main deliverable. **Owned by MOT-001** — the spring magnitudes and geometries will be
+  validated on device and propagated to `41`/`42`.
+- **The behavior-preset vocabulary** — ratified as `transient` · `sheet` · `modal` for V1
+  (DOC-005). `menu`/`tooltip` (anchor-origin) remain v2.
 - **Anchor rect (v2)** — the measurement contract is defined (above); the exact native
   read-timing and the child-anchor-rect path (`menu`/`tooltip`) remain open in `33`.
 - **Named states beyond binary `visible`** — multi-step intro→hold→outro; one-shot bursts.

@@ -4,13 +4,8 @@
   "description": "A native presentation runtime for React Native — platform-native effects and motion, configured declaratively from JS.",
   "main": "build/index.js",
   "types": "build/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./build/index.d.ts",
-      "react-native": "./build/index.js",
-      "default": "./build/index.js"
-    }
-  },
+  "source": "src/index.ts",
+  "react-native": "src/index.ts",
   "files": [
     "build",
     "ios",

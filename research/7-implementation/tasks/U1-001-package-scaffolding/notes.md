@@ -73,4 +73,12 @@ zero tests; the first real tests arrive with U2-001 (`select()` planned-rung tes
 - Stripped all internal-doc/ledger/build-unit references from shipped code comments (iOS, Android,
   src, example); added the rule to the Code Comments Guide and bound it in CLAUDE.md.
 
-## Next: U1-002 (FxNativeView base + register the substrate trio; closes RT-010). U1-001 completes when RT-010 + REAL-002 close.
+## 2026-06-09 — docs-closed complete + merged
+
+- IMPL-001's last consumed row, **REAL-002, resolved** (U3-005, build-verified). With RT-010
+  (U1-003) and SHIP-001 (U1-001) already resolved, all three IMPL-001 consumed rows are closed →
+  **IMPL-001 → resolved**. U1-001's `docs-closed` gate is now fully satisfied (both `Closes:` rows
+  true in source), so it was wrongly left at `docs-pending`.
+- **Merged on `integration/0.1.x`** alongside U3-005. U1-001 complete.
+
+## Next: none — U1-001 complete. Build clears to the DOC ratify backlog.

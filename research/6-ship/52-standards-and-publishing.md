@@ -136,21 +136,32 @@ The keystone packaging detail — each platform compiles/packages its own shader
    concern.
 8. **The `exports` map is the only stability contract — root export for V1**; subpath
    exports are optional V2 polish (verify Metro `exports` support; minimal bundle benefit).
-9. **Do not scope-split into `@react-native-fx/*` packages yet** — version coordination,
+9. **V1 curated shaders are hand-maintained MSL+AGSL pairs** — author the `.metal` and
+   `.agsl` implementation for each catalog id directly. The author-once compiler remains
+   additive V2 build-time codegen (`03`), not a prerequisite for the V1 catalog.
+10. **Do not scope-split into `@react-native-fx/*` packages yet** — version coordination,
    install friction, and premature boundaries before the product is stable. The only later
    split worth considering: `@react-native-fx/compiler` (the optional build-time shader/
    effect emitter, `03`) and `@react-native-fx/lab` (experimental effects/recipes — a home
    for the "where curation ends" question in `00`, kept out of core's semver).
 
+## Findings
+
+- **iOS shader bundle resolution.** CocoaPods emits `FxShaders.bundle` unmangled with
+  `default.metallib` at its root, per the `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR`
+  mechanism (Decision #2). The hosted shader path resolves the bundle at runtime via
+  `ShaderLibrary(url:)` against `FxShaders.bundle`. Build-verified locally on Xcode 26.5 /
+  Swift 6.3.2 (U3-005); the CI `bare-ios` job (U1-004) separately confirmed native compile
+  + autolink on `macos-26` / Xcode 26. The bundle layout is determined by the podspec
+  mechanism, which is toolchain-stable. Render-verified on device (U3-006).
+- **Android AGSL asset path.** Curated AGSL shaders ship under
+  `android/src/main/assets/shaders/*.agsl` and are read at runtime via
+  `context.assets.open("shaders/<id>.agsl")`. No build-time shader compile step is
+  required. Below API 33 the shader rung is unavailable. Pin recorded in `structure.android.md`
+  §Render paths. Device-verified on API 35 (U3-006).
+
 ## Open questions
 
-- **Resource-bundle name (needs-device)** — confirm CocoaPods emits `FxShaders.bundle`
-  unmangled and `MTL_LIBRARY_OUTPUT_DIR` lands `default.metallib` at the bundle root on
-  the pinned SDK 56 toolchain (carried from `_legacy/08`/`00`).
-- **AGSL asset packaging path** — exact Android assets vs res/raw location and the
-  runtime read API; pin with `structure.android`.
-- **Single source for the curated shaders** — author once (GLSL/SkSL) → transpile to
-  MSL+AGSL, or hand-maintain the pair per effect? (Ties to `03` compiler.)
 - **`surface/` exports come from the ratified vocabulary (`50`/`54`–`57`), not the folder
   layout.** The component set is now pinned: `FxPresence` (`54`), `FxView`/`FxPressable`/
   `FxGroup`/`FxItem` (`57`), `<Fx>` single-or-stack (`55`), plus curated effect components

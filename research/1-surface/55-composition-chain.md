@@ -111,7 +111,10 @@ Same `fx` namespace, two sub-builders, two non-interchangeable types. `transitio
 - ~~**`SpringTune` shape**~~ — **resolved: `SpringTune` removed.** The canonical API is
   `tune = { speed, emphasis, distance }` (`data-layer.md` I2). `Transition.spring` uses raw
   spring parameters (`stiffeness`, `damping`, `mass`) for direct control.
-- **Memoization** — an inline-built stack rebuilds each render; document stable-ref/`useFx`.
+- ~~**Memoization**~~ — **resolved (SURF-010):** an inline-built `EffectStack` rebuilds each
+  render, but the native side compares stack *values* via `previousProps`, so a rebuild with
+  unchanged content does no native work — no manual memo or `useFx` needed. Verified on SDK 56,
+  iOS + Android.
 
 ## Sources
 

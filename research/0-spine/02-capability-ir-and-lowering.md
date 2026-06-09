@@ -388,12 +388,22 @@ proof — each consumer's needs are fields the schema carries.
     orchestrations over it, not new primitives. The default spring/easing is always the
     platform's own (the law).
 11. **The content-vs-effect fork is explicit on the rung, matched by a `target` axis.**
-    Each `kind:'driver'` rung declares `target: 'content' | 'effect'`; `select(node,
-    platform, ctx)` keys on `{ deviceOS, wantInteractive, target }` (default `'effect'`)
-    and matches `rung.target` directly — it does **not** infer content-vs-effect from
-    `hosted`/`expo-view`. Other nodes ignore `target`. Likewise each rung may carry its
-    own `phase` (content motion is v2, hosted effect motion v1), so phase is per-rung, not
-    only per-node.
+     Each `kind:'driver'` rung declares `target: 'content' | 'effect'`; `select(node,
+     platform, ctx)` keys on `{ deviceOS, wantInteractive, target }` (default `'effect'`)
+     and matches `rung.target` directly — it does **not** infer content-vs-effect from
+     `hosted`/`expo-view`. Other nodes ignore `target`. Likewise each rung may carry its
+     own `phase` (content motion is v2, hosted effect motion v1), so phase is per-rung, not
+     only per-node.
+12. **`composition` (background/overlay/surface) is an API-layer prop, not a manifest field.**
+     The `composition` prop lives on the effect surface (`50` / `<Fx>`), resolved by the
+     component before the manifest is consulted. The manifest's rungs only describe *how*
+     a capability lowers; *where* the effect layer sits (background/overlay/surface) is an
+     effect-stack concern, not a node-schema concern.
+13. **`via:'lib'` naming: `applyVia` names the library, `asset` names the asset type.**
+     A `lib` rung declares `applyVia: 'Haze'` (the library name) and `asset: 'lottie'`
+     (the asset type, if any). The manifest does **not** include version numbers — the
+     optional peer dependency is managed by the app, not by the manifest (`53` decision 6).
+     The rung guards out if the library is absent.
 
 ## Open questions
 
@@ -404,19 +414,17 @@ proof — each consumer's needs are fields the schema carries.
   types file. Lean: canonical in the manifest, TS types generated from it. (The worked
   examples here currently show only `shader`/`motion` config; at implementation they should
   grow to include `fill`/`material`/`filter`/`symbol` typed config too.)
-- **Composition modes in the schema** — does `composition` (background/overlay/
-  surface) belong on the node, on the rung, or stay a separate prop resolved by the
-  API layer (`50`)? Lean: API-layer prop, not manifest.
 - **Multiple assets per rung** — a shader needing helper functions or a texture.
   Currently `asset` is singular; promote to `assets: Asset[]` if needed.
-- **`feature` flag vocabulary** — enumerate the non-OS capability flags (e.g. a
-  specific Metal feature set, AGSL extension) or keep free-form until a real case.
-- **Manifest partitioning** — one file, or split per node / per layer once the node
-  count grows? Affects how `structure.{ios,android}.md` are rendered.
-- **`via:'lib'` dependency contract** — **resolved** (`6-ship/53` decision 6): a `lib` rung
-  (Haze, Lottie) is an **optional peer dependency** the app installs, guarding out (degrading
-  the ladder) if absent. The only open part: whether the manifest **names the package +
-  version**.
+- **`feature` flag vocabulary** — deferred until a real shader or feature case forces it.
+  Keep free-form until then; enumeration is premature.
+- **Manifest partitioning** — deferred until implementation selects a structure. The
+  manifest stays one file for V1; split when the node count makes rendering unwieldy.
+- ~~`composition` (background/overlay/surface).~~ **Resolved (decision 12):** API-layer prop
+  on the effect surface, not a manifest field.
+- ~~`via:'lib'` dependency contract.~~ **Resolved (decision 13):** `applyVia` names the
+  library (e.g., `Haze`), `asset` names the asset type (e.g., `lottie`), no version in
+  manifest. The optional-peer rule is settled in `53` decision 6.
 - ~~The selector needs a `target` axis for `motion`.~~ **Resolved (decision 11):**
   `ctx.target: 'content' | 'effect'`, default `'effect'`; `motion` picks the matching
   substrate rung, other nodes ignore it.

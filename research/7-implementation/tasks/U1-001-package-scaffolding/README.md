@@ -26,7 +26,7 @@ A fresh session: read in order, then construct.
 
 ## Authority links
 
-- **Contract:** `52` (standards/publishing), `53` (install/autolink), `51` (the boundary), `05` (Expo Modules decision). Target layout: `architecture.md` §1. Names: `data-layer.md` §9 (D1 five-view module, D2 `FxShader`→`ReactNativeFx`).
+- **Contract:** `52` (standards/publishing), `53` (install/autolink), `51` (the boundary), `05` (Expo Modules decision). Target layout: `architecture.md` §1. Names: `data-layer.md` §9 (D1 three-view module, D2 `FxShader`→`ReactNativeFx`).
 - **Decision:** `use` Expo Modules (blueprint Unit 1). No flip-trigger — settled.
 - **Reference (HOW):** `references/expo/packages/expo-modules-core/ios/Core/Modules/ModuleDefinition.swift` (multi-view module, first view = default), `.../ios/Core/Views/ExpoView.swift`; file:line breadcrumbs in `architecture.md` §0. Mimic the module/view registration; **reject** `@expo/ui` universal-component auto-Host (would seize layout/hit-testing — `01`).
 - **Rules gate:** #7 (Expo Modules + Fabric only; no JSI/C++). Public surface stays the ratified vocabulary — no un-ratified API names.

@@ -1,10 +1,7 @@
 # U2-002 — UniformSpec schema reconciliation
 
-Unit 2 · type: `rework` · state: `in-progress` · device: no
+Unit 2 · type: `rework` · state: `merged` · device: no
 Consumes: SPINE-003 · Closes: SPINE-003 · Blocked by: —
-
-> **Next action (resume here):** widen the canonical `UniformSpec.type` schema in `02` and
-> the TypeScript manifest types so `boolean` and `color[]` are first-class manifest values.
 
 `data-layer.md` provisioned two UniformSpec variants that the source manifest schema does not
 yet allow: `boolean` for semantic toggles and `color[]` for color-stop lists. The manifest is
@@ -54,13 +51,13 @@ Subtask: UniformSpec schema reconciliation (blueprint Unit 2)
 ## Lifecycle
 
 - [x] spec'd
-- [ ] rules-gated
-- [ ] source docs reconciled (`02` widened; `data-layer.md` no longer marks the values provisional)
-- [ ] TypeScript manifest types updated by hand
-- [ ] headless-done
-- [ ] reviewed
-- [ ] docs-closed
-- [ ] merged
+- [x] rules-gated
+- [x] source docs reconciled (`02` widened; `data-layer.md` no longer marks the values provisional)
+- [x] TypeScript manifest types updated by hand
+- [x] headless-done
+- [x] reviewed
+- [x] docs-closed
+- [x] merged
 
 `device-verified`: N/A — this task is pure TypeScript/schema documentation.
 

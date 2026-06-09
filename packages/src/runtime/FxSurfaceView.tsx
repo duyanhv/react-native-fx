@@ -1,5 +1,5 @@
 import { requireNativeView } from 'expo';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { ShaderId } from '../effects/catalog';
@@ -24,6 +24,7 @@ export type NativeFxSurfaceProps = {
   onShaderPressIn?: (event: FxSurfacePressEvent) => void;
   onShaderPressOut?: (event: FxSurfacePressEvent) => void;
   style?: StyleProp<ViewStyle>;
+  children?: ReactNode;
 };
 
 /**

@@ -83,10 +83,10 @@ boundary.
 
 ## Open questions
 
-- **`FxView` state vocabulary** — the named-state set per `preset` and its `MotionSpec` map
-  (shared with `40`/`56`).
-- **`FxPressable` `feedback` values** — `native` plus any named variants; per-platform
-  default catalog (`41`).
+- **`FxView` state vocabulary** — ratified as `idle` · `selected` for `lift` (DOC-005).
+  The per-platform `MotionSpec` map defaults are device-pending, owned by MOT-001.
+- **`FxPressable` `feedback` values** — ratified as `native` (DOC-005). Per-platform
+  default catalog is device-pending, owned by MOT-001.
 - **`FxGroup` morph scope** — which effects support cross-item morph beyond glass (`21`).
 - Native mechanics (the managed wrapper, state handshake) are `open` in `33`/`34`/`35`.
 

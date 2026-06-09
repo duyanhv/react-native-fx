@@ -28,11 +28,16 @@ config.resolver.nodeModulesPaths = [
 ];
 
 config.resolver.extraNodeModules = {
-  'react-native-fx': path.resolve(__dirname, '../packages'),
   react: path.resolve(exampleModules, 'react'),
   'react-native': path.resolve(exampleModules, 'react-native'),
   expo: path.resolve(exampleModules, 'expo'),
   'expo-modules-core': path.resolve(exampleModules, 'expo-modules-core'),
+  // The router's native view singletons must resolve to the example's copies.
+  'react-native-screens': path.resolve(exampleModules, 'react-native-screens'),
+  'react-native-safe-area-context': path.resolve(
+    exampleModules,
+    'react-native-safe-area-context',
+  ),
 };
 
 config.watchFolders = [path.resolve(__dirname, '../packages')];

@@ -26,7 +26,7 @@ Every architectural decision in this doc traces to one of these sources.
 packages/
 ├── src/                          ← JS SURFACE (mirror of research planes)
 │   ├── manifest/                 ← dependency SINK (imports nothing from other src/)
-│   │   ├── CapabilityManifest.ts   the data [research: G1]
+│   │   ├── index.ts                the manifest barrel [research: G1]
 │   │   ├── select.ts               the adapter dispatch [research: G2]
 │   │   └── types.ts                shared IR types [research: 02]
 │   │
@@ -52,13 +52,10 @@ packages/
 │   │   ├── palettes.ts             [research: 50]
 │   │   └── themes.ts               [research: 50]
 │   │
-│   ├── runtime/                  ← JS BINDINGS (thin glue)
+│   ├── runtime/                  ← JS BINDINGS (thin glue) — one per registered native view
 │   │   ├── FxHostedView.tsx        default requireNativeView wrapper
-│   │   ├── FxSurfaceView.tsx       named requireNativeView wrapper
-│   │   ├── FxGroupView.tsx         named requireNativeView wrapper
-│   │   ├── FxPresenceView.tsx      [research: 54]
-│   │   ├── FxManagedView.tsx       [research: 33/57]
-│   │   └── FxPressableView.tsx     [research: 57]
+│   │   ├── FxSurfaceView.tsx       named requireNativeView wrapper (presence/state/press route here)
+│   │   └── FxGroupView.tsx         named requireNativeView wrapper
 │   │
 │   └── index.ts                  ← PUBLIC API (root export) [research: 52 §Public exports]
 │
@@ -74,7 +71,7 @@ packages/
 │   ├── FxPressHandler.swift        press handler (6-state FSM) [finding: gesture-handler borrow]
 │   ├── Shaders/
 │   │   └── FxShaders.metal         curated .metal shaders [research: 22]
-│   └── react-native-fx.podspec     [IMPL-001: post-identity-pass name]
+│   └── ReactNativeFx.podspec
 │
 ├── android/                      ← ANDROID NATIVE
 │   ├── FxModule.kt                 Expo Module [finding: multiple views, first=default]
@@ -320,7 +317,7 @@ JSX: <FxPresence visible={open} preset="transient">
      </FxPresence>
        │
        ▼
-src/runtime/FxPresenceView.tsx
+src/runtime/FxSurfaceView.tsx
   → requireNativeView('ReactNativeFx', 'FxSurfaceView')  // content motion wrapper
        │
        ▼
@@ -351,14 +348,15 @@ ios/FxSurfaceView.swift (extends FxNativeView) — content motion wrapper
        │   │   [ref: react-native/.../renderer/mounting/ShadowTree.cpp:417]
        │   └── feeds ──▶ FxAnimationDriver (travel/origin for edge motion)
        │
-       └── FxManagedView (the wrapper-transform model)
-           │ owns: the wrapper fx transforms
-           │ [finding] Wrapper-transform model — fx animates an intermediate sublayer
-           │   of the ExpoView that Fabric does not track, avoiding clobbering.
-           │   See §5.1 for full rationale.
-           │ rule: touch survives (transform-only, no snapshot) [research: 33]
-           │ rule: children ride along (one wrapper, no per-child motion)
-           └── mounted: FxAnimationDriver animates this wrapper
+        └── intermediate container (inside FxSurfaceView)
+            │ owns: the native view fx transforms
+            │ [finding] The intermediate container — a native view inside FxSurfaceView
+            │   that Fabric does not track, so Fabric cannot clobber its transform/opacity.
+            │   FxSurfaceView overrides mountChildComponentView to route children into
+            │   this container. See §5.1 for full rationale.
+            │ rule: touch survives (transform-only, no snapshot) [research: 33]
+            │ rule: children ride along (one container, no per-child motion)
+            └── mounted: FxAnimationDriver animates this container
 
 Data flow: visible/state → native; native runs envelope; onTransitionEnd → JS.
 [research: 40 §Regime B — low-frequency JS]
@@ -371,27 +369,27 @@ Data flow: visible/state → native; native runs envelope; onTransitionEnd → J
 > **[finding] Fabric re-applies `transform`/`opacity` on every commit via `Update` mutations. The `ShadowView` snapshot includes `props` (which contains `transform` and `opacity`). The Differentiator generates `UpdateMutation` when props change, and the platform layer applies these as authoritative values. Direct `CALayer.transform` manipulation on a Fabric-tracked view gets clobbered.**
 > [ref: react-native/.../renderer/mounting/ShadowView.cpp:23-32] [ref: react-native/.../renderer/components/view/BaseViewProps.h:46,94] [ref: react-native/.../renderer/mounting/Differentiator.cpp:946-951]
 
-**The mechanic:** fx does NOT animate the Fabric-tracked ExpoView directly (it would be clobbered). Instead, inside the `FxManagedView` (an `FxSurfaceView`), fx creates a **Fabric-invisible intermediate sublayer** — a `CALayer` on iOS / a child `View` on Android that Fabric does not know about. fx animates this intermediate sublayer's `transform`/`opacity`. Children are subviews of `FxManagedView`; the intermediate sublayer wraps their visual layer hierarchy so the animation moves them, while Fabric tracks only the outer `FxManagedView` and never overwrites the sublayer.
+**The mechanic:** fx does NOT animate the Fabric-tracked `FxSurfaceView` directly (it would be clobbered). Instead, `FxSurfaceView` creates a **Fabric-invisible intermediate container** — a `UIView` on iOS / a `View` on Android that Fabric does not track, so Fabric cannot clobber its `transform`/`opacity`. `FxSurfaceView` overrides `mountChildComponentView` to route RN children into this intermediate container; the children ride along as the container animates. The animator targets the intermediate container, not the outer `FxSurfaceView`.
 
 ```
-FxManagedView (FxSurfaceView → FxNativeView → ExpoView → RCTViewComponentView)
+FxSurfaceView (extends FxNativeView → ExpoView → RCTViewComponentView)
   │
-  │  Fabric tracks: Tag, layoutMetrics.frame — NOT the intermediate sublayer
+  │  Fabric tracks: Tag, layoutMetrics.frame — NOT the intermediate container
   │
-  ├── intermediate sublayer (CALayer / child View)  ← fx animates THIS
+  ├── intermediate container (UIView / View)  ← fx animates THIS
   │     │  Fabric does NOT track; commits don't clobber it
-  │     │  [research: 33:58-60] "intermediate layer/container that Fabric does not track"
-  │     │  CASpringAnimation / SpringAnimation targets this sublayer
+  │     │  [research: 33] "intermediate container that Fabric does not track"
+  │     │  CASpringAnimation / SpringAnimation targets this container
   │     │
-  │     └── children's visual layers are sublayers of this intermediate layer
+  │     └── children are subviews of this container
   │
-  └── children are addSubview'd into FxManagedView
+  └── children are routed here via mountChildComponentView override
         [finding] mounted via mountChildComponentView
         [ref: expo/ios/Fabric/ExpoFabricViewObjC.mm]
-        Children ride along because the intermediate sublayer wraps their visual hierarchy
+        Children ride along because the container is their direct parent
 ```
 
-> **[finding] The `MountingOverrideDelegate` (Reanimated's approach) is NOT needed for this model. fx owns the intermediate sublayer — Fabric doesn't know about it, so commits don't clobber it. The `MountingOverrideDelegate` is needed only to intercept Fabric mutations on views fx does NOT own (the Reanimated case). For fx's owned intermediate sublayer, this approach is simpler and sufficient.**
+> **[finding] The `MountingOverrideDelegate` (Reanimated's approach) is NOT needed for this model. fx owns the intermediate container — Fabric doesn't know about it, so commits don't clobber it. The `MountingOverrideDelegate` is needed only to intercept Fabric mutations on views fx does NOT own (the Reanimated case). For fx's owned intermediate container, this approach is simpler and sufficient.**
 > [ref: reanimated/.../LayoutAnimationsProxy_Experimental.cpp:pullTransaction]
 > [ref: react-native/.../renderer/mounting/MountingOverrideDelegate.h]
 
@@ -409,6 +407,8 @@ FxManagedView (FxSurfaceView → FxNativeView → ExpoView → RCTViewComponentV
 | **Android** | ✅ Correct | Tappable at **visual** position (tracks on-screen position) | Property animators update real view per frame |
 
 **fx does NOT override `hitTest` to correct iOS mid-flight behavior** — that would require keeping the model layer in sync with the presentation layer every frame, which is the model for regime-C continuous gesture-tracked motion (out of scope). For short presence transitions (<300ms), the model-layer tappable-at-destination behavior is desirable — the element is "really" already at its target position.
+
+**Future path:** a `hitTest` override against the presentation layer (`CALayer.presentation()` on iOS) is feasible and will compose with the shaped/SDF pass-through override planned for U8. If mid-transition interaction proves to matter, it is deferred to the interaction work (U6/U8). For now, the model-layer caveat is acceptable.
 
 **At rest** (no animation running), the model and presentation layers coincide, and hit-testing is correct on both platforms without any override.
 
@@ -547,12 +547,17 @@ ios/FxNativeView.swift  /  android/FxNativeView.kt  ──  (the abstract base, 
 | 1 | `FxNativeView` (Boundary) | `FxNativeView.swift/.kt` (base), `FxHostedView.swift/.kt`, `FxSurfaceView.swift/.kt`, `FxModule.swift/.kt` | — |
 | 2 | Manifest + `select()` | — | `src/manifest/` |
 | 3 | `FxEffectRenderer` (Pixels) | `FxHostedView.swift/.kt`, `FxSurfaceView.swift/.kt` | `src/runtime/FxHostedView.tsx`, `src/runtime/FxSurfaceView.tsx` |
-| 4 | Fabric-Invisible Layer | `FxSurfaceView.swift/.kt` (content motion wrapper) | `src/runtime/FxManagedView.tsx` |
+| 4 | Fabric-Invisible Layer | `FxSurfaceView.swift/.kt` (content motion wrapper) | `src/runtime/FxSurfaceView.tsx` |
 | 5 | `FxLayoutObserver` (Read) | `FxLayoutObserver.swift/.kt` | — |
 | 6 | `FxAnimationDriver` | `FxAnimationDriver.swift/.kt` | — |
-| 7 | `FxPresenceCoordinator` | `FxPresenceCoordinator.swift/.kt` | `src/runtime/FxPresenceView.tsx` |
-| 8 | Press Recognizer | `FxPressHandler.swift/.kt` | `src/runtime/FxPressableView.tsx` |
+| 7 | `FxPresenceCoordinator` | `FxSurfaceView.swift/.kt` + `FxPresenceCoordinator.swift/.kt` | `src/surface/FxPresence.tsx` (planned) |
+| 8 | Press Recognizer | `FxSurfaceView.swift/.kt` + `FxPressHandler.swift/.kt` | `src/surface/FxPressable.tsx` (planned) |
 | 9 | Runtime Objects | Plain native classes (no SharedObject needed) | — |
+
+> Units 7/8 lower to `FxSurfaceView` (plus the coordinator/recognizer object); dedicated presence/press
+> views are **not planned** — they ship as `src/surface/` components over the existing binding. The
+> runtime-object granularity behind this (driver family-split, scheduling) is the current direction,
+> not a closed call — formally open as RT-008 (`36`, DOC-011's todo).
 
 ---
 
@@ -573,7 +578,7 @@ Every architectural decision in this doc traces to exactly one of:
 | Layout resolved BEFORE mounting | Fabric `ShadowTree.cpp:417` | `[ref: react-native/.../renderer/mounting/ShadowTree.cpp:408-420]` |
 | Hit-testing: model-layer only, not native-layer transforms (iOS caveat) | Fabric `LayoutableShadowNode` | `[ref: react-native/.../renderer/layout/LayoutableShadowNode.cpp:272-345]` `[research: 34:42-58]` |
 | ShadowNodeFamily = real identity (Tag immutable) | Fabric `ShadowNodeFamily` | `[ref: react-native/.../renderer/core/ShadowNodeFamily.h]` |
-| Intermediate sublayer model (Fabric-invisible, not container view itself) | Cross-referencing: Fabric clobber + Expo children + research 33 | `[finding] §5.1` `[research: 33:58-60]` |
+| Intermediate container model (Fabric-invisible, not container view itself) | Cross-referencing: Fabric clobber + Expo children + research 33 | `[finding] §5.1` `[research: 33]` |
 | No iOS hitTest override — model-layer caveat from 34 | Cross-referencing: Fabric hit-test + 34 caveat | `[finding] §5.1.1` `[research: 34:47-58]` |
 | No MountingOverrideDelegate needed for wrapper model | Cross-referencing: Reanimated approach vs fx's owned wrapper | `[finding] §5.1` |
 | 6-state FSM: UNDETERMINED → BEGAN → ACTIVE → END/FAILED/CANCELLED | Gesture Handler `RNGestureHandlerState.h` | `[ref: gesture-handler/apple/RNGestureHandlerState.h:3-10]` |

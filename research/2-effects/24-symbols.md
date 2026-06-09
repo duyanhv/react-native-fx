@@ -22,7 +22,7 @@ to a per-platform-different **asset/runtime path** behind one unified public sur
 
 ```ts
 interface SymbolConfig {
-  name: string;                         // SF Symbol (iOS) / drawable or Lottie ref (Android)
+  name: string;                         // SF Symbol in V1; future drawable/Lottie ref on Android
   animation: 'bounce' | 'pulse' | 'scale' | 'variableColor'  // NOT the public `effect` id
            | 'appear' | 'disappear' | 'breathe' | 'rotate' | 'wiggle';
   trigger?: 'value' | 'state' | 'repeat';   // discrete / held / continuous
@@ -38,14 +38,12 @@ interface SymbolConfig {
 
 | | iOS | Android |
 |---|---|---|
-| symbol | `.symbolEffect` (17; `breathe`/`rotate`/`wiggle` need 18), `.contentTransition(.symbolEffect)` | Animated Vector Drawable / Lottie — no system symbols |
+| symbol | `.symbolEffect` (17; `breathe`/`rotate`/`wiggle` need 18), `.contentTransition(.symbolEffect)` | planned AVD/Lottie future path — no system symbols |
 
-**iOS-only vocabulary.** On Android the same *intent* is met with AVD or Lottie — a
-different **lowering / asset contract**, **not a different public component.** The public
-surface stays `<Fx effect="…">` (or optional effect sugar); only the asset/runtime path
-differs per platform. `symbol` may be **iOS-native only**, which is fine as long as the
-manifest honestly **degrades** (graceful `{via:'none'}`) or **requires app-supplied Android
-assets** — recorded as data, not a separate component. Mechanics in `structure.{ios,android}.md`.
+**iOS-only V1 vocabulary.** Android has no system-symbol equivalent, so V1 does not ship an
+Android `symbol` runtime. AVD/Lottie remain planned future lowerings behind the same public
+surface, not a different public component. The manifest keeps those Android rungs
+non-selectable in V1 so Android degrades gracefully to `{via:'none'}`.
 
 ## Surface consumption
 
@@ -85,9 +83,8 @@ trigger value (e.g. on your button's `onPress`); the symbol does not capture the
 
 ## Degradation
 
-- Android (no system symbols) → AVD/Lottie asset path; **if no app-supplied asset →
-  `{via:'none'}`** (graceful). iOS-native-only is acceptable, expressed honestly in the
-  manifest.
+- iOS <17 → `{via:'none'}` (graceful). Android V1 → `{via:'none'}` because AVD/Lottie
+  support is planned/deferred, not shipped.
 
 ## Events
 
@@ -98,18 +95,13 @@ can sequence). No per-frame stream.
 
 1. **`symbol` is `interaction: 'self'`** — the system animates it; fx triggers via
    discrete `trigger`, never per-frame.
-2. **iOS-native, Android-library** — unify the prop shape and the public surface (`<Fx>`);
-   accept that Android lowers to AVD/Lottie (a per-platform-different **lowering/asset
-   contract**, not a different public component).
+2. **iOS-only in V1** — unify the prop shape and the public surface (`<Fx>`), but ship
+   the runtime only through iOS `.symbolEffect`. Android AVD/Lottie stays planned and
+   non-selectable until a later task defines the asset contract and renderer.
 3. **Effect names map to SF Symbols' behavioral classes** (discrete/indefinite/
    transition/content) — the trigger semantics follow from the class.
-
-## Open questions
-
-- **Android scope** — ship `symbol` on Android via Lottie (asset burden, dependency)
-  or mark it iOS-only in V1 and document the gap? Ties to the `via:'lib'` contract (`02`).
-- **Symbol asset sourcing** — SF Symbols are Apple-only; the Android equivalent needs
-  the app to supply matching AVD/Lottie assets. Decide the contract.
+4. **Android asset sourcing is deferred** — SF Symbols are Apple-only. Android AVD/Lottie
+   assets require an app-supplied asset contract, which does not ship in V1.
 
 ## Sources
 

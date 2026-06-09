@@ -1,0 +1,59 @@
+uniform float time;
+uniform vec2 resolution;
+uniform float intensity;
+
+float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+float vnoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float a = hash21(i);
+    float b = hash21(i + vec2(1.0, 0.0));
+    float c = hash21(i + vec2(0.0, 1.0));
+    float d = hash21(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i < 5; i++) {
+        v += amp * vnoise(p);
+        p *= 2.0;
+        amp *= 0.5;
+    }
+    return v;
+}
+
+half4 main(float2 fragCoord) {
+    vec2 uv = fragCoord / resolution;
+    float aspect = resolution.x / max(resolution.y, 1.0);
+    uv.x *= aspect;
+    float t = time * 0.15;
+    float band = 0.0;
+    for (int i = 0; i < 4; i++) {
+        float fi = float(i);
+        float yOff = sin(t * 0.7 + fi * 1.8) * 0.25;
+        float xOff = cos(t * 0.5 + fi * 2.1) * 0.3;
+        float wave = uv.y - (0.25 + fi * 0.15) - yOff;
+        float thickness = 0.035 + fbm(uv * 3.0 + vec2(xOff, t * 0.3)) * 0.04;
+        float ribbon = exp(-wave * wave / (thickness * thickness));
+        ribbon *= 1.0 - smoothstep(-0.3, 0.7, wave);
+        band += ribbon * (0.7 + 0.3 * fbm(uv * 2.5 + vec2(fi * 5.0, t * 0.2)));
+    }
+    vec3 green = vec3(0.1, 1.0, 0.3);
+    vec3 purple = vec3(0.5, 0.2, 1.0);
+    vec3 teal = vec3(0.1, 0.8, 1.0);
+    float shift = sin(t * 0.3) * 0.5 + 0.5;
+    vec3 ribbonColor = mix(mix(green, purple, shift), teal, uv.y * 0.5);
+    vec3 sky = vec3(0.02, 0.01, 0.08);
+    vec3 col = sky + band * ribbonColor * 1.8;
+    col += vec3(0.05, 0.02, 0.03) * pow(clamp(1.0 - uv.y, 0.0, 1.0), 2.0) * 0.5;
+    col *= intensity;
+    return half4(clamp(col, 0.0, 1.0), 1.0);
+}

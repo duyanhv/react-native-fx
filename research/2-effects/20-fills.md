@@ -34,7 +34,7 @@ type FillUniforms =
   the geometry. Static by default.
 - **mesh** — a `width × height` control grid with one `color` per vertex; `drift`
   animates vertex positions for the fluid aurora look (driven by the native clock,
-  not JS).
+  not JS). V1 exposes the full grid. It does not expose N-stop auto-placement sugar.
 - Colors resolve in JS (palettes/themes, `50`); `time` is native-injected for `drift`.
 
 ## Lowering (summary — authority is 02 + structure.\*)
@@ -69,7 +69,8 @@ content.
 ## Runtime behavior
 
 - **static** for plain gradients; **native clock** for `mesh.drift` (vertex animation off
-  `time`, not JS).
+  `time`, not JS). `drift` is mesh-only in V1; plain gradients do not get implicit
+  animated drift.
 - **state-eased** — palette/points change discretely, eased by `transition`.
 
 ## Degradation
@@ -89,13 +90,10 @@ None of consequence — decorative. `onLoad` is trivially available; no interact
    native-injected.
 3. **Mesh lowers to a native primitive on iOS, a generated shader on Android** — the
    manifest carries the fallback ladder; consumers never see the split.
-
-## Open questions
-
-- **Mesh control-point ergonomics** — expose the full `width×height` grid, or a
-  simpler "N color stops, auto-placed" sugar for the common case? (Ties to `50`.)
-- **Animated gradient drift for the non-mesh gradients** — is `drift` mesh-only, or
-  do plain gradients get a subtle animated variant?
+4. **V1 mesh exposes the full `width × height` grid** — N-stop auto-placement sugar stays
+   out of V1 until real usage shows the grid is too heavy.
+5. **`drift` is mesh-only** — plain gradients stay static unless a later capability adds
+   explicit animated-gradient semantics.
 
 ## Sources
 

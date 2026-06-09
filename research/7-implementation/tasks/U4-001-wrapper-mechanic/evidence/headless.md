@@ -2,7 +2,7 @@
 
 ## Goal
 
-Prove that content motion uses an intermediate sublayer that Fabric does not track, so Fabric commits do not clobber the animation.
+Prove that content motion uses an intermediate container that Fabric does not track, so Fabric commits do not clobber the animation.
 
 ## Steps
 

@@ -56,8 +56,13 @@ layout/hit-testing to a `UIHostingController`.
 - **Shader, expo-view**: `MTLRenderPipelineState` + `MTKView`. Runtime
   `makeLibrary(source:)` is available but build-time `.metallib` is the default.
 - `.metal` files in the target compile into `default.metallib` at build; functions
-  are referenced by name. Uniforms upload via `setFragmentBytes` (`<4 KB`) at buffer
-  index 0; `time`/`resolution` are native-injected each frame, never from JS.
+  are referenced by name. The podspec uses `resource_bundles` (not `source_files`,
+  because the pod is `static_framework`) with `MTL_LIBRARY_OUTPUT_DIR` redirecting
+  the compiled output to `FxShaders.bundle/default.metallib`. At runtime, the hosted
+  shader path resolves `ShaderLibrary(url:)` against `FxShaders.bundle`, falling
+  back to `ShaderLibrary.default`. Uniforms upload via `setFragmentBytes` (`<4 KB`)
+  at buffer index 0; `time`/`resolution` are native-injected each frame, never
+  from JS.
 
 ### Touch contract
 
@@ -66,7 +71,8 @@ layout/hit-testing to a `UIHostingController`.
 - **`expo-view`**: `UILongPressGestureRecognizer(minimumPressDuration = 0)`,
   `cancelsTouchesInView = false`, delegate `shouldRecognizeSimultaneouslyWith → true`;
   read `location(in:)` each callback; spring back on `.cancelled`. `hitTest` override
-  carries the shaped/SDF pass-through. Full mechanics in `30`.
+  carries the shaped/SDF pass-through (U8) and the animated-container mid-flight caveat
+  (U4) — the same override composes both concerns. Full mechanics in `30`.
 - **Severing rule:** applying `.layerEffect` to live RN content requires hosting that
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.
@@ -130,14 +136,32 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
 
 ### `motion`
 The driver node (`02`) lowers two ways, by **target**:
-- **content target** — `CASpringAnimation`/`UIView.animate` on the **wrapped
+- **content target** — `CASpringAnimation`/`UIView.animate` on the **intermediate
   container's** `CALayer` · `requires {os:13, expo-view}` · `applyVia:CALayer` · the OS
-  animator owns timing. Animates the host view fx owns (`33`), transform/opacity only ⇒
-  touch survives. **Caveat (`34`):** hit-testing reads the **model layer** (the target),
-  so touch is correct at rest and, mid-flight, lands at the element's destination rather
-  than its on-screen position. Spring defaults to the iOS system spring (the law); `tune`
+  animator owns timing. `FxSurfaceView` hosts the children in a nested container and the
+  animator targets that container's `CALayer` transform/opacity; Fabric tracks only the
+  outer `FxSurfaceView` and never overwrites the container. Transform/opacity only ⇒ touch
+  survives. **Child routing follows the proven RCT/Expo nested-container pattern, not a
+  one-sided override.** RN itself hosts Fabric children one level down via `currentContainerView`
+  (`references/react-native` `RCTViewComponentView.mm`), and `expo-glass-effect`'s `GlassView.swift`
+  + gesture-handler's `RNGestureHandlerButtonComponentView.mm` ship it. Two valid realizations:
+  route children through the view's `contentView`/`currentContainerView` slot so the default
+  mount/unmount machinery targets the container automatically, **or** override
+  `mountChildComponentView` **and** `unmountChildComponentView` as a **symmetric pair** against
+  the *same* container — never mount alone (the default unmount asserts the child's superview is
+  the container). On unmount the child must `removeFromSuperview()` (RN asserts a detached child
+  has no superview — `SwiftUIHostingView.swift`). iOS has no child-accessor methods to proxy. **Caveat (`34`):**
+  hit-testing reads the **model layer** (the target), so touch is correct at rest and,
+  mid-flight, lands at the element's destination rather than its on-screen position. A
+  `hitTest` override against the presentation layer is deferred to U6/U8 if mid-transition
+  interaction proves to matter. Spring defaults to the iOS system spring (the law); `tune`
   adjusts within that family. Presence (`42`/`54`) composes this rung into enter/hold/exit
   via `FxPresenceCoordinator`; the deferred-unmount handshake is `35`.
+  **Effect surface visibility:** the `metalView` (GPU surface) is hidden when no effect is
+  active (`pendingShader` empty or invalid), so it never obscures the content-motion
+  container. The effect surface sits above the container in z-order; when both are active
+  the composition concern (SPINE-004, background/overlay/surface) intersects the U3 V2
+  interactive surface and is not yet decided.
 - **effect target** — `phaseAnimator`/`keyframeAnimator`/`.animation`
   (`requires {os:17 · 16 for .animation, hosted}`). Drive a hosted effect's own targets
   (intro/outro/state) — the native side of the eased-`transition` channel (`40`); JS sets

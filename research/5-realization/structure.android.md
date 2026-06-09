@@ -42,6 +42,26 @@ component.
 - Compose host via Expo's Android `RNHostView` equivalent. The auto-Host boundary
   (#46549) covers Android too. For decorative full-surface effects, keep the host
   non-intercepting so touches reach RN content below.
+- **Child layout on the plain-`View` host.** When the host swaps its decorative child
+  on a prop update (effect or `intensity` change recreates the inner render view), the
+  new child is added natively *outside* RN's layout pass. `ExpoView` defaults
+  `shouldUseAndroidLayout = false`, which swallows the child's `requestLayout()`, so a
+  child added after the host's initial layout never gets measured and renders at 0×0
+  (blank). The hosting `ExpoView` subclass therefore sets
+  `shouldUseAndroidLayout = true`, which re-runs `measureAndLayout()` (via `post`) on
+  every `requestLayout`. Because that flag alone "does not guarantee accurate layout"
+  (per `ExpoView`), the host also overrides `onLayout` to lay its decorative child
+  explicitly to the host bounds — mirroring `ExpoComposeView`'s hosting-child handling.
+  This reads the host's RN-assigned bounds; it never writes layout back to Yoga. This is
+  Android-local: iOS recreates the hosted controller the same way per prop batch, but
+  UIKit constraints re-size the new subview automatically, so only Android needs it.
+- **Discrete uniform change vs remount.** A discrete `intensity` change updates the *live*
+  child's uniform in place (`setIntensity` → `invalidate()`); the host remounts the child
+  only when the effect *id* actually changes. This is the Android realization of the
+  discrete-prop rule: a dragged slider mutates one uniform per frame instead of recreating
+  the view each tick, which would flash a blank frame, reset the shader clock
+  (`baseTimeNanos`), and reparse the AGSL. iOS reaches the same no-flicker outcome through
+  SwiftUI's reactive re-render, so the divergence is implementation-local.
 
 ### Clock (what advances `time`)
 
@@ -61,7 +81,10 @@ component.
   is activated when the library-module Compose setup is resolved.
 - **Shader**: `RuntimeShader` (AGSL) applied via
   `RenderEffect.createRuntimeShaderEffect` + `Modifier.graphicsLayer`, or as a
-  `ShaderBrush`.
+  `ShaderBrush`. AGSL source files ship under `src/main/assets/shaders/` and are
+  read at runtime via `context.assets.open("shaders/<id>.agsl")`. No build-time
+  shader compile step is required. Below API 33 the shader rung guards out and
+  degrades to `{ via: 'none' }`.
 - **Filter/blur**: `RenderEffect` (`createBlurEffect`, color filter, chained).
 
 ### Touch contract (when on `expo-view`)
@@ -131,9 +154,22 @@ Each section expands the Android rungs from `02`.
 ### `motion`
 The driver node (`02`) lowers two ways, by **target**:
 - **content target** — `ViewPropertyAnimator` / `androidx.dynamicanimation`
-  `SpringAnimation` on the **wrapped container** `View` · `requires {os:21, expo-view}` ·
-  `applyVia:View` · the animator owns timing. Animates the host view fx owns (`33`),
-  translation/scale/alpha only ⇒ touch survives. **Caveat (`34`):** unlike iOS, property
+  `SpringAnimation` on the **intermediate container** `View` · `requires {os:21, expo-view}` ·
+  `applyVia:View` · the animator owns timing. `FxSurfaceView` creates an intermediate
+  container `View` inside itself and hosts the RN children in it; the animator targets the
+  container's translation/scale/alpha. Fabric tracks only the outer `FxSurfaceView` and never
+  overwrites the container. Animates the container fx owns (`33`), translation/scale/alpha
+  only ⇒ touch survives. **Child routing must follow Expo's proven pattern, not a partial
+  override** — a naive `addView` + `getChild*` proxy violates Android's
+  `getChildAt(i).getParent() == this` invariant (and `SurfaceMountingManager`'s direct-`getChildAt`
+  fallback), which crashes on mount. Two sanctioned options: **(preferred)** route children via
+  Expo's `GroupView { AddChildView/GetChildCount/GetChildViewAt/RemoveChildViewAt }` ViewManager
+  DSL (`references/expo` `GroupViewManagerWrapper.kt`) — the framework-blessed seam; **or (if
+  overriding the `View` directly)** mirror `expo-blur`'s `ExpoBlurTargetView.kt` exactly: add the
+  container via `super.addView` guarded by identity; report the container's children from
+  `getChildCount`/`getChildAt`/`indexOfChild` with the container itself **excluded**; override the
+  **full** add / remove / `removeViewAt` / `removeAllViews` / `updateViewLayout` family (not just
+  `addView`); and size the container in `onMeasure`/`onLayout`. **Caveat (`34`):** unlike iOS, property
   animators update the real view each frame, so touch tracks the **visual** position
   throughout — a deliberate platform divergence (the law). Spring defaults to the platform's
   **standard** `androidx.dynamicanimation` `SpringForce` (always available, API 21); where
@@ -141,18 +177,28 @@ The driver node (`02`) lowers two ways, by **target**:
   enhancement — § version gates / open questions). `tune` adjusts within whichever is active.
   Presence (`42`/`54`) composes this rung via `FxPresenceCoordinator`; the unmount handshake
   is `35`.
+  **Explicit layout required.** The container is a `FrameLayout` holding the RN child tree; it
+  is added outside RN's layout pass. `FxSurfaceView` sets `shouldUseAndroidLayout = true`
+  (so Expo re-runs `measureAndLayout()`) and overrides `onLayout` to measure the container
+  with exact specs and then lay it to the host bounds. Without this, the container renders at
+  0×0 (blank). The same mechanic as the hosted renderer above — one mechanic, one home.
+  **Effect surface visibility:** the effect surface is hidden when no effect is active
+  (`pendingShader` blank), so it never obscures the content-motion container. When the
+  Android shader renderer is implemented, the visibility rule controls the effect surface
+  view. The composition concern (SPINE-004, background/overlay/surface) intersects the
+  U3 V2 interactive surface and is not yet decided.
 - **effect target** — Compose `animate*AsState` / `updateTransition` / `keyframes` /
   `spring` (`requires {os:21, hosted}`); spring defaults to Compose's standard `spring()`,
   upgrading to **M3 Expressive** `MotionScheme` springs where present (progressive
   enhancement). The native side of the eased-`transition` channel (`40`).
 
-### `symbol` — planned / optional (V1 scope open, `24`)
+### `symbol` — planned / optional (deferred from V1)
 - **AVD / Lottie** — `via:native`(AVD) or `via:lib`(Lottie) · `requires {os:21, hosted}` ·
-  **`status:planned`**. Whether Android ships `symbol` in V1 (via Lottie/AVD) or `symbol`
-  stays **iOS-only in V1** is an open scope decision owned by `24`. If it ships: no system
-  symbol vocabulary, so it is a per-platform-different **lowering / asset contract**, **not a
-  different public component** — the public surface stays `<Fx>` (`24`). Lottie is a
-  `via:'lib'` optional peer dependency (`53`).
+  **`status:planned`**. `symbol` stays **iOS-only in V1**; Android AVD/Lottie support is
+  deferred until a future task defines the asset contract and renderer. There is no system
+  symbol vocabulary, so the future Android path is a per-platform-different **lowering /
+  asset contract**, **not a different public component** — the public surface stays `<Fx>`
+  (`24`). Lottie remains a possible `via:'lib'` optional peer dependency (`53`).
 
 ### `content-distort` — planned (Android-only)
 - **AGSL via `RenderEffect`** — `requires {os:33, expo-view}` · `status:planned`.

@@ -111,6 +111,20 @@ mounts the native view/prop. Unavailable degrades to a graceful no-op, never thr
 A bring-your-own effect registers as a `shader` node with developer `.metal`+`.agsl` and a
 uniform table (`22`); it flows through the identical preset/primitive/adapter path.
 
+## V1 shader catalog
+
+The V1 `ShaderId` catalog is `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`,
+`dots`, `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`.
+
+`fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, and `dots` are the implemented
+starter shaders. `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow` are V1
+catalog entries that need native MSL+AGSL implementations before package types/runtime
+expose them.
+
+Public shader uniforms stay shared and minimal in V1. `intensity` is the stable semantic
+override. `time`, `resolution`, `pressDepth`, and `touch` are native-owned values injected
+by the runtime.
+
 ## Decisions
 
 1. **Three explicit layers, platform-native behavior presets on top** — presets → primitives → builders;
@@ -127,17 +141,21 @@ uniform table (`22`); it flows through the identical preset/primitive/adapter pa
    three preset-like bundles on different owned surfaces (an honest domain split).
 4. **Props by default; compound only for real native layers** (`FxGroup`/`FxItem`).
 5. **Presets resolve in JS**; palettes/themes are pure config; `time`/`resolution` never in
-   the record.
+   the record. V1 shader uniforms are shared and minimal.
 6. **The component layer is the adapter** — `select()` over the manifest; degrades, never
    throws. **BYO reuses the `shader` node**, no separate API.
 
+## Decisions
+
+7. **V1 vocabulary ratified (DOC-005).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` · `sheet` · `modal` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+
 ## Open questions
 
-- **The preset vocabularies** — exactly which `preset`/`feedback`/`effect` values ship v1 and
-  their native defaults (`56`, ties to the `42` preset set + `41`'s default catalog).
-- **`uniforms`/spec memoization** — inline literals re-resolve each render; document
-  stable-ref guidance.
-- **Per-shader uniform typing source** — generate TS from the manifest (`02`) vs hand-maintain.
+- ~~**`uniforms`/spec memoization**~~ — **resolved (SURF-010; verified SDK 56, iOS + Android).**
+  No manual memoization is required: the native side compares props by *value*, not reference
+  (Expo's `previousProps` per-prop equality), so an inline builder that re-resolves to the same
+  value triggers no native work. React Compiler memoizes the builder chain automatically; without
+  it, module-level constants for static presets are an optional optimization, not a correctness need.
 - **Theme distribution** — consumer-authored palettes/themes as a shareable artifact (`52` `lab`).
 
 ## Sources

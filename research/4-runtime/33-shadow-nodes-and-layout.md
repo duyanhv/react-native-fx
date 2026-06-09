@@ -51,21 +51,37 @@ approach sidesteps it: transform the container fx owns, not the children.
   its child subtree (transform-only, no snapshot); the mid-flight tappable position follows
   `34`'s iOS/Android caveat.
 
-### The clobber constraint → animate an fx-owned, Fabric-invisible layer
+### The clobber constraint → the intermediate container
 
 **Verified, and it sharpens the design:** `transform`/`opacity` are **Fabric props re-applied
 on every commit** (`BaseViewProps.h`; `Differentiator.cpp`). So animating a *Fabric-tracked*
 view's layer transform directly gets **clobbered** by the next commit. Therefore fx animates
-an **fx-owned intermediate layer/container that Fabric does not track** — created *inside* the
-`FxNativeView`, wrapping the children — **not** the tracked view's `transform` prop. That
-layer is invisible to Fabric's diff, so commits don't overwrite it. (`34`/`35` build on this.)
+an **intermediate container** — a native view inside `FxSurfaceView` that Fabric does not track,
+so Fabric cannot clobber its `transform`/`opacity`. `FxSurfaceView` overrides
+`mountChildComponentView` to route RN children into this intermediate container; the children
+ride along as the container animates. The animator targets the intermediate container, not
+the outer `FxSurfaceView` that Fabric tracks. This is a view, not a raw `CALayer`, so
+children mount as subviews and hit-testing survives at rest. (`34`/`35` build on this.)
+
+**Child-routing realization (proven precedent, not naive override).** Hosting Fabric-mounted
+children in a nested container is a shipping Expo/RCT pattern, but it must mirror the proven
+templates exactly — the per-platform mechanics and the references are pinned in
+`5-realization/structure.{ios,android}.md`. A one-sided override (mount without unmount on iOS;
+a partial `addView` + `getChild*` proxy on Android) breaks Fabric's mounting invariants and
+crashes — the templates (`expo-glass-effect`/`currentContainerView` on iOS, `expo-blur` or the
+`GroupView` ViewManager DSL on Android) are the contract. **Fallback if reparenting ever proves
+too fragile:** Reanimated avoids reparenting entirely, animating in place by participating in
+the committed props — but its mechanism is a C++ `UIManagerCommitHook` (rule #7 forbids it). The
+fx-legal analogue is to animate fx's *own* `expo-view` where fx is the sole writer of
+transform/opacity, so there is no Fabric prop to clobber — reserved as the alternative if the
+container model breaks down, not the V1/V2 default.
 
 ### The falsification test — source-audit verdict: PASS (device proof pending)
 
 Verified against Expo/RN source — a **source-audit** pass, not a device proof: **stable
 wrapper identity holds** (Expo
 `shouldBeRecycled() = false` → views are never recycled), and **layout is readable natively**
-(`layoutMetrics` pre-mount). With the Fabric-invisible intermediate layer above, **Expo
+(`layoutMetrics` pre-mount). With the Fabric-invisible intermediate container above, **Expo
 Modules is sufficient** for the container-transform model. It is **insufficient only the day
 fx needs per-child control** (staggered children, child-anchored `menu`/`tooltip`) — *that*
 is the concrete trigger to reconsider Nitro / raw Fabric (`0-spine/05`). Until then, the
@@ -73,8 +89,8 @@ default holds.
 
 ## Research questions
 
-- How does fx keep a stable handle to the **managed wrapper view it creates** across
-  re-renders, on each platform (iOS UIView, Android ViewGroup)? (fx animates the wrapper it
+- How does fx keep a stable handle to the **intermediate container** across
+  re-renders, on each platform (iOS UIView, Android ViewGroup)? (fx animates the container it
   owns — no child RN-view ref is needed; #27846.)
 - When is the post-layout frame available, and how does fx read size/position
   **natively** to resolve a relative target (e.g. `distance: 'compact'` → the view's
@@ -89,11 +105,12 @@ default holds.
 ## Open questions
 
 - **Falsification test for the boundary decision (gates `0-spine/05`).** This doc owns
-  the layout half. fx animates the **managed wrapper it creates** (so it holds that handle
-  trivially — no child ref needed, #27846); the open questions are whether Expo Modules can
-  keep that **wrapper's identity stable across re-renders** and let fx **read post-layout
-  frames natively**. If either cannot be done cleanly through Expo Modules, that is a
-  concrete trigger to reconsider Nitro/JSI. Until one fails on device, the default holds.
+  the layout half. fx animates the **intermediate container** inside `FxSurfaceView` (so it
+  holds that handle trivially — no child ref needed, #27846); the open questions are whether
+  Expo Modules can keep that **container's identity stable across re-renders** and let fx
+  **read post-layout frames natively**. If either cannot be done cleanly through Expo Modules,
+  that is a concrete trigger to reconsider Nitro/JSI. Until one fails on device, the default
+  holds.
 - Whether any of this is reachable on the `hosted` substrate, or strictly `expo-view`.
 - Shadow-node interaction on the New Architecture only, or a Paper fallback at all.
 

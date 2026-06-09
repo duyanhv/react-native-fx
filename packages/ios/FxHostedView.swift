@@ -50,6 +50,9 @@ internal final class FxHostedView: FxNativeView {
       return FxFillView(intensity: intensity)
     case "material":
       return FxMaterialView(intensity: intensity)
+    case "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
+      "aurora", "noise-field", "plasma", "caustics", "edge-glow":
+      return FxShaderView(shaderId: effect, intensity: intensity)
     default:
       return FxEmptyView()
     }

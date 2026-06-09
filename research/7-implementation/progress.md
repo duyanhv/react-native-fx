@@ -10,7 +10,7 @@ for active or complex tasks. The rules (lifecycle, states, proof, the closure ru
 
 ## Legend
 
-- **state** (one per task): `todo · in-progress · blocked · headless-done · device-pending · docs-pending · ready-to-merge · merged`. `ready-to-merge` = **complete** (all gates but git); `merged` = integrated.
+- **state** (one per task): `todo · in-progress · blocked · headless-done · device-pending · docs-pending · ready-to-merge · merged`. `ready-to-merge` = **complete** (all gates through `docs-closed`; finishing commit not yet in); `merged` = complete **and** the finishing commit is in (on `integration/0.1.x`).
 - **type:** `implement` (code) · `ratify` (decide in source doc) · `device-verify` (device proof) · `rework` (fix inconsistency) · `doc-cleanup` (source alignment).
 - **device:** `yes` = has a non-headless gate (effects/animation/touch — will not run headless).
 - **consumes / closes:** decision-ledger ids this task reads / must close.
@@ -25,43 +25,47 @@ the bottom. A row needs a detail block only when it is active or has more than a
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| DOC-001 | 1-surface | doc-cleanup | ready-to-merge | no | — | SURF-001, SURF-009 | — | `GlassView` dropped from `56`; `SpringTune` removed from `55`; SURF-001 + SURF-009 resolved |
-| DOC-002 | 0-spine | ratify | todo | no | — | SPINE-004, SPINE-005, SPINE-006, SPINE-007 | — | docs: `02` composition, feature-flags, partitioning, lib naming |
+| DOC-001 | 1-surface | doc-cleanup | merged | no | — | SURF-001, SURF-009 | — | `GlassView` dropped from `56`; `SpringTune` removed from `55`; SURF-001 + SURF-009 resolved; [review](./reviews/v1-merge-batch-2026-06-08.md) |
+| DOC-002 | 0-spine | ratify | merged | no | — | SPINE-004, SPINE-007 | — | `02` Decisions 12+13 ratified; SPINE-004/007 closed, SPINE-005/006 deferred; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-002--ratify-spine-004005006007) |
 | DOC-003 | 0-spine | ratify | todo | no | — | SPINE-001, SPINE-002 | — | docs: `00`/`50` curation/BYO threshold, palettes-as-artifact |
 | DOC-004 | 1-surface | ratify | todo | no | — | SURF-002 | — | docs: `56`/`6-ship` ship effect components? |
-| DOC-005 | 1-surface | ratify | todo | no | MOT-001 | SURF-003, SURF-004, SURF-005 | — | docs: `50`/`56`/`57` V1 preset/state/feedback vocab |
+| DOC-005 | 1-surface | ratify | merged | no | MOT-001 | SURF-003, SURF-004, SURF-005 | — | `50`/`56`/`57`/`41` V1 preset/state/feedback vocab ratified; springs stay with MOT-001; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-005--v1-presetstatefeedback-vocabulary-ratification) |
 | DOC-006 | 1-surface | ratify | todo | no | — | SURF-006 | — | docs: `57`/`21` FxGroup morph scope |
-| DOC-007 | 2-effects | ratify | todo | no | — | FX-001, FX-004 | — | docs: `20`/`22`/`50` mesh ergonomics, shader catalog |
-| DOC-008 | 2-effects | ratify | todo | no | — | FX-009 | — | docs: `24` Android symbol scope |
+| DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) · [review](./reviews/DOC-007.md) |
+| DOC-008 | 2-effects | ratify | merged | no | — | FX-009 | — | `symbol` iOS-only in V1; Android AVD/Lottie planned/deferred (non-selectable, enforced by `select()`); [task](./tasks/DOC-008/) · [review](./reviews/DOC-008.md) |
 | DOC-009 | 3-motion | ratify | todo | no | — | MOT-003, MOT-005, MOT-006, MOT-009 | — | docs: `40`/`41`/`42` V1 motion vocab scope |
-| DOC-010 | 3-motion | ratify | todo | no | — | MOT-010 | — | docs: `41`/`42` reduce-motion policy |
+| DOC-010 | 3-motion | ratify | merged | no | — | MOT-010 | — | V1 reduce-motion = instant degradation (0-duration); policy recorded in `41` Decision #9, `42` §Reduce-motion, `34` §Findings; MOT-010 resolved; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-010--reduce-motion-policy-ratification) |
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
 | DOC-012 | 6-ship | ratify | todo | no | — | SHIP-002 | — | docs: `53` no-rung degradation UX |
-| DOC-013 | 2-effects | ratify | todo | no | — | REAL-004 | — | docs: `52` single-source shaders (ties compiler) |
+| DOC-013 | 2-effects | ratify | merged | no | — | REAL-004 | — | V1 curated shaders hand-maintain MSL+AGSL pairs; compiler remains additive V2; [task](./tasks/DOC-013/) · [review](./reviews/DOC-013.md) |
+| DOC-014 | 7-impl | doc-cleanup | merged | no | — | — | — | [detail](#doc-014--runtime-binding-ref-cleanup). Reviewed + merged on integration/0.1.x. Reconciled all runtime-binding/folder refs in `architecture.md` (§1 src-tree, §2 path, §9 unit-map + footnote, podspec) and `data-layer.md` (§9 entity diagram) to the real package — 3 bindings `FxHostedView`/`FxSurfaceView`/`FxGroupView`. **All three phantoms dropped** (`FxManagedView` + `FxPresenceView` + `FxPressableView`): grounding overruled the S1 "mark planned" disposition — presence/press are `expo-view` (rule #3) over `FxSurfaceView`, exposed as `src/surface/` components, never dedicated bindings. Also reconciled the ledger RT-008 "five-view object model" wording to 3 views (RT-008 stays open — object granularity per `36`). (scope widened per audit-2026-06-09 S1; binding call revised in-session) |
+| DOC-015 | 1-surface | doc-cleanup | merged | no | — | SURF-010 (re-close) | — | [detail](#doc-015--surf-010-plane-1-re-closure). Reviewed + merged on integration/0.1.x. Cardinal-rule slip (audit-2026-06-09 S3): SURF-010 (memoization guidance — native `previousProps` value-equality ⇒ no manual memo) was closed against plane-7 `data-layer §5.1`, not its named plane-1 source `50`/`54`/`55`. Propagate the guidance into the owning surface doc(s) and re-point the SURF-010 closure there (or correct the source attribution if it genuinely belongs in `data-layer`) |
 
 ### V1 build — Units 1–3 + ship
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U1-001 | Unit 1 | implement | docs-pending | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 closed, IMPL-001 carried; [detail](#u1-001--package-scaffolding) |
-| U1-002 | Unit 1 | implement | headless-done | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; SDK-verify deferred to U1-003; [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
-| U1-003 | Unit 1 | device-verify | ready-to-merge | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
-| U1-004 | Unit 1 | implement | ready-to-merge | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. [detail](#u1-004--bare-fabric-example-in-ci) |
-| U1-005 | Unit 1 | implement | headless-done | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed on main (`e6c29c3`). CI Android autolink passes. |
-| U2-001 | Unit 2 | implement | ready-to-merge | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; [detail](#u2-001--planned-rung-selection) |
-| U2-002 | Unit 2 | rework | ready-to-merge | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; [detail](#u2-002--uniformspec-schema-reconciliation) |
-| U3-001 | Unit 3 | implement | ready-to-merge | yes | FX-004 | RT-009 | U1-002, U2-001, DOC-007, DOC-008 | implemented; RT-009 closed; fill iOS+Android; material iOS; device-verified iOS 26+; [detail](#u3-001--hosted-effect-renderer) |
+| U1-001 | Unit 1 | implement | merged | no | IMPL-001 | SHIP-001, IMPL-001 | — | reviewed; SHIP-001 + IMPL-001 both resolved in source (IMPL-001 closed 2026-06-09 once REAL-002/U3-005 landed); docs-closed complete; merged on integration/0.1.x; [detail](#u1-001--package-scaffolding) |
+| U1-002 | Unit 1 | implement | merged | no | RT-010 | — | U1-001 | headless build green; `FxNativeView` + substrate view classes register in source; docs reconciled; reviewed (batch); [detail](#u1-002--fxnativeview-abstract-base--substrate-view-registration) |
+| U1-003 | Unit 1 | device-verify | merged | yes | RT-010, RT-011 | SURF-010, RT-010, RT-011, RT-004 | U1-002, U1-004 | all four scenarios pass on iOS + Android (2026-06-08); ledger rows resolved; source docs reconciled; reviewed (batch); [detail](#u1-003--sdk-verify-expo-boundary-behaviors) |
+| U1-004 | Unit 1 | implement | merged | no | — | SHIP-003 | U1-001 | CI green on GitHub (all 4 jobs). SHIP-003 resolved in `53` and ledger. `apple.podspecPath` fix recorded. reviewed (batch). [detail](#u1-004--bare-fabric-example-in-ci) |
+| U1-005 | Unit 1 | implement | merged | no | — | — | — | Android library build-ready: `versionCode`/`versionName` added to `packages/android/build.gradle`; fix committed (`e6c29c3`). CI Android autolink passes. reviewed (batch). |
+| U2-001 | Unit 2 | implement | merged | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; reviewed (batch); [detail](#u2-001--planned-rung-selection) |
+| U2-002 | Unit 2 | rework | merged | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; reviewed (batch); [detail](#u2-002--uniformspec-schema-reconciliation) |
+| U3-001 | Unit 3 | implement | merged | yes | — | RT-009 | U1-002, U2-001 | RT-009 + fill (iOS+Android) + iOS material; device-verified iOS 26+ (2026-06-08); shader → U3-006, symbol → U3-007; [detail](#u3-001--hosted-effect-renderer) · [review](./reviews/U3-001.md) |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
-| U3-005 | Unit 3 | device-verify | todo | yes | — | REAL-002, REAL-003 | U3-001 | device: metallib bundle resolves; AGSL assets read at runtime |
+| U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
+| U3-006 | Unit 3 | implement | merged | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); reviewed + confirmed by maintainer (2026-06-09); merged on integration/0.1.x; [detail](#u3-006--curated-shader-implementation) |
+| U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
 
 ### V2 build — Units 4–9
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U4-001 | Unit 4 | rework | todo | yes | RT-015 | RT-015 | U1-002 | device: child rides animated wrapper (see detail) |
-| U4-002 | Unit 4 | device-verify | todo | yes | — | RT-014 | U4-001 | device: `mountChildComponentView` override on Fabric |
+| U4-001 | Unit 4 | rework | merged | yes | RT-015 | RT-015 | U1-002 | RT-015 resolved — animator targets an intermediate container (a Fabric-untracked view inside `FxSurfaceView`); `33`/`34` decide, `structure.{ios,android}` pin, consumers reconciled; device-verified via U4-002 run (2026-06-09); merged on integration/0.1.x; [detail](#u4-001--wrapper-mechanic) |
+| U4-002 | Unit 4 | device-verify | merged | yes | — | RT-014 | U4-001 | `mountChildComponentView` override (rule-#7 clean Swift/Kotlin); reimplemented to the `ExpoBlurTargetView`/`expo-glass` templates after a reference fan-out — fixed the Android `LinearLayout`-traversal crash, Android 0×0, iOS spurious default shader, iOS free-running MTKView loop; device-verified iOS + Android (2026-06-09); RT-014 closed; merged on integration/0.1.x; [detail](#u4-002--mountchildcomponentview-override) |
 | U5-001 | Unit 5 | implement | todo | yes | RT-013 | RT-013 | U4-001 | device: post-layout frame read natively |
 | U6-001 | Unit 6 | implement | todo | yes | RT-007 | RT-007 | U4-001, U5-001 | device: interruptible spring, no snap |
 | U6-002 | Unit 6 | device-verify | todo | yes | — | RT-016 | U6-001 | device: animators handle hard retarget, else build integrator |
@@ -91,42 +95,155 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DEF-012 | 4-runtime | ratify | blocked | no | — | RT-012 | V2 | generalize beyond presence to declarative state |
 | DEF-013 | 6-ship | implement | blocked | no | — | SHIP-004 | trigger: V2 native mod | config plugin |
 
+## DOC-014 — runtime-binding ref cleanup
+
+Type: `doc-cleanup` · State: `merged` · Device: no · Consumes: — · Closes: — (no ledger row)
+
+Reconciles the phantom/stale runtime-binding and folder refs in `architecture.md` + `data-layer.md`
+to the real package. Scope widened per audit-2026-06-09 S1.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (docs-only; no rule touched)
+- [x] docs reconciled
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Edits made (grounded against the shipped package):
+- **`architecture.md` §1 runtime block (`:55-58`)** — dropped **all three** phantom bindings
+  (`FxManagedView` + `FxPresenceView` + `FxPressableView`). Revised from the initial S1 disposition
+  after grounding: there are only 3 registered native views, so the runtime layer has exactly 3
+  bindings (`FxHostedView`/`FxSurfaceView`/`FxGroupView`, at `packages/ios/FxModule.swift:12,31,53`;
+  `android/.../FxModule.kt:19,38,60`). Presence/press are `expo-view` (rule #3) — they route through
+  `FxSurfaceView` + a coordinator/recognizer object and ship as `src/surface/` components, never their
+  own `requireNativeView` bindings. `src/surface/` currently holds only `types.ts` (components not yet built).
+- **`architecture.md` §1 manifest (`:29`)** — `CapabilityManifest.ts (the data)` → `index.ts (the
+  manifest barrel)`. Real manifest files are `index.ts`/`select.ts`/`types.ts`; `CapabilityManifest`
+  is a *type* in `types.ts`, and the manifest *data* is not shipped in `src/` (test fixture only).
+  **Note:** `:29` was not in the S1-enumerated ref set, but it is the identical phantom as
+  `data-layer:693` — fixed for tree-consistency.
+- **`architecture.md` §2 Path-2 flow (`:323`)** — `src/runtime/FxPresenceView.tsx` →
+  `src/runtime/FxSurfaceView.tsx` (the real binding the JSX lowers to today; matches the
+  `requireNativeView('ReactNativeFx','FxSurfaceView')` line beneath it).
+- **`architecture.md` §9 unit map (`:556-557`)** — Unit 7/8 native = `FxSurfaceView` + the
+  coordinator/recognizer object (not a dedicated view); JS = `src/surface/FxPresence.tsx` /
+  `FxPressable.tsx` (planned). Added a footnote phrasing this as the current direction, with
+  object/view granularity formally open per RT-008.
+- **`decision-ledger.md` RT-008 row (`:170`)** — reconciled the stale "five-view object model"
+  provisioned-value wording to the **3-view** reality (the same phantom drift one level up — five =
+  3 real + the 2 phantom presence/press views). RT-008 stays **open**: its real subject is
+  runtime-object granularity (driver family-split + scheduling), still open in `36`/DOC-011. Doc
+  bodies (`architecture.md §2`, `data-layer.md §9 D1`) were already correct at 3 views — no body edit needed.
+- **`architecture.md` §1 podspec (`:77`)** — `react-native-fx.podspec` → `ReactNativeFx.podspec`
+  (real file; dropped the now-satisfied `[IMPL-001: post-identity-pass name]` prediction).
+- **`data-layer.md` §9 entity diagram (`:693`, `:724-726`)** — manifest `CapabilityManifest.ts` →
+  `index.ts (public API)`; runtime box dropped `FxManagedView`, marked Presence/Pressable
+  `(planned — Unit 7/8)`. Box ASCII alignment preserved.
+- **DOC-014's own pointer** — the widened row text already cites "entity-diagram src-tree", not
+  `§5.1`; no further pointer fix needed (`§5.1` is the Memoization section, correctly distinct).
+
+Proof:
+- headless: N/A — docs-only, no code changed.
+- device: N/A.
+- docs: `architecture.md` §1/§2/§9; `data-layer.md` §9 entity diagram. No ledger row (cleanup only).
+
+## DOC-015 — SURF-010 plane-1 re-closure
+
+Type: `doc-cleanup` · State: `merged` · Device: no · Consumes: — · Closes: SURF-010 (re-close)
+
+Fixes the cardinal-rule slip flagged in audit-2026-06-09 S3: SURF-010 (memoization guidance) was
+closed against plane-7 `data-layer §5.1`, not its named plane-1 source `50`/`54`/`55`. Took the
+**propagate** path (Option A): the guidance now lives in the owning surface docs, so the row closes
+in source.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (docs-only)
+- [x] guidance propagated to `50`/`54`/`55` §Open questions (resolved in source)
+- [x] ledger SURF-010 reconciliation verb flipped `propagate` → `resolved`; main row + `data-layer §5.1` re-pointed
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Edits made:
+- **`50-api-and-presets.md` §Open questions** — memoization bullet struck through and resolved:
+  no manual memo (native `previousProps` value-equality; React Compiler memoizes automatically).
+- **`54-presence.md` §Open questions** — `uniforms`/`tune` memoization bullet resolved (same as `50`).
+- **`55-composition-chain.md` §Open questions** — `EffectStack` memoization bullet resolved.
+- **`decision-ledger.md`** — main SURF-010 row close-condition re-pointed to `50`/`54`/`55`
+  §Open questions; the Reconciliation row verb flipped `propagate` → `resolved (DOC-015)`.
+- **`data-layer.md §5.1`** — header note clarifies plane 7 *materializes* the guidance; closure
+  lives in the plane-1 source docs.
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A.
+- docs: `50`/`54`/`55` §Open questions; `decision-ledger.md` SURF-010 (both rows); `data-layer.md §5.1`.
+
 ## U1-001 — package scaffolding
 
-Type: `implement` · State: `docs-pending` · Closes: SHIP-001, IMPL-001 · [task](./tasks/U1-001-package-scaffolding/)
+Type: `implement` · State: `merged` · Closes: SHIP-001, IMPL-001 · [task](./tasks/U1-001-package-scaffolding/)
 
-Through `reviewed` ([review](./reviews/U1-001.md), approved). `docs-closed` is **partial**:
+Through `reviewed` ([review](./reviews/U1-001.md), approved). `docs-closed` is **complete** — both `Closes:` rows true in source:
 
 - **SHIP-001 — closed.** `package.json` matches `52` (root `exports`, `files` allowlist shipping
   both shader trees, `publishConfig` public, `FxShader` dropped); `npm pack --dry-run` verified.
-- **IMPL-001 — carried (stays `implementation-pending`).** The scaffolding pass landed headless,
-  but IMPL-001 closes only when its consumed rows do. **RT-010** is now resolved (U1-003, 2026-06-08).
-  **REAL-002** (native build / metallib resolves — device, U3-005) remains the sole blocker.
+- **IMPL-001 — resolved (2026-06-09).** The scaffolding pass landed headless,
+  but IMPL-001 closes only when its consumed rows do. **RT-010** resolved (U1-003, 2026-06-08);
+  **REAL-002** resolved (U3-005, 2026-06-09 — build-verified, not device);
+  **SHIP-001** resolved (U1-001). All three consumed rows are closed.
 - **`apple.podspecPath`** declared in `packages/expo-module.config.json` (U1-004 finding) — makes
   autolinking install-method-agnostic. Recorded in the IMPL-001 package-identity context.
 
-So U1-001 is **complete-blocked on IMPL-001**, now gated only on REAL-002 (U3-005).
+So U1-001's `docs-closed` gate is **satisfied** — IMPL-001 (and all its consumed rows: SHIP-001, RT-010, REAL-002) are resolved in their source docs. **Merged on integration/0.1.x (2026-06-09).**
 
 ## U4-001 — wrapper mechanic
 
-Type: `rework` · State: `todo` · Consumes: RT-015 · Closes: RT-015
+Type: `rework` · State: `merged` · Consumes: RT-015 · Closes: RT-015
 
 Checklist:
-- [ ] spec'd
-- [ ] rules-gated
-- [ ] source docs reconciled (`33`, `34` decide the target object)
-- [ ] `architecture.md` / `data-layer.md` updated to match (consumers, not sources)
-- [ ] device proof defined and observed
-- [ ] ledger RT-015 closed (true in `33`/`34`)
+- [x] spec'd
+- [x] rules-gated
+- [x] source docs reconciled (`33`, `34` decide the target object)
+- [x] `architecture.md` / `data-layer.md` / `blueprint.md` updated to match (consumers, not sources)
+- [x] device proof defined (scenario in `tasks/U4-001-wrapper-mechanic/evidence/device.md`)
+- [x] device proof observed (maintainer-verified iOS + Android, 2026-06-09 — child mounts into the container, hit-test survives at rest; via the U4-002 device run)
+- [x] ledger RT-015 closed (true in `33`/`34`)
+- [x] merged (couple-merge with U4-002)
 
 Proof:
 - headless: N/A
-- device: mount an RN child inside `FxSurfaceView`; confirm the child rides the animated wrapper and hit-testing survives mid-animation
-- docs: `33`, `34`, `architecture.md`, decision-ledger RT-015
+- device: mount an RN child inside `FxSurfaceView`; confirm the child rides the animated intermediate container and hit-testing survives at rest (mid-flight caveat per `34`)
+- docs: `33`, `34`, `architecture.md`, `data-layer.md`, `blueprint.md`, decision-ledger RT-015
+
+## U4-002 — mountChildComponentView override
+
+Type: `device-verify` · State: `merged` · Consumes: — · Closes: RT-014 · [task](./tasks/U4-002-mountChildComponentView/)
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+  - [x] implemented
+  - [x] commented
+  - [x] TS+format-green (tsc/build/lint/test pass; swift-format clean)
+  - [x] native-compile-verified (iOS local xcodebuild BUILD SUCCESSFUL; Android local gradle BUILD SUCCESSFUL)
+  - [x] Android reimplemented — full `ExpoBlurTargetView.kt` override family + the no-`super.onLayout` fix (the `LinearLayout`-traversal crash) + onMeasure/onLayout sizing (0×0 fix)
+  - [x] iOS reimplemented — symmetric mount/unmount + superview guard; spurious default shader (`pendingShader=""`) + free-running MTKView loop (pause when no effect) fixed; diagnostics removed
+  - [x] device-verified (maintainer, iOS + Android, 2026-06-09 — mount/unmount confirmed via logs; smooth show/hide; taps land; Android crash gone)
+  - [x] docs-closed (RT-014 mechanic + the corrected templates pinned in `structure.{ios,android}`; `33` fallback note; reference fan-out captured)
+  - [x] reviewed (diffed against `ExpoBlurTargetView`/`expo-glass` templates; root causes confirmed fixed)
+  - [x] merged
+
+Proof:
+- headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run swift:lint`, `bun run test` from `packages/` all pass. `git diff --check` clean.
+- native compile:
+  - **iOS:** `xcodebuild` (Debug, iphonesimulator) on Xcode 26.5 → BUILD SUCCESSFUL. Diagnostic logging added to both `mountChildComponentView` and `unmountChildComponentView` to diagnose the "child won't unmount" symptom on device.
+  - **Android:** `./gradlew :react-native-fx:compileDebugKotlin` → BUILD SUCCESSFUL. Reimplemented to match `expo-blur` `ExpoBlurTargetView.kt` exactly: full `addView`/`removeView`/`updateViewLayout`/`onMeasure`/`onLayout` family with identity guards. `onMeasure` added (explicit `setMeasuredDimension` + `intermediateContainer.measure`) as the missing half of the 0×0 fix.
+- device: mount an RN child inside `<FxSurfaceView>` (no `shader` prop — `metalView` hidden), confirm it lands in the intermediate container, renders correctly (layout + draw, not 0×0), and hit-testing survives. The scenario must exercise layout, draw, and touch correctness. **iOS: capture console logs and answer:** (1) does `unmountChildComponentView` fire on hide? (2) if it fires, does `removeFromSuperview()` remove the child? (3) is there double-parenting (`self.subviews` vs `intermediateContainer.subviews`)? Mid-flight caveat per `34`.
+- docs: `structure.ios.md` / `structure.android.md` — intermediate container mechanic + effect surface visibility rule + explicit layout note; `34` — open item about effect↔content composition.
 
 ## U2-002 — UniformSpec schema reconciliation
 
-Type: `rework` · State: `ready-to-merge` · Consumes: SPINE-003 · Closes: SPINE-003 · [task](./tasks/U2-002-uniformspec-reconciliation/task.md)
+Type: `rework` · State: `merged` · Consumes: SPINE-003 · Closes: SPINE-003 · [task](./tasks/U2-002-uniformspec-reconciliation/task.md)
 
 Checklist:
 - [x] spec'd
@@ -135,8 +252,8 @@ Checklist:
 - [x] `data-layer.md` provisional mismatch note removed
 - [x] TypeScript manifest types updated manually
 - [x] ledger SPINE-003 closed (true in `02`)
-- [ ] reviewed
-- [ ] merged
+- [x] reviewed
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bunx biome check .`, and `bun run test` from `packages/` all pass. `git diff --check` clean.
@@ -145,7 +262,7 @@ Proof:
 
 ## U2-001 — planned-rung selection
 
-Type: `implement` · State: `ready-to-merge` · Consumes: SPINE-013 · Closes: SPINE-013 · [task](./tasks/U2-001-planned-rung-selection/)
+Type: `implement` · State: `merged` · Consumes: SPINE-013 · Closes: SPINE-013 · [task](./tasks/U2-001-planned-rung-selection/)
 
 Checklist:
 - [x] spec'd
@@ -153,9 +270,9 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] reviewed
+- [x] reviewed
 - [x] docs-closed
-- [ ] merged
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run test` from `packages/` all pass. 17 Jest tests prove planned rungs are skipped, out-of-scope rungs are skipped, OS gating works, `wantInteractive` enforces expo-view, driver target matching works, and empty/guarded-out ladders degrade to `{ via: 'none' }`.
@@ -164,7 +281,11 @@ Proof:
 
 ## U3-001 — hosted effect renderer
 
-Type: `implement` · State: `ready-to-merge` · Device: yes · Consumes: FX-004 · Closes: RT-009 · [task](./tasks/U3-001-effect-renderer-hosted/)
+Type: `implement` · State: `merged` · Device: yes · Consumes: — · Closes: RT-009 · [task](./tasks/U3-001-effect-renderer-hosted/) · [review](./reviews/U3-001.md)
+
+Scope (Option A): U3-001 owns the hosted authoring path + fill + iOS material — the RT-009 slice.
+The shader rung moved to U3-006 and the iOS symbol rung to U3-007; those are separate tasks, not
+blockers on this one.
 
 Checklist:
 - [x] spec'd
@@ -175,22 +296,26 @@ Checklist:
 - [x] device-verified
 - [x] docs-closed
 - [x] reviewed
-- [ ] merged
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run test` from `packages/`.
   Renderer logic is device-gated — effects do not run headless.
-- device: RT-009 — hosted mount + prop/config path on iOS + Android. fill on both platforms
-  (unblocked). iOS material (unblocked); Android material gated by U3-003 / FX-003.
-  shader after DOC-007/FX-004. symbol iOS after DOC-008/FX-009; Android symbol deferred.
-  Evidence in `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
-- docs: `51` RT-009 intended close (hosted authoring path — device gate pending);
-  `structure.android.md` records V1 deviation (plain View fill, Compose deferred);
-  `structure.ios.md` records hosted material path.
+- device: RT-009 verified on iOS 26+ and Android (2026-06-08) — hosted mount + prop/config path;
+  fill on both platforms; iOS material via `.glassEffect()`. Android material → U3-003 / FX-003;
+  shader rung → U3-006; iOS symbol → U3-007. Evidence in
+  `tasks/U3-001-effect-renderer-hosted/evidence/device.md`.
+- docs: `51` RT-009 closed (hosted authoring path proven); `structure.android.md` records the V1
+  deviation (plain View fill, Compose deferred); `structure.ios.md` records the hosted material path.
 
-## U1-002 — FxNativeView abstract base + substrate view registration
+## U3-006 — curated shader implementation
 
-Type: `implement` · State: `headless-done` · Consumes: RT-010 · Closes: — · [task](./tasks/U1-002-native-view-boundary/)
+Type: `implement` · State: `merged` · Device: yes · Consumes: FX-004, REAL-004 · Closes: — · [task](./tasks/U3-006/)
+
+Scope: implement the committed V1 shader catalog on the hosted renderer slice. The public
+`ShaderId` widens only when all ten curated ids have native coverage: MSL for all ten ids on iOS
+and AGSL for all ten ids on Android. DOC-013's pair rule means Android AGSL covers the original
+five ids too, not only `aurora` / `noise-field` / `plasma` / `caustics` / `edge-glow`.
 
 Checklist:
 - [x] spec'd
@@ -198,9 +323,77 @@ Checklist:
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] reviewed
-- [ ] docs-closed
-- [ ] merged
+- [x] device-verified
+- [x] docs-closed
+- [x] reviewed
+- [x] merged
+
+Proof:
+- headless: from `packages/`, `bunx tsc --noEmit`, `bun run build`, `bun run lint`,
+  `bun run swift:lint`, and `bun run test`; from the repo root, `git diff --check`.
+  All green (2026-06-08). 18 Jest tests pass; TS build produces widened ShaderId in `.d.ts`;
+  Biome clean; swift-format clean.
+- device: iOS 17+ and Android API 33+ render every curated shader id; `intensity` updates from a
+  discrete prop; `time` advances natively while visible; shader switching has no stale pixels or
+  crash; navigation/backgrounding pause and resume the native clock. Scenario in
+  `tasks/U3-006/evidence/headless.md`.
+  - **Android: PASS (2026-06-08)** — all ten AGSL shaders on a POCO F1 (API 35); blank-on-switch and
+    intensity-drag flicker fixes both confirmed live.
+  - **iOS: PASS (2026-06-08)** — verified by the maintainer on iOS 17+; shaders render through the
+    hosted Metal path. Evidence in `tasks/U3-006/evidence/device.md`. (REAL-002/REAL-003 ledger
+    closures remain owned by U3-005.)
+- docs: **closed (2026-06-08).** `22` reconciled — all ten ids ship with native MSL+AGSL and are
+  package-exposed (the "first five only" wording is gone, Decision 2 updated). `structure.android.md`
+  carries the shipped hosted-shader mechanics (layout fix + discrete-uniform-in-place). `structure.ios.md`
+  hosted-shader mechanic reads true; the metallib-bundle-resolution detail stays with U3-005/REAL-002.
+  This tracker moved.
+
+## U3-005 — shader asset packaging + runtime load proof
+
+Type: `device-verify` (hybrid — see below) · State: `merged` · Device: yes · Consumes: — · Closes: REAL-002, REAL-003 · [task](./tasks/U3-005/)
+
+Spec'd 2026-06-09. **Reframed:** the `device-verify` label undersells it — the dominant work
+is **doc-cleanup + closure-reconciliation**, with a thin device/build residual.
+
+- **REAL-002 (iOS metallib)** — close condition is "build verification on the pinned toolchain",
+  an **agent-ownable Tier-3 build-artifact check**, not the human device gate. Build-verified on
+  Xcode 26.5 / Swift 6.3.2 (2026-06-09): `FxShaders.bundle` emitted unmangled with
+  `default.metallib` (194 KB) at the bundle root. `structure.ios.md` §Render paths records the
+  `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR` mechanism and the `ShaderLibrary(url:)` hosted-path
+  loader. `52` Findings section records the resolution.
+- **REAL-003 (Android AGSL path)** — mis-statused `open`. The path is chosen and shipped
+  (`android/src/main/assets/shaders/*.agsl`, read via `context.assets.open(...)`) and device-proven
+  on U3-006 (POCO F1, API 35). Path recorded in `structure.android.md` §Render paths; `52` Open
+  questions cleared. Row resolved.
+- **No new device gate:** REAL-003's render is proven on U3-006; REAL-002 is a build check done on
+  the pinned toolchain. No fresh device run required.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] headless-done (REAL-002 build artifact verified on Xcode 26.5 / Swift 6.3.2 — `FxShaders.bundle/default.metallib` at bundle root)
+- [x] docs-closed (`structure.android.md` AGSL path; `structure.ios.md`/`52` bundle resolution + loader; REAL-002 + REAL-003 closed in source)
+- [x] reviewed (approved; ①/② toolchain-wording fixes applied + verified in the [review](./reviews/U3-005.md) addendum)
+- [x] merged
+
+Proof:
+- headless / build-verify: xcodebuild Debug-iphonesimulator on Xcode 26.5 / Swift 6.3.2 → `FxShaders.bundle` (unmangled) with `default.metallib` (194 KB) at root in build products.
+- device: no new run — Android render observed on U3-006; iOS render observed on U3-006. REAL-002 build verification satisfies the close condition.
+- docs: `structure.android.md` §Render paths (AGSL asset path + read API); `structure.ios.md`/`52` (bundle resolution + hosted-path loader); `52` Open questions cleared → Findings; decision-ledger REAL-002 + REAL-003 → resolved.
+
+## U1-002 — FxNativeView abstract base + substrate view registration
+
+Type: `implement` · State: `merged` · Consumes: RT-010 · Closes: — · [task](./tasks/U1-002-native-view-boundary/)
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
+- [x] reviewed
+- [x] docs-closed
+- [x] merged
 
 Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run swift:lint` pass. `bun run test` passes with no tests found. These verify TS types/build/style and Swift formatting only. None prove native compilation or runtime registration — those are U1-003.
@@ -209,7 +402,7 @@ Proof:
 
 ## U1-003 — SDK-verify Expo boundary behaviors
 
-Type: `device-verify` · State: `ready-to-merge` · Consumes: RT-010, RT-011 · Closes: SURF-010, RT-010, RT-011, RT-004 · [task](./tasks/U1-003-sdk-verify-boundary/)
+Type: `device-verify` · State: `merged` · Consumes: RT-010, RT-011 · Closes: SURF-010, RT-010, RT-011, RT-004 · [task](./tasks/U1-003-sdk-verify-boundary/)
 
 Checklist:
 - [x] spec'd
@@ -217,8 +410,8 @@ Checklist:
 - [x] scenario-written (four device scenarios defined)
 - [x] device-verified (all four scenarios observed on iOS + Android, 2026-06-08)
 - [x] docs-closed (source docs reconciled, all four ledger rows resolved)
-- [ ] reviewed
-- [ ] merged
+- [x] reviewed
+- [x] merged
 
 Proof:
 - headless: N/A — all claims require runtime/device observation.
@@ -227,7 +420,7 @@ Proof:
 
 ## U1-004 — bare Fabric example in CI
 
-Type: `implement` · State: `ready-to-merge` · Closes: SHIP-003 · [task](./tasks/U1-004-bare-fabric-example-ci/)
+Type: `implement` · State: `merged` · Closes: SHIP-003 · [task](./tasks/U1-004-bare-fabric-example-ci/)
 
 Checklist:
 - [x] spec'd
@@ -236,8 +429,8 @@ Checklist:
 - [x] commented
 - [x] headless-done (CI green on GitHub — all 4 jobs; `bare-ios` on `macos-26` for Swift 6.2)
 - [x] docs-closed (SHIP-003 resolved in `53` and ledger; `apple.podspecPath` recorded)
-- [ ] reviewed
-- [ ] merged
+- [x] reviewed
+- [x] merged
 
 Progress (CI green — all 4 jobs on GitHub):
 - **Bare fixture built + verified locally:** `example-bare/` — literal bare RN 0.85.3 / New-Arch
@@ -261,6 +454,81 @@ Proof:
 - headless: package build/lint (green); CI all 4 jobs green — iOS autolink + native compile proven; Android autolink proven.
 - device: N/A — U1-003 owns runtime/device verification.
 - docs: `53` open question closed (Bare + Fabric CI); SHIP-003 resolved in ledger. `apple.podspecPath` library-config change recorded.
+
+## DOC-002 — ratify SPINE-004/005/006/007
+
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: SPINE-004, SPINE-007 · [task](./tasks/DOC-002/)
+
+Ratifies the `02` open questions that are ripe and honestly defers the ones that are not.
+
+**Closed (2 of 4):**
+- **SPINE-004** — `composition` (background/overlay/surface) is an **API-layer prop** (`50` / `<Fx>`), not a manifest field. `02` Decision 12 records this.
+- **SPINE-007** — `via:'lib'` naming: `applyVia` names the library (e.g., `Haze`), `asset` names the asset type (e.g., `lottie`). No version in the manifest — managed by the app's optional peer dependency (`53` decision 6). `02` Decision 13 records this.
+
+**Deferred (2 of 4) — no premature decision:**
+- **SPINE-005** — feature-flag vocabulary + multiple assets per rung. Deferred: no real shader or feature case forces it in V1. Revisit when a non-OS capability flag or multiple assets per rung is needed.
+- **SPINE-006** — manifest partitioning. Deferred: the manifest stays one file for V1; split when the node count makes rendering unwieldy.
+
+Checklist:
+- [x] spec'd (2026-06-09)
+- [x] rules-gated
+- [x] docs-closed (`02` Decisions 12+13; SPINE-004/007 closed; SPINE-005/006 deferred with triggers)
+- [x] reviewed (passed — closures grounded in `02`+`50`+`53`, 2-closed/2-deferred split honored, stale SPINE-007 back-references swept; no separate review doc)
+- [x] merged
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A — ratification task.
+- docs: `02` Decision 12 (`composition` = API-layer prop), Decision 13 (`via:'lib'` naming); decision-ledger SPINE-004 + SPINE-007 → resolved; SPINE-005 + SPINE-006 → deferred with trigger notes.
+
+## DOC-010 — reduce-motion policy ratification
+
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: MOT-010 · [task](./tasks/DOC-010/)
+
+The motion domain had no policy for honoring OS reduce-motion / animation-scale settings.
+This task ratifies the V1 policy: **instant degradation** (0-duration, snap to target)
+when the OS setting is active. Implementation is owned by U6-001 (FxAnimationDriver, v2).
+
+- **iOS:** `UIAccessibility.isReduceMotionEnabled` → driver sets duration to 0.
+- **Android:** `Settings.Global.TRANSITION_ANIMATION_SCALE` = 0.0 (or
+  `ANIMATOR_DURATION_SCALE` = 0.0) → driver sets duration to 0.
+- **Scope:** All content motion (presence enter/exit, state transitions). Presets and
+  explicit `motion` overrides are both degraded. Opacity-only degradation is a deferred
+  V2 refinement. Decorative effects have their own native clock and are not gated in V1.
+
+Checklist:
+- [x] spec'd (2026-06-09)
+- [x] rules-gated
+- [x] docs-closed (`41` Decision #9; `42` §Reduce-motion; `34` §Findings — reduce-motion; MOT-010 → resolved)
+- [x] reviewed (passed — closure verified across `41`/`42`/`34`, `onTransitionEnd`-fires-immediately confirmed; no separate review doc)
+- [x] merged
+
+Proof:
+- headless: N/A — docs-only; no code.
+- device: N/A — policy ratification. Implementation + device proof owned by U6-001.
+- docs: `41-motion-vocabulary.md` (Decision #9), `42-presence-and-lifecycle.md`
+  (§Reduce-motion), `34-animation-driver.md` (§Findings — reduce-motion);
+  decision-ledger MOT-010 → resolved.
+
+## DOC-005 — V1 preset/state/feedback vocabulary ratification
+
+Type: `ratify` · State: `merged` · Device: no · Consumes: MOT-001 · Closes: SURF-003, SURF-004, SURF-005
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] source docs ratified (`50`/`56`/`57` vocab; `41`/`42` preset sets)
+- [x] data-layer §3 MOT-001 ownership pointer added
+- [x] data-layer §5 accuracy checked (no change needed — values already match)
+- [x] ledger SURF-003/004/005 closed (resolved)
+- [x] docs-closed
+- [x] reviewed (passed — closures grounded in `56`/`57`/`41`; vocab cross-checked against `42` catalog + behavior-named law and the Reanimated motion-primitive altitude; split held; no separate doc)
+- [x] merged
+
+Proof:
+- headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run test` from `packages/` — all green.
+- device: N/A — ratification task.
+- docs: `50`/`56`/`57` vocab ratified; `41`/`42` preset sets ratified; `data-layer.md` §3 MOT-001 pointer added; ledger SURF-003/004/005 → resolved. Springs remain device-pending with MOT-001.
 
 ## Maintenance
 

@@ -29,8 +29,22 @@ class FxHostedView(
   val onFxError by EventDispatcher<Unit>()
 
   private var effectView: View? = null
+  private var mountedEffectId: String? = null
   private var pendingEffect: String? = null
   private var pendingIntensity: Double = 0.8
+
+  // A decorative child swapped in on a later prop batch is added outside RN's layout
+  // pass; without this, ExpoView swallows its requestLayout() and the child renders at
+  // 0x0. true re-runs measureAndLayout() so swapped-in children fill the host bounds.
+  override val shouldUseAndroidLayout: Boolean = true
+
+  // measureAndLayout() alone is not guaranteed to size children accurately (per ExpoView),
+  // so the decorative child is laid out explicitly to the RN-assigned host bounds — reading
+  // those bounds, never writing layout back to Yoga.
+  override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+    super.onLayout(changed, left, top, right, bottom)
+    effectView?.layout(0, 0, width, height)
+  }
 
   fun setEffect(value: String) {
     pendingEffect = value
@@ -49,6 +63,15 @@ class FxHostedView(
       return
     }
 
+    // When only intensity changed, push it onto the live child instead of remounting —
+    // a slider drag mutates one uniform per frame rather than recreating the view, which
+    // would flash a blank frame, reset the shader clock, and reparse the AGSL each tick.
+    val current = effectView
+    if (effect == mountedEffectId && current is FxEffectView) {
+      current.setIntensity(pendingIntensity)
+      return
+    }
+
     mountEffect(effect, pendingIntensity)
   }
 
@@ -57,6 +80,10 @@ class FxHostedView(
 
     val view = when (effect) {
       "fill" -> FxFillView(context, intensity)
+      "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
+      "aurora", "noise-field", "plasma", "caustics", "edge-glow" -> {
+        FxShaderView(context, effect, intensity)
+      }
       else -> return
     }
 
@@ -66,11 +93,13 @@ class FxHostedView(
     )
     addView(view)
     effectView = view
+    mountedEffectId = effect
   }
 
   private fun removeHost() {
     effectView?.let { removeView(it) }
     effectView = null
+    mountedEffectId = null
   }
 }
 
@@ -83,10 +112,10 @@ class FxHostedView(
 private class FxFillView(
   context: Context,
   intensity: Double
-) : View(context) {
+) : View(context), FxEffectView {
   private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private var gradient: LinearGradient? = null
-  private val alpha = (intensity * 255).toInt().coerceIn(0, 255)
+  private var alpha = alphaFor(intensity)
 
   override fun onDraw(canvas: Canvas) {
     super.onDraw(canvas)
@@ -94,6 +123,13 @@ private class FxFillView(
     fillPaint.shader = shader
     fillPaint.alpha = alpha
     canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fillPaint)
+  }
+
+  // Intensity drives opacity here; the gradient itself is intensity-independent, so a
+  // change only re-derives alpha and redraws — no gradient regen.
+  override fun setIntensity(value: Double) {
+    alpha = alphaFor(value)
+    invalidate()
   }
 
   override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
@@ -113,4 +149,9 @@ private class FxFillView(
       Shader.TileMode.CLAMP
     )
   }
+}
+
+/** Maps fill `intensity` (0..1) to an 8-bit paint alpha. */
+private fun alphaFor(intensity: Double): Int {
+  return (intensity * 255).toInt().coerceIn(0, 255)
 }

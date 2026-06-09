@@ -212,20 +212,20 @@ const manifest: CapabilityManifest = {
       },
       lower: {
         ios: [
-          { via: 'native', primitive: 'CASpringAnimation', applyVia: 'CALayer', clock: 'none',
-            target: 'content', phase: 'v2',
-            requires: { os: 13, substrate: 'expo-view' },
-            note: 'wraps a real RN view; Core Animation owns timing; transform-only → touch-safe' },
+           { via: 'native', primitive: 'CASpringAnimation', applyVia: 'CALayer', clock: 'none',
+             target: 'content', phase: 'v2',
+             requires: { os: 13, substrate: 'expo-view' },
+             note: 'intermediate container inside FxSurfaceView; Core Animation owns timing; transform-only → touch-safe' },
           { via: 'native', primitive: 'SwiftUI .animation', applyVia: '.animation', clock: 'none',
             target: 'effect', phase: 'v1',
             requires: { os: 16, substrate: 'hosted' },
             note: 'fx own drawn layer; SwiftUI spring' },
         ],
         android: [
-          { via: 'native', primitive: 'SpringAnimation', applyVia: 'View (dynamicanimation)', clock: 'none',
-            target: 'content', phase: 'v2',
-            requires: { os: 21, substrate: 'expo-view' },
-            note: 'ViewPropertyAnimator / androidx.dynamicanimation; touch-safe' },
+           { via: 'native', primitive: 'SpringAnimation', applyVia: 'View (dynamicanimation)', clock: 'none',
+             target: 'content', phase: 'v2',
+             requires: { os: 21, substrate: 'expo-view' },
+             note: 'intermediate container inside FxSurfaceView; androidx.dynamicanimation; touch-safe' },
           { via: 'native', primitive: 'animate*AsState', applyVia: 'Compose', clock: 'infinite-transition',
             target: 'effect', phase: 'v1',
             requires: { os: 21, substrate: 'hosted' },
@@ -235,10 +235,10 @@ const manifest: CapabilityManifest = {
     },
 
     // ──────────────────────────────────────────────────────────────
-    // symbol (render-target, self-gesturing, SF Symbols / AVD / Lottie)
+    // symbol (render-target, self-gesturing, SF Symbols; Android planned)
     // [research: 24-symbols.md §Lowering]
     symbol: {
-      id: 'symbol', kind: 'render-target', interaction: 'self', phase: 'v1',   // iOS-native; Android via lib
+      id: 'symbol', kind: 'render-target', interaction: 'self', phase: 'v1',   // iOS-native; Android planned
       uniforms: {
         name:       { type: 'enum',   default: 'heart', options: [] },  // SF Symbol name or drawable ref
         animation:  { type: 'enum',   default: 'bounce',
@@ -254,10 +254,11 @@ const manifest: CapabilityManifest = {
         ],
         android: [
           { via: 'native', primitive: 'AnimatedVectorDrawable', applyVia: 'AndroidView',
-            requires: { os: 21, substrate: 'hosted' }, note: 'AVD fallback, simple animations only' },
+            requires: { os: 21, substrate: 'hosted' }, status: 'planned',
+            note: 'future AVD fallback, simple animations only; Android symbol is deferred from V1' },
           { via: 'lib', asset: 'lottie', applyVia: 'Compose LottieAnimation',
             requires: { os: 21, substrate: 'hosted' }, status: 'planned',
-            note: 'Lottie as optional peer dependency; if absent → {via:"none"}' },
+            note: 'future Lottie optional peer dependency; Android symbol is deferred from V1' },
         ],
       },
     },
@@ -423,6 +424,11 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme, snackbar/bottom-sheet/dialog]**
 
+> **The per-platform shape, timing, and spring values in this table are device-pending and
+> owned by [MOT-001](../decision-ledger.md#motion).** They are provisioned values, not
+> ratified decisions. DOC-005 ratifies the adjacent vocabulary names (§5) only; the spring
+> magnitudes and geometries will be validated on device and propagated to `41`/`42` by MOT-001.
+
 ### Presence presets (FxPresence)
 
 > **[research: 42 §The presence preset catalog]**
@@ -465,7 +471,7 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 
 | Effect ID | Composition | What fx draws |
 |-----------|-------------|---------------|
-| `edge-glow` | `background` / `overlay` | shader: edge-lit glow around view bounds, curated `fx_edge_glow` [research: 22] |
+| `edge-glow` | `background` / `overlay` | shader: edge-lit glow around view bounds; catalog entry pending native implementation [research: 22] |
 | `mesh-gradient` | `background` | fill: animated mesh gradient with palette, `MeshGradient` (iOS 18) / AGSL (Android 33) |
 | `glass` | `surface` | material: Liquid Glass (iOS 26) / blur+overlay (Android); see §10 |
 | `fractal-clouds` | `background` / `overlay` | shader: organic noise, slow drift, sky-to-cloud [ref: packages/ios/Shaders/FxShaders.metal:91] |
@@ -478,7 +484,10 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 | `plasma` | `background` / `overlay` | shader: [research: 22 §ShaderId] |
 | `caustics` | `background` / `overlay` | shader: [research: 22 §ShaderId] |
 
-> **[candidate] The current 5 shaders (`fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, `dots`) are a candidate V1 starter set (already implemented) coexisting with the reserved research vocabulary (`aurora`, `noise-field`, `plasma`, `caustics`, `edge-glow`). Pending ratification in `22`/`50` (ledger: FX-004, status = `open`). The research vocabulary names remain reserved for future curated shaders; neither set is yet a ratified effect ID catalog.**
+> **Ratified by DOC-007.** The V1 shader catalog contains all ten ids above. The current
+> package implements `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, and `dots`.
+> `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow` need native MSL+AGSL
+> implementations before package types/runtime expose them.
 
 ---
 
@@ -632,8 +641,9 @@ type Transition = {
 
 ## §5.1 Memoization Guidance (M9)
 
-> **[research: 50 §Open questions] [research: 55 §Open questions]**
-> **[ledger: SURF-010 status = `resolved`]** Inline builder literals create new objects each render. The native side handles re-configuration gracefully via per-prop equality checking (`previousProps`), so no manual memoization is required. React Compiler (recommended) handles it automatically.
+> **[research: 50/54/55 §Open questions — resolved (SURF-010, DOC-015)]**
+> **[ledger: SURF-010 status = `resolved`]** This section materializes the guidance; the decision is
+> closed in its owning plane-1 docs (`50`/`54`/`55` §Open questions). Inline builder literals create new objects each render. The native side handles re-configuration gracefully via per-prop equality checking (`previousProps`), so no manual memoization is required. React Compiler (recommended) handles it automatically.
 >
 > **Verified on SDK 56, iOS + Android (2026-06-08).** `previousProps` compares both primitive props and nested `Record` props by value, not JS object reference. A fresh `{ valueA: 99 }` object with the same effective value does not trigger the native setter. `@Field` defaults fill absent fields predictably on both platforms.
 
@@ -681,7 +691,7 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 
 ```
 ┌── src/manifest/ ───────────────────────┐
-│ CapabilityManifest.ts   (data)         │
+│ index.ts                (public API)   │
 │ select.ts               (algorithm)    │
 │ types.ts                (shared IR)    │
 └────────────────────────────────────────┘
@@ -712,9 +722,6 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 │ FxHostedView.tsx    (requireNativeView)│
 │ FxSurfaceView.tsx   (requireNativeView)│
 │ FxGroupView.tsx     (requireNativeView)│
-│ FxPresenceView.tsx  (requireNativeView)│
-│ FxManagedView.tsx   (requireNativeView)│
-│ FxPressableView.tsx (requireNativeView)│
 └────────────────────────────────────────┘
          │ imports: surface/ + manifest/
          ▼
@@ -739,7 +746,7 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 | `loop` | `fx_loop` | Diagonal iridescent light streaks, edge glow | Yes |
 | `dots` | `fx_dots` | Wavy 3D dots, interactive finger bulge | Yes (`interactionMode: 'active'`) |
 
-### Reserved vocabulary (future curated)
+### Ratified catalog entries pending implementation
 
 | Shader ID | Research | Description |
 |-----------|----------|-------------|
@@ -755,12 +762,15 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 // V1 starter (implemented)
 type V1ShaderId = 'fractal-clouds' | 'ink-smoke' | 'liquid-chrome' | 'loop' | 'dots';
 
-// Future curated (reserved)
-type FutureShaderId = 'aurora' | 'noise-field' | 'plasma' | 'caustics' | 'edge-glow';
+// Ratified catalog entries pending native implementation
+type PendingShaderId = 'aurora' | 'noise-field' | 'plasma' | 'caustics' | 'edge-glow';
 
 // Unified
-type ShaderId = V1ShaderId | FutureShaderId;
+type ShaderId = V1ShaderId | PendingShaderId;
 ```
+
+The package currently exposes only `V1ShaderId`. It should expose the unified `ShaderId`
+after the five pending ids have native implementations on both platforms.
 
 ### Uniforms struct (shared across all curated shaders)
 
@@ -776,6 +786,10 @@ struct FxUniforms {
   float2 touch;         // native-set by recognizer, 0..1, y up
 };
 ```
+
+The V1 public shader uniform contract is shared and minimal: `intensity` is public;
+`time`, `resolution`, `pressDepth`, and `touch` are native-owned runtime values. Per-shader
+public uniform maps are out of V1.
 
 ---
 
@@ -894,9 +908,12 @@ Each JS component maps to a concrete view class: `<Fx effect>` → `FxHostedView
 **Provisioned candidate (ledger: SURF-006, status = `open`). Pending source-doc closure in `57`/`21`.** `FxGroup`/`FxItem` is iOS-only V1 (`.glassEffect` + `GlassEffectContainer`, iOS 26+). Android uses `material` node with blur+overlay fallback, no `FxGroup` morphing. When both platforms have glass morph equivalents, `FxGroup` extends to Android.
 **Source**: [research: 21-materials-and-glass.md §Glass morphing] [research: structure.android.md §material]
 
-### D4: `symbol` Android = Lottie/AVD dependency
+### D4: `symbol` Android scope
 
-**Provisioned candidate (ledger: FX-009, status = `open`). Pending source-doc closure in `24`.** Lottie as optional peer dependency for Android. AVD is the native fallback for simple animations. If neither is installed, the `symbol` rung guards out → `{ via: 'none' }` (graceful).
+**Resolved (DOC-008, 2026-06-08).** `symbol` is iOS-only in V1 through `.symbolEffect`.
+Android AVD/Lottie support is planned/deferred and non-selectable; Android degrades to
+`{ via: 'none' }`. Future Android support must define the app-supplied asset contract and
+renderer before those rungs become selectable.
 **Source**: [research: 24-symbols.md §Lowering] [research: 02 §via:'lib' open question]
 
 ---

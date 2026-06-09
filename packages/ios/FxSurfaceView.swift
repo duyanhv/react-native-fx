@@ -43,16 +43,26 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
-  private var pendingShader = "fractal-clouds"
+  // Empty by default: a surface with no `shader` prop runs no effect, so the metalView
+  // stays hidden and never obscures the content-motion container. A non-empty default would
+  // render a shader the consumer never asked for (and hide the wrapped content behind it).
+  private var pendingShader = ""
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
 
   private var pressRecognizer: UILongPressGestureRecognizer?
 
-  /// Initializes the Metal surface while keeping the loop paused until attachment.
+  /// A Fabric-invisible container that holds RN children so Fabric cannot clobber
+  /// the animator's transform/opacity. The animator targets this container, not the
+  /// outer `FxSurfaceView` that Fabric tracks.
+  private let intermediateContainer = UIView()
+
+  /// Initializes the Metal surface and the intermediate container while keeping the loop paused until attachment.
   internal required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
+    setUpIntermediateContainer()
     setUpMetal()
+    bringSubviewToFront(metalView)
   }
 
   deinit {
@@ -60,6 +70,14 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   }
 
   // MARK: - Setup
+
+  /// Creates the intermediate container that holds RN children. Fabric does not track
+  /// this view, so its transform/opacity cannot be overwritten by React Native commits.
+  private func setUpIntermediateContainer() {
+    intermediateContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    intermediateContainer.frame = bounds
+    addSubview(intermediateContainer)
+  }
 
   /// Creates the Metal view and command resources without starting frame production.
   private func setUpMetal() {
@@ -170,8 +188,40 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   internal override func applyResolvedConfig() {
     super.applyResolvedConfig()
     uniforms.intensity = min(max(pendingIntensity, 0), 1)
-    _ = pipeline(for: pendingShader)  // warm the cache
+    updateEffectSurfaceVisibility()
     updateInteraction(mode: pendingMode)
+  }
+
+  // MARK: - Child routing
+
+  /// Routes Fabric-mounted children into the intermediate container so React Native
+  /// cannot overwrite the animator's transform/opacity.
+  internal override func mountChildComponentView(_ childComponentView: UIView, index: Int) {
+    intermediateContainer.insertSubview(childComponentView, at: index)
+  }
+
+  /// Removes a Fabric-mounted child from the intermediate container. The superview guard
+  /// defends against a stale or repeated unmount detaching a view fx no longer owns.
+  internal override func unmountChildComponentView(_ child: UIView, index: Int) {
+    if child.superview == intermediateContainer {
+      child.removeFromSuperview()
+    }
+  }
+
+  // MARK: - Effect surface visibility
+
+  /// True when a non-empty shader resolves to a usable pipeline.
+  private var hasActiveEffect: Bool {
+    !pendingShader.isEmpty && pipeline(for: pendingShader) != nil
+  }
+
+  /// Hides the GPU surface when no effect is active so it never obscures the content-motion
+  /// container, and pauses the display loop with it. A hidden but unpaused `MTKView` still ticks
+  /// its `CADisplayLink` every frame and congests the main thread (sluggish UI, laggy touch,
+  /// gesture-gate timeouts), so the loop runs only while an effect is actually drawing.
+  private func updateEffectSurfaceVisibility() {
+    metalView.isHidden = !hasActiveEffect
+    metalView.isPaused = !hasActiveEffect || window == nil
   }
 
   // MARK: - Interaction
@@ -257,8 +307,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     metalView.isPaused = true
   }
 
-  /// Resumes the Metal display link only while the surface is attached.
+  /// Resumes the Metal display link only while the surface is attached and an effect is active.
   internal override func resumePresentationLoop() {
-    metalView.isPaused = (window == nil)
+    metalView.isPaused = window == nil || !hasActiveEffect
   }
 }
