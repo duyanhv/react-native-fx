@@ -20,9 +20,12 @@ READ, IN ORDER (binding; they override your defaults):
 4. research/7-implementation/subtask-protocol.md — the authority stack, the cross-check
    protocol, the Lifecycle, the proof field, the task types, and the closure rule.
 
-OPEN THE TASK:
-- If tasks/<id>/ exists, open its README/task.md — a self-sufficient cold-start kit. Start there.
-- If it does NOT exist, SPEC it first: create tasks/<id>/README.md from the subtask template,
+OPEN THE TASK (task folders live at research/7-implementation/tasks/<id>/ — always that full path,
+never a repo-root tasks/):
+- If research/7-implementation/tasks/<id>/ exists, open its README/task.md — a self-sufficient
+  cold-start kit. Start there.
+- If it does NOT exist, SPEC it first: create research/7-implementation/tasks/<id>/README.md from
+  the subtask template,
   filling authority links from blueprint.md (the unit), decision-ledger.md (the row it Closes/
   Consumes), architecture.md / data-layer.md (provisioned structure + names), and the cited
   research docs. spec'd is a gate; pass it before coding.
@@ -68,7 +71,8 @@ for the human. Effects/animation/touch/layout/lifecycle never run headless — w
 scenario, don't fake the gate.
 
 THEN, per the session protocol's end sequence: update progress.md's state, tick the task
-checklist, log changes + unverified claims + a one-line "Next:" in tasks/<id>/notes.md, run lint
+checklist, log changes + unverified claims + a one-line "Next:" in
+research/7-implementation/tasks/<id>/notes.md, run lint
 if code changed, and do not open random files. THEN STOP for review.
 
 Two gates are the human's — `device-verified` and `merged`. Never tick them. And never close a
