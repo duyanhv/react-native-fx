@@ -26,7 +26,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | DOC-001 | 1-surface | doc-cleanup | merged | no | — | SURF-001, SURF-009 | — | `GlassView` dropped from `56`; `SpringTune` removed from `55`; SURF-001 + SURF-009 resolved; [review](./reviews/v1-merge-batch-2026-06-08.md) |
-| DOC-002 | 0-spine | ratify | todo | no | — | SPINE-004, SPINE-005, SPINE-006, SPINE-007 | — | docs: `02` composition, feature-flags, partitioning, lib naming |
+| DOC-002 | 0-spine | ratify | merged | no | — | SPINE-004, SPINE-007 | — | `02` Decisions 12+13 ratified; SPINE-004/007 closed, SPINE-005/006 deferred; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-002--ratify-spine-004005006007) |
 | DOC-003 | 0-spine | ratify | todo | no | — | SPINE-001, SPINE-002 | — | docs: `00`/`50` curation/BYO threshold, palettes-as-artifact |
 | DOC-004 | 1-surface | ratify | todo | no | — | SURF-002 | — | docs: `56`/`6-ship` ship effect components? |
 | DOC-005 | 1-surface | ratify | todo | no | MOT-001 | SURF-003, SURF-004, SURF-005 | — | docs: `50`/`56`/`57` V1 preset/state/feedback vocab |
@@ -340,6 +340,32 @@ Proof:
 - headless: package build/lint (green); CI all 4 jobs green — iOS autolink + native compile proven; Android autolink proven.
 - device: N/A — U1-003 owns runtime/device verification.
 - docs: `53` open question closed (Bare + Fabric CI); SHIP-003 resolved in ledger. `apple.podspecPath` library-config change recorded.
+
+## DOC-002 — ratify SPINE-004/005/006/007
+
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: SPINE-004, SPINE-007 · [task](./tasks/DOC-002/)
+
+Ratifies the `02` open questions that are ripe and honestly defers the ones that are not.
+
+**Closed (2 of 4):**
+- **SPINE-004** — `composition` (background/overlay/surface) is an **API-layer prop** (`50` / `<Fx>`), not a manifest field. `02` Decision 12 records this.
+- **SPINE-007** — `via:'lib'` naming: `applyVia` names the library (e.g., `Haze`), `asset` names the asset type (e.g., `lottie`). No version in the manifest — managed by the app's optional peer dependency (`53` decision 6). `02` Decision 13 records this.
+
+**Deferred (2 of 4) — no premature decision:**
+- **SPINE-005** — feature-flag vocabulary + multiple assets per rung. Deferred: no real shader or feature case forces it in V1. Revisit when a non-OS capability flag or multiple assets per rung is needed.
+- **SPINE-006** — manifest partitioning. Deferred: the manifest stays one file for V1; split when the node count makes rendering unwieldy.
+
+Checklist:
+- [x] spec'd (2026-06-09)
+- [x] rules-gated
+- [x] docs-closed (`02` Decisions 12+13; SPINE-004/007 closed; SPINE-005/006 deferred with triggers)
+- [x] reviewed (passed — closures grounded in `02`+`50`+`53`, 2-closed/2-deferred split honored, stale SPINE-007 back-references swept; no separate review doc)
+- [x] merged
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A — ratification task.
+- docs: `02` Decision 12 (`composition` = API-layer prop), Decision 13 (`via:'lib'` naming); decision-ledger SPINE-004 + SPINE-007 → resolved; SPINE-005 + SPINE-006 → deferred with trigger notes.
 
 ## DOC-010 — reduce-motion policy ratification
 
