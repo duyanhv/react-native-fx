@@ -38,7 +38,8 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
 | DOC-012 | 6-ship | ratify | todo | no | — | SHIP-002 | — | docs: `53` no-rung degradation UX |
 | DOC-013 | 2-effects | ratify | merged | no | — | REAL-004 | — | V1 curated shaders hand-maintain MSL+AGSL pairs; compiler remains additive V2; [task](./tasks/DOC-013/) · [review](./reviews/DOC-013.md) |
-| DOC-014 | 7-impl | doc-cleanup | todo | no | — | — | — | reconcile `architecture.md` §1 / `data-layer.md` §5.1 runtime src-trees to the real package bindings (`FxHostedView`/`FxSurfaceView`/`FxGroupView`) + ratified component set (`FxPresence`/`FxView`/`FxPressable`); drop the `FxPresenceView`/`FxManagedView`/`FxPressableView` phantoms (surfaced by U4-001) |
+| DOC-014 | 7-impl | doc-cleanup | todo | no | — | — | — | reconcile ALL runtime-binding refs to the real package (`FxHostedView`/`FxSurfaceView`/`FxGroupView`) + ratified names (`FxPresence`/`FxView`/`FxPressable`/`FxGroup`): `architecture.md` §1 src-tree (`:59-61`), the `:323` path, the unit-map table (`:556-557`); `data-layer.md` entity-diagram src-tree (`:724-726`, `:693-695`). `FxManagedView` is a true phantom (drop); `FxPresenceView`/`FxPressableView` are PLANNED V2 bindings (Units 7/8 — mark planned / use ratified names, do not delete). Fix DOC-014's own mis-cited `data-layer §5.1` pointer (src-tree is in the entity-diagram section, not §5.1). (scope widened per audit-2026-06-09 S1) |
+| DOC-015 | 1-surface | doc-cleanup | todo | no | — | SURF-010 (re-close) | — | cardinal-rule slip (audit-2026-06-09 S3): SURF-010 (memoization guidance — native `previousProps` value-equality ⇒ no manual memo) was closed against plane-7 `data-layer §5.1`, not its named plane-1 source `50`/`54`/`55`. Propagate the guidance into the owning surface doc(s) and re-point the SURF-010 closure there (or correct the source attribution if it genuinely belongs in `data-layer`) |
 
 ### V1 build — Units 1–3 + ship
 
@@ -120,7 +121,7 @@ Checklist:
 - [x] rules-gated
 - [x] source docs reconciled (`33`, `34` decide the target object)
 - [x] `architecture.md` / `data-layer.md` / `blueprint.md` updated to match (consumers, not sources)
-- [x] device proof defined (scenario in `tasks/U4-001/evidence/device.md`)
+- [x] device proof defined (scenario in `tasks/U4-001-wrapper-mechanic/evidence/device.md`)
 - [x] device proof observed (maintainer-verified iOS + Android, 2026-06-09 — child mounts into the container, hit-test survives at rest; via the U4-002 device run)
 - [x] ledger RT-015 closed (true in `33`/`34`)
 - [x] merged (couple-merge with U4-002)

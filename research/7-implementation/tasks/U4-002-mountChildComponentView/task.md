@@ -1,7 +1,7 @@
 # U4-002 (RT-014) — mountChildComponentView override that routes RN children into the intermediate container
 
 Type: implement + device-verify
-State: headless-done
+State: merged
 Unit: 4
 
 Consumes: RT-014 (U4-001 decides the mechanic, this task implements it)
@@ -44,12 +44,12 @@ Implement the `mountChildComponentView` override on `FxSurfaceView` (iOS) and th
   - [x] commented
   - [x] TS+format-green
   - [x] native-compile-verified (iOS local xcodebuild BUILD SUCCESSFUL; Android local gradle BUILD SUCCESSFUL)
-  - [x] Android reimplemented — full ExpoBlurTargetView.kt family (onMeasure, updateViewLayout, removeAllViews, etc.)
-  - [x] iOS diagnostic logging added — superview guard deferred until cause is known
-  - [ ] device-verified (human gate; iOS console logs must answer diagnosis questions)
-  - [ ] docs-closed
-  - [ ] reviewed
-  - [ ] merged
+  - [x] Android reimplemented — full ExpoBlurTargetView.kt family (onMeasure, updateViewLayout, removeAllViews, etc.) + no-`super.onLayout` traversal-crash fix + onMeasure/onLayout 0×0 sizing fix
+  - [x] iOS reimplemented — symmetric mount/unmount + superview guard; spurious default shader + free-running MTKView loop fixed; diagnostics removed
+  - [x] device-verified (maintainer, iOS + Android, 2026-06-09 — mount/unmount confirmed; taps land; Android crash gone)
+  - [x] docs-closed (RT-014 mechanic + corrected templates pinned in `structure.{ios,android}`)
+  - [x] reviewed (diffed against `ExpoBlurTargetView`/`expo-glass` templates)
+  - [x] merged
 
 ## Proof
 

@@ -1,7 +1,7 @@
 # U4-001 — wrapper mechanic
 
 Type: rework
-State: device-pending
+State: merged
 Unit: 4
 
 Consumes: RT-015
@@ -20,8 +20,9 @@ Decide and document the exact object fx animates for content motion. Resolve whe
 - [x] `architecture.md` / `data-layer.md` / `blueprint.md` updated to match (consumers, not sources)
 - [x] blueprint.md shape fixed ("intermediate container" picked)
 - [x] device proof defined
-- [ ] device proof observed (human gate)
+- [x] device proof observed (maintainer-verified iOS + Android, 2026-06-09, via the U4-002 device run)
 - [x] ledger RT-015 closed (true in `33`/`34`)
+- [x] merged (couple-merge with U4-002)
 
 ## Proof
 
