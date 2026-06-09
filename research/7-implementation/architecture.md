@@ -26,7 +26,7 @@ Every architectural decision in this doc traces to one of these sources.
 packages/
 ├── src/                          ← JS SURFACE (mirror of research planes)
 │   ├── manifest/                 ← dependency SINK (imports nothing from other src/)
-│   │   ├── CapabilityManifest.ts   the data [research: G1]
+│   │   ├── index.ts                the manifest barrel [research: G1]
 │   │   ├── select.ts               the adapter dispatch [research: G2]
 │   │   └── types.ts                shared IR types [research: 02]
 │   │
@@ -52,13 +52,10 @@ packages/
 │   │   ├── palettes.ts             [research: 50]
 │   │   └── themes.ts               [research: 50]
 │   │
-│   ├── runtime/                  ← JS BINDINGS (thin glue)
+│   ├── runtime/                  ← JS BINDINGS (thin glue) — one per registered native view
 │   │   ├── FxHostedView.tsx        default requireNativeView wrapper
-│   │   ├── FxSurfaceView.tsx       named requireNativeView wrapper
-│   │   ├── FxGroupView.tsx         named requireNativeView wrapper
-│   │   ├── FxPresenceView.tsx      [research: 54]
-│   │   ├── FxManagedView.tsx       [research: 33/57]
-│   │   └── FxPressableView.tsx     [research: 57]
+│   │   ├── FxSurfaceView.tsx       named requireNativeView wrapper (presence/state/press route here)
+│   │   └── FxGroupView.tsx         named requireNativeView wrapper
 │   │
 │   └── index.ts                  ← PUBLIC API (root export) [research: 52 §Public exports]
 │
@@ -74,7 +71,7 @@ packages/
 │   ├── FxPressHandler.swift        press handler (6-state FSM) [finding: gesture-handler borrow]
 │   ├── Shaders/
 │   │   └── FxShaders.metal         curated .metal shaders [research: 22]
-│   └── react-native-fx.podspec     [IMPL-001: post-identity-pass name]
+│   └── ReactNativeFx.podspec
 │
 ├── android/                      ← ANDROID NATIVE
 │   ├── FxModule.kt                 Expo Module [finding: multiple views, first=default]
@@ -320,7 +317,7 @@ JSX: <FxPresence visible={open} preset="transient">
      </FxPresence>
        │
        ▼
-src/runtime/FxPresenceView.tsx
+src/runtime/FxSurfaceView.tsx
   → requireNativeView('ReactNativeFx', 'FxSurfaceView')  // content motion wrapper
        │
        ▼
@@ -553,9 +550,14 @@ ios/FxNativeView.swift  /  android/FxNativeView.kt  ──  (the abstract base, 
 | 4 | Fabric-Invisible Layer | `FxSurfaceView.swift/.kt` (content motion wrapper) | `src/runtime/FxSurfaceView.tsx` |
 | 5 | `FxLayoutObserver` (Read) | `FxLayoutObserver.swift/.kt` | — |
 | 6 | `FxAnimationDriver` | `FxAnimationDriver.swift/.kt` | — |
-| 7 | `FxPresenceCoordinator` | `FxPresenceCoordinator.swift/.kt` | `src/runtime/FxPresenceView.tsx` |
-| 8 | Press Recognizer | `FxPressHandler.swift/.kt` | `src/runtime/FxPressableView.tsx` |
+| 7 | `FxPresenceCoordinator` | `FxSurfaceView.swift/.kt` + `FxPresenceCoordinator.swift/.kt` | `src/surface/FxPresence.tsx` (planned) |
+| 8 | Press Recognizer | `FxSurfaceView.swift/.kt` + `FxPressHandler.swift/.kt` | `src/surface/FxPressable.tsx` (planned) |
 | 9 | Runtime Objects | Plain native classes (no SharedObject needed) | — |
+
+> Units 7/8 lower to `FxSurfaceView` (plus the coordinator/recognizer object); dedicated presence/press
+> views are **not planned** — they ship as `src/surface/` components over the existing binding. The
+> runtime-object granularity behind this (driver family-split, scheduling) is the current direction,
+> not a closed call — formally open as RT-008 (`36`, DOC-011's todo).
 
 ---
 

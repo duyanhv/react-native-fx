@@ -92,8 +92,9 @@ mounted; flip `visible`. The wrapped child should carry a stable key.
 
 - **Portal** — does fx ever need a root overlay layer for `transient`/`modal`, or is
   placement always the app's job? Lean: app's job in v1.
-- **`uniforms`/`tune` memoization** — inline literals re-resolve each render; document
-  stable-ref guidance or shallow-compare (carried from `50`).
+- ~~**`uniforms`/`tune` memoization**~~ — **resolved (SURF-010): same as `50`.** Native
+  `previousProps` value-equality (not reference) means inline builders need no manual memo;
+  both primitive and nested `Record` props compare by value. Verified on SDK 56, iOS + Android.
 - ~~**Event payload** — beyond `phase`, does `onTransitionEnd` need timing/interrupt info?~~
   **Resolved in `40`:** `onTransitionEnd` carries `{ owner, phase, finished, interrupted }`
   (the interrupt/completion contract); presence reads `phase` + `interrupted`.

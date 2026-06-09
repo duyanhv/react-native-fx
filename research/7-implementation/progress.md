@@ -38,8 +38,8 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
 | DOC-012 | 6-ship | ratify | todo | no | — | SHIP-002 | — | docs: `53` no-rung degradation UX |
 | DOC-013 | 2-effects | ratify | merged | no | — | REAL-004 | — | V1 curated shaders hand-maintain MSL+AGSL pairs; compiler remains additive V2; [task](./tasks/DOC-013/) · [review](./reviews/DOC-013.md) |
-| DOC-014 | 7-impl | doc-cleanup | todo | no | — | — | — | reconcile ALL runtime-binding refs to the real package (`FxHostedView`/`FxSurfaceView`/`FxGroupView`) + ratified names (`FxPresence`/`FxView`/`FxPressable`/`FxGroup`): `architecture.md` §1 src-tree (`:59-61`), the `:323` path, the unit-map table (`:556-557`); `data-layer.md` entity-diagram src-tree (`:724-726`, `:693-695`). `FxManagedView` is a true phantom (drop); `FxPresenceView`/`FxPressableView` are PLANNED V2 bindings (Units 7/8 — mark planned / use ratified names, do not delete). Fix DOC-014's own mis-cited `data-layer §5.1` pointer (src-tree is in the entity-diagram section, not §5.1). (scope widened per audit-2026-06-09 S1) |
-| DOC-015 | 1-surface | doc-cleanup | todo | no | — | SURF-010 (re-close) | — | cardinal-rule slip (audit-2026-06-09 S3): SURF-010 (memoization guidance — native `previousProps` value-equality ⇒ no manual memo) was closed against plane-7 `data-layer §5.1`, not its named plane-1 source `50`/`54`/`55`. Propagate the guidance into the owning surface doc(s) and re-point the SURF-010 closure there (or correct the source attribution if it genuinely belongs in `data-layer`) |
+| DOC-014 | 7-impl | doc-cleanup | merged | no | — | — | — | [detail](#doc-014--runtime-binding-ref-cleanup). Reviewed + merged on integration/0.1.x. Reconciled all runtime-binding/folder refs in `architecture.md` (§1 src-tree, §2 path, §9 unit-map + footnote, podspec) and `data-layer.md` (§9 entity diagram) to the real package — 3 bindings `FxHostedView`/`FxSurfaceView`/`FxGroupView`. **All three phantoms dropped** (`FxManagedView` + `FxPresenceView` + `FxPressableView`): grounding overruled the S1 "mark planned" disposition — presence/press are `expo-view` (rule #3) over `FxSurfaceView`, exposed as `src/surface/` components, never dedicated bindings. Also reconciled the ledger RT-008 "five-view object model" wording to 3 views (RT-008 stays open — object granularity per `36`). (scope widened per audit-2026-06-09 S1; binding call revised in-session) |
+| DOC-015 | 1-surface | doc-cleanup | merged | no | — | SURF-010 (re-close) | — | [detail](#doc-015--surf-010-plane-1-re-closure). Reviewed + merged on integration/0.1.x. Cardinal-rule slip (audit-2026-06-09 S3): SURF-010 (memoization guidance — native `previousProps` value-equality ⇒ no manual memo) was closed against plane-7 `data-layer §5.1`, not its named plane-1 source `50`/`54`/`55`. Propagate the guidance into the owning surface doc(s) and re-point the SURF-010 closure there (or correct the source attribution if it genuinely belongs in `data-layer`) |
 
 ### V1 build — Units 1–3 + ship
 
@@ -94,6 +94,90 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DEF-011 | 4-runtime | implement | blocked | yes | — | RT-003 | V2 | drag/tilt (G3) axis-aware claiming |
 | DEF-012 | 4-runtime | ratify | blocked | no | — | RT-012 | V2 | generalize beyond presence to declarative state |
 | DEF-013 | 6-ship | implement | blocked | no | — | SHIP-004 | trigger: V2 native mod | config plugin |
+
+## DOC-014 — runtime-binding ref cleanup
+
+Type: `doc-cleanup` · State: `merged` · Device: no · Consumes: — · Closes: — (no ledger row)
+
+Reconciles the phantom/stale runtime-binding and folder refs in `architecture.md` + `data-layer.md`
+to the real package. Scope widened per audit-2026-06-09 S1.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (docs-only; no rule touched)
+- [x] docs reconciled
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Edits made (grounded against the shipped package):
+- **`architecture.md` §1 runtime block (`:55-58`)** — dropped **all three** phantom bindings
+  (`FxManagedView` + `FxPresenceView` + `FxPressableView`). Revised from the initial S1 disposition
+  after grounding: there are only 3 registered native views, so the runtime layer has exactly 3
+  bindings (`FxHostedView`/`FxSurfaceView`/`FxGroupView`, at `packages/ios/FxModule.swift:12,31,53`;
+  `android/.../FxModule.kt:19,38,60`). Presence/press are `expo-view` (rule #3) — they route through
+  `FxSurfaceView` + a coordinator/recognizer object and ship as `src/surface/` components, never their
+  own `requireNativeView` bindings. `src/surface/` currently holds only `types.ts` (components not yet built).
+- **`architecture.md` §1 manifest (`:29`)** — `CapabilityManifest.ts (the data)` → `index.ts (the
+  manifest barrel)`. Real manifest files are `index.ts`/`select.ts`/`types.ts`; `CapabilityManifest`
+  is a *type* in `types.ts`, and the manifest *data* is not shipped in `src/` (test fixture only).
+  **Note:** `:29` was not in the S1-enumerated ref set, but it is the identical phantom as
+  `data-layer:693` — fixed for tree-consistency.
+- **`architecture.md` §2 Path-2 flow (`:323`)** — `src/runtime/FxPresenceView.tsx` →
+  `src/runtime/FxSurfaceView.tsx` (the real binding the JSX lowers to today; matches the
+  `requireNativeView('ReactNativeFx','FxSurfaceView')` line beneath it).
+- **`architecture.md` §9 unit map (`:556-557`)** — Unit 7/8 native = `FxSurfaceView` + the
+  coordinator/recognizer object (not a dedicated view); JS = `src/surface/FxPresence.tsx` /
+  `FxPressable.tsx` (planned). Added a footnote phrasing this as the current direction, with
+  object/view granularity formally open per RT-008.
+- **`decision-ledger.md` RT-008 row (`:170`)** — reconciled the stale "five-view object model"
+  provisioned-value wording to the **3-view** reality (the same phantom drift one level up — five =
+  3 real + the 2 phantom presence/press views). RT-008 stays **open**: its real subject is
+  runtime-object granularity (driver family-split + scheduling), still open in `36`/DOC-011. Doc
+  bodies (`architecture.md §2`, `data-layer.md §9 D1`) were already correct at 3 views — no body edit needed.
+- **`architecture.md` §1 podspec (`:77`)** — `react-native-fx.podspec` → `ReactNativeFx.podspec`
+  (real file; dropped the now-satisfied `[IMPL-001: post-identity-pass name]` prediction).
+- **`data-layer.md` §9 entity diagram (`:693`, `:724-726`)** — manifest `CapabilityManifest.ts` →
+  `index.ts (public API)`; runtime box dropped `FxManagedView`, marked Presence/Pressable
+  `(planned — Unit 7/8)`. Box ASCII alignment preserved.
+- **DOC-014's own pointer** — the widened row text already cites "entity-diagram src-tree", not
+  `§5.1`; no further pointer fix needed (`§5.1` is the Memoization section, correctly distinct).
+
+Proof:
+- headless: N/A — docs-only, no code changed.
+- device: N/A.
+- docs: `architecture.md` §1/§2/§9; `data-layer.md` §9 entity diagram. No ledger row (cleanup only).
+
+## DOC-015 — SURF-010 plane-1 re-closure
+
+Type: `doc-cleanup` · State: `merged` · Device: no · Consumes: — · Closes: SURF-010 (re-close)
+
+Fixes the cardinal-rule slip flagged in audit-2026-06-09 S3: SURF-010 (memoization guidance) was
+closed against plane-7 `data-layer §5.1`, not its named plane-1 source `50`/`54`/`55`. Took the
+**propagate** path (Option A): the guidance now lives in the owning surface docs, so the row closes
+in source.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (docs-only)
+- [x] guidance propagated to `50`/`54`/`55` §Open questions (resolved in source)
+- [x] ledger SURF-010 reconciliation verb flipped `propagate` → `resolved`; main row + `data-layer §5.1` re-pointed
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Edits made:
+- **`50-api-and-presets.md` §Open questions** — memoization bullet struck through and resolved:
+  no manual memo (native `previousProps` value-equality; React Compiler memoizes automatically).
+- **`54-presence.md` §Open questions** — `uniforms`/`tune` memoization bullet resolved (same as `50`).
+- **`55-composition-chain.md` §Open questions** — `EffectStack` memoization bullet resolved.
+- **`decision-ledger.md`** — main SURF-010 row close-condition re-pointed to `50`/`54`/`55`
+  §Open questions; the Reconciliation row verb flipped `propagate` → `resolved (DOC-015)`.
+- **`data-layer.md §5.1`** — header note clarifies plane 7 *materializes* the guidance; closure
+  lives in the plane-1 source docs.
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A.
+- docs: `50`/`54`/`55` §Open questions; `decision-ledger.md` SURF-010 (both rows); `data-layer.md §5.1`.
 
 ## U1-001 — package scaffolding
 

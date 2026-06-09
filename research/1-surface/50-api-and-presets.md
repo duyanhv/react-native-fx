@@ -151,8 +151,11 @@ by the runtime.
 
 ## Open questions
 
-- **`uniforms`/spec memoization** — inline literals re-resolve each render; document
-  stable-ref guidance.
+- ~~**`uniforms`/spec memoization**~~ — **resolved (SURF-010; verified SDK 56, iOS + Android).**
+  No manual memoization is required: the native side compares props by *value*, not reference
+  (Expo's `previousProps` per-prop equality), so an inline builder that re-resolves to the same
+  value triggers no native work. React Compiler memoizes the builder chain automatically; without
+  it, module-level constants for static presets are an optional optimization, not a correctness need.
 - **Theme distribution** — consumer-authored palettes/themes as a shareable artifact (`52` `lab`).
 
 ## Sources

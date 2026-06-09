@@ -641,8 +641,9 @@ type Transition = {
 
 ## §5.1 Memoization Guidance (M9)
 
-> **[research: 50 §Open questions] [research: 55 §Open questions]**
-> **[ledger: SURF-010 status = `resolved`]** Inline builder literals create new objects each render. The native side handles re-configuration gracefully via per-prop equality checking (`previousProps`), so no manual memoization is required. React Compiler (recommended) handles it automatically.
+> **[research: 50/54/55 §Open questions — resolved (SURF-010, DOC-015)]**
+> **[ledger: SURF-010 status = `resolved`]** This section materializes the guidance; the decision is
+> closed in its owning plane-1 docs (`50`/`54`/`55` §Open questions). Inline builder literals create new objects each render. The native side handles re-configuration gracefully via per-prop equality checking (`previousProps`), so no manual memoization is required. React Compiler (recommended) handles it automatically.
 >
 > **Verified on SDK 56, iOS + Android (2026-06-08).** `previousProps` compares both primitive props and nested `Record` props by value, not JS object reference. A fresh `{ valueA: 99 }` object with the same effective value does not trigger the native setter. `@Field` defaults fill absent fields predictably on both platforms.
 
@@ -690,7 +691,7 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 
 ```
 ┌── src/manifest/ ───────────────────────┐
-│ CapabilityManifest.ts   (data)         │
+│ index.ts                (public API)   │
 │ select.ts               (algorithm)    │
 │ types.ts                (shared IR)    │
 └────────────────────────────────────────┘
@@ -721,9 +722,6 @@ const ENTER_BOTTOM = fx.motion.edgeIn({ from: 'bottom' });
 │ FxHostedView.tsx    (requireNativeView)│
 │ FxSurfaceView.tsx   (requireNativeView)│
 │ FxGroupView.tsx     (requireNativeView)│
-│ FxPresenceView.tsx  (requireNativeView)│
-│ FxManagedView.tsx   (requireNativeView)│
-│ FxPressableView.tsx (requireNativeView)│
 └────────────────────────────────────────┘
          │ imports: surface/ + manifest/
          ▼
