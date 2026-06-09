@@ -8,7 +8,7 @@ Owns: the effect-composition builder — `fx.effect.*` → `EffectStack` (visual
 
 This is the native-chain-flavored way to **stack visual effect layers** — fills,
 materials, shaders, symbols, filters — into one `EffectStack`. It is the escape hatch
-beneath the curated effect presets (`EdgeGlow`, `MeshGradient`; `56`), and what `<Fx effect>`
+beneath the curated effect preset component (`EdgeGlow`; `56`), and what `<Fx effect>`
 mounts.
 
 **Effects are not motion.** This builder composes *visual layers* only. Enter/exit/state

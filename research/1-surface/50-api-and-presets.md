@@ -156,7 +156,10 @@ by the runtime.
   (Expo's `previousProps` per-prop equality), so an inline builder that re-resolves to the same
   value triggers no native work. React Compiler memoizes the builder chain automatically; without
   it, module-level constants for static presets are an optional optimization, not a correctness need.
-- **Theme distribution** — consumer-authored palettes/themes as a shareable artifact (`52` `lab`).
+- ~~**Theme distribution**~~ — **resolved (SPINE-002; DOC-003).** Consumer-authored
+  palettes/themes as a shareable artifact are deferred to V2. Pure-config palettes resolve
+  in JS within the core package (`presets/`). A distribution surface would live in
+  `@react-native-fx/lab` if demand justifies the split (`52` Decision #11).
 
 ## Sources
 

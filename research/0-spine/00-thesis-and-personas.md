@@ -108,13 +108,20 @@ cross-platform presentation runtime and the consumer ergonomics.
 5. **fx owns its runtime** — **no dependency for the V1/V2 presence runtime**; the boundary
    stays Expo Modules until the ownership research proves it insufficient (`05`). Regime-C
    continuous motion is the one separately-scoped future lane that may take a dependency.
+6. **The V1 curation/BYO threshold** — the curated catalog is the 10 shader ids (`22`)
+   plus the ratified preset/feedback/effect vocabularies (`50`/`56`). Anything outside
+   the curated set is BYO (developer-supplied `.metal`+`.agsl` via the `shader` node).
+   The compiler/emitter (`03`) is deferred until real novel-composition demand triggers it.
 
 ## Open questions
 
-- **Where curation ends and BYO begins** — how large a curated catalog before "drop in
-  your own" is genuinely needed; track against real consumer demand.
-- **Palettes/themes as a shareable artifact** — are consumer-authored "looks" (pure
-  config) a distribution surface of their own (`50`)?
+- ~~**Where curation ends and BYO begins**~~ — **resolved (SPINE-001; DOC-003).** The
+  threshold is the 10 curated shader ids + the ratified preset/feedback/effect vocabularies.
+  BYO is the `shader` node with developer-supplied assets; the compiler remains deferred.
+- ~~**Palettes/themes as a shareable artifact**~~ — **resolved (SPINE-002; DOC-003).**
+  Consumer-authored palettes/themes are deferred to V2; pure-config palettes resolve in JS
+  within the core package (`presets/`). A distribution surface would live in `@react-native-fx/lab`
+  if demand justifies the split (`52` Decision #11).
 - **Keeping the fx-vs-app line sharp** — fx owns *overlay presentation* and *its own
   effects*; the app/Yoga own *flow layout*. Watch that presence never drifts into owning
   layout.

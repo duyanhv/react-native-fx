@@ -80,18 +80,26 @@ Optional thin sugar over `<Fx effect="…">`; the `effect=` preset is the canoni
    fx owns the behavior, not the component. It wraps any UI kit.
 3. **Three preset-like bundles** — `preset` (presentation), `feedback` (press), `effect`
    (visual) — on three owned surfaces; an honest domain split, not a reduction.
-4. **The canonical API is `<Fx effect="…">`.** If named effect components ship at all
-   (`EdgeGlow`/`MeshGradient`), they are optional sugar over it — an **open ship
-   decision** (`6-ship`), not a core promise, and only effects qualify (fx draws them whole).
-   Escape is downward — `tune` → `motion`/`effect` overrides → builders.
+4. **The canonical API is `<Fx effect="…">`.** Named effect components ship only when
+   three conditions hold: the effect is drawn whole by fx (rule #5), it is standalone-useful
+   without wrapped content, and the canonical API remains `<Fx effect="…">` (the component
+   is thin sugar). The V1 set that passes this test today is `EdgeGlow`. `MeshGradient` is a
+   fill style, reached via `<Fx effect="mesh-gradient">` (or `fx.effect.mesh()`), not a
+   standalone component. Escape is downward — `tune` → `motion`/`effect` overrides → builders.
 5. **V1 vocabulary ratified (DOC-005).** The behavior-preset values that ship in V1 are:
    `transient` · `sheet` · `modal` (presence); `lift` (state). The feedback value is `native`.
    The per-platform shape and timing defaults behind these presets are **device-pending**
    and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+6. **V1 effect-component set ratified (DOC-004).** `EdgeGlow` ships as a component.
+   `MeshGradient` does not. These are sugar over effects already in the curated catalog
+   (DOC-003, SPINE-001) — not new surface. They export from the core package, not
+   `@react-native-fx/lab` (consistent with `52` Decision #10).
 
 ## Open questions
 
-- **Ship the named effect-component sugar, or only `effect=`?** Lean: a small curated set.
+- ~~**Ship the named effect-component sugar, or only `effect=`?**~~ — **Resolved (DOC-004).**
+  The criterion is recorded in Decision 4; `EdgeGlow` passes it for V1. `MeshGradient` is a
+  fill, reached via `<Fx>`.
 - **`FxView` state vocabulary** — the named states per `preset` (`idle`/`selected`/…; `40`).
   Ratified as `idle` · `selected` for `lift` in `57` (DOC-005).
 

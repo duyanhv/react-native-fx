@@ -27,8 +27,8 @@ the bottom. A row needs a detail block only when it is active or has more than a
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | DOC-001 | 1-surface | doc-cleanup | merged | no | — | SURF-001, SURF-009 | — | `GlassView` dropped from `56`; `SpringTune` removed from `55`; SURF-001 + SURF-009 resolved; [review](./reviews/v1-merge-batch-2026-06-08.md) |
 | DOC-002 | 0-spine | ratify | merged | no | — | SPINE-004, SPINE-007 | — | `02` Decisions 12+13 ratified; SPINE-004/007 closed, SPINE-005/006 deferred; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-002--ratify-spine-004005006007) |
-| DOC-003 | 0-spine | ratify | todo | no | — | SPINE-001, SPINE-002 | — | docs: `00`/`50` curation/BYO threshold, palettes-as-artifact |
-| DOC-004 | 1-surface | ratify | todo | no | — | SURF-002 | — | docs: `56`/`6-ship` ship effect components? |
+| DOC-003 | 0-spine | ratify | merged | no | — | SPINE-001, SPINE-002 | — | docs: `00` Decision #6 + `52` Decision #11 + `50` open question struck; SPINE-001/002 resolved; reviewed (no separate doc); merged on integration/0.1.x; [task](./tasks/DOC-003/) · [detail](#doc-003--ratify-spine-001--spine-002) |
+| DOC-004 | 1-surface | ratify | merged | no | — | SURF-002 | — | `56` Decision 4 records the criterion; `52` Decision 12 records the V1 set; SURF-002 resolved; reviewed (no separate doc); merged on integration/0.1.x; [task](./tasks/DOC-004/) · [detail](#doc-004--ratify-surf-002) |
 | DOC-005 | 1-surface | ratify | merged | no | MOT-001 | SURF-003, SURF-004, SURF-005 | — | `50`/`56`/`57`/`41` V1 preset/state/feedback vocab ratified; springs stay with MOT-001; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-005--v1-presetstatefeedback-vocabulary-ratification) |
 | DOC-006 | 1-surface | ratify | todo | no | — | SURF-006 | — | docs: `57`/`21` FxGroup morph scope |
 | DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) · [review](./reviews/DOC-007.md) |
@@ -509,6 +509,68 @@ Proof:
 - docs: `41-motion-vocabulary.md` (Decision #9), `42-presence-and-lifecycle.md`
   (§Reduce-motion), `34-animation-driver.md` (§Findings — reduce-motion);
   decision-ledger MOT-010 → resolved.
+
+## DOC-003 — ratify SPINE-001 + SPINE-002
+
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: SPINE-001, SPINE-002 · [task](./tasks/DOC-003/)
+
+Ratifies the curation/BYO threshold and the palettes-as-artifact disposition.
+
+**SPINE-001 — curation/BYO threshold:**
+- `00` Decision #6: the V1 threshold is the 10 curated shader ids (`22`) plus the ratified preset/feedback/effect vocabularies (`50`/`56`). Anything outside the curated set is BYO (developer-supplied `.metal`+`.agsl` via the `shader` node). The compiler/emitter (`03`) is deferred until real novel-composition demand triggers it.
+- The `00` open question "Where curation ends and BYO begins" is struck through and resolved.
+
+**SPINE-002 — palettes/themes as artifact:**
+- `52` Decision #11: palettes and themes as a shareable distribution artifact are deferred to V2. Pure-config palettes resolve in JS within the core package (`presets/`). A distribution surface would live in `@react-native-fx/lab` if demand justifies the split.
+- The `50` open question "Theme distribution" is struck through and resolved.
+- `52` Decision #10 already named `@react-native-fx/lab` as the home for "where curation ends"; Decision #11 makes the palettes-as-artifact link explicit.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (docs-only)
+- [x] source docs ratified
+  - [x] `00` — Decision #6 added; open question struck through
+  - [x] `52` — Decision #11 added
+  - [x] `50` — "Theme distribution" open question struck through
+- [x] ledger SPINE-001 + SPINE-002 closed (true in source)
+- [x] docs-closed
+- [x] reviewed (no separate doc — inline verdict)
+- [x] merged (integration/0.1.x)
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A — ratification task.
+- docs: `00` §Decisions (Decision #6), `50` §Open questions, `52` §Decisions (Decision #11); decision-ledger SPINE-001 + SPINE-002 → `resolved`.
+
+## DOC-004 — ratify SURF-002
+
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: SURF-002 · [task](./tasks/DOC-004/)
+
+Ratifies the criterion for shipping named effect components and the V1 set that passes it.
+
+**SURF-002 — ship effect components?**
+- `56` Decision 4: named effect components ship only when the effect is drawn whole by fx (rule #5), is standalone-useful without wrapped content, and the canonical API remains `<Fx effect="…">`. The V1 set that passes this test today is `EdgeGlow`. `MeshGradient` is a fill style, reached via `<Fx effect="mesh-gradient">` (or `fx.effect.mesh()`), not a standalone component.
+- `56` Decision 6: `EdgeGlow` ships as a component. `MeshGradient` does not. These are sugar over effects already in the curated catalog (DOC-003, SPINE-001) — not new surface. They export from the core package, not `@react-native-fx/lab` (consistent with `52` Decision #10).
+- `52` Decision 12: ratifies the same V1 set and criterion in the ship plane.
+- `55` line 11: curated effect preset wording updated to `EdgeGlow` only.
+- The `56` and `52` open questions are struck through and resolved.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (docs-only)
+- [x] source docs ratified
+  - [x] `56` — Decision 4 records the criterion; Decision 6 records the V1 set + DOC-003 reconciliation
+  - [x] `52` — Decision 12 records the V1 set
+  - [x] `55` — curated effect preset wording updated
+- [x] ledger SURF-002 closed (true in `52`)
+- [x] docs-closed
+- [x] reviewed (no separate doc — inline verdict)
+- [x] merged (integration/0.1.x)
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A — ratification task.
+- docs: `56` §Decisions (Decision 4, Decision 6), `52` §Decisions (Decision 12), `55` line 11; decision-ledger SURF-002 → `resolved`.
 
 ## DOC-005 — V1 preset/state/feedback vocabulary ratification
 
