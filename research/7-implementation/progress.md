@@ -34,7 +34,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) · [review](./reviews/DOC-007.md) |
 | DOC-008 | 2-effects | ratify | merged | no | — | FX-009 | — | `symbol` iOS-only in V1; Android AVD/Lottie planned/deferred (non-selectable, enforced by `select()`); [task](./tasks/DOC-008/) · [review](./reviews/DOC-008.md) |
 | DOC-009 | 3-motion | ratify | todo | no | — | MOT-003, MOT-005, MOT-006, MOT-009 | — | docs: `40`/`41`/`42` V1 motion vocab scope |
-| DOC-010 | 3-motion | ratify | todo | no | — | MOT-010 | — | docs: `41`/`42` reduce-motion policy |
+| DOC-010 | 3-motion | ratify | merged | no | — | MOT-010 | — | V1 reduce-motion = instant degradation (0-duration); policy recorded in `41` Decision #9, `42` §Reduce-motion, `34` §Findings; MOT-010 resolved; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-010--reduce-motion-policy-ratification) |
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
 | DOC-012 | 6-ship | ratify | todo | no | — | SHIP-002 | — | docs: `53` no-rung degradation UX |
 | DOC-013 | 2-effects | ratify | merged | no | — | REAL-004 | — | V1 curated shaders hand-maintain MSL+AGSL pairs; compiler remains additive V2; [task](./tasks/DOC-013/) · [review](./reviews/DOC-013.md) |
@@ -340,6 +340,35 @@ Proof:
 - headless: package build/lint (green); CI all 4 jobs green — iOS autolink + native compile proven; Android autolink proven.
 - device: N/A — U1-003 owns runtime/device verification.
 - docs: `53` open question closed (Bare + Fabric CI); SHIP-003 resolved in ledger. `apple.podspecPath` library-config change recorded.
+
+## DOC-010 — reduce-motion policy ratification
+
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: MOT-010 · [task](./tasks/DOC-010/)
+
+The motion domain had no policy for honoring OS reduce-motion / animation-scale settings.
+This task ratifies the V1 policy: **instant degradation** (0-duration, snap to target)
+when the OS setting is active. Implementation is owned by U6-001 (FxAnimationDriver, v2).
+
+- **iOS:** `UIAccessibility.isReduceMotionEnabled` → driver sets duration to 0.
+- **Android:** `Settings.Global.TRANSITION_ANIMATION_SCALE` = 0.0 (or
+  `ANIMATOR_DURATION_SCALE` = 0.0) → driver sets duration to 0.
+- **Scope:** All content motion (presence enter/exit, state transitions). Presets and
+  explicit `motion` overrides are both degraded. Opacity-only degradation is a deferred
+  V2 refinement. Decorative effects have their own native clock and are not gated in V1.
+
+Checklist:
+- [x] spec'd (2026-06-09)
+- [x] rules-gated
+- [x] docs-closed (`41` Decision #9; `42` §Reduce-motion; `34` §Findings — reduce-motion; MOT-010 → resolved)
+- [x] reviewed (passed — closure verified across `41`/`42`/`34`, `onTransitionEnd`-fires-immediately confirmed; no separate review doc)
+- [x] merged
+
+Proof:
+- headless: N/A — docs-only; no code.
+- device: N/A — policy ratification. Implementation + device proof owned by U6-001.
+- docs: `41-motion-vocabulary.md` (Decision #9), `42-presence-and-lifecycle.md`
+  (§Reduce-motion), `34-animation-driver.md` (§Findings — reduce-motion);
+  decision-ledger MOT-010 → resolved.
 
 ## Maintenance
 

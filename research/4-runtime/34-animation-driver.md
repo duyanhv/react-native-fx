@@ -75,6 +75,15 @@ frame — another reason it stays out of scope here.
   (native timer/displacement + callback) or a **UI-thread channel** (a gesture's shared value
   bound to a uniform off the JS thread) — never a worklet driving fx's own envelopes (`40`/`05`).
 
+## Findings — reduce-motion
+
+The driver checks the OS reduce-motion / animation-scale setting at the start of each
+animation envelope. When active (`UIAccessibility.isReduceMotionEnabled` on iOS;
+`Settings.Global.TRANSITION_ANIMATION_SCALE` = 0.0 or `ANIMATOR_DURATION_SCALE` = 0.0
+on Android), the driver sets the animation duration to 0, applies the target
+immediately, and fires `onTransitionEnd` synchronously. The policy is recorded in
+`41`/`42` and applies to all content motion (presence enter/exit, state transitions).
+
 ## Research questions
 
 - What is the minimal interruptible-spring contract the driver must expose so a target

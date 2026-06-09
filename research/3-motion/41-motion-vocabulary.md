@@ -181,6 +181,14 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
    `motion` is a typed map, *different per component* (phases vs states), never one universal map.
 8. **Motion-map fallback** = `userMotion[key] ?? presetMotion[key] ?? identity`; no implicit
    reverse; unknown keys → identity (with a dev warning).
+9. **Reduce-motion is instant degradation.** When the OS reduce-motion or animation-scale
+   setting is active (iOS `UIAccessibility.isReduceMotionEnabled`, Android
+   `Settings.Global.TRANSITION_ANIMATION_SCALE` = 0.0 or `ANIMATOR_DURATION_SCALE`
+   = 0.0), the animation driver sets all motion envelopes to 0 duration — snap to
+   target, no interpolation — and fires `onTransitionEnd` immediately. This applies to
+   all content motion (presence enter/exit, state transitions). Opacity-only degradation
+   is a deferred V2 refinement. Decorative effects (shaders, materials) have their own
+   native clock and are not gated by the motion reduce-motion policy in V1.
 
 ## Open questions
 

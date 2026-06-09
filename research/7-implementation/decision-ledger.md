@@ -94,7 +94,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | MOT-007 | deferred | `40` | The Regime-C option-2 UI-thread channel (Reanimated shared values bound to a uniform). | — | post-V1, additive over the same uniform names |
 | MOT-008 | open | `40`/`34` | How a BYO author declares an intro/outro envelope in `.metal`/`.agsl`, not hardcoded to the curated glow. | BYO envelopes | an envelope-declaration contract |
 | MOT-009 | open | `42`/`35` | Named states beyond binary `visible` (multi-step intro→hold→outro; one-shot bursts). | — | the extended state model decided (V1 or V2) |
-| MOT-010 | open | — (gap → `3-motion`) | **Coverage gap (no doc covers this yet):** honor OS reduce-motion / animation-scale settings (iOS `UIAccessibility.isReduceMotionEnabled`, Android animator-duration-scale) — degrade to instant or opacity-only envelopes. | accessible motion shipping | a reduce-motion policy recorded in `41`/`42` and honored by the driver (`34`) |
+| MOT-010 | resolved | `41`/`42`/`34` | V1 reduce-motion is instant degradation: when the OS reduce-motion / animation-scale setting is active, the driver sets all motion envelopes to 0 duration — snap to target, no interpolation. iOS `UIAccessibility.isReduceMotionEnabled`; Android `TRANSITION_ANIMATION_SCALE`/`ANIMATOR_DURATION_SCALE` = 0.0. Opacity-only degradation is a deferred V2 refinement. | — | **Resolved (DOC-010, 2026-06-09).** Policy recorded in `41` Decision #9, `42` §Reduce-motion, and `34` §Findings — reduce-motion. |
 
 ## Runtime — owner: `4-runtime`
 
