@@ -929,7 +929,7 @@ renderer before those rungs become selectable.
 ## §10 FxGroup/FxItem Scope (G5) — Provisioned Candidate
 
 > **[research: 21 §Glass morphing] [research: 57 §FxGroup/FxItem]**
-> **[ledger: SURF-006 status = `open`]** The scope below is a **provisioned candidate** — pending source-doc closure in `57`/`21` for morph scope and merge-threshold contract.
+> **[ledger: SURF-006 status = `resolved` (DOC-006, 2026-06-10)]** The scope below is **ratified** in `57`/`21`.
 
 ### iOS
 

@@ -30,7 +30,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-003 | 0-spine | ratify | merged | no | — | SPINE-001, SPINE-002 | — | docs: `00` Decision #6 + `52` Decision #11 + `50` open question struck; SPINE-001/002 resolved; reviewed (no separate doc); merged on integration/0.1.x; [task](./tasks/DOC-003/) · [detail](#doc-003--ratify-spine-001--spine-002) |
 | DOC-004 | 1-surface | ratify | merged | no | — | SURF-002 | — | `56` Decision 4 records the criterion; `52` Decision 12 records the V1 set; SURF-002 resolved; reviewed (no separate doc); merged on integration/0.1.x; [task](./tasks/DOC-004/) · [detail](#doc-004--ratify-surf-002) |
 | DOC-005 | 1-surface | ratify | merged | no | MOT-001 | SURF-003, SURF-004, SURF-005 | — | `50`/`56`/`57`/`41` V1 preset/state/feedback vocab ratified; springs stay with MOT-001; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-005--v1-presetstatefeedback-vocabulary-ratification) |
-| DOC-006 | 1-surface | ratify | todo | no | — | SURF-006 | — | docs: `57`/`21` FxGroup morph scope |
+| DOC-006 | 1-surface | ratify | ready-to-merge | no | — | SURF-006 | — | docs: `57`/`21` FxGroup morph scope ratified; [task](./tasks/DOC-006/) |
 | DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) · [review](./reviews/DOC-007.md) |
 | DOC-008 | 2-effects | ratify | merged | no | — | FX-009 | — | `symbol` iOS-only in V1; Android AVD/Lottie planned/deferred (non-selectable, enforced by `select()`); [task](./tasks/DOC-008/) · [review](./reviews/DOC-008.md) |
 | DOC-009 | 3-motion | ratify | ready-to-merge | no | — | MOT-003, MOT-005, MOT-006, MOT-009 | — | driver model (`target`/`clock`/`source`) ratified — scope widened to promote the research/wip rethink (maintainer-accepted 2026-06-10); per-platform spring authoring replaces `{damping,mass,stiffness}`; iOS content rung → `os:17`; render-server-first + `FxSpring`-on-retarget pinned; MOT-003/005/006/009 resolved in source; [task](./tasks/DOC-009/) · [detail](#doc-009--driver-model-ratification) |
@@ -632,6 +632,28 @@ Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run test` from `packages/` — all green.
 - device: N/A — ratification task.
 - docs: `50`/`56`/`57` vocab ratified; `41`/`42` preset sets ratified; `data-layer.md` §3 MOT-001 pointer added; ledger SURF-003/004/005 → resolved. Springs remain device-pending with MOT-001.
+
+## DOC-006 — FxGroup morph scope ratification
+
+Type: `ratify` · State: `ready-to-merge` · Device: no · Consumes: — · Closes: SURF-006 · [task](./tasks/DOC-006/)
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] docs-closed
+  - [x] `57` — Decision 6 records glass-only morph scope, iOS 26+ / system-owned merge, Android flat fallback
+  - [x] `57` — Open question struck
+  - [x] `21` — Decision 5 records glass-morph as the only V1 compound effect
+  - [x] `21` — Open question struck
+  - [x] `data-layer.md` §10 reconciled to ratified wording
+- [x] ledger SURF-006 closed (true in `57`/`21`)
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A — ratification task.
+- docs: `57` §Decisions (Decision 6), `21` §Decisions (Decision 5), `data-layer.md` §10; `decision-ledger.md` SURF-006 → `resolved`.
 
 ## Maintenance
 
