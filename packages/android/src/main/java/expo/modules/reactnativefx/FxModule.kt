@@ -25,6 +25,9 @@ class FxModule : Module() {
       Prop("intensity") { view: FxHostedView, value: Double ->
         view.setIntensity(value)
       }
+      Prop("materialConfig") { view: FxHostedView, value: MaterialConfig? ->
+        view.setMaterialConfig(value)
+      }
 
       AsyncFunction("snapshot") { view: FxHostedView ->
         return@AsyncFunction view.snapshot()

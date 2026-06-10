@@ -32,6 +32,7 @@ class FxHostedView(
   private var mountedEffectId: String? = null
   private var pendingEffect: String? = null
   private var pendingIntensity: Double = 0.8
+  private var pendingMaterialConfig: MaterialConfig? = null
 
   // A decorative child swapped in on a later prop batch is added outside RN's layout
   // pass; without this, ExpoView swallows its requestLayout() and the child renders at
@@ -54,6 +55,10 @@ class FxHostedView(
     pendingIntensity = value
   }
 
+  fun setMaterialConfig(value: MaterialConfig?) {
+    pendingMaterialConfig = value
+  }
+
   override fun applyResolvedConfig() {
     super.applyResolvedConfig()
 
@@ -63,12 +68,16 @@ class FxHostedView(
       return
     }
 
-    // When only intensity changed, push it onto the live child instead of remounting —
-    // a slider drag mutates one uniform per frame rather than recreating the view, which
-    // would flash a blank frame, reset the shader clock, and reparse the AGSL each tick.
+    // When only intensity or config changed, push it onto the live child instead of
+    // remounting — a slider drag mutates one uniform per frame rather than recreating the
+    // view, which would flash a blank frame, reset the shader clock, and reparse the AGSL
+    // each tick.
     val current = effectView
     if (effect == mountedEffectId && current is FxEffectView) {
       current.setIntensity(pendingIntensity)
+      if (current is FxMaterialView) {
+        current.setMaterialConfig(pendingMaterialConfig)
+      }
       return
     }
 
@@ -80,6 +89,7 @@ class FxHostedView(
 
     val view = when (effect) {
       "fill" -> FxFillView(context, intensity)
+      "material" -> FxMaterialView(context, intensity, pendingMaterialConfig)
       "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
       "aurora", "noise-field", "plasma", "caustics", "edge-glow" -> {
         FxShaderView(context, effect, intensity)

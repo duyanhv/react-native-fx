@@ -130,10 +130,38 @@ Each section expands the Android rungs from `02`.
   `clock:frame-nanos`; degrades to a linear `Brush` below 33.
 
 ### `material`
-- **`RenderEffect.createBlurEffect`** — `via:native` · `requires {os:31, hosted}` ·
-  `applyVia:graphicsLayer`. Glassmorphism = blur + gradient + overlay layering; there
-  is no Liquid Glass equivalent.
-- **Haze** (lib) — `via:lib` · `requires {os:21, hosted}`. Fallback below 31.
+- **Own-content composition + `RenderEffect.createBlurEffect`** — `via:native` ·
+  `requires {os:31, hosted}` · `applyVia:View.setRenderEffect`. The Android material is an
+  fx-drawn translucent stack — a white frost scrim plus a vertical highlight gradient,
+  drawn in `onDraw` on the plain-`View` hosted path (the V1 no-Compose idiom, § render
+  paths) — softened by `RenderEffect.createBlurEffect(radius, radius, CLAMP)` applied to
+  fx's **own** view via `View.setRenderEffect` (the same RenderNode-backed mechanism as
+  the `expo-view` shader rung, not `Modifier.graphicsLayer`). There is no Liquid Glass
+  equivalent and **no backdrop capture**: sampling parent/RN content is costly and
+  stale-prone on Android and would host RN content to sample it (rule #4) — and the iOS
+  rung does not refract sibling fx hosts either (the glass compositing limit,
+  `structure.ios` §material), so own-content composition is the cross-platform-consistent
+  default in practice. Equal polish, not pixel parity.
+- **Pinned constants (intensity normalization).** JS speaks `intensity` 0–1 only. On
+  Android it maps linearly to a blur radius of **0–24dp** (converted to px at the device
+  density; radius 0 clears the effect — `createBlurEffect` rejects non-positive radii) and
+  scales the overlay alphas: frost-scrim alpha = variant weight × intensity; highlight
+  gradient = white **0.35 → 0.05** (top → bottom) × intensity. The variant weights are
+  **`regular` = 0.55** (heavier frost) and **`clear` = 0.28** (lighter, more transparent);
+  unknown variants fall back to `regular`. Intensity and variant changes update the live
+  view in place (`setIntensity`/`setMaterialConfig` → `invalidate()`), never remount.
+- **`interactive` is inert on Android.** The press response is the iOS-26 system glass's
+  own behavior; Android has no system equivalent, and the law forbids simulating another
+  platform's behavior. The knob is accepted silently (the `MaterialConfig` Record carries
+  it) and ignored — no crash, no recognizer, no synthetic animation.
+- **Below API 31** — the same translucent stack **without** blur (`RenderEffect` requires
+  31): `via:draw` · `requires {os:21, hosted}`. Degraded but never a flat box (`21`
+  decision 4).
+- **Haze** (lib) — `via:lib` · `requires {os:21, hosted}` · **`status:planned`**,
+  non-selectable in V1 (the same treatment as the Android `symbol` rung). The true
+  backdrop-blur library rung is documented and deferred until backdrop blur is genuinely
+  demanded; when it lands it is an optional peer dependency (`53` decision 6) — no Compose
+  dependency and no optional-peer machinery now.
 
 ### `shader`
 - **Decorative** — `lower:shader, asset:agsl` · `requires {os:33, hosted}` ·

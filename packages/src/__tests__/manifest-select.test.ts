@@ -190,6 +190,52 @@ const fixture: CapabilityManifest = {
       },
     },
 
+    // ── material: Android blur rung + planned Haze + unblurred floor ──
+    material: {
+      id: 'material',
+      kind: 'render-target',
+      interaction: 'self',
+      phase: 'v1',
+      lower: {
+        ios: [
+          {
+            via: 'native',
+            primitive: 'UIGlassEffect',
+            applyVia: 'UIVisualEffectView',
+            requires: { os: 26, substrate: 'hosted' },
+          },
+          {
+            via: 'native',
+            primitive: '.ultraThinMaterial',
+            applyVia: '.background',
+            requires: { os: 15, substrate: 'hosted' },
+            note: 'material fallback below 26',
+          },
+        ],
+        android: [
+          {
+            via: 'native',
+            primitive: 'RenderEffect.createBlurEffect',
+            applyVia: 'View.setRenderEffect',
+            requires: { os: 31, substrate: 'hosted' },
+            note: 'own-content translucent stack + blur',
+          },
+          {
+            via: 'lib',
+            applyVia: 'Haze',
+            requires: { os: 21, substrate: 'hosted' },
+            status: 'planned',
+            note: 'true backdrop blur via optional peer — deferred',
+          },
+          {
+            via: 'draw',
+            requires: { os: 21, substrate: 'hosted' },
+            note: 'translucent stack without blur — never a flat box',
+          },
+        ],
+      },
+    },
+
     // ── symbol: iOS supported, Android planned ────────────────────────
     symbol: {
       id: 'symbol',
@@ -386,6 +432,35 @@ describe('select()', () => {
     // content-distort on iOS: out-of-scope; on Android: planned
     expect(select(fixture.nodes['content-distort'], ios, { deviceOS: 18 }).via).toBe('none');
     expect(select(fixture.nodes['content-distort'], android, { deviceOS: 34 }).via).toBe('none');
+  });
+
+  // ── material: Android ladder ───────────────────────────────────
+
+  it('selects the blur rung for material on Android 31+', () => {
+    const result = select(fixture.nodes.material, android, { deviceOS: 31 });
+    expect(result.via).toBe('native');
+    expect(result.primitive).toBe('RenderEffect.createBlurEffect');
+    expect(result.applyVia).toBe('View.setRenderEffect');
+  });
+
+  it('skips the planned Haze rung and degrades material to the unblurred stack below 31', () => {
+    const result = select(fixture.nodes.material, android, { deviceOS: 30 });
+    expect(result.via).toBe('draw');
+  });
+
+  it('never degrades material to a flat box on Android 21+', () => {
+    const result = select(fixture.nodes.material, android, { deviceOS: 21 });
+    expect(result.via).not.toBe('none');
+  });
+
+  it('selects the glass rung for material on iOS 26', () => {
+    const result = select(fixture.nodes.material, ios, { deviceOS: 26 });
+    expect(result.primitive).toBe('UIGlassEffect');
+  });
+
+  it('falls back to the system material for material below iOS 26', () => {
+    const result = select(fixture.nodes.material, ios, { deviceOS: 18 });
+    expect(result.primitive).toBe('.ultraThinMaterial');
   });
 
   // ── symbol: iOS supported, Android planned ─────────────────────
