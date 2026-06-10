@@ -55,7 +55,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-001 | Unit 3 | implement | merged | yes | — | RT-009 | U1-002, U2-001 | RT-009 + fill (iOS+Android) + iOS material; device-verified iOS 26+ (2026-06-08); shader → U3-006, symbol → U3-007; [detail](#u3-001--hosted-effect-renderer) · [review](./reviews/U3-001.md) |
 | U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
-| U3-004 | Unit 3 | ratify | todo | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract |
+| U3-004 | Unit 3 | ratify | ready-to-merge | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract ratified; [detail](#u3-004--byo-registration-contract) |
 | U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
 | U3-006 | Unit 3 | implement | merged | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); reviewed + confirmed by maintainer (2026-06-09); merged on integration/0.1.x; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
@@ -421,6 +421,25 @@ Proof:
 - headless / build-verify: xcodebuild Debug-iphonesimulator on Xcode 26.5 / Swift 6.3.2 → `FxShaders.bundle` (unmangled) with `default.metallib` (194 KB) at root in build products.
 - device: no new run — Android render observed on U3-006; iOS render observed on U3-006. REAL-002 build verification satisfies the close condition.
 - docs: `structure.android.md` §Render paths (AGSL asset path + read API); `structure.ios.md`/`52` (bundle resolution + hosted-path loader); `52` Open questions cleared → Findings; decision-ledger REAL-002 + REAL-003 → resolved.
+
+## U3-004 — BYO registration contract
+
+Type: `ratify` · State: `ready-to-merge` · Device: no · Consumes: — · Closes: `FX-006` · [task](./tasks/U3-004/)
+
+Ratifies the V1 BYO (bring-your-own) shader registration contract in the owning source doc (`22-shaders.md`) and propagates it to `data-layer.md` §7. The contract is end-to-end: registration, consumption, typing, and unregistered-id behavior.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] docs-closed (`22` Decision 6 records the contract; open question resolved; `data-layer.md` §7 reconciled)
+- [x] ledger `FX-006` closed (true in `22`)
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Proof:
+- headless: N/A — docs-only.
+- device: N/A — ratification task.
+- docs: `22` §Decisions (Decision 6), `22` §Open questions (BYO asset contract resolved), `data-layer.md` §7 (reconciled), `decision-ledger.md` `FX-006` → `resolved`.
 
 ## U1-002 — FxNativeView abstract base + substrate view registration
 

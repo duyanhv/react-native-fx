@@ -139,13 +139,49 @@ events only — no per-frame pointer stream** (`04`/`35`).
    assets, not a runtime `source` prop. Curation is the front door.
 5. **Each curated shader is an MSL+AGSL pair** maintained by the library — the 2×
    authoring cost is the price of cross-platform, and the compiler's future target.
+6. **BYO registration contract (V1)** — a developer registers a `.metal`+`.agsl` pair as a
+   `shader` node, consumed at the same call site as curated ids:
+   - **Registration path:** `registerShader({ id, uniforms })` in JS. The `id` must not
+     collide with curated `ShaderId` values; collisions are a dev warning and the curated
+     id wins.
+   - **Asset locations:** BYO `.metal` files live in the **fx package's** `Shaders/` directory
+     (`ios/Shaders/<id>.metal`); BYO `.agsl` files live in the **fx package's** asset tree
+     (`android/src/main/assets/shaders/<id>.agsl`). The app's own `ios/` or `android/`
+     directories do not participate — the files must be present in the library's paths at
+     build time so the existing bundling mechanic picks them up.
+   - **Build wiring:** BYO uses the **same** build mechanism as curated shaders, with no
+     special path. See the single-home mechanic: `structure.ios.md` §shader (hosted +
+     expo-view rungs) and `52` Decision #2 (iOS `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR`)
+     for the full wiring. Android reads from assets at runtime via
+     `context.assets.open("shaders/<id>.agsl")` — no build-time compile step.
+   - **V1 constraint:** there is no config plugin in V1 (`DEF-013`/`SHIP-004` deferred), so
+     BYO assets cannot be injected into the library's bundle from the app side at build time.
+     They must be present in the fx package's resource paths before the library build runs.
+     V2 may add a config plugin or a build-time copy step for app-side BYO asset placement.
+   - **Runtime compilation:** explicitly deferred to V2 (`DEF-008`). V1 BYO is build-time
+     `.metal`/`.agsl` pairs only.
+   - **Missing platform file:** degrades that platform to `{via:'none'}` (honest guard-out
+     per the pair rule; rule #2).
+   - **Events:** `onLoad`/`onError` fire for BYO compile/load failures, same as curated.
+   - **Consumption surface:** `<Fx effect="id" />` where the `effect` prop accepts the
+     registered id. The `shader` node is the IR node; the `effect` prop is the JSX call
+     site (`55`).
+   - **Typing idiom:** the `effect` prop boundary type is `ShaderId | (string & {})` —
+     curated literals keep autocomplete; registered BYO ids are admitted. `ShaderId`
+     itself stays exactly the curated union.
+   - **Unregistered-id behavior:** referencing an id that is neither curated nor registered
+     → native compile/load fails because the `.metal`/`.agsl` file is missing → `onError`
+     fires with a descriptive error. No hard crash.
+   - **Forward pointer:** the actual TypeScript change (applying `ShaderId | (string & {})`
+     at the `effect` prop) is an `implement` task, not this one.
 
 ## Open questions
 
 - **Uniform struct alignment (needs-device)** — Swift↔MSL field order/stride, and the
   AGSL uniform binding equivalent; carried from `_legacy/08`.
-- **BYO asset contract** — how a developer registers a `.metal`+`.agsl` pair + uniform
-  table (build step, manifest entry); ties to `03`/`53`.
+- ~~**BYO asset contract**~~ — **resolved (FX-006; U3-004, 2026-06-10).** The registration
+  contract is recorded in Decision 6 above. Build wiring, consumption surface, typing idiom,
+  and unregistered-id behavior are all pinned.
 
 ## Sources
 

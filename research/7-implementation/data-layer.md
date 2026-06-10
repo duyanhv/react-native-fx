@@ -801,11 +801,11 @@ public uniform maps are out of V1.
 
 ---
 
-## §7 BYO Asset Registration (M8) — Provisional Candidate
+## §7 BYO Asset Registration (M8) — Ratified Contract
 
-> **[research: 22 §BYO is a shader node with dev-supplied assets]**
+> **[research: 22 §Decision 6]** The BYO registration contract is ratified in the owning source doc.
 > **[research: 52 §Cross-platform shader asset bundling]**
-> **[ledger: FX-006 status = `open`]** The registration API below is a **provisioned candidate** — pending source-doc closure in `22`/`03`/`53`. The `registerShader` approach is a design proposal, not yet ratified.
+> **[ledger: FX-006 status = `resolved` (U3-004, 2026-06-10).]**
 
 ### Registration API
 
@@ -829,19 +829,52 @@ registerShader(myShaderConfig);
 
 ### Asset location
 
+BYO assets live in the **fx package's** paths, not the app's:
+
 ```
 packages/
 ├── ios/Shaders/
-│   └── my-shader.metal         ← developer .metal file
-├── android/assets/shaders/
-│   └── my-shader.agsl          ← developer .agsl file
+│   └── my-shader.metal         ← developer .metal file (fx package)
+├── android/src/main/assets/shaders/
+│   └── my-shader.agsl          ← developer .agsl file (fx package)
 ```
+
+The app's own `ios/` or `android/` directories do not participate — the files must be present in the library's paths at build time so the existing bundling mechanic picks them up.
 
 ### Build integration
 
-- **iOS**: `.metal` files in `Shaders/` compile into `default.metallib` via podspec `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR` [research: 52 §Cross-platform shader asset bundling]
-- **Android**: `.agsl` files in `assets/shaders/` compiled at runtime by `RuntimeShader` [research: 52 §Cross-platform shader asset bundling]
+BYO uses the **same** build mechanism as curated shaders, with no special path. The single-home mechanic lives in `structure.ios.md` §shader and `52` Decision #2:
+
+- **iOS**: `.metal` files compile into `default.metallib` via the existing podspec `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR` [research: 52 §Cross-platform shader asset bundling]
+- **Android**: `.agsl` files ship as packaged assets and are compiled at runtime by `RuntimeShader` [research: 52 §Cross-platform shader asset bundling]
 - **compile failure**: `onError` event fires → JS falls back gracefully [research: 22 §Events]
+
+### V1 constraint
+
+There is no config plugin in V1 (`DEF-013`/`SHIP-004` deferred), so BYO assets cannot be injected into the library's bundle from the app side at build time. They must be present in the fx package's resource paths before the library build runs. V2 may add a config plugin or a build-time copy step for app-side BYO asset placement.
+
+### Consumption surface
+
+BYO ids are consumed at the same call site as curated ids: the `effect` prop on `<Fx>`.
+The `shader` node is the IR node; the `effect` prop is the JSX call site (`55`).
+
+### Typing idiom
+
+The `effect` prop boundary type is `ShaderId | (string & {})` — curated literals keep
+autocomplete; registered BYO ids are admitted. `ShaderId` itself stays exactly the curated
+union. The actual TypeScript change is an `implement` task.
+
+### Unregistered-id behavior
+
+Referencing an id that is neither curated nor registered → native compile/load fails
+because the `.metal`/`.agsl` file is missing → `onError` fires with a descriptive error.
+No hard crash.
+
+### Missing platform guard-out
+
+A BYO shader must supply both `.metal` and `.agsl` files. If one platform's file is
+missing, that platform degrades to `{via:'none'}` (honest guard-out per the pair rule;
+rule #2).
 
 ---
 
