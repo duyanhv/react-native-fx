@@ -7,14 +7,21 @@ import SwiftUI
 /// press response; intensity has no effect on that path. On earlier iOS,
 /// intensity selects `.ultraThinMaterial` / `.thinMaterial` / `.regularMaterial`
 /// to vary perceived material weight.
+///
+/// The glass shape is a `RoundedRectangle` whose corner radius is read from the
+/// host layer at layout time. If the host layer reports `cornerRadius == 0`, the
+/// glass renders as a sharp rectangle — the explicit fallback.
 internal struct FxMaterialView: View {
   let intensity: Double
   let materialConfig: MaterialConfig?
+  let cornerRadius: CGFloat
 
   var body: some View {
     if #available(iOS 26.0, *) {
       Rectangle()
-        .glassEffect(resolvedGlass)
+        .fill(.clear)
+        .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .glassEffect(resolvedGlass, in: RoundedRectangle(cornerRadius: cornerRadius))
     } else {
       Rectangle()
         .fill(materialForIntensity)

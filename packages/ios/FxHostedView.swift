@@ -7,6 +7,10 @@ import SwiftUI
 /// The host owns sizing and pointer-event passthrough; it never samples or wraps
 /// RN content. Props stash in the two-phase Expo pattern and are
 /// applied once per batch in `applyResolvedConfig()`.
+///
+/// The glass effect rebuilds on `layoutSubviews()` so its `cornerRadius` tracks the
+/// host layer. If the layer reports `cornerRadius == 0`, the glass falls back to a
+/// sharp rectangle. This is verified with `NSLog` at layout time.
 internal final class FxHostedView: FxNativeView {
   // MARK: - Events
 
@@ -21,6 +25,7 @@ internal final class FxHostedView: FxNativeView {
   private var pendingIntensity: Double = 0.8
   private var pendingSymbolConfig: SymbolConfig?
   private var pendingMaterialConfig: MaterialConfig?
+  private var appliedCornerRadius: CGFloat = 0
 
   // MARK: - Props
 
@@ -58,6 +63,28 @@ internal final class FxHostedView: FxNativeView {
     mountHost(AnyView(view))
   }
 
+  // MARK: - Layout reactivity
+
+  internal override func layoutSubviews() {
+    super.layoutSubviews()
+
+    let currentCornerRadius = self.layer.cornerRadius
+
+    NSLog(
+      "[FxHostedView] layoutSubviews cornerRadius=%.1f appliedCornerRadius=%.1f effect=%@",
+      currentCornerRadius, appliedCornerRadius, pendingEffect ?? "none")
+
+    guard pendingEffect == "material" else {
+      return
+    }
+
+    if currentCornerRadius != appliedCornerRadius {
+      appliedCornerRadius = currentCornerRadius
+      let view = makeSwiftUIView(for: "material", intensity: pendingIntensity)
+      mountHost(AnyView(view))
+    }
+  }
+
   // MARK: - Effect dispatch
 
   private func makeSwiftUIView(for effect: String, intensity: Double) -> any View {
@@ -65,7 +92,10 @@ internal final class FxHostedView: FxNativeView {
     case "fill":
       return FxFillView(intensity: intensity)
     case "material":
-      return FxMaterialView(intensity: intensity, materialConfig: pendingMaterialConfig)
+      return FxMaterialView(
+        intensity: intensity,
+        materialConfig: pendingMaterialConfig,
+        cornerRadius: self.layer.cornerRadius)
     case "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
       "aurora", "noise-field", "plasma", "caustics", "edge-glow":
       return FxShaderView(shaderId: effect, intensity: intensity)

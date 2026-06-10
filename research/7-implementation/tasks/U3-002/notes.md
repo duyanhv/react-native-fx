@@ -9,6 +9,18 @@
 - The below-26 material fallback is unchanged by the refactor (intensity-keyed materials).
 - Uniform alignment (FX-005) and hosting parity / GPU resume (SPINE-012) — pure device
   checks against the existing harness; no code claim, but unverified until the sweep runs.
+- **NEW (rework round 1):** `self.layer.cornerRadius` is populated by Fabric when `borderRadius` is
+  set on the RN style. If it reads `0`, the glass shape falls back to a sharp rectangle.
+  The `layoutSubviews` override rebuilds the host when the radius changes, so a late
+  Fabric layout pass should correct the shape. Unverified until device logs are checked.
+- **NEW (rework round 1):** With the opaque base gone, the glass may or may not refract the
+  aurora backdrop. The example composes the aurora as an independent `FxHostedView`; if
+  `.glassEffect` samples only its own host, the glass will not refract the aurora. This
+  is a hypothesis, not a claim — the device test determines the real behavior.
+- **NEW (rework round 2):** `.contentShape(RoundedRectangle(cornerRadius: cornerRadius))` restores
+  the hit region for the `interactive` glass press response. The press response is the
+  system's own; fx surfaces no press events. Unverified until device confirmation — the
+  human/reviewer verifies the press fires while the dark box does not come back.
 
 ## What changed
 
@@ -41,6 +53,44 @@
 - `tasks/U3-002/evidence/xcodebuild.md` — BUILD SUCCEEDED record (Xcode 26.5, Debug,
   iphonesimulator, full example workspace).
 
+### Rework round 1 additions (2026-06-10)
+
+- `packages/ios/FxMaterialView.swift` — **A2-1 fix**: `Rectangle().fill(.clear)` on the iOS 26
+  path so the glass lets the backdrop show through (no opaque dark fill). **A2-2 fix**: added
+  `cornerRadius: CGFloat` parameter and `.glassEffect(resolvedGlass, in: RoundedRectangle(...))`
+  so the glass shape follows the host bounds, not the default `Capsule()`.
+- `packages/ios/FxHostedView.swift` — passes `self.layer.cornerRadius` to `FxMaterialView`.
+  Added `layoutSubviews()` override that reads the layer radius, logs it with `NSLog`, and
+  rebuilds the SwiftUI host if the radius changed while the effect is `material`. This
+  addresses the mount-time-stale-corner-radius problem (R2).
+- `research/5-realization/structure.ios.md` §material — added the glass shape mechanic
+  (host-layer corner-radius read) and the **glass compositing limit** note (`.glassEffect`
+  samples only its own host; in-host composition is needed for glass-over-fx-drawn-content).
+- `research/2-effects/21-materials-and-glass.md` — added a citation-only note pointing to
+  `structure.ios.md` §material for the shape mechanic and compositing limit.
+- `tasks/U3-002/evidence/headless.md` — expanded A2 steps with corner-radius logging,
+  shape-matching check, and A2-3 re-verification as a hypothesis test.
+
+### Rework round 2 additions (2026-06-10)
+
+- `packages/ios/FxMaterialView.swift` — **A2-4 fix**: `.contentShape(RoundedRectangle(cornerRadius:))`
+  added to the iOS 26 path to restore the hit region for the `interactive` glass press response
+  after `.fill(.clear)` removed the opaque hit surface. The visual stays clear (no dark box);
+  the hit-test region is the same shape as the glass.
+- `tasks/U3-002/evidence/headless.md` — added the A2-4 interactive press-response check to
+  the A2 steps (press the glass tile, confirm the system liquid response fires).
+
+### Rework round 2 removals (2026-06-10)
+
+- `research/wip/critique-2026-06-10.md` — deleted (out of scope for U3-002; 414-line
+  architectural critique is not a glass-fix changeset). The critique may have value for a
+  planner triage separately.
+- `research/wip/README.md` — reverted to original state ("Nothing in flight.") to remove the
+  critique reference.
+- `research/7-implementation/progress.md` — reverted the leading-space churn introduced in
+  round 1; the U3-002 detail block now has no leading spaces on the list/checklist/proof lines.
+  The only added content is the genuine "Rework (2026-06-10):" paragraph.
+
 ## Why
 
 - `21` §The typed inputs ratifies the surface: `variant?: 'regular' | 'clear'` (the
@@ -54,13 +104,19 @@
   adopt. Recorded in `structure.ios` §material and sweep §A2; the FX-002 ledger row itself
   closes on device.
 - The grounded iOS 26 API shape is `.glassEffect(glass.interactive(bool), in: shape)`;
-  fx passes only the `Glass` value and keeps the modifier's default shape, preserving the
-  pre-existing visual behavior of the bare `.glassEffect()` call.
+  fx passes the `Glass` value and a `RoundedRectangle` matching the host, replacing the
+  default `Capsule()` that produced the dark-corner artifact.
+- **A2-4 rationale:** `.fill(.clear)` removes the opaque hit surface, so the `interactive`
+  glass modifier (`.glassEffect`) cannot receive touches. `.contentShape` restores the hit-test
+  region to the same `RoundedRectangle` used by the glass, without reintroducing the dark fill.
+  The visual remains clear; the touch region is the correct shape.
 - No new tests: the slice is bridge passthrough + native rendering — no JS resolution logic,
   and glass does not render headless. The proof is the gates + xcodebuild + the device sweep.
 
 ## Next:
 
-Run the device sweep (`device-sweep-v1.md` §A2/§A3/§A4/§B2) on an iOS 26 device (+ Android
-for B2), fill the sign-off block, then close FX-002 in `21`, FX-005 in `22`, SPINE-012 in
-`01` and the ledger — the human gate.
+Run the device sweep (reworked `evidence/headless.md` §A2) on an iOS 26 device, verify: (1) the
+press response fires on `interactive` glass (A2-4), (2) the dark box does NOT come back, (3) the
+glass shape matches the tile bounds (A2-2), (4) the layer `cornerRadius` log reads the expected
+value (16), (5) the A2-3 refraction hypothesis. Record results in `notes.md` under a device-run
+section. Then close FX-002 in `21`, FX-005 in `22`, SPINE-012 in `01` and the ledger — the human gate.
