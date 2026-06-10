@@ -189,6 +189,34 @@ const fixture: CapabilityManifest = {
         ],
       },
     },
+
+    // ── symbol: iOS supported, Android planned ────────────────────────
+    symbol: {
+      id: 'symbol',
+      kind: 'render-target',
+      interaction: 'self',
+      phase: 'v1',
+      lower: {
+        ios: [
+          {
+            via: 'native',
+            primitive: '.symbolEffect',
+            applyVia: '.symbolEffect',
+            requires: { os: 17, substrate: 'hosted' },
+          },
+        ],
+        android: [
+          {
+            via: 'lib',
+            asset: 'lottie',
+            applyVia: 'Lottie',
+            requires: { os: 21, substrate: 'hosted' },
+            status: 'planned',
+            note: 'AVD/Lottie is a planned future lowering',
+          },
+        ],
+      },
+    },
   },
 };
 
@@ -358,6 +386,25 @@ describe('select()', () => {
     // content-distort on iOS: out-of-scope; on Android: planned
     expect(select(fixture.nodes['content-distort'], ios, { deviceOS: 18 }).via).toBe('none');
     expect(select(fixture.nodes['content-distort'], android, { deviceOS: 34 }).via).toBe('none');
+  });
+
+  // ── symbol: iOS supported, Android planned ─────────────────────
+
+  it('selects symbol rung on iOS 17+', () => {
+    const result = select(fixture.nodes.symbol, ios, { deviceOS: 17 });
+    expect(result.via).toBe('native');
+    expect(result.primitive).toBe('.symbolEffect');
+    expect(result.requires.substrate).toBe('hosted');
+  });
+
+  it('degrades to via: none for symbol on iOS below 17', () => {
+    const result = select(fixture.nodes.symbol, ios, { deviceOS: 16 });
+    expect(result.via).toBe('none');
+  });
+
+  it('skips planned rung for symbol on Android', () => {
+    const result = select(fixture.nodes.symbol, android, { deviceOS: 34 });
+    expect(result.via).toBe('none');
   });
 
   // ── non-driver nodes ignore target ─────────────────────────────

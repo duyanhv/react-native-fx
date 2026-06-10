@@ -58,7 +58,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-004 | Unit 3 | ratify | ready-to-merge | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract ratified; [detail](#u3-004--byo-registration-contract) |
 | U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
 | U3-006 | Unit 3 | implement | merged | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); reviewed + confirmed by maintainer (2026-06-09); merged on integration/0.1.x; [detail](#u3-006--curated-shader-implementation) |
-| U3-007 | Unit 3 | implement | todo | yes | FX-009 | — | DOC-008, U3-001 | implement iOS `symbol` via `.symbolEffect` on the hosted slice; Android symbol deferred (planned, non-selectable) |
+| U3-007 | Unit 3 | implement | headless-done | yes | FX-009 | — | DOC-008, U3-001 | iOS `.symbolEffect` via hosted slice; Android planned rung skipped by `select()`; headless green; device scenario written; [detail](#u3-007--ios-symbol-effect) |
 
 ### V2 build — Units 4–9
 
@@ -673,6 +673,41 @@ Proof:
 - headless: N/A — docs-only.
 - device: N/A — ratification task.
 - docs: `57` §Decisions (Decision 6), `21` §Decisions (Decision 5), `data-layer.md` §10; `decision-ledger.md` SURF-006 → `resolved`.
+
+## U3-007 — iOS symbol effect
+
+Type: `implement` · State: `headless-done` · Device: yes · Consumes: `FX-009` · Closes: — · Blocked by: `DOC-008`, `U3-001` · [task](./tasks/U3-007/)
+
+Implement iOS `symbol` via `.symbolEffect` on the hosted slice. Android symbol deferred (planned, non-selectable), confirmed by `select()` tests.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] implemented
+  - [x] `FxSymbolView.swift` — `.symbolEffect` on iOS 17+ (bounce/pulse/scale/appear/disappear/variableColor), iOS 18 adds breathe/rotate/wiggle, `.contentTransition(.symbolEffect(.automatic))` for symbol→symbol, degrades below 17
+  - [x] `FxHostedView.swift` — `symbolConfig` dispatch path before `effect` path
+  - [x] `FxModule.swift` — `Prop("symbolConfig")` registered
+  - [x] `src/effects/catalog.ts` — `SymbolAnimation` and `SymbolConfig` types exported
+  - [x] `src/runtime/FxHostedView.tsx` — `symbolConfig` added to `NativeFxHostedProps`
+  - [x] `src/index.ts` — exports the new symbol types
+- [x] commented
+- [x] headless-done
+  - [x] `bunx tsc --noEmit` green
+  - [x] `bun run build` green
+  - [x] `bun run lint` green
+  - [x] `bun run swift:lint` green
+  - [x] `xcodebuild` native compile: **BUILD SUCCEEDED** (Xcode 26.5, iPhone 17 sim, iOS 26.5)
+  - [x] `bun run test` green (21 tests pass, 3 new symbol tests)
+  - [x] `structure.ios.md` diff check: zero changes (consumed, not edited)
+- [ ] device-verified (human gate)
+- [ ] reviewed
+- [ ] docs-closed
+- [ ] merged
+
+Proof:
+- headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run swift:lint`, `bun run test` from `packages/` all green. `xcodebuild` native compile: BUILD SUCCEEDED. `structure.ios.md` diff = zero changes.
+- device: scenario written in `tasks/U3-007/evidence/headless.md`. Requires iOS 17+ device/simulator to verify `.symbolEffect` rendering and symbol→symbol transition. Android degradation confirmed by `select()` test.
+- docs: `structure.ios.md` §symbol already pinned — consumed, not re-derived. `24-symbols.md` already ratified. No new ledger row to close (FX-009 resolved by DOC-008).
 
 ## Maintenance
 

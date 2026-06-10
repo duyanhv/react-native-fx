@@ -18,6 +18,9 @@ public class FxModule: Module {
       Prop("intensity") { (view: FxHostedView, value: Double) in
         view.setIntensity(value)
       }
+      Prop("symbolConfig") { (view: FxHostedView, value: SymbolConfig?) in
+        view.setSymbolConfig(value)
+      }
 
       AsyncFunction("snapshot") { (view: FxHostedView) in
         return view.snapshot()

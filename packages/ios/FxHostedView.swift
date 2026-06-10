@@ -19,6 +19,7 @@ internal final class FxHostedView: FxNativeView {
   private var hostingController: UIHostingController<AnyView>?
   private var pendingEffect: String?
   private var pendingIntensity: Double = 0.8
+  private var pendingSymbolConfig: SymbolConfig?
 
   // MARK: - Props
 
@@ -30,8 +31,18 @@ internal final class FxHostedView: FxNativeView {
     pendingIntensity = value
   }
 
+  internal func setSymbolConfig(_ value: SymbolConfig?) {
+    pendingSymbolConfig = value
+  }
+
   internal override func applyResolvedConfig() {
     super.applyResolvedConfig()
+
+    if let symbolConfig = pendingSymbolConfig {
+      let view = FxSymbolView(symbolConfig: symbolConfig)
+      mountHost(AnyView(view))
+      return
+    }
 
     guard let effect = pendingEffect else {
       removeHost()
