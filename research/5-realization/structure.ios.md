@@ -121,8 +121,23 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
   `.glassEffect(glass.interactive(bool))`. SwiftUI also exposes `Glass.identity`; fx does not
   adopt it (`21` ships `regular`/`clear` only). Unknown variant values fall back to the
   regular glass.
+- **Glass shape** — the `.glassEffect` modifier receives a `RoundedRectangle` whose
+  `cornerRadius` is read from the host layer (`self.layer.cornerRadius`) at `layoutSubviews()`
+  time. If the host layer reports `cornerRadius == 0`, the glass renders as a sharp rectangle.
+  This is the fallback when the layer has no rounded corner (or when Fabric does not set it).
+  The value is captured at layout and applied to the SwiftUI `RoundedRectangle` that the
+  `.glassEffect` uses as its `in:` parameter.
 - **`.ultraThinMaterial`** — `requires {os:15, hosted}` · `applyVia:.background`.
   Fallback below 26.
+
+#### Glass compositing limit
+
+`.glassEffect` samples only what is behind its own SwiftUI host, not a sibling RN-layered
+hosted view. If an app wants glass to refract a backdrop that is an `FxHostedView` (e.g.,
+an `aurora` shader), both views must be composed inside the same `UIHostingController` as
+the glass. That arrangement is supported because fx-drawn content is not RN content (rule #4
+applies to RN content, not to fx-drawn effects). The `FxGroup`/`FxItem` compound is the
+intended tool for in-host glass composition.
 
 ### `shader`
 - **Decorative** — `lower:shader, asset:metal` · `requires {os:17, hosted}` ·

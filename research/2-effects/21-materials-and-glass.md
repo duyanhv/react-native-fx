@@ -149,6 +149,10 @@ in `02`). If the lib isn't present, the rung guards out and the ladder degrades 
   semantics are system-owned in V1 via `GlassEffectContainer`; no explicit `spacing` prop.
   See `57` Decision 6 and `21` Decision 5.
 
+## Platform notes
+
+- iOS glass shape: `structure.ios.md` §material records the host-layer corner-radius read and the `.glassEffect` compositing limit (glass samples only its own host).
+
 ## Sources
 
 - `_legacy/02-ios-glass-materials.md` — the full iOS glass/material findings (prior-art
