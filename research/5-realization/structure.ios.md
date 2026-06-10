@@ -136,9 +136,18 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
 
 ### `motion`
 The driver node (`02`) lowers two ways, by **target**:
-- **content target** — `CASpringAnimation`/`UIView.animate` on the **intermediate
-  container's** `CALayer` · `requires {os:13, expo-view}` · `applyVia:CALayer` · the OS
-  animator owns timing. `FxSurfaceView` hosts the children in a nested container and the
+- **content target** — render-server-first springs on the **intermediate container's**
+  `CALayer` · `requires {os:17, expo-view}` · `applyVia:CALayer` (ratified DOC-009).
+  Fire-once envelopes — the common presence/state case — commit the iOS 17 unified spring
+  (`UIView.animate(springDuration:bounce:)` / `CASpringAnimation` with Apple's defaults),
+  so Core Animation runs them in the **render server**, off the app's main thread. On an
+  actual mid-flight retarget, capture the presentation-layer value and hand off to a
+  `CADisplayLink` loop stepping `SwiftUI.Spring` behind the **`FxSpring`** facade (a
+  substrate-free solver — pure `VectorArithmetic` math, no view hosted, rule #4 untouched):
+  carry velocity, clip inertia opposing the new target, write one transform+opacity
+  envelope to the model layer per tick, rest-test, emit a single completion event. Below
+  iOS 17 the ladder is empty — `{via:'none'}`, instant placement (consistent with the
+  reduce-motion posture). `FxSurfaceView` hosts the children in a nested container and the
   animator targets that container's `CALayer` transform/opacity; Fabric tracks only the
   outer `FxSurfaceView` and never overwrites the container. Transform/opacity only ⇒ touch
   survives. **Child routing follows the proven RCT/Expo nested-container pattern, not a
@@ -151,11 +160,14 @@ The driver node (`02`) lowers two ways, by **target**:
   the *same* container — never mount alone (the default unmount asserts the child's superview is
   the container). On unmount the child must `removeFromSuperview()` (RN asserts a detached child
   has no superview — `SwiftUIHostingView.swift`). iOS has no child-accessor methods to proxy. **Caveat (`34`):**
-  hit-testing reads the **model layer** (the target), so touch is correct at rest and,
-  mid-flight, lands at the element's destination rather than its on-screen position. A
-  `hitTest` override against the presentation layer is deferred to U6/U8 if mid-transition
-  interaction proves to matter. Spring defaults to the iOS system spring (the law); `tune`
-  adjusts within that family. Presence (`42`/`54`) composes this rung into enter/hold/exit
+  on the committed render-server path, hit-testing reads the **model layer** (the target),
+  so touch is correct at rest and, mid-flight, lands at the element's destination rather
+  than its on-screen position; while the `FxSpring` integrator runs (retarget only), the
+  model layer is written each tick, so touch tracks the **visual** position — same as
+  Android. A `hitTest` override against the presentation layer is deferred to U6/U8 if
+  mid-transition interaction proves to matter. Spring defaults come from the iOS 17
+  unified spring's own defaults (the law); `tune` adjusts within that family, authored as
+  `{ duration, bounce }` (`41` decision 11). Presence (`42`/`54`) composes this rung into enter/hold/exit
   via `FxPresenceCoordinator`; the deferred-unmount handshake is `35`.
   **Effect surface visibility:** the `metalView` (GPU surface) is hidden when no effect is
   active (`pendingShader` empty or invalid), so it never obscures the content-motion

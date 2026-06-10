@@ -214,8 +214,8 @@ const manifest: CapabilityManifest = {
         ios: [
            { via: 'native', primitive: 'CASpringAnimation', applyVia: 'CALayer', clock: 'none',
              target: 'content', phase: 'v2',
-             requires: { os: 13, substrate: 'expo-view' },
-             note: 'intermediate container inside FxSurfaceView; Core Animation owns timing; transform-only → touch-safe' },
+             requires: { os: 17, substrate: 'expo-view' },   // [02 Decision #14 — SwiftUI.Spring retarget solver floors the rung at 17 (DOC-009)]
+             note: 'intermediate container inside FxSurfaceView; render-server-first springs, FxSpring integrator on retarget; transform-only → touch-safe' },
           { via: 'native', primitive: 'SwiftUI .animation', applyVia: '.animation', clock: 'none',
             target: 'effect', phase: 'v1',
             requires: { os: 16, substrate: 'hosted' },
@@ -620,19 +620,27 @@ interface EffectStack {
 
 ### Transition type
 
-> **[research: 55 §Transition] [research: 41 §transition]**
+> **[research: 55 §Transition] [research: 41 Decision #11 — per-platform spring authoring (DOC-009)]**
 
 ```ts
 type Transition = {
   duration?: number;    // ms
   delay?: number;       // ms
   easing?: string;      // 'ease-in' | 'ease-out' | 'ease-in-out' | 'linear'
-  spring?: {            // overrides easing; mutually exclusive
-    mass?: number;
-    stiffness?: number;
-    damping?: number;
-    dampingRatio?: number;
-    velocity?: number;
+  spring?: SpringSpec;  // overrides easing; mutually exclusive
+};
+
+/** Per-platform native spring authoring (41 Decision #11). Each side uses its platform's
+ *  own parameterization; omitting a side keeps that platform's tuned default (the law).
+ *  Bridge for internal conversion: bounce ≈ 1 − dampingRatio; stiffness ≈ (2π/duration)². */
+type SpringSpec = {
+  ios?: {
+    duration?: number;  // seconds — the iOS 17 unified spring's perceptual duration
+    bounce?: number;    // 0 (no bounce) … 1; negative = overdamped
+  };
+  android?: {
+    stiffness?: number | 'high' | 'medium' | 'mediumLow' | 'low' | 'veryLow';        // SpringForce / Compose tokens
+    dampingRatio?: number | 'highBouncy' | 'mediumBouncy' | 'lowBouncy' | 'noBouncy'; // SpringForce tokens
   };
 };
 ```

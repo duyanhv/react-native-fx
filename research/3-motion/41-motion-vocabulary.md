@@ -114,6 +114,16 @@ rule applies to presence phases and mounted states alike.
 
 ## Findings
 
+### The driver layer beneath the vocabulary
+
+The four props are sugar over a deeper layer: an animatable property — a content channel
+or an effect uniform, the same thing — bound to a **native driver** (`02` decision 14).
+Three drivers: **`target`** (discrete state → platform-native spring; what ships today),
+**`clock`** (a native timeline: loop, pulse, keyframe sequence, stagger), **`source`**
+(a native scroll/gesture value, mapped natively — `40` decision 7). `preset="sheet"`
+expands to a `target`-driver binding with platform-native springs; the four-prop front
+door does not change. `target` + `clock` build first; `source` is V2 and substrate-tiered.
+
 ### One driver node, two targets
 
 The vocabulary lowers to a single manifest node — **`motion` (`kind:'driver'`)** — whose
@@ -121,7 +131,7 @@ ladder splits by *what is animated* (`0-spine/02`):
 
 | Target | iOS rung | Android rung | Substrate |
 |---|---|---|---|
-| **content** (the fx-owned wrapper carrying RN content; transform/opacity) | `CASpringAnimation` on `CALayer` | `dynamicanimation` / `ViewPropertyAnimator` | `expo-view` |
+| **content** (the fx-owned wrapper carrying RN content; transform/opacity) | render-server spring (`CASpringAnimation`); `SwiftUI.Spring` integrator on retarget · `os:17` | `dynamicanimation` / `ViewPropertyAnimator` | `expo-view` |
 | **effect** (fx's own drawn layer) | SwiftUI `.animation` | Compose `animate*AsState` | `hosted` |
 
 Content motion is **transform/opacity only** on the **fx-owned wrapper** (carrying RN content,
@@ -189,6 +199,26 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
    all content motion (presence enter/exit, state transitions). Opacity-only degradation
    is a deferred V2 refinement. Decorative effects (shaders, materials) have their own
    native clock and are not gated by the motion reduce-motion policy in V1.
+10. **The vocabulary rides the driver layer (DOC-009, 2026-06-10).** `preset` / `motion` /
+    `tune` / `transition` are sugar over *animatable properties bound to native drivers* —
+    `target` / `clock` / `source` (`02` decision 14, `40` decision 7). The four-prop front
+    door is unchanged; drivers are the layer beneath it, and the layer the "feels
+    primitive" fixes land in.
+11. **Springs are authored per platform; the uniform `{damping,mass,stiffness}` shape is
+    dropped (DOC-009, 2026-06-10).** `transition.spring` takes each platform's own
+    parameterization — iOS `{ duration, bounce }` (the iOS 17 unified spring); Android
+    `{ stiffness, dampingRatio }` (`SpringForce` values or tokens; M3 Expressive
+    `MotionScheme` tokens where present). Omitting a side keeps that platform's tuned
+    default — the law, applied to timing authoring. The lossless bridge for internal
+    conversion: `bounce ≈ 1 − dampingRatio`, `stiffness ≈ (2π/duration)²`. One invented
+    cross-platform spring tuned to feel native on both is exactly the janky middle this
+    forbids.
+12. **The V1 primitive layer is the driver vocabulary, not a Compose-style enter/exit set
+    (DOC-009, 2026-06-10).** V1 ships the ratified presets (DOC-005) and the `fx.motion.*`
+    builders over the `target` driver; `emphasis` lives in `tune`, press response in
+    `feedback` (`57`). Compose's `fadeIn`/`slideIn` names are not borrowed — the builders
+    stay `edgeIn`/`edgeOut`/`scale`/`identity`. Multi-step sequences and one-shot bursts
+    arrive with the `clock` driver (`42` decision 6), not as more named primitives.
 
 ## Open questions
 
@@ -203,10 +233,13 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
   "platform shape but from the bottom").
 - ~~The selector `target` axis (`content`/`effect`).~~ **Resolved in `0-spine/02`** (decision
   11: declared per-rung, default `'effect'`).
-- Which semantic primitives ship in v1 (`appear`/`dismiss` certain; `emphasis`/
-  `pressResponse` — v1 or v2?).
-- Borrow Compose's enter/exit names (`fadeIn`/`slideIn`/`scaleIn`/`expandIn`) for the
-  primitive layer without adopting its API shape (rule #2).
+- ~~Which semantic primitives ship in v1 (`appear`/`dismiss` certain; `emphasis`/
+  `pressResponse` — v1 or v2?).~~ **Resolved (decision 12, DOC-009):** the V1 primitive
+  layer is the driver vocabulary; presets + `fx.motion.*` carry the semantics, `tune`
+  carries emphasis, `feedback` carries press response.
+- ~~Borrow Compose's enter/exit names (`fadeIn`/`slideIn`/`scaleIn`/`expandIn`) for the
+  primitive layer without adopting its API shape (rule #2).~~ **Resolved (decision 12,
+  DOC-009):** not borrowed; the builders stay `edgeIn`/`edgeOut`/`scale`/`identity`.
 
 ## Sources
 

@@ -309,8 +309,8 @@ motion: {
     ios: [
       { via: 'native', primitive: 'CASpringAnimation', applyVia: 'CALayer', clock: 'none',
         target: 'content', phase: 'v2',
-        requires: { os: 13, substrate: 'expo-view' },
-        note: 'animates the fx-owned wrapper carrying RN content (33); Core Animation owns timing; transform-only ⇒ touch-safe (rule #4)' },
+        requires: { os: 17, substrate: 'expo-view' },
+        note: 'animates the fx-owned wrapper carrying RN content (33); render-server-first springs, SwiftUI.Spring integrator on retarget (structure.ios); transform-only ⇒ touch-safe (rule #4)' },
       { via: 'native', primitive: 'SwiftUI .animation', applyVia: '.animation', clock: 'none',
         target: 'effect', phase: 'v1',
         requires: { os: 16, substrate: 'hosted' },
@@ -335,6 +335,15 @@ primitives.** `FxPresence` (`1-surface/54`) adds the enter/hold/exit lifecycle a
 `preset` defaults in the runtime (`4-runtime/33`–`35`) and surface; the chain attaches a
 `transition` to a stacked layer. Both dispatch to these same rungs. The Motion semantics
 live in `3-motion/41`–`42`; the mechanics in `4-runtime` + `5-realization`.
+
+**The driver vocabulary generalizes to `target` / `clock` / `source` (decision 14).** The
+shipped `motion` node is the `target` driver: a discrete state, eased by the platform's own
+spring. `clock` (a native timeline: loop, keyframe sequence, stagger) and `source` (a native
+scroll or gesture value, mapped natively) are additive driver nodes; their rung schema lands
+with their build tasks. The iOS content rung floors at `os:17` — the retarget path steps
+`SwiftUI.Spring`, and there is no stock solver below 17 — so on earlier iOS the ladder
+degrades to `{ via: 'none' }`: instant placement, consistent with the reduce-motion posture
+(`41` decision 9).
 
 ## Who reads what
 
@@ -404,6 +413,17 @@ proof — each consumer's needs are fields the schema carries.
      (the asset type, if any). The manifest does **not** include version numbers — the
      optional peer dependency is managed by the app, not by the manifest (`53` decision 6).
      The rung guards out if the library is absent.
+14. **The driver vocabulary is `target` / `clock` / `source`, substrate-tiered (DOC-009,
+     2026-06-10).** Motion channels and effect uniforms are both *animatable properties
+     bound to native drivers*. `target` is the shipped `motion` node — discrete state in,
+     platform-native spring out. `clock` (native timeline: loop, keyframe, stagger) and
+     `source` (a native scroll/gesture value, mapped natively) are additive driver nodes,
+     built in that order after `target`. The slicing honors rule #4: content motion
+     (`expo-view`) gets full-fidelity `target`/`clock` and a best-effort `source`;
+     render-server `source` fidelity and all effect-uniform animation live in the hosted
+     effects lane. `source` guarantees "zero per-frame JS" everywhere — not "zero per-frame
+     native work", which is true only on iOS hosted. The iOS content rung floors at `os:17`
+     (the `SwiftUI.Spring` solver; below 17 the ladder degrades to `{ via: 'none' }`).
 
 ## Open questions
 

@@ -3,10 +3,12 @@
 A spec-time `references-preflight` (per `agents/references-preflight.md`) on the `FxAnimationDriver`
 content lane. Resolves the design question behind **RT-016** (animator sufficiency) before U6-001 is
 built. This is the *design disposition* only — RT-016 stays `device-pending` and is closed by **U6-002**
-on device. No source doc, ledger row, or tracker state was changed by this preflight.
+on device.
 
-Status: U6-001 is `todo`, blocked by U5-001. This artifact exists so the work is not lost; act on it
-when U6-001 is picked up.
+Status: **dispositions maintainer-ratified and pinned in source (DOC-009, 2026-06-10)** —
+`34` §Findings — the iOS spring disposition; `structure.{ios,android}.md` `motion` content
+target; `02` content rung `os:17`. U6-001 is `todo`, blocked by U5-001. This artifact remains
+as the spec-time reference dossier; the canonical mechanics now live in the docs above.
 
 ## The verdict question (RT-016)
 
@@ -27,15 +29,13 @@ displacement integrator required — on a Fabric-untracked intermediate containe
   integrator only when an actual mid-flight target change occurs** (capture presentation-layer state,
   hand off). Most transitions never leave the render-server path.
 
-- **The integrator branch — `FxSpring` facade, modern-first with fallback.** A thin value type mirroring
-  Apple's `Spring` surface (`update(value:&,velocity:&,target:,deltaTime:)`, `settlingDuration`), backed
-  two ways behind one `#available(iOS 17, *)` split:
-  - iOS 17+ → delegates to `SwiftUI.Spring` (Apple's own solver — a substrate-free math value type, no
-    view hosting, so rule #4 is untouched).
-  - iOS 13–16 → hand-rolled closed-form damped-oscillator step (the RN/Reanimated math).
-  Shared once across both: the `CADisplayLink` loop, the retarget logic (carry velocity, clip inertia
-  opposing the new target), the model-layer write of a single transform+opacity `VectorArithmetic`
-  envelope, the rest test, and the single completion event. Downstream is oblivious to which solver runs.
+- **The integrator branch — `FxSpring` facade, `SwiftUI.Spring` only (iOS 17 floor).** A thin value
+  type mirroring Apple's `Spring` surface (`update(value:&,velocity:&,target:,deltaTime:)`,
+  `settlingDuration`), delegating to `SwiftUI.Spring` — Apple's own solver, a substrate-free math
+  value type with no view hosting, so rule #4 is untouched. Owned by the facade: the `CADisplayLink`
+  loop, the retarget logic (carry velocity, clip inertia opposing the new target), the model-layer
+  write of a single transform+opacity `VectorArithmetic` envelope, the rest test, and the single
+  completion event.
 
 ## Load-bearing findings (the why)
 
@@ -61,26 +61,25 @@ displacement integrator required — on a Fabric-untracked intermediate containe
 ## Touch caveat flip
 
 A `CADisplayLink` integrator writes the **model layer** each tick, so iOS hit-testing tracks the *visual*
-position mid-flight — same as Android — instead of the "tappable at destination" model-layer caveat the
-animation-driver doc currently records. Record as a deliberate change when the mechanic lands.
+position mid-flight — same as Android — instead of the "tappable at destination" model-layer caveat.
+**Recorded (DOC-009):** `34` §hit-testing carries the flip; it applies only while the integrator runs.
 
-## Open decisions for the maintainer (before building U6-001)
+## Maintainer decisions (ratified 2026-06-10, DOC-009)
 
-1. **iOS floor.** Option A: iOS-17 floor for spring content-motion, `Spring` only, instant degradation
-   below 17 (consistent with the ratified reduce-motion posture). Option B: iOS-13 floor, `Spring` (17+)
-   + hand-rolled fallback (13–16). The content rung currently says `os:13` → B matches today's contract;
-   A is simpler and most-native. Recommendation leans A unless iOS 13–16 spring feel is required.
-2. **Render-server-first vs flat-integrator** for the iOS lane. Recommendation: render-server-first,
-   integrator-on-retarget (above).
+1. **iOS floor: Option A — iOS 17.** `SwiftUI.Spring` only; no hand-rolled 13–16 fallback. The `02`
+   content rung moved `os:13` → `os:17`; below 17 the ladder degrades to `{via:'none'}` (instant
+   placement, consistent with the ratified reduce-motion posture).
+2. **Render-server-first, integrator-on-retarget** for the iOS lane (the disposition above).
 
-## Feed-back still owed (do when U6-001 is picked up, with maintainer sign-off)
+## Feed-back ledger
 
-- Correct `structure.ios.md` `motion` content-target mechanic to the disposition above (current text
-  names `CASpringAnimation`/`UIView.animate` without the render-server-first / integrator-on-retarget
-  split).
-- Keep/confirm `structure.android.md` `dynamicanimation` + `animateToFinalPosition()`.
-- Record the touch-caveat flip in the animation-driver doc.
-- Carry the two open decisions into the U6-001 spec; leave RT-016 open for U6-002's device gate.
+- [x] `structure.ios.md` `motion` content-target mechanic corrected to render-server-first /
+  integrator-on-retarget (DOC-009).
+- [x] `structure.android.md` `dynamicanimation` + `animateToFinalPosition()` confirmed and pinned,
+  with the spring parameterization and the reduce-motion spring gate (DOC-009).
+- [x] Touch-caveat flip recorded in `34` (DOC-009).
+- [ ] Carry the ratified decisions into the U6-001 spec when the task unblocks (U5-001).
+- [ ] RT-016 device gate — U6-002, after U6-001 builds the driver.
 
 ## References consulted
 

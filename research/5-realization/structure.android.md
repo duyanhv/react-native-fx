@@ -171,10 +171,19 @@ The driver node (`02`) lowers two ways, by **target**:
   **full** add / remove / `removeViewAt` / `removeAllViews` / `updateViewLayout` family (not just
   `addView`); and size the container in `onMeasure`/`onLayout`. **Caveat (`34`):** unlike iOS, property
   animators update the real view each frame, so touch tracks the **visual** position
-  throughout — a deliberate platform divergence (the law). Spring defaults to the platform's
+  throughout — a deliberate platform divergence (the law). **Retarget is stock (ratified
+  DOC-009):** `SpringAnimation.animateToFinalPosition()` redirects the running animation
+  with value and velocity carried ("continuous movement since last frame") — no custom
+  integrator; the on-device proof is U6-002 (RT-016). Spring defaults to the platform's
   **standard** `androidx.dynamicanimation` `SpringForce` (always available, API 21); where
   **M3 Expressive** is present it upgrades to the motion-scheme spring (progressive
-  enhancement — § version gates / open questions). `tune` adjusts within whichever is active.
+  enhancement — § version gates / open questions). `tune` adjusts within whichever is
+  active, authored as `{ stiffness, dampingRatio }` — `SpringForce` values or tokens
+  (`STIFFNESS_HIGH`=10000 · `MEDIUM`=1500 · `LOW`=200 · `VERY_LOW`=50; Compose adds
+  `StiffnessMediumLow`=400; `DAMPING_RATIO_HIGH_BOUNCY`=0.2 · `MEDIUM_BOUNCY`=0.5 ·
+  `LOW_BOUNCY`=0.75 · `NO_BOUNCY`=1.0), per `41` decision 11. **Reduce-motion gate:**
+  duration animators auto-respect `ANIMATOR_DURATION_SCALE`, but springs/physics do
+  **not** — gate them manually via `ValueAnimator.areAnimatorsEnabled()` (`34`).
   Presence (`42`/`54`) composes this rung via `FxPresenceCoordinator`; the unmount handshake
   is `35`.
   **Explicit layout required.** The container is a `FrameLayout` holding the RN child tree; it

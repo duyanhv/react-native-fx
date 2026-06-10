@@ -141,6 +141,12 @@ honored by the driver (`34`).
 4. **Presets are overlay-scoped** — no flow-layout; `menu`/`tooltip` (anchor) are v2.
 5. **The envelope is enter → hold → exit**, keyed by `visible`; exit→unmount is the `35`
    handshake. **`exit` is the idiomatic platform dismiss, not a blind reverse of enter.**
+6. **Presence is a `target`-driver orchestration; extended states are `clock` timelines,
+   V2 (DOC-009, 2026-06-10).** The envelope dispatches `visible` to the `target` driver
+   (`02` decision 14) — discrete state in, platform-native spring out. Named states beyond
+   binary `visible` — multi-step intro → hold → outro, one-shot bursts — are `clock`-driver
+   timelines (native keyframe/phase sequences), arriving with the `clock` driver in V2,
+   never as more presence surface.
 
 ## Open questions
 
@@ -152,7 +158,9 @@ honored by the driver (`34`).
   (DOC-005). `menu`/`tooltip` (anchor-origin) remain v2.
 - **Anchor rect (v2)** — the measurement contract is defined (above); the exact native
   read-timing and the child-anchor-rect path (`menu`/`tooltip`) remain open in `33`.
-- **Named states beyond binary `visible`** — multi-step intro→hold→outro; one-shot bursts.
+- ~~**Named states beyond binary `visible`** — multi-step intro→hold→outro; one-shot
+  bursts.~~ **Resolved (decision 6, DOC-009):** `clock`-driver timelines, V2; V1 stays
+  binary `visible` plus `FxView`'s named `state`.
 
 ## Sources
 

@@ -33,7 +33,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-006 | 1-surface | ratify | todo | no | — | SURF-006 | — | docs: `57`/`21` FxGroup morph scope |
 | DOC-007 | 2-effects | ratify | merged | no | — | FX-001, FX-004 | — | full-grid mesh + mesh-only `drift`; 10-id shader catalog; shared minimal shader uniforms; [task](./tasks/DOC-007/) · [review](./reviews/DOC-007.md) |
 | DOC-008 | 2-effects | ratify | merged | no | — | FX-009 | — | `symbol` iOS-only in V1; Android AVD/Lottie planned/deferred (non-selectable, enforced by `select()`); [task](./tasks/DOC-008/) · [review](./reviews/DOC-008.md) |
-| DOC-009 | 3-motion | ratify | todo | no | — | MOT-003, MOT-005, MOT-006, MOT-009 | — | docs: `40`/`41`/`42` V1 motion vocab scope |
+| DOC-009 | 3-motion | ratify | ready-to-merge | no | — | MOT-003, MOT-005, MOT-006, MOT-009 | — | driver model (`target`/`clock`/`source`) ratified — scope widened to promote the research/wip rethink (maintainer-accepted 2026-06-10); per-platform spring authoring replaces `{damping,mass,stiffness}`; iOS content rung → `os:17`; render-server-first + `FxSpring`-on-retarget pinned; MOT-003/005/006/009 resolved in source; [task](./tasks/DOC-009/) · [detail](#doc-009--driver-model-ratification) |
 | DOC-010 | 3-motion | ratify | merged | no | — | MOT-010 | — | V1 reduce-motion = instant degradation (0-duration); policy recorded in `41` Decision #9, `42` §Reduce-motion, `34` §Findings; MOT-010 resolved; reviewed (no separate doc); merged on integration/0.1.x; [detail](#doc-010--reduce-motion-policy-ratification) |
 | DOC-011 | 4-runtime | ratify | todo | no | — | RT-006, RT-008 | — | docs: `32`/`36` SDF source, driver granularity |
 | DOC-012 | 6-ship | ratify | todo | no | — | SHIP-002 | — | docs: `53` no-rung degradation UX |
@@ -67,7 +67,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U4-001 | Unit 4 | rework | merged | yes | RT-015 | RT-015 | U1-002 | RT-015 resolved — animator targets an intermediate container (a Fabric-untracked view inside `FxSurfaceView`); `33`/`34` decide, `structure.{ios,android}` pin, consumers reconciled; device-verified via U4-002 run (2026-06-09); merged on integration/0.1.x; [detail](#u4-001--wrapper-mechanic) |
 | U4-002 | Unit 4 | device-verify | merged | yes | — | RT-014 | U4-001 | `mountChildComponentView` override (rule-#7 clean Swift/Kotlin); reimplemented to the `ExpoBlurTargetView`/`expo-glass` templates after a reference fan-out — fixed the Android `LinearLayout`-traversal crash, Android 0×0, iOS spurious default shader, iOS free-running MTKView loop; device-verified iOS + Android (2026-06-09); RT-014 closed; merged on integration/0.1.x; [detail](#u4-002--mountchildcomponentview-override) |
 | U5-001 | Unit 5 | implement | todo | yes | RT-013 | RT-013 | U4-001 | device: post-layout frame read natively |
-| U6-001 | Unit 6 | implement | todo | yes | RT-007 | RT-007 | U4-001, U5-001 | device: interruptible spring, no snap |
+| U6-001 | Unit 6 | implement | todo | yes | RT-007 | RT-007 | U4-001, U5-001 | device: interruptible spring, no snap; spring dispositions pre-ratified (DOC-009) — see [preflight](./tasks/U6-001/preflight.md) |
 | U6-002 | Unit 6 | device-verify | todo | yes | — | RT-016 | U6-001 | device: animators handle hard retarget, else build integrator |
 | U6-003 | Unit 6 | device-verify | todo | yes | — | MOT-002, REAL-001 | U6-001 | device: tune formulas feel right; M3 floor + fallback |
 | U7-001 | Unit 7 | implement | todo | yes | MOT-001 | — | U6-001 | device: presence FSM + deferred-unmount handshake |
@@ -178,6 +178,47 @@ Proof:
 - headless: N/A — docs-only.
 - device: N/A.
 - docs: `50`/`54`/`55` §Open questions; `decision-ledger.md` SURF-010 (both rows); `data-layer.md §5.1`.
+
+## DOC-009 — driver-model ratification
+
+Type: `ratify` · State: `ready-to-merge` · Device: no · Consumes: — · Closes: MOT-003, MOT-005, MOT-006, MOT-009 · [task](./tasks/DOC-009/)
+
+Promotes the research/wip driver-model rethink (maintainer-accepted 2026-06-10) into the
+canonical docs and closes the four open motion-vocabulary rows. Scope widened from the
+original "`40`/`41`/`42` V1 motion vocab scope" to carry the spine vocabulary (`02`), the
+maintainer-ratified U6-001 spring-preflight dispositions (`34` + `structure.*`), and the
+`Transition.spring` consumers (`55`, `data-layer`).
+
+The three maintainer decisions recorded (2026-06-10):
+
+1. **Substrate-tiered slicing; rule #4 holds.** Motion channels and effect uniforms are both
+   animatable properties bound to native drivers — `target`/`clock`/`source`. Content motion
+   (`expo-view`) gets full-fidelity `target`/`clock` and a best-effort `source`; render-server
+   `source` fidelity and all effect-uniform animation live in the hosted effects lane.
+   `source`'s guarantee is "zero per-frame JS", not "zero per-frame native". Build order:
+   `target`+`clock`, then `source` (V2), then hosted effect-uniform animation.
+2. **iOS 17 floor for spring content motion** — the `02` content rung moves `os:13` → `os:17`
+   (`SwiftUI.Spring` only; below 17 the ladder degrades to `{via:'none'}`, instant placement).
+3. **Render-server-first, integrator-on-retarget** for the iOS content lane (the `FxSpring`
+   facade over `SwiftUI.Spring`; the touch caveat flips to visual-position while it runs).
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (docs-only; the slicing exists to honor rule #4; per-platform spring
+      authoring is the law applied to timing)
+- [x] docs-closed (`02` Decision #14 + content rung; `40` Decision #7; `41` Decisions
+      #10–#12; `42` Decision #6; `34` §Findings — iOS spring disposition + caveat flip +
+      Android spring gate; `structure.{ios,android}.md` motion content mechanics; `55` +
+      `data-layer.md` `Transition.spring`; MOT-003/005/006/009 → resolved; MOT-007 reframed
+      (stays deferred, DEF-006); RT-016 reworded (stays device-pending, U6-002); wip folded —
+      rethink deleted, preflight moved to `tasks/U6-001/preflight.md`)
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Proof:
+- headless: N/A — docs-only, no code changed.
+- device: N/A — RT-016 stays with U6-002; MOT-001/MOT-002 catalog values stay device-pending.
+- docs: as listed under docs-closed above.
 
 ## U1-001 — package scaffolding
 

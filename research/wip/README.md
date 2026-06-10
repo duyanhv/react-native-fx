@@ -10,6 +10,9 @@ ledger process; when it's abandoned, delete it.
 
 ## Current
 
-- [motion-driver-model-rethink.md](motion-driver-model-rethink.md) — reframing motion +
-  effects as *animatable properties bound to native drivers* (`target`/`clock`/`source`).
-  Includes the iOS + Android native-animation research. Has a "Resume here" header.
+Nothing in flight.
+
+Promoted (DOC-009, 2026-06-10): the motion driver-model rethink (`target`/`clock`/`source`,
+maintainer-accepted) folded into `0-spine/02`, `3-motion/40`–`42`, `4-runtime/34`, and
+`5-realization/structure.{ios,android}.md`; the U6-001 iOS spring preflight moved to
+`7-implementation/tasks/U6-001/preflight.md`.

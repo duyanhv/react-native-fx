@@ -150,10 +150,14 @@ Two clean routes, never per-frame `setUniform` from the **JS thread**:
 
 1. **Make the source native** — if the driver is a native scroller/pager, read its
    offset natively and write the uniform natively (onboarding morph, scroll-reactive
-   backgrounds; no JS, no Reanimated). The sleeper win.
+   backgrounds; no JS, no Reanimated). The sleeper win. **Ratified as the `source`
+   driver (decision 7)** — phase V2, substrate-tiered: the guarantee is zero per-frame
+   **JS** everywhere; render-server-fidelity mapping only on iOS `hosted` (SwiftUI
+   `visualEffect`/`scrollTransition`); a main-thread/UI-thread reader elsewhere.
 2. **UI-thread channel** — Reanimated shared values / animated props (gesture writes a
    shared value off the JS thread, bound to a uniform). The silky bring-your-own-gesture
-   path; **post-V1**, additive over the same uniform names.
+   path; **post-V1**, additive over the same uniform names — the deferred UI-thread tier
+   of the same `source` driver (MOT-007).
 
 **On `setUniform` itself.** The imperative `setUniform`/`setHighlight` (`4-runtime/30`/`51`)
 are not banned — they are a **low-frequency / debug / `controlled`-mode escape hatch**, not a
@@ -175,14 +179,27 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
    tracking is the post-V1 Reanimated path.
 6. **Regime C routes to a native source read first, the UI-thread channel second** —
    never JS-per-frame.
+7. **The driver vocabulary is `target` / `clock` / `source` (DOC-009, 2026-06-10).**
+   Motion channels and effect uniforms are both animatable properties bound to native
+   drivers (`02` decision 14). Two consequences land here: **`transition` stays
+   surface-scoped** — one timing for all the uniforms of its step/component; per-property
+   control is a driver *binding*, never a per-uniform easing config inside `transition`.
+   And **the regime-C native source read is the `source` driver** — phase V2 (after
+   `target`+`clock`), substrate-tiered: zero per-frame JS everywhere, render-server
+   fidelity only on iOS `hosted`, UI-thread-mapped elsewhere. That tier distinction is
+   first-class in the contract, never papered over.
 
 ## Open questions
 
-- **`transition` scope** — all uniforms, or per-uniform easing config?
+- ~~**`transition` scope** — all uniforms, or per-uniform easing config?~~ **Resolved
+  (decision 7, DOC-009):** surface-scoped — one timing per step/component; per-property
+  control is a driver binding, not a `transition` shape.
 - **The named-state vocabulary** per `FxView` preset (`idle`/`selected`/… ; ties to `57`/`50`).
   `mood`/`playing` are demoted to effect-specific *uniforms*, never global props.
-- **Native-source-read API** — how an effect declares "track this native scroll/pager"
-  (the Regime-C option-1 surface); is it V1 or V2?
+- ~~**Native-source-read API** — how an effect declares "track this native scroll/pager"
+  (the Regime-C option-1 surface); is it V1 or V2?~~ **Resolved (decision 7, DOC-009):**
+  the `source` driver, V2, substrate-tiered (zero per-frame JS everywhere; render-server
+  fidelity only on iOS hosted).
 - **BYO envelope** — how a BYO author declares an intro/outro envelope in `.metal`/`.agsl`
   so it isn't hardcoded to the curated glow.
 
