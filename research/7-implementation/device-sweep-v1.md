@@ -18,25 +18,24 @@ bun run example:android   # from repo root
 
 ## Example-app readiness (READ FIRST — most scenarios need a screen built)
 
-The example currently routes U3-007 / U3-002 / U3-003 to the **blank** placeholder
-(`example/data/tasks.ts`). Only the items marked ✅ are runnable today.
+The example routes each task id to its screen in `example/data/tasks.ts`. Only the items
+marked ✅ are runnable today.
 
 | Sweep item | Example today | Needs before it can be verified |
 |---|---|---|
 | U3-007 symbol | ✅ `symbol` screen | Symbol screen — mounts `<FxHostedView symbolConfig={…}>` with name/animation/trigger pickers |
-| U3-002 iOS glass styles (`.regular`/`.clear`/`.identity`) | ❌ blocked on library glassStyle prop (FX-002) | Screen exposing each `UIGlassEffect.Style` variant — blocked on library prop |
+| U3-002 iOS glass styles (`regular`/`clear` + `interactive`) | ✅ `hosting-parity` screen | `hosting-parity` has a glass section — variant segmented control + press-response toggle driving `materialConfig` |
 | U3-002 uniform alignment | ✅ `hosting-parity` screen | `hosting-parity` mounts `loop` shader with intensity slider — multi-uniform output makes misalignment visible |
 | U3-002 hosting parity / many boundaries | ✅ `hosting-parity` screen | `hosting-parity` mounts a grid of mixed fill/shader boundaries — scroll to verify smoothness |
-| U3-002 interactive glass (`.interactive()` in scroller) | ❌ blocked on library glassStyle prop (FX-002) | Screen with glass `.interactive()` inside an RN scroller — blocked on library prop |
+| U3-002 interactive glass (press response in scroller) | ✅ `hosting-parity` screen | The glass section sits inside the screen's ScrollView — set press response to interactive and press while scrolling |
 | U3-002 GPU resume | ⚠️ partial — `shader-catalog` runs a clock | Use shader-catalog; background/foreground (no new screen needed) ✅ |
 | U3-003 Android material fallback | ⚠️ partial — `fill-material` `effect="material"` renders the Android fallback | Confirm it is a real blur, not a flat box ✅ (visual only) |
 | U3-003 intensity 0–1 (Android blur radius) | ✅ `android-material` screen | `android-material` has `effect="material"` with an intensity slider |
 | U3-003 RenderEffect staleness | ✅ `android-material` screen | `android-material` animates a block behind the blur — blur update proves staleness absent |
 
-**Bottom line:** the symbol screen, Android material, and hosting parity screens are now
-runnable. GPU-resume and the basic Android-fallback look are already checkable on the
-existing screens. Glass styles and interactive glass remain blocked on the library
-`glassStyle` prop (FX-002). The remaining work is the human device sweep.
+**Bottom line:** every sweep item now has a runnable screen. Glass styles and interactive
+glass run on `hosting-parity` via the `materialConfig` channel (the FX-002 library prep,
+landed by U3-002). The remaining work is the human device sweep.
 
 ---
 
@@ -53,11 +52,11 @@ existing screens. Glass styles and interactive glass remain blocked on the libra
 - Fail signs: black frame/crash; symbol renders but never animates; 18-only effect shows a different animation on 17; `symbolConfig` doesn't reach native (prop typing).
 
 ### A2 · U3-002 — iOS glass styles (FX-002)
-- [ ] `.regular` glass renders over content.
-- [ ] `.clear` glass renders over content.
-- [ ] `.identity` renders (the unverified case — confirm it does not crash / no-op unexpectedly).
-- **Blocked:** no `glassStyle` prop on `FxHostedView` / `FxModule` — the library uses bare `.glassEffect()` with no `UIGlassEffect.Style` wiring. The screen is deferred until FX-002 lands.
-- Fail signs: flat box instead of glass; wrong style; crash on Xcode 26 runtime.
+- [ ] `regular` glass renders over content.
+- [ ] `clear` glass renders over content.
+- [ ] `interactive` press response plays on press (system-owned — no fx press events).
+- *`identity` is not adopted: SwiftUI exposes `Glass.identity`, but the ratified `21` surface ships `regular`/`clear` only (see `structure.ios` §material).*
+- Fail signs: flat box instead of glass; wrong style; variant switch has no visible effect; crash on Xcode 26 runtime.
 
 ### A3 · U3-002 — uniform alignment (FX-005)
 - [ ] A multi-uniform shader renders with **correct** values (colors/positions not garbled or offset) — proves Swift↔MSL field order/stride is aligned.
@@ -65,8 +64,7 @@ existing screens. Glass styles and interactive glass remain blocked on the libra
 
 ### A4 · U3-002 — hosting parity / many boundaries / GPU resume (SPINE-012)
 - [ ] Several hosted boundaries on one screen all render (no missing/blank hosts); scroll is smooth.
-- [ ] A glass `.interactive()` component inside an RN `ScrollView` behaves (its own gesture + scroll coexist).
-   - **Blocked:** no `glassStyle` prop on `FxHostedView` / `FxModule` — `.interactive()` requires the library to wire `UIGlassEffect.Style` first. Deferred until FX-002 lands.
+- [ ] An interactive glass component inside an RN `ScrollView` behaves (its own gesture + scroll coexist). *(Runnable on `hosting-parity` — set press response to interactive.)*
 - [ ] **GPU resume:** with a running shader visible, background the app, then foreground → the clock resumes, no black frame, no runaway battery/leak. *(Runnable today on `shader-catalog`.)*
 - Fail signs: blank hosts at scale; jank; frozen/black surface after resume.
 

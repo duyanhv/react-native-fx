@@ -21,6 +21,9 @@ public class FxModule: Module {
       Prop("symbolConfig") { (view: FxHostedView, value: SymbolConfig?) in
         view.setSymbolConfig(value)
       }
+      Prop("materialConfig") { (view: FxHostedView, value: MaterialConfig?) in
+        view.setMaterialConfig(value)
+      }
 
       AsyncFunction("snapshot") { (view: FxHostedView) in
         return view.snapshot()

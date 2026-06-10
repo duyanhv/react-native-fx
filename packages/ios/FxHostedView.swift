@@ -20,6 +20,7 @@ internal final class FxHostedView: FxNativeView {
   private var pendingEffect: String?
   private var pendingIntensity: Double = 0.8
   private var pendingSymbolConfig: SymbolConfig?
+  private var pendingMaterialConfig: MaterialConfig?
 
   // MARK: - Props
 
@@ -33,6 +34,10 @@ internal final class FxHostedView: FxNativeView {
 
   internal func setSymbolConfig(_ value: SymbolConfig?) {
     pendingSymbolConfig = value
+  }
+
+  internal func setMaterialConfig(_ value: MaterialConfig?) {
+    pendingMaterialConfig = value
   }
 
   internal override func applyResolvedConfig() {
@@ -60,7 +65,7 @@ internal final class FxHostedView: FxNativeView {
     case "fill":
       return FxFillView(intensity: intensity)
     case "material":
-      return FxMaterialView(intensity: intensity)
+      return FxMaterialView(intensity: intensity, materialConfig: pendingMaterialConfig)
     case "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
       "aurora", "noise-field", "plasma", "caustics", "edge-glow":
       return FxShaderView(shaderId: effect, intensity: intensity)

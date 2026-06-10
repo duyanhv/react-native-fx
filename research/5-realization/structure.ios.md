@@ -115,7 +115,12 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
   a separate UIKit rung.** `GlassEffectContainer` is the SwiftUI realization of the
   **`FxGroup`/`FxItem`** compound (`57`) when multiple glass shapes must morph; glass can't
   sample glass. Self-gesturing via `.interactive()` (≈ UIKit `isInteractive`; owns its own tap
-  response — `interaction:'self'`).
+  response — `interaction:'self'`). The `21` config lowers onto the modifier's `Glass` value:
+  `variant` maps `regular`/`clear` to `Glass.regular`/`Glass.clear` (↔ `UIGlassEffect.Style`),
+  and `interactive` applies the `Glass.interactive(_:)` combinator —
+  `.glassEffect(glass.interactive(bool))`. SwiftUI also exposes `Glass.identity`; fx does not
+  adopt it (`21` ships `regular`/`clear` only). Unknown variant values fall back to the
+  regular glass.
 - **`.ultraThinMaterial`** — `requires {os:15, hosted}` · `applyVia:.background`.
   Fallback below 26.
 

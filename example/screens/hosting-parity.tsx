@@ -5,11 +5,16 @@ import {
 	Text,
 	View,
 } from "react-native";
-import { FxHostedView } from "react-native-fx";
+import { FxHostedView, type MaterialVariant } from "react-native-fx";
+import { NativeSegmented } from "../components/native-segmented";
 import { NativeSlider } from "../components/native-slider";
 import { useTheme } from "../components/theme";
 
 const BOUNDARY_COUNT = 12;
+
+const GLASS_VARIANTS: MaterialVariant[] = ["regular", "clear"];
+
+const INTERACTIVE_MODES = ["static", "interactive"] as const;
 
 const SHADER_IDS = [
 	"fractal-clouds",
@@ -23,6 +28,11 @@ const SHADER_IDS = [
 export function HostingParityScreen() {
 	const { palette } = useTheme();
 	const [intensity, setIntensity] = useState(0.8);
+	const [variantIndex, setVariantIndex] = useState(0);
+	const [interactiveIndex, setInteractiveIndex] = useState(0);
+
+	const variant = GLASS_VARIANTS[variantIndex];
+	const interactive = INTERACTIVE_MODES[interactiveIndex] === "interactive";
 
 	return (
 		<ScrollView
@@ -80,6 +90,45 @@ export function HostingParityScreen() {
 				intensity {intensity.toFixed(2)}
 			</Text>
 
+			<Text style={{ color: palette.textMuted, fontSize: 13 }}>
+				Glass styles — variant and press response (iOS 26)
+			</Text>
+
+			<View style={styles.row}>
+				<Text style={[styles.label, { color: palette.text }]}>Variant</Text>
+				<NativeSegmented
+					options={GLASS_VARIANTS}
+					selectedIndex={variantIndex}
+					onChange={setVariantIndex}
+				/>
+			</View>
+
+			<View style={styles.row}>
+				<Text style={[styles.label, { color: palette.text }]}>
+					Press response
+				</Text>
+				<NativeSegmented
+					options={[...INTERACTIVE_MODES]}
+					selectedIndex={interactiveIndex}
+					onChange={setInteractiveIndex}
+				/>
+			</View>
+
+			<View style={styles.glassStage}>
+				<FxHostedView effect="aurora" intensity={0.8} style={styles.backdrop} />
+				<FxHostedView
+					effect="material"
+					materialConfig={{ variant, interactive }}
+					style={styles.glassTile}
+				/>
+			</View>
+
+			<Text style={[styles.note, { color: palette.textFaint }]}>
+				The glass tile sits over a moving shader so variant differences are
+				visible. In interactive mode, press the tile inside this scroller —
+				its own press response and scrolling must coexist.
+			</Text>
+
 			<Text style={[styles.note, { color: palette.textFaint }]}>
 				Scroll to verify boundaries render smoothly. The shader tile uses
 				loop, which depends on time and intensity — garbled output would
@@ -116,6 +165,28 @@ const styles = StyleSheet.create({
 		width: "100%",
 		height: 200,
 		borderRadius: 12,
+	},
+	row: { gap: 6 },
+	label: { fontSize: 14, fontWeight: "600" },
+	glassStage: {
+		width: "100%",
+		height: 200,
+		borderRadius: 12,
+		overflow: "hidden",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	backdrop: {
+		position: "absolute",
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+	},
+	glassTile: {
+		width: 160,
+		height: 120,
+		borderRadius: 16,
 	},
 	note: {
 		fontSize: 12,

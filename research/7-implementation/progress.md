@@ -53,7 +53,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U2-001 | Unit 2 | implement | merged | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; reviewed (batch); [detail](#u2-001--planned-rung-selection) |
 | U2-002 | Unit 2 | rework | merged | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; reviewed (batch); [detail](#u2-002--uniformspec-schema-reconciliation) |
 | U3-001 | Unit 3 | implement | merged | yes | — | RT-009 | U1-002, U2-001 | RT-009 + fill (iOS+Android) + iOS material; device-verified iOS 26+ (2026-06-08); shader → U3-006, symbol → U3-007; [detail](#u3-001--hosted-effect-renderer) · [review](./reviews/U3-001.md) |
-| U3-002 | Unit 3 | device-verify (hybrid) | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, uniform alignment, GPU resume; **FX-002 glass styles need a `glassStyle` library prop added first** (folded into spec — [detail](#u3-002--hosting-parity--glass-styles--uniforms-scope-note)) |
+| U3-002 | Unit 3 | device-verify (hybrid) | headless-done | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, uniform alignment, GPU resume; the FX-002 prep landed as the `materialConfig` channel ([task](./tasks/U3-002/), [detail](#u3-002--hosting-parity--glass-styles--uniforms-scope-note)) |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | ready-to-merge | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract ratified; [detail](#u3-004--byo-registration-contract) |
 | U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
@@ -322,23 +322,42 @@ Proof:
 
 ## U3-002 — hosting parity / glass styles / uniforms (scope note)
 
-Type: `device-verify` (hybrid — includes a library prep step) · State: `todo` · Device: yes ·
-Consumes: — · Closes: SPINE-012, FX-002, FX-005 · Blocked by: U3-001
+Type: `device-verify` (hybrid — includes a library prep step) · State: `headless-done` · Device: yes ·
+Consumes: — · Closes: SPINE-012, FX-002, FX-005 · Blocked by: U3-001 · [task](./tasks/U3-002/)
 
-Scope folded in (Planner, 2026-06-10): **FX-002 (glass styles `.regular`/`.clear`/`.identity`)
-cannot be device-verified until the library exposes a glass-style prop.** `FxMaterialView`
-currently uses bare `.glassEffect()` (no `UIGlassEffect.Style`), and there is no `glassStyle`
-prop on `FxHostedView`/`FxModule`. So U3-002's eventual spec must, in order:
+Scope folded in (Planner, 2026-06-10): **FX-002 (glass styles) cannot be device-verified until
+the library exposes a glass-style channel.** Landed (2026-06-10) as the `materialConfig` config
+channel (mirrors `symbolConfig`, per `21` §The typed inputs — `variant: 'regular'|'clear'` +
+`interactive`; `.identity` deliberately not adopted), in order:
 
-1. **Add the library prop** — `glassStyle` on `FxHostedView` (TS `NativeFxHostedProps`) +
-   `FxModule` `Prop` + `FxMaterialView` applying `UIGlassEffect.Style` on iOS 26.
-2. **Build the example selector** — the EX-001 harness leaves the glass-styles row `❌` on
-   purpose; add the style picker once the prop exists.
-3. **Run the glass-style device check** (Section A2 of `device-sweep-v1.md`).
+1. **The library prep** — `materialConfig` on `FxHostedView` (TS `NativeFxHostedProps`) +
+   `FxModule` `Prop` + `FxMaterialView` applying the `Glass` variant and `.interactive()` on
+   iOS 26. Done.
+2. **The example selector** — the glass section on the `hosting-parity` screen (variant
+   segmented control + press-response toggle, glass tile inside the scroller). Done.
+3. **The glass-style device check** (Section A2 of `device-sweep-v1.md`). Human gate.
 
 FX-005 (uniform alignment, Section A3) and SPINE-012 (hosting parity / many boundaries / GPU
 resume, Sections A4 + B2) are pure device-verify against the EX-001 harness — no library work.
 The single-pass scenarios live in `device-sweep-v1.md`.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
+- [ ] device-verified (human gate)
+- [ ] reviewed
+- [ ] docs-closed
+- [ ] merged
+
+Proof:
+- headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run swift:lint`,
+  `bun run test` (21 tests) from `packages/`; `bunx tsc --noEmit` from `example/`; local
+  xcodebuild (Debug, iphonesimulator) BUILD SUCCEEDED — `tasks/U3-002/evidence/xcodebuild.md`.
+- device: `device-sweep-v1.md` §A2/§A3/§A4/§B2 — scenario in `tasks/U3-002/evidence/headless.md`.
+- docs: on device pass, FX-002 closes in `21`, FX-005 in `22`, SPINE-012 in `01` + the ledger.
 
 ## U3-001 — hosted effect renderer
 
