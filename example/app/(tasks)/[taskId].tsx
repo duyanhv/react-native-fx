@@ -1,9 +1,12 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import type { DemoScreen } from "../../data/tasks";
 import { TASKS } from "../../data/tasks";
+import { AndroidMaterialScreen } from "../../screens/android-material";
 import { ContentMotionScreen } from "../../screens/content-motion";
 import { FillMaterialScreen } from "../../screens/fill-material";
+import { HostingParityScreen } from "../../screens/hosting-parity";
 import { ShaderCatalogScreen } from "../../screens/shader-catalog";
+import { SymbolScreen } from "../../screens/symbol";
 import { TaskBlankScreen } from "../../screens/task-blank";
 
 function renderDemo(screen: DemoScreen | undefined, label: string) {
@@ -14,6 +17,12 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <ShaderCatalogScreen />;
 		case "content-motion":
 			return <ContentMotionScreen />;
+		case "symbol":
+			return <SymbolScreen />;
+		case "android-material":
+			return <AndroidMaterialScreen />;
+		case "hosting-parity":
+			return <HostingParityScreen />;
 		default:
 			return <TaskBlankScreen label={label} />;
 	}

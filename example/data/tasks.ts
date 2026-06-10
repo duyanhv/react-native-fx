@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -25,7 +25,7 @@ export const TASKS: DeviceTask[] = [
 		platform: "iOS",
 		what: "SF Symbol renders through the hosted path",
 		status: "todo",
-		screen: "blank",
+		screen: "symbol",
 	},
 	{
 		id: "U3-005",
@@ -41,7 +41,7 @@ export const TASKS: DeviceTask[] = [
 		platform: "Android",
 		what: "RenderEffect blur · intensity 0–1 · staleness",
 		status: "todo",
-		screen: "blank",
+		screen: "android-material",
 	},
 	{
 		id: "U3-002",
@@ -49,7 +49,7 @@ export const TASKS: DeviceTask[] = [
 		platform: "iOS · Android",
 		what: "glass styles · uniform alignment · hosting parity",
 		status: "todo",
-		screen: "blank",
+		screen: "hosting-parity",
 	},
 	{
 		id: "U3-006",
