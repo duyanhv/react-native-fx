@@ -120,3 +120,25 @@ captures only.
 
 Remaining from this handoff: **decision 3** (the F1–F19 critique triage) and **U3-003**
 (Android material, B1). The sweep docs additionally wait on B1 and the A1-2 hardware.
+
+## Addendum 3 — V1 hardware-pending gates (the close-out checklist)
+
+All V1 implementation work is done and committed (`48fa26b` glass, `33c7f98` symbol fix,
+`f88c2f1` Android material). What remains is gated on hardware and one triage:
+
+1. **POCO F1 (or any Android 12+ device) — U3-003 / B1.** Attach the device, then run the
+   B1 scenario in `tasks/U3-003/evidence/headless.md` via an agent-device run (stills only,
+   no recordings). The Debug APK is prebuilt at
+   `example/android/app/build/outputs/apk/debug/app-debug.apk`. On pass: tick
+   `device-verified`, close FX-003 in `21` + `structure.android` + the ledger, resolve the
+   `intensity` open question in `21`, mark the sweep B1 finding resolved.
+2. **iOS 17 / sub-17 device — U3-007 / A1-2.** The OS-degradation rows (18-only effects
+   degrade to plain symbol on 17; sub-17 renders clear). Maintainer chose not to waive.
+   On pass: tick `device-verified` on U3-007.
+3. **F1–F19 critique triage** (`research/wip/critique-2026-06-10.md`) — the last
+   non-hardware decision item.
+4. **Sweep-doc deletion** (`device-sweep-v1.md` + `device-sweep-v1-findings.md`) unlocks
+   after 1 and 2.
+
+Both device gates are noted on their progress rows (`device-pending`, blocked on hardware
+only).
