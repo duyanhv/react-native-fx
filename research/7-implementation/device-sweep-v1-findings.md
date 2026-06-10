@@ -34,6 +34,14 @@ device. Code paths exist; not verifiable on this sim.
 
 ## A2 · U3-002 glass (FX-002) — FAIL as it stands
 
+> **RESOLVED (2026-06-10, UIKit glass-rung rework).** A2-1, A2-2, and A2-4 are all fixed and
+> device-verified: the iOS-26 rung moved from the SwiftUI `.glassEffect` modifier to a
+> UIKit `UIVisualEffectView` + `UIGlassEffect` surface (`FxGlassSurfaceView`), which the
+> spike proved is the only way to have a clear fill and the interactive press at once.
+> Evidence: `tasks/U3-002/evidence/device-run-2026-06-10/` + maintainer live tap. A2-3
+> stands as a design limit, recorded in `structure.ios.md` §Glass compositing limit. The
+> text below is the original sweep record, kept as written.
+
 The `materialConfig` channel is correct: `variant` (regular/clear) and `interactive`
 map cleanly to `Glass` at `FxMaterialView.swift:25-34`. The rendering wrapper is broken.
 
@@ -120,7 +128,10 @@ passed.)
   design decision; degradation rows (A1-2) need a lower-OS device.
 - **U3-002 glass (A2):** **FAIL** — A2-1/A2-2 are confirmed code defects in
   `FxMaterialView`; A2-3 is a design-level concern. Blocks U3-002 closure until fixed.
+  *(Superseded 2026-06-10: resolved by the UIKit glass-rung rework — see the A2 banner.)*
 - **U3-002 uniforms (A3) + parity/resume (A4):** pass (one open coexistence item).
+  *(The coexistence item closed 2026-06-10: the shipped UIKit rung is scroll-through —
+  `01` decision 6.)*
 
 ## B1 · U3-003 Android material fallback (FX-003) — FAIL (not implemented)
 

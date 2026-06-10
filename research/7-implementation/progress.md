@@ -53,7 +53,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U2-001 | Unit 2 | implement | merged | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; reviewed (batch); [detail](#u2-001--planned-rung-selection) |
 | U2-002 | Unit 2 | rework | merged | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; reviewed (batch); [detail](#u2-002--uniformspec-schema-reconciliation) |
 | U3-001 | Unit 3 | implement | merged | yes | — | RT-009 | U1-002, U2-001 | RT-009 + fill (iOS+Android) + iOS material; device-verified iOS 26+ (2026-06-08); shader → U3-006, symbol → U3-007; [detail](#u3-001--hosted-effect-renderer) · [review](./reviews/U3-001.md) |
-| U3-002 | Unit 3 | device-verify (hybrid) | headless-done | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, uniform alignment, GPU resume; the FX-002 prep landed as the `materialConfig` channel ([task](./tasks/U3-002/), [detail](#u3-002--hosting-parity--glass-styles--uniforms-scope-note)) |
+| U3-002 | Unit 3 | device-verify (hybrid) | docs-closed | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | iOS-26 glass rung reworked to UIKit `UIVisualEffectView`+`UIGlassEffect` per the ratified spike; device-verified 2026-06-10 (agent-device run + maintainer live tap); SPINE-012/FX-002/FX-005 closed in owning docs + ledger; UIKit rung is scroll-through inside scrollers (`01` decision 6) ([task](./tasks/U3-002/), [detail](#u3-002--hosting-parity--glass-styles--uniforms-scope-note)) · [review](./reviews/U3-002.md) |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | ready-to-merge | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract ratified; [detail](#u3-004--byo-registration-contract) |
 | U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
@@ -322,8 +322,8 @@ Proof:
 
 ## U3-002 — hosting parity / glass styles / uniforms (scope note)
 
-Type: `device-verify` (hybrid — includes a library prep step) · State: `headless-done` · Device: yes ·
-Consumes: — · Closes: SPINE-012, FX-002, FX-005 · Blocked by: U3-001 · [task](./tasks/U3-002/)
+Type: `device-verify` (hybrid — includes a library prep step) · State: `docs-closed` · Device: yes ·
+Consumes: — · Closes: SPINE-012, FX-002, FX-005 (all closed 2026-06-10) · Blocked by: U3-001 · [task](./tasks/U3-002/) · [review](./reviews/U3-002.md)
 
 Scope folded in (Planner, 2026-06-10): **FX-002 (glass styles) cannot be device-verified until
 the library exposes a glass-style channel.** Landed (2026-06-10) as the `materialConfig` config

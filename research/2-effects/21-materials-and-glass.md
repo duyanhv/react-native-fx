@@ -139,8 +139,10 @@ in `02`). If the lib isn't present, the rung guards out and the ladder degrades 
 
 ## Open questions
 
-- **`UIGlassEffect.Style` case set + beta guard** — `.regular`/`.clear` confirmed;
-  `.identity` unverified; needs Xcode 26 / device (carried from `_legacy/02`).
+- ~~**`UIGlassEffect.Style` case set + beta guard**~~ — **resolved (FX-002; U3-002 device
+  gate, 2026-06-10).** `.regular`/`.clear` confirmed on device (iOS 26, Xcode 26.5) via
+  `UIGlassEffect` on the shipped UIKit rung — visually distinct over a moving backdrop.
+  `.identity` is moot: this doc ships `regular`/`clear` only and fx does not adopt it.
 - **Android backdrop blur cost** — capturing parent content for true backdrop blur is
   expensive/stale-prone; decide the default (own-content blur vs Haze) per `structure.android`.
 - **`intensity` semantics across platforms** — `fractionComplete` on iOS vs blur radius on

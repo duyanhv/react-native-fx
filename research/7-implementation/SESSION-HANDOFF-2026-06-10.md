@@ -85,3 +85,26 @@ capability change; model stays `interaction:'self'`, hosted (rules #3/#4 intact)
 
 Delete both `device-sweep-v1.md` and `device-sweep-v1-findings.md` ONLY after every finding
 (A1/A2/A2-4/B1) is fixed AND device-verified. The spike doc + critique are separate; keep.
+
+---
+
+## Addendum — same-day closure (housekeeping session, 2026-06-10 evening)
+
+Decision 1 was taken (do the UIKit rework now) and executed end-to-end:
+
+- **U3-002 is `docs-closed`.** The iOS-26 glass rung moved to UIKit
+  `UIVisualEffectView`+`UIGlassEffect` (`FxGlassSurfaceView`); A2-1/A2-2/A2-4 all fixed and
+  device-verified (agent-device evidence run + maintainer live tap). Review:
+  `reviews/U3-002.md`. SPINE-012/FX-002/FX-005 closed in their owning docs + ledger.
+- **New device-grounded fact:** the UIKit rung is scroll-through inside RN scrollers (drag
+  beginning on the glass pans the parent; tap presses) — the spike's capture behavior was
+  SwiftUI-rung-only. Recorded in `01` decision 6 and `structure.ios.md` §material.
+- **Decision 4 superseded:** the dead-end SwiftUI changes were replaced in place by the
+  rework (the wip commit's doc additions stayed valid).
+- Minor items logged in `tasks/U3-002/notes.md`: below-26 fallback has sharp corners
+  (pre-existing, polish candidate), interactive-glass stage read ~40 fps on the simulator
+  (watch on hardware), stale Pods file lists can invalidate build-evidence claims.
+
+Still open from this handoff: **decision 2** (A1 `replaceWith` — U3-007), **decision 3**
+(the F1–F19 critique triage), **U3-003** (Android material). The sweep docs stay until
+A1 and B1 are fixed and device-verified (the housekeeping rule above).

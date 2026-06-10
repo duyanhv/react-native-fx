@@ -1,0 +1,54 @@
+getpwuid_r did not find a match for uid 501
+Filtering the log data using "composedMessage CONTAINS "fx-verify""
+Timestamp               Ty Process[PID:TID]
+2026-06-10 20:42:25.726 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:25.726 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree FxGlassSurfaceView gestures=[none] interactions=[]
+2026-06-10 20:42:25.726 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree · UIVisualEffectView gestures=[none] interactions=[] effect=UIGlassEffect isInteractive=false
+2026-06-10 20:42:25.726 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:25.727 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:25.727 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:25.728 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:25.728 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:25.728 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:25.728 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.625 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.626 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree FxGlassSurfaceView gestures=[none] interactions=[]
+2026-06-10 20:42:26.626 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree · UIVisualEffectView gestures=[none] interactions=[] effect=UIGlassEffect isInteractive=false
+2026-06-10 20:42:26.626 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.627 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.627 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.627 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.627 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.627 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:26.627 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.542 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.542 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree FxGlassSurfaceView gestures=[none] interactions=[]
+2026-06-10 20:42:27.543 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree · UIVisualEffectView gestures=[none] interactions=[] effect=UIGlassEffect isInteractive=false
+2026-06-10 20:42:27.543 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.544 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.544 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.544 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.544 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.544 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:27.544 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.425 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.426 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree FxGlassSurfaceView gestures=[none] interactions=[]
+2026-06-10 20:42:28.426 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree · UIVisualEffectView gestures=[none] interactions=[] effect=UIGlassEffect isInteractive=false
+2026-06-10 20:42:28.426 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.427 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.427 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.427 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.427 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.427 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:28.427 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.342 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.343 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree FxGlassSurfaceView gestures=[none] interactions=[]
+2026-06-10 20:42:29.343 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify tree · UIVisualEffectView gestures=[none] interactions=[] effect=UIGlassEffect isInteractive=false
+2026-06-10 20:42:29.343 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.344 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.344 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.344 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.344 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.344 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+2026-06-10 20:42:29.345 Df reactnativefxexample[55302:5d92bb] (Foundation) fx-verify hitTest winner=UIVisualEffectView point=(79.0, 28.999959309895985)
+Child process terminated with signal 15: Terminated

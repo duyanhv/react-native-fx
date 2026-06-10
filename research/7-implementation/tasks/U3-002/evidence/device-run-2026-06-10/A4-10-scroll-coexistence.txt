@@ -1,0 +1,20 @@
+A4-10 scroll coexistence — interactive glass inside the RN ScrollView
+Device: iPhone 17 Pro iOS 26.0. Press response = interactive. Downward drags (room to scroll up).
+
+OFF-glass drag (x=30, same height): list PANS (loop-shader strip revealed). Expected. PASS.
+ON-glass drag (x=200, tile center), 600ms: list PANS; log shows glass got touch (UIVisualEffectView x9).
+ON-glass drag, SLOW 1500ms/150px: list STILL PANS (scrolled up to the grid); glass got touch (x9).
+
+FINDING / DISCREPANCY:
+- On the UIKit rung the interactive glass does NOT capture pan drags that begin on it — the parent
+  ScrollView pans whether the drag starts on or off the glass. Standard iOS arbitration: touch-down
+  reaches the glass (press machinery, A2-4), but once the finger crosses the scroll threshold the
+  ScrollView pan recognizer wins and the glass press cancels.
+- This CONTRADICTS the spike (SwiftUI rung: 'drag starting on the glass does not scroll; the
+  interaction view captures the moving touch') and the rework's stated expected behavior
+  ('drags that begin on the glass are captured'). The rung swap flipped this behavior.
+- Net effect is MORE permissive scroll-through (you can scroll by dragging from the glass), which
+  the spike itself called out as desirable for a large scroll-through glass surface. Whether this
+  is acceptable vs the documented 'capture' expectation is the maintainer's call — flagged, not fixed.
+- Tested with synthesized gestures (agent-device gesture pan); a real finger drag should be
+  re-confirmed by the human, but slow+fast synthesized drags agree.

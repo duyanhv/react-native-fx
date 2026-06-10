@@ -3,14 +3,17 @@ import SwiftUI
 
 /// Hosts the platform-native decorative rendering surface for the `hosted` substrate.
 ///
-/// A `UIHostingController` embeds a SwiftUI view selected by the `effect` prop.
-/// The host owns sizing and pointer-event passthrough; it never samples or wraps
-/// RN content. Props stash in the two-phase Expo pattern and are
-/// applied once per batch in `applyResolvedConfig()`.
+/// Most effects mount as a SwiftUI view inside a `UIHostingController`. The iOS 26 glass
+/// surface instead mounts `FxGlassSurfaceView` directly as a UIKit subview, because the
+/// system glass delivers its own press response only through a real, hit-testable view —
+/// a hosted SwiftUI shape cannot carry it. The two mount paths are exclusive; switching
+/// effects tears down whichever one is active. The host owns sizing and pointer-event
+/// passthrough; it never samples or wraps RN content. Props stash in the two-phase Expo
+/// pattern and are applied once per batch in `applyResolvedConfig()`.
 ///
-/// The glass effect rebuilds on `layoutSubviews()` so its `cornerRadius` tracks the
-/// host layer. If the layer reports `cornerRadius == 0`, the glass falls back to a
-/// sharp rectangle. This is verified with `NSLog` at layout time.
+/// `layoutSubviews()` pushes the host layer's `cornerRadius` into the glass surface so
+/// the glass shape tracks late Fabric layout passes without remounting; a radius of 0
+/// falls back to a sharp rectangle.
 internal final class FxHostedView: FxNativeView {
   // MARK: - Events
 
@@ -21,11 +24,13 @@ internal final class FxHostedView: FxNativeView {
   // MARK: - Hosting state
 
   private var hostingController: UIHostingController<AnyView>?
+  // Stored as UIView because @available cannot annotate a stored property; every use
+  // casts back to FxGlassSurfaceView under an iOS 26 check.
+  private var glassSurfaceView: UIView?
   private var pendingEffect: String?
   private var pendingIntensity: Double = 0.8
   private var pendingSymbolConfig: SymbolConfig?
   private var pendingMaterialConfig: MaterialConfig?
-  private var appliedCornerRadius: CGFloat = 0
 
   // MARK: - Props
 
@@ -56,6 +61,12 @@ internal final class FxHostedView: FxNativeView {
 
     guard let effect = pendingEffect else {
       removeHost()
+      removeGlassSurface()
+      return
+    }
+
+    if effect == "material", #available(iOS 26.0, *) {
+      mountGlassSurface()
       return
     }
 
@@ -68,20 +79,8 @@ internal final class FxHostedView: FxNativeView {
   internal override func layoutSubviews() {
     super.layoutSubviews()
 
-    let currentCornerRadius = self.layer.cornerRadius
-
-    NSLog(
-      "[FxHostedView] layoutSubviews cornerRadius=%.1f appliedCornerRadius=%.1f effect=%@",
-      currentCornerRadius, appliedCornerRadius, pendingEffect ?? "none")
-
-    guard pendingEffect == "material" else {
-      return
-    }
-
-    if currentCornerRadius != appliedCornerRadius {
-      appliedCornerRadius = currentCornerRadius
-      let view = makeSwiftUIView(for: "material", intensity: pendingIntensity)
-      mountHost(AnyView(view))
+    if #available(iOS 26.0, *), let surface = glassSurfaceView as? FxGlassSurfaceView {
+      surface.setCornerRadius(self.layer.cornerRadius)
     }
   }
 
@@ -92,10 +91,7 @@ internal final class FxHostedView: FxNativeView {
     case "fill":
       return FxFillView(intensity: intensity)
     case "material":
-      return FxMaterialView(
-        intensity: intensity,
-        materialConfig: pendingMaterialConfig,
-        cornerRadius: self.layer.cornerRadius)
+      return FxMaterialView(intensity: intensity)
     case "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
       "aurora", "noise-field", "plasma", "caustics", "edge-glow":
       return FxShaderView(shaderId: effect, intensity: intensity)
@@ -108,6 +104,7 @@ internal final class FxHostedView: FxNativeView {
 
   private func mountHost(_ rootView: AnyView) {
     removeHost()
+    removeGlassSurface()
 
     let controller = UIHostingController(rootView: rootView)
     controller.view.backgroundColor = .clear
@@ -124,13 +121,37 @@ internal final class FxHostedView: FxNativeView {
     hostingController = controller
   }
 
+  @available(iOS 26.0, *)
+  private func mountGlassSurface() {
+    removeHost()
+
+    let surface: FxGlassSurfaceView
+    if let existing = glassSurfaceView as? FxGlassSurfaceView {
+      surface = existing
+    } else {
+      surface = FxGlassSurfaceView(frame: bounds)
+      surface.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      addSubview(surface)
+      glassSurfaceView = surface
+    }
+
+    surface.setMaterialConfig(pendingMaterialConfig)
+    surface.setCornerRadius(self.layer.cornerRadius)
+  }
+
   private func removeHost() {
     hostingController?.view.removeFromSuperview()
     hostingController = nil
   }
 
+  private func removeGlassSurface() {
+    glassSurfaceView?.removeFromSuperview()
+    glassSurfaceView = nil
+  }
+
   deinit {
     removeHost()
+    removeGlassSurface()
   }
 }
 

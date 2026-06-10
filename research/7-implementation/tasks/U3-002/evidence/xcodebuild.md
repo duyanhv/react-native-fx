@@ -29,3 +29,24 @@ rework verification.
 
 This compiles the round-2 A2-4 fix:
 - `FxMaterialView.swift` — `.contentShape(RoundedRectangle(cornerRadius: cornerRadius))` added to restore the hit region for the `interactive` glass press response after `.fill(.clear)` removed the opaque hit surface.
+
+---
+
+## Glass-rung rework — UIKit `UIVisualEffectView` + `UIGlassEffect` (2026-06-10)
+
+- Command: same as above (from `example/ios`, after a `pod install` so the Pods project
+  picks up the new `FxGlassSurfaceView.swift` — the podspec glob resolves at install time)
+- Toolchain: Xcode 26.5 (17F42) on macOS 26.5.1
+- Date: 2026-06-10
+- Result: `** BUILD SUCCEEDED **` (exit code 0, zero `error:` lines;
+  `FxGlassSurfaceView.swift` confirmed in the `ReactNativeFx.SwiftFileList`)
+
+This compiles the UIKit glass-rung rework:
+- `FxGlassSurfaceView.swift` (new) — `UIVisualEffectView` + `UIGlassEffect` surface with the
+  precedent lifecycle (effect created in `layoutSubviews`, stale-effect clear on
+  `isInteractive` toggles, `setNeedsLayout` on window re-entry, `cornerConfiguration` shape);
+  `MaterialConfig` moved here with its consumer.
+- `FxHostedView.swift` — `material` on iOS 26 mounts the glass surface directly as a UIKit
+  subview; radius updates push into `cornerConfiguration` without remounting; diagnostic
+  `NSLog` removed.
+- `FxMaterialView.swift` — shrunk to the below-26 intensity-keyed material fallback.

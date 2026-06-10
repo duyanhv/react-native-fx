@@ -108,25 +108,44 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
   linear gradient below 18.
 
 ### `material`
-- **SwiftUI-hosted glass** (the shipped rung) — `.glassEffect` · `requires {os:26, hosted}` ·
-  `applyVia:.glassEffect`. fx's iOS substrate is SwiftUI, so the shipped rung is the SwiftUI
-  modifier, **backed by the same system glass UIKit surfaces as `UIGlassEffect` /
-  `UIVisualEffectView`** (the API names `21` cites at the capability level) — **one rung, not
-  a separate UIKit rung.** `GlassEffectContainer` is the SwiftUI realization of the
-  **`FxGroup`/`FxItem`** compound (`57`) when multiple glass shapes must morph; glass can't
-  sample glass. Self-gesturing via `.interactive()` (≈ UIKit `isInteractive`; owns its own tap
-  response — `interaction:'self'`). The `21` config lowers onto the modifier's `Glass` value:
-  `variant` maps `regular`/`clear` to `Glass.regular`/`Glass.clear` (↔ `UIGlassEffect.Style`),
-  and `interactive` applies the `Glass.interactive(_:)` combinator —
-  `.glassEffect(glass.interactive(bool))`. SwiftUI also exposes `Glass.identity`; fx does not
-  adopt it (`21` ships `regular`/`clear` only). Unknown variant values fall back to the
-  regular glass.
-- **Glass shape** — the `.glassEffect` modifier receives a `RoundedRectangle` whose
-  `cornerRadius` is read from the host layer (`self.layer.cornerRadius`) at `layoutSubviews()`
-  time. If the host layer reports `cornerRadius == 0`, the glass renders as a sharp rectangle.
-  This is the fallback when the layer has no rounded corner (or when Fabric does not set it).
-  The value is captured at layout and applied to the SwiftUI `RoundedRectangle` that the
-  `.glassEffect` uses as its `in:` parameter.
+- **UIKit glass surface** (the shipped iOS-26 rung) — `UIVisualEffectView` + `UIGlassEffect` ·
+  `requires {os:26, hosted}` · `applyVia:UIVisualEffectView`. `FxHostedView` mounts an
+  `FxGlassSurfaceView` (a `UIView` owning an autoresizing-mask-filled `UIVisualEffectView`)
+  **directly as a UIKit subview, not through `UIHostingController`**. This overturns the
+  earlier claim that the shipped rung is the SwiftUI `.glassEffect` modifier ("one rung, not a
+  separate UIKit rung"): the device spike (`research/wip/interactive-glass-touch-delivery.md`)
+  proved the SwiftUI modifier cannot present a clear backdrop and the system interaction view
+  at once — a clear-filled shape never installs `UIPlatformGlassInteractionView`, so the
+  interactive press and the clear fill are mutually exclusive on that rung. The `21` config
+  lowers onto `UIGlassEffect`: `variant` maps `regular`/`clear` to
+  `UIGlassEffect.Style.regular`/`.clear` (unknown values fall back to the regular glass), and
+  `interactive` sets `UIGlassEffect.isInteractive` — the system interaction view owns the
+  press and its arbitration (`interaction:'self'`; fx installs no recognizer). fx does not
+  adopt an identity/none style (`21` ships `regular`/`clear` only). `GlassEffectContainer` is
+  still the SwiftUI realization of the **`FxGroup`/`FxItem`** compound (`57`) when multiple
+  glass shapes must morph (glass can't sample glass); the morphing compound remains a
+  SwiftUI-side concern, out of this rung's slice.
+- **Glass lifecycle (pinned mechanic)** — `UIGlassEffect` must be (re)created during
+  `layoutSubviews()`, not `didMoveToWindow()` (creating it there does not render —
+  expo/expo#43732). Toggling `isInteractive` requires clearing the prior effect
+  (`effect = UIVisualEffect()`) before assigning the new `UIGlassEffect`. On window re-entry
+  the view calls `setNeedsLayout()`, because `layoutSubviews` may not fire when geometry is
+  unchanged. Precedent: `references/expo/packages/expo-glass-effect/ios/GlassView.swift`.
+- **Press delivery and scroll coexistence (device-grounded, 2026-06-10)** — the UIKit rung
+  installs no separate hittable interaction *view* (unlike the SwiftUI modifier's
+  `UIPlatformGlassInteractionView`): `isInteractive` rides interaction objects
+  (`_UIFlexInteraction`, `_UIUpdateLinkViewInteraction`) attached to the
+  `UIVisualEffectView` itself, present only while interactive. The backdrop-independent
+  verification signal for the press is therefore the effect view's interaction set (or a
+  live tap), never a hit-test winner class and never frame-diff over an animated backdrop.
+  Inside an RN scroller the rung is scroll-through: a drag beginning on the interactive
+  glass pans the parent list; only a tap produces the press. The system owns that
+  arbitration — fx installs no recognizer on `hosted` (`01` decision 6).
+- **Glass shape** — the host layer's `cornerRadius` (`self.layer.cornerRadius`), read at
+  `layoutSubviews()` time, flows into the effect view's `cornerConfiguration` as a single
+  uniform radius. If the host layer reports `cornerRadius == 0`, the glass renders as a sharp
+  rectangle — the fallback when the layer has no rounded corner (or when Fabric does not set
+  it). Radius changes update `cornerConfiguration` in place; they never remount the rung.
 - **`.ultraThinMaterial`** — `requires {os:15, hosted}` · `applyVia:.background`.
   Fallback below 26.
 

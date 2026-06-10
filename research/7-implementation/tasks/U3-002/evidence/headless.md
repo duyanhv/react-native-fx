@@ -13,19 +13,27 @@ A2, A3, A4, and B2. All four are human gates.
 1. Launch the example app on an iOS 26 device (Xcode 26 runtime).
 2. Open the U3-002 task → the `hosting-parity` screen → the "Glass styles" section.
 3. With variant `regular`: the glass tile renders system glass over the moving shader
-   backdrop — never a flat box. Check the console: `NSLog` should log the host
-   `cornerRadius` value at `layoutSubviews` time; verify it is `16` (matching the style
-   `borderRadius: 16` on the glass tile). If it reads `0`, the glass will render as a
-   sharp rectangle — the explicit fallback.
-4. Check the visual edge: the glass should match the tile bounds; the glass edge should
-   be `borderRadius: 16` — not a `Capsule` pill shape. If the glass is a pill regardless
-   of tile size, the `RoundedRectangle` shape is not reaching the modifier.
-5. Switch the variant to `clear`: the tile visibly changes to the more transparent glass.
-6. Set press response to `interactive` and press the tile: the system liquid press
-   response plays (fx surfaces no press events — the response is the system's own).
-   If the press does not respond, check that `Rectangle().fill(.clear)` does not remove
-   the hit surface: `.contentShape(RoundedRectangle(cornerRadius: cornerRadius))` must be
-   present to restore the hit region while keeping the visual clear fill.
+   backdrop — never a flat box and never a dark box. The iOS-26 rung is now a UIKit
+   `UIVisualEffectView` + `UIGlassEffect` mounted by `FxHostedView`; the host layer's
+   `cornerRadius` flows into `cornerConfiguration` at `layoutSubviews` time. If the layer
+   reports `0`, the glass renders as a sharp rectangle — the explicit fallback.
+4. Check the visual edge: the glass should match the tile bounds with a `borderRadius: 16`
+   edge — not a pill and not a sharp rectangle. If the edge is sharp, the layer radius is
+   not reaching `cornerConfiguration` (or Fabric did not set it).
+5. Switch the variant to `clear`: the tile visibly changes to the more transparent glass,
+   with no dark box behind it.
+6. Set press response to `interactive` and press the tile: the system press response plays
+   (fx surfaces no press events — the response is the system's own, via
+   `UIGlassEffect.isInteractive`). **Verify the press with a backdrop-independent signal,
+   never by frame-diffing over the animated shader backdrop** (that method produced a prior
+   false conclusion). Acceptable signals, any one of:
+   - a temporary `hitTest(_:with:)` override on `FxHostedView` logging the winning view
+     class — the system glass interaction view must appear in the chain when pressing the
+     interactive glass (apply the instrumentation locally for the run, then revert it;
+     it is not shipped code);
+   - a static backdrop (temporarily swap the aurora for a solid color) so the press state
+     is visible by eye or by frame comparison;
+   - a live human tap judging the system press response directly on device.
 7. `identity` is deliberately absent from the picker: SwiftUI exposes `Glass.identity`,
    but the ratified `21` surface ships `regular`/`clear` only.
 8. Below iOS 26 (if a device is available): the same screen renders the material
@@ -51,8 +59,13 @@ A2, A3, A4, and B2. All four are human gates.
 ### A4 · hosting parity / many boundaries / GPU resume (SPINE-012)
 9. Scroll the boundary grid (12 mixed fill/shader hosts): every host renders, scroll
    stays smooth.
-10. With press response `interactive`, scroll the screen by dragging across the glass
-    tile, then press it: the glass press response and the scroller coexist.
+10. With press response `interactive`, press the glass tile, then scroll the screen by
+    dragging from outside the tile: the press response and the scroller coexist. **On the
+    shipped UIKit rung a drag that begins on the glass passes through and pans the list
+    (scroll-through: tap → press, drag → scroll) — device-confirmed 2026-06-10. Capture
+    of such drags was SwiftUI-rung behavior only; either way the arbitration is the
+    system's, not a scroll bug.** Confirm a drag starting off the glass at the same
+    height also pans.
 11. On `shader-catalog` with a running shader visible, background then foreground the
     app: the clock resumes, no black frame.
 
@@ -76,10 +89,15 @@ A2, A3, A4, and B2. All four are human gates.
 
 - Flat box instead of glass; variant switch has no visible effect (`materialConfig` not
   reaching native — prop typing / `@Field` mismatch).
-- Dark rectangle behind the glass (opaque base fill not removed — A2-1).
-- Glass is pill-shaped regardless of tile size (default `Capsule` shape not overridden — A2-2).
-- Glass edge is sharp when `borderRadius` is non-zero (layer `cornerRadius` not read or
-  Fabric did not set it).
+- Dark rectangle behind the glass (the effect view rendering opaque — A2-1 regressed).
+- No press response on `interactive` glass, proven by the backdrop-independent signal
+  (the system interaction view not installed — A2-4 regressed; check the lifecycle: the
+  effect must be created during `layoutSubviews`, and toggling `isInteractive` must clear
+  the prior effect first).
+- Glass edge is sharp when `borderRadius` is non-zero (layer `cornerRadius` not reaching
+  `cornerConfiguration`, or Fabric did not set it).
+- Glass does not reappear after navigating away and back (window re-entry must call
+  `setNeedsLayout` because `layoutSubviews` may not fire when geometry is unchanged).
 - Crash on the Xcode 26 runtime when the glass mounts.
 - Garbled/shifted shader output (uniform stride mismatch).
 - Blank hosts at scale; dropped touches; frozen or black surface after resume.

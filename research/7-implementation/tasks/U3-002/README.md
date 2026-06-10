@@ -28,15 +28,22 @@ Subtask: glass styles + hosting parity device verify (blueprint Unit 3)
 - Decision:          mimic the U3-007 SymbolConfig pattern exactly — a structured Record config
                      channel on FxHostedView, not a new top-level prop. Flip-trigger: only if
                      material config outgrows the hosted substrate (V2 interactive surface).
-- Reference (HOW):   references/expo/packages/expo-ui/ios/Modifiers/GlassEffectModifier.swift —
-                     the SwiftUI Glass API shape on iOS 26: .glassEffect(glass.interactive(bool),
-                     in: shape) with Glass.regular/.clear/.identity. ADOPT regular/clear + the
-                     .interactive(Bool) combinator; REJECT .identity (21 deliberately ships
-                     regular/clear only) and REJECT the shape/tint params (out of this slice).
-                     references/expo/packages/expo-glass-effect/ios/GlassView.swift +
-                     GlassStyle.swift — the UIKit peer confirming the same regular/clear case set
-                     (UIGlassEffect.Style) and isInteractive; fx's shipped rung stays the SwiftUI
-                     modifier (one rung, not a separate UIKit rung — structure.ios §material).
+- Reference (HOW):   references/expo/packages/expo-glass-effect/ios/GlassView.swift +
+                     GlassStyle.swift — the shipped iOS-26 rung: a hit-testable UIVisualEffectView
+                     + UIGlassEffect (Style.regular/.clear, isInteractive, cornerConfiguration),
+                     with the lifecycle quirks (effect created in layoutSubviews, stale-effect
+                     clear on isInteractive toggles, setNeedsLayout on window re-entry). ADOPT
+                     those; REJECT tintColor/colorScheme/per-corner radii/RTL, the
+                     NSClassFromString availability probe, and mountChildComponentView (rule #4).
+                     The rework follows the ratified spike
+                     (research/wip/interactive-glass-touch-delivery.md): the SwiftUI .glassEffect
+                     modifier cannot present a clear backdrop and the system interaction view at
+                     once, so the SwiftUI rung was replaced. Historical context for the variant
+                     vocabulary: references/expo/packages/expo-ui/ios/Modifiers/
+                     GlassEffectModifier.swift — the SwiftUI Glass API
+                     (.glassEffect(glass.interactive(bool), in: shape) with
+                     Glass.regular/.clear/.identity); .identity stays rejected (21 ships
+                     regular/clear only).
 - Guides:            Code Style + Code Comments (the code); Testing (headless); Device
                      Verification (the sweep scenarios); Contributing (merge bar).
 - Rules gate:        #2 (agnostic surface — public TS speaks 21's variant vocabulary; never
@@ -61,9 +68,9 @@ Subtask: glass styles + hosting parity device verify (blueprint Unit 3)
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified (human gate)
-- [ ] reviewed
-- [ ] docs-closed
+- [x] device-verified (human gate — agent-device evidence run + maintainer live-tap confirmation, 2026-06-10)
+- [x] reviewed ([review](../../reviews/U3-002.md))
+- [x] docs-closed (FX-002 in `21`, FX-005 in `22`, SPINE-012 in `01` + ledger, 2026-06-10)
 - [ ] merged
 
 ## Proof
@@ -81,13 +88,20 @@ Subtask: glass styles + hosting parity device verify (blueprint Unit 3)
 
 ### iOS native
 
-- **FxMaterialView.swift** — add a `MaterialConfig` Record (`variant`, `interactive` — `@Field`
-  on every property) and apply `.glassEffect(...)` with the mapped glass variant and
-  `.interactive()` on iOS 26. Below 26 the existing intensity-keyed material fallback is
-  unchanged.
-- **FxHostedView.swift** — add `pendingMaterialConfig` + `setMaterialConfig`, pass the config
-  through `makeSwiftUIView` to the `material` case.
-- **FxModule.swift** — add `Prop("materialConfig")` to the `FxHostedView` view definition.
+- **FxGlassSurfaceView.swift** (new, the UIKit rework) — the iOS-26 glass surface: a `UIView`
+  owning a `UIVisualEffectView` + `UIGlassEffect` (`Style` mapped from `MaterialConfig.variant`,
+  `isInteractive` from `interactive`, `cornerConfiguration` from the host's corner radius), with
+  the precedent's lifecycle quirks (effect created in `layoutSubviews()`, stale-effect clear on
+  `isInteractive` toggles, `setNeedsLayout()` on window re-entry). The `MaterialConfig` Record
+  (`variant`, `interactive` — `@Field` on every property) lives here with its consumer.
+- **FxHostedView.swift** — `pendingMaterialConfig` + `setMaterialConfig`; on iOS 26 the
+  `material` effect mounts `FxGlassSurfaceView` directly as a UIKit subview (no
+  `UIHostingController`), and `layoutSubviews()` pushes the layer's `cornerRadius` into it
+  without remounting. Below 26 the `material` case still hosts the SwiftUI fallback.
+- **FxMaterialView.swift** — shrunk to the below-26 intensity-keyed material fallback; the
+  SwiftUI `.glassEffect` body was removed by the UIKit rework.
+- **FxModule.swift** — `Prop("materialConfig")` on the `FxHostedView` view definition
+  (unchanged by the rework).
 
 ### TypeScript
 

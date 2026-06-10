@@ -1,6 +1,6 @@
 # Interactive glass touch delivery — spike (sweep A2-4)
 
-Status: spike (wip) — not ratified, carries no authority until a `ratify` task promotes it
+Status: ratified (2026-06-10) — the findings and fix direction (option 1, the UIKit rung) are promoted into `structure.ios.md` §material and `01-substrates-and-hosting.md` by the U3-002 glass-rung rework
 Scope: find *why* the system-owned interactive glass press response does not fire on the
 `hosted` substrate, with device evidence; answer the scroller-coexistence question. Findings +
 recommended direction only — **no production fix landed here.** The diagnostic instrumentation

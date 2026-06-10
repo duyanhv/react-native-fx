@@ -177,8 +177,11 @@ events only — no per-frame pointer stream** (`04`/`35`).
 
 ## Open questions
 
-- **Uniform struct alignment (needs-device)** — Swift↔MSL field order/stride, and the
-  AGSL uniform binding equivalent; carried from `_legacy/08`.
+- ~~**Uniform struct alignment (needs-device)**~~ — **resolved (FX-005; U3-002 device
+  gate, 2026-06-10).** Metal: the multi-uniform `loop` shader renders with no
+  garbling/offset on iOS 26 (Swift↔MSL field order/stride aligned). AGSL: the same
+  shader catalog renders correctly on Android (POCO F1/API 35), exercising the AGSL
+  uniform binding.
 - ~~**BYO asset contract**~~ — **resolved (FX-006; U3-004, 2026-06-10).** The registration
   contract is recorded in Decision 6 above. Build wiring, consumption surface, typing idiom,
   and unregistered-id behavior are all pinned.

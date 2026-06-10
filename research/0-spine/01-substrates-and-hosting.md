@@ -114,15 +114,28 @@ hosted/expo-view boundary is less load-bearing for touch on Android. Details in
    asymmetry is the reason, recorded in the manifest via `status`.
 5. **V1 leans on the Host's passthrough + sizing** for decorative effects, so most of
    the runtime (G) is V2.
+6. **Self-gesturing glass coexists with RN scrollers, and the drag arbitration is
+   rung-specific** (device-grounded; the `research/wip/interactive-glass-touch-delivery.md`
+   spike plus the U3-002 device gate, 2026-06-10). A `self`-interaction glass hosted inside
+   an RN scroller delivers its press, and the parent scroll pans normally. What happens to
+   a drag that *begins on the glass* depends on the realization: the **shipped UIKit rung**
+   (`UIVisualEffectView` + `UIGlassEffect`) lets it pass through — the parent scroller pans
+   (tap → press, drag → scroll-through); the SwiftUI `.glassEffect` rung the spike measured
+   captured such drags via its interaction view. In both cases the arbitration is owned by
+   the system, never by fx — fx installs no recognizer on `hosted`.
 
 ## Open questions
 
-- **Android `RNHostView` parity** — confirm the Android host's touch-handler and
-  sizing behavior match the iOS analysis (the #46549 Android side was not fully read).
-- **Self-gesturing inside a scroller** — how `self`-interaction system components
-  (glass `.interactive()`) behave when hosted inside RN scrollers; device-verify.
-- **When a single screen mixes substrates** — performance of many hosted boundaries
-  vs grouping under one explicit `Host` (the #46549 grouping path).
+- ~~**Android `RNHostView` parity**~~ — **resolved (SPINE-012; U3-002 device gate,
+  2026-06-10).** The Android host passes the device matrix (POCO F1/API 35): the 12-cell
+  mixed grid renders with no blank hosts, tiles size to layout, scroll holds ~60 fps.
+  Touch/sizing parity confirmed for the implemented effects. (The #46549 Android source
+  read remains optional background, not a gate.)
+- ~~**When a single screen mixes substrates**~~ — **resolved (SPINE-012; U3-002 device
+  gate, 2026-06-10).** Twelve mixed fill/shader hosts on one screen hold UI/JS 60 fps on
+  device; no grouping `Host` is needed at V1 scale. One caveat recorded: the
+  interactive-glass stage read ~40 fps on the iOS simulator — watch on hardware, not a
+  blocker.
 
 ## Sources
 
@@ -131,3 +144,5 @@ hosted/expo-view boundary is less load-bearing for touch on Android. Details in
 - `structure.ios.md`, `structure.android.md` — the per-platform hosting/touch mechanics.
 - `02-capability-ir-and-lowering.md` — `requires.substrate` and `interaction`.
 - `30-interaction-and-gestures.md` — the `expo-view` recognizer and RNGH coexistence.
+- `research/wip/interactive-glass-touch-delivery.md` — the device spike behind decision 6
+  (interactive glass press delivery and scroller coexistence).
