@@ -39,3 +39,42 @@
 - Confirm iOS 18-only effects degrade to plain symbol on iOS 17.
 - Confirm Android planned rung skip at runtime.
 - Confirm trigger wiring fires animations correctly (discrete on mount for value mode, repeating for repeat mode, indefinite for state mode).
+
+## 2026-06-10 — A1-1 fix landed with device evidence
+
+What changed:
+- `packages/ios/FxSymbolView.swift` — the displayed glyph resolves to `replaceWith ?? name`, so `replaceWith` drives the rendered symbol instead of only arming the content transition.
+- `research/5-realization/structure.ios.md` §symbol — the resolved-display mechanic (`replaceWith ?? name`; `replaceWith` takes precedence while set) is pinned.
+
+Headless gates: lint, swift:lint, build, test (21 passed), and `tsc --noEmit` in `packages/` and `example/` all green; xcodebuild `BUILD SUCCEEDED` recorded in `evidence/xcodebuild.md`.
+
+Device run (iPhone 17 Pro simulator, iOS 26.0, Debug build; evidence in `evidence/device-run-2026-06-10/`):
+
+| Item | Result | Evidence |
+| --- | --- | --- |
+| Before: `replaceWith` unset displays `name` (heart, AX identifier `heart`) | PASS | `A1-1-before-replaceWith-unset.png` |
+| After: `replaceWith: "star"` changes the displayed glyph (AX identifier `star`, caption `heart · bounce · value → star`) | PASS | `A1-1-after-replaceWith-star.png` |
+| Transition: symbol-effect morph while toggling `replaceWith` heart→star→heart→star | PASS | recording reviewed in-session, not retained (repo policy: no video files); the before/after stills + AX identifiers are the durable evidence |
+| Regression: bounce still plays (`trigger: "repeat"`; the still catches the glyph mid-bounce) | PASS | `A1-1-regression-bounce-repeat.png` (recording reviewed in-session, not retained) |
+| Regression: clearing `replaceWith` returns the display to `name` (AX identifier back to `heart`) | PASS | `A1-1-regression-cleared-back-to-name.png` |
+
+The A1-2 coverage gap (iOS 17 / sub-17 degradation) remains open — the installed 18.5 runtime is ≥18 and cannot exercise it.
+
+Next: maintainer ratification of A1-1 evidence.
+
+## 2026-06-10 — A1-1 ratified; device gate held for older hardware
+
+- The maintainer ratified the A1-1 evidence: `replaceWith` drives the displayed glyph, the
+  fix round is accepted. Reviewer approved the diff (one-expression fix honoring the `24`
+  contract; mechanic pinned in `structure.ios.md` §symbol before code, per the operating
+  rule).
+- Maintainer decision on A1-2: do NOT waive — the OS-degradation rows (iOS 17 loses
+  `breathe`/`rotate`/`wiggle` gracefully; sub-17 renders `Color.clear`) wait for a real
+  iOS 17 / sub-17 device. U3-007 therefore stays short of `device-verified`; the state
+  moves to `device-pending`, blocked on hardware availability only.
+- Repo policy applied: the two device-run recordings and their gesture-telemetry sidecars
+  were deleted before commit — video files are not committed as evidence; the stills and
+  AX-identifier captures are the durable record.
+
+Next: acquire/borrow an iOS 17 or sub-17 device for the A1-2 rows; everything else on
+U3-007 is done.

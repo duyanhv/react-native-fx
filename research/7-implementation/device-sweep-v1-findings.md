@@ -11,6 +11,13 @@ closure; these are reviewer findings, not closures. Evidence captured under
 
 ## A1 · U3-007 symbol — pass, with one semantic finding + a coverage gap
 
+> **A1-1 RESOLVED (2026-06-10).** `replaceWith` now drives the displayed glyph
+> (`replaceWith ?? name` in `FxSymbolView`), honoring the `24` contract — no rename.
+> Device-evidenced (AX identifiers heart→star, static background) and maintainer-ratified;
+> evidence in `tasks/U3-007/evidence/device-run-2026-06-10/`. **A1-2 stays open by
+> maintainer decision (not waived):** the OS-degradation rows wait for a real iOS 17 /
+> sub-17 device. The text below is the original sweep record, kept as written.
+
 Confirmed: renders through the hosted path; `symbolConfig` reaches native; discrete
 (`bounce`) and indefinite (`variableColor`) effects animate; `repeat` loops; an
 iOS-18-only effect (`wiggle`) renders rather than degrading; symbol→symbol transition

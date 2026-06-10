@@ -5,8 +5,10 @@ import SwiftUI
 ///
 /// Renders via `Image(systemName:)` with `.symbolEffect` on iOS 17+.
 /// The `symbolConfig` prop carries `{ name, animation, trigger, replaceWith }` as a structured
-/// record; the native side never parses strings. `.contentTransition(.symbolEffect(.automatic))`
-/// handles symbol-to-symbol transitions.
+/// record; the native side never parses strings. The displayed glyph resolves to
+/// `replaceWith ?? name`; setting `replaceWith` arms
+/// `.contentTransition(.symbolEffect(.automatic))`, so the system animates the
+/// symbol-to-symbol transition when the resolved glyph changes.
 ///
 /// Discrete animations (bounce, pulse, scale, appear, disappear) fire once on mount.
 /// Indefinite animations (variableColor, breathe, rotate, wiggle) play while `trigger` is
@@ -31,7 +33,7 @@ internal struct FxSymbolView: View {
     if symbolConfig.name.isEmpty {
       Color.clear
     } else {
-      let image = Image(systemName: symbolConfig.name)
+      let image = Image(systemName: symbolConfig.replaceWith ?? symbolConfig.name)
         .resizable()
         .aspectRatio(contentMode: .fit)
 

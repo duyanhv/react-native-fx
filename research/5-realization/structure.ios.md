@@ -221,7 +221,11 @@ The driver node (`02`) lowers two ways, by **target**:
 ### `symbol`
 - **`.symbolEffect`** — `requires {os:17, hosted}` (`.breathe`/`.rotate`/`.wiggle`
   need 18); `.contentTransition(.symbolEffect)` for symbol→symbol. Self-contained,
-  self-gesturing where relevant. No `expo-view` rung.
+  self-gesturing where relevant. No `expo-view` rung. The displayed glyph is
+  `replaceWith ?? name`: setting `replaceWith` arms
+  `.contentTransition(.symbolEffect(.automatic))` and the system animates the
+  symbol→symbol transition when the resolved glyph changes; while set, `replaceWith`
+  takes precedence over `name`.
 
 ### `content-distort` — out-of-scope on iOS
 - **`.layerEffect`** — `requires {os:17, hosted}`, `status:out-of-scope`. Sampling a

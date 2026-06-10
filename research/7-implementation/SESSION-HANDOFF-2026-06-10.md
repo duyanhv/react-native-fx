@@ -108,3 +108,15 @@ Decision 1 was taken (do the UIKit rework now) and executed end-to-end:
 Still open from this handoff: **decision 2** (A1 `replaceWith` — U3-007), **decision 3**
 (the F1–F19 critique triage), **U3-003** (Android material). The sweep docs stay until
 A1 and B1 are fixed and device-verified (the housekeeping rule above).
+
+## Addendum 2 — decision 2 executed (same day)
+
+A1 `replaceWith` (decision 2) was taken: **drive the glyph**, per the `24` contract — no
+rename. The fix (`replaceWith ?? name` in `FxSymbolView`) is device-evidenced
+(AX-identifier proof) and maintainer-ratified. A1-2 (OS degradation) is deliberately NOT
+waived: U3-007 sits at `device-pending`, blocked only on a real iOS 17 / sub-17 device.
+Repo policy set this session: no video files committed as evidence — stills + structural
+captures only.
+
+Remaining from this handoff: **decision 3** (the F1–F19 critique triage) and **U3-003**
+(Android material, B1). The sweep docs additionally wait on B1 and the A1-2 hardware.
