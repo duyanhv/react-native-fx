@@ -335,11 +335,11 @@ channel (mirrors `symbolConfig`, per `21` §The typed inputs — `variant: 'regu
    iOS 26. Done.
 2. **The example selector** — the glass section on the `hosting-parity` screen (variant
    segmented control + press-response toggle, glass tile inside the scroller). Done.
-3. **The glass-style device check** (Section A2 of `device-sweep-v1.md`). Human gate.
+3. **The glass-style device check** (scenario in `tasks/U3-002/evidence/headless.md`). Human gate.
 
-FX-005 (uniform alignment, Section A3) and SPINE-012 (hosting parity / many boundaries / GPU
-resume, Sections A4 + B2) are pure device-verify against the EX-001 harness — no library work.
-The single-pass scenarios live in `device-sweep-v1.md`.
+FX-005 (uniform alignment) and SPINE-012 (hosting parity / many boundaries / GPU resume) are
+pure device-verify against the EX-001 harness — no library work. The scenarios live in
+`tasks/U3-002/evidence/headless.md` (the sweep docs were retired 2026-06-10; history in git).
 
 Checklist:
 - [x] spec'd
@@ -356,7 +356,7 @@ Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run swift:lint`,
   `bun run test` (21 tests) from `packages/`; `bunx tsc --noEmit` from `example/`; local
   xcodebuild (Debug, iphonesimulator) BUILD SUCCEEDED — `tasks/U3-002/evidence/xcodebuild.md`.
-- device: `device-sweep-v1.md` §A2/§A3/§A4/§B2 — scenario in `tasks/U3-002/evidence/headless.md`.
+- device: scenario in `tasks/U3-002/evidence/headless.md` (formerly sweep §A2/§A3/§A4/§B2; the sweep docs were retired 2026-06-10 — history in git). Verified 2026-06-10.
 - docs: on device pass, FX-002 closes in `21`, FX-005 in `22`, SPINE-012 in `01` + the ledger.
 
 ## U3-001 — hosted effect renderer

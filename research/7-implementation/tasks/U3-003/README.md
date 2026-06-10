@@ -24,7 +24,10 @@ Subtask: Android material — own-content composition + RenderEffect blur (bluep
                      and interactive: boolean; §Degradation pins the fallback-ladder law "never a
                      flat box"), 02 (material manifest node), structure.android.md §material (the
                      sole mechanic home — this task reconciles it to the decided shape),
-                     device-sweep-v1-findings.md §B1 (the finding this task closes).
+                     sweep finding B1 (the finding this task closes: effect="material"
+                     had no Android branch — the glass stage rendered only the backdrop;
+                     the sweep docs were retired 2026-06-10, history in git — the device
+                     scenario lives in evidence/headless.md).
 - Decision:          maintainer-ratified 2026-06-10; do not re-litigate.
                      (1) Default = own-content composition: an fx-drawn translucent stack
                      (gradient/scrim) blurred by RenderEffect.createBlurEffect applied to fx's
