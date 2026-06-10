@@ -1,0 +1,52 @@
+Page: expo.modules.fx.example
+App: expo.modules.fx.example
+Snapshot: 48 visible nodes
+@e1 [application] "react-native-fx-example"
+@e2 [window]
+@e3 [other] "Tab Bar"
+@e4 [navigation-bar] "Tasks"
+@e5 [button] "Tasks"
+@e6 [text] "U3-007"
+@e7 [scroll-area] "U3-007 · iOS symbol effect" [scrollable]
+  [content below scroll-area hidden]
+@e8 [other] "U3-007 · iOS symbol effect"
+@e9 [text] "Symbol"
+@e10 [other] "heart"
+@e11 [segmented-control] "heart"
+@e12 [button] "heart" [selected]
+@e13 [button] "star"
+@e14 [button] "bell"
+@e15 [button] "heart.fill"
+@e16 [button] "star.fill"
+@e17 [text] "Animation"
+@e18 [other] "bounce"
+@e19 [segmented-control] "bounce"
+@e20 [button] "bounce" [selected]
+@e21 [button] "pulse"
+@e22 [button] "scale"
+@e23 [button] "appear"
+@e24 [button] "disappear"
+@e25 [button] "variableColor"
+@e26 [button] "breathe"
+@e27 [button] "rotate"
+@e28 [button] "wiggle"
+@e29 [text] "Trigger"
+@e30 [other] "value"
+@e31 [segmented-control] "value"
+@e32 [button] "value" [selected]
+@e33 [button] "state"
+@e34 [button] "repeat"
+@e35 [text] "Replace with"
+@e36 [other] "heart"
+@e37 [segmented-control] "heart"
+@e38 [button] "heart" [selected]
+@e39 [button] "star"
+@e40 [button] "bell"
+@e41 [button] "heart.fill"
+@e42 [button] "star.fill"
+@e43 [text] "heart · bounce · value"
+@e44 [tab-bar] "Tab Bar"
+@e45 [other] "Tasks"
+@e46 [button] "Tasks" [selected]
+@e47 [button] "Comps"
+@e48 [button] "Settings"

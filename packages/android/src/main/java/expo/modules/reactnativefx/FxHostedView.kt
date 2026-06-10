@@ -101,6 +101,8 @@ class FxHostedView(
       ViewGroup.LayoutParams.MATCH_PARENT,
       ViewGroup.LayoutParams.MATCH_PARENT
     )
+    // Decorative effect output is presentation-only; keep it out of the TalkBack tree.
+    view.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
     addView(view)
     effectView = view
     mountedEffectId = effect

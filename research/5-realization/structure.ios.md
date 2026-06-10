@@ -39,6 +39,22 @@ layout/hit-testing to a `UIHostingController`.
   fx view as the first child of an `RNHostView` — it double-handles touches.
 - fx hosts SwiftUI itself with a boundary it controls (own the `pointerEvents` +
   sizing), rather than riding the universal auto-Host.
+- **Persistent host:** the hosted substrate keeps ONE `UIHostingController` per view
+  whose root view reads an observable props holder (`@Published` snapshot of the
+  resolved props, the Expo `SwiftUIHostingView` idiom). A prop batch mutates the
+  holder and SwiftUI diffs the change into the live tree — in-flight symbol-effect
+  state, the shader clock, and glass press state survive unrelated prop changes,
+  which is what the eased-uniform `transition` channel rides on. The controller is
+  torn down only when the effect identity changes its class of realization
+  (SwiftUI-hosted ↔ the UIKit glass surface — the two mount paths stay exclusive)
+  or the host unmounts.
+- **Accessibility default:** hosted decorative effect views are excluded from the
+  accessibility tree (`accessibilityElementsHidden` on iOS,
+  `importantForAccessibility="no"` on Android) — a hosted SF Symbol image would
+  otherwise surface its own VoiceOver label. The interactive glass surface stays IN
+  the tree: it is self-gesturing. (Open: the interactive glass's VoiceOver
+  semantics — label, trait, announced state — are owned by the interactive-surface
+  work, not pinned here.)
 
 ### Clock (what advances `time`)
 

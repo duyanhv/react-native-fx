@@ -28,6 +28,9 @@ internal final class FxGlassSurfaceView: UIView {
     effectView.frame = bounds
     effectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     addSubview(effectView)
+    // Decorative glass is presentation-only and starts hidden from the accessibility
+    // tree; setMaterialConfig re-admits it when the glass turns interactive.
+    accessibilityElementsHidden = true
   }
 
   internal required init?(coder: NSCoder) {
@@ -50,6 +53,9 @@ internal final class FxGlassSurfaceView: UIView {
     }
     variant = newVariant
     interactive = newInteractive
+    // The interactive glass carries the system press response, so it stays reachable
+    // to assistive technologies; only the decorative variant is hidden.
+    accessibilityElementsHidden = !newInteractive
     applyEffect()
   }
 
