@@ -79,6 +79,18 @@ mechanism for "this effect needs a newer OS" — handled as data, not as a plugi
    so the dependency is genuinely optional. The optional-peer rule is **settled** (this
    decision); the only open part is whether the manifest **names the package + version**
    (`02`); install docs list these as optional peers.
+7. **No-rung degradation: silent omission in production, `__DEV__` console warning.**
+   When a capability's ladder bottoms out at `{via:'none'}` (no satisfiable rung at all),
+   the effect layer is silently omitted in production — any wrapped content remains fully
+   visible and interactive (`rule #5`). For motion, the no-rung case degrades to instant
+   placement (content visible, no animation), consistent with the reduce-motion posture
+   (`41` Decision 9). In `__DEV__`, the adapter emits a console warning naming the node,
+   platform, and the guarding condition. A static fallback is never invented unless the
+   ladder itself defines one (e.g., glass below floor degrades to material/blur, which is a
+   rung-with-fallback, not a no-rung case). This policy is the umbrella over the ratified
+   degradation decisions: glass below floor → material/blur (`21` Decision 4); reduce-motion
+   → instant placement (`41` Decision 9); symbol on Android → `{via:'none'}` (DOC-008); BYO
+   missing platform file → `{via:'none'}` (`22` Decision 6).
 
 ## Open questions
 
@@ -87,9 +99,7 @@ mechanism for "this effect needs a newer OS" — handled as data, not as a plugi
   bare iOS build (Metal toolchain → `pod install` → `xcodebuild` — proves native autolink + compile),
   bare Android autolink (package id + module class resolve). Proven on `macos-26` with Swift 6.2
   (2026-06-07, U1-004).
-- **Runtime guard UX** — when an effect has no satisfiable rung (e.g. AGSL below API 33
-  with no fallback), what does the consumer see — a no-op, a static fallback, a dev
-  warning? Tie to `50` and the `{via:'none'}` contract (`02`).
+- ~~**Runtime guard UX**~~ — **resolved (DOC-012, 2026-06-10).** Decision 7: silent omission in production, `__DEV__` console warning. Motion no-rung maps to instant placement. No static fallback invented unless the ladder itself defines one.
 - **Android backend maturity** — revisit if the Android path ever needs a real mod
   (then, and only then, a scoped plugin).
 

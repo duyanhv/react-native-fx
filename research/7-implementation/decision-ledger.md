@@ -131,7 +131,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 | id | status | source | decision / pending work | blocks | close condition |
 |---|---|---|---|---|---|
 | SHIP-001 | resolved | `52` | `package.json` — the root-only `exports` map, the `files` allowlist (including both shader asset trees), `publishConfig` public, and corrected metadata (drop `FxShader`). | any publish; `IMPL-001` | `package.json` matches `52` — **done (U1-001):** root `exports`, `files` allowlist shipping both asset trees, `publishConfig` public, `FxShader` dropped; `npm pack --dry-run` verified |
-| SHIP-002 | open | `53` | The runtime guard UX when no rung is satisfiable — a no-op, a static fallback, or a dev warning. | — | the no-rung degradation behavior recorded in `53` |
+| SHIP-002 | resolved | `53` | The runtime guard UX when no rung is satisfiable — a no-op, a static fallback, or a dev warning. | — | **Resolved (DOC-012, 2026-06-10).** `53` Decision 7 records the policy: silent omission in production, `__DEV__` console warning. Motion no-rung maps to instant placement. No static fallback invented unless the ladder itself defines one. |
 | SHIP-003 | resolved | `53` | A bare React Native + Fabric example in CI so the install path does not rot. | — | **Done (U1-004, 2026-06-07/08).** `example-bare/` wired into `.github/workflows/ci.yml` — all 4 jobs green (ts, swift, bare-ios compile, bare-android autolink). Recorded in `53`. |
 | SHIP-004 | deferred | `53` | A config plugin, introduced only when a real V2 native mod forces it. | — | a V2 native mod triggers it |
 
