@@ -53,7 +53,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U2-001 | Unit 2 | implement | merged | no | SPINE-013 | SPINE-013 | — | typed `select()` in `packages/src/manifest/select.ts` skips planned and out-of-scope rungs; 17 Jest tests pass; `02` selection rule updated; reviewed (batch); [detail](#u2-001--planned-rung-selection) |
 | U2-002 | Unit 2 | rework | merged | no | SPINE-003 | SPINE-003 | — | `02` UniformSpec widened with `boolean` + `color[]`; `data-layer.md` provisional note removed; types manually synced in `packages/src/manifest/types.ts`; reviewed (batch); [detail](#u2-002--uniformspec-schema-reconciliation) |
 | U3-001 | Unit 3 | implement | merged | yes | — | RT-009 | U1-002, U2-001 | RT-009 + fill (iOS+Android) + iOS material; device-verified iOS 26+ (2026-06-08); shader → U3-006, symbol → U3-007; [detail](#u3-001--hosted-effect-renderer) · [review](./reviews/U3-001.md) |
-| U3-002 | Unit 3 | device-verify | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, glass styles, uniform alignment, GPU resume |
+| U3-002 | Unit 3 | device-verify (hybrid) | todo | yes | — | SPINE-012, FX-002, FX-005 | U3-001 | device: hosting parity, uniform alignment, GPU resume; **FX-002 glass styles need a `glassStyle` library prop added first** (folded into spec — [detail](#u3-002--hosting-parity--glass-styles--uniforms-scope-note)) |
 | U3-003 | Unit 3 | implement | todo | yes | — | FX-003 | U3-001 | device: Android glass fallback + intensity 0–1; RenderEffect staleness |
 | U3-004 | Unit 3 | ratify | ready-to-merge | no | — | FX-006 | U3-001 | docs: `22` BYO `.metal`/`.agsl` registration contract ratified; [detail](#u3-004--byo-registration-contract) |
 | U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
@@ -319,6 +319,26 @@ Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, and `bun run test` from `packages/` all pass. 17 Jest tests prove planned rungs are skipped, out-of-scope rungs are skipped, OS gating works, `wantInteractive` enforces expo-view, driver target matching works, and empty/guarded-out ladders degrade to `{ via: 'none' }`.
 - device: N/A.
 - docs: `02` selection rule updated with `planned` skip. decision-ledger SPINE-013 resolved.
+
+## U3-002 — hosting parity / glass styles / uniforms (scope note)
+
+Type: `device-verify` (hybrid — includes a library prep step) · State: `todo` · Device: yes ·
+Consumes: — · Closes: SPINE-012, FX-002, FX-005 · Blocked by: U3-001
+
+Scope folded in (Planner, 2026-06-10): **FX-002 (glass styles `.regular`/`.clear`/`.identity`)
+cannot be device-verified until the library exposes a glass-style prop.** `FxMaterialView`
+currently uses bare `.glassEffect()` (no `UIGlassEffect.Style`), and there is no `glassStyle`
+prop on `FxHostedView`/`FxModule`. So U3-002's eventual spec must, in order:
+
+1. **Add the library prop** — `glassStyle` on `FxHostedView` (TS `NativeFxHostedProps`) +
+   `FxModule` `Prop` + `FxMaterialView` applying `UIGlassEffect.Style` on iOS 26.
+2. **Build the example selector** — the EX-001 harness leaves the glass-styles row `❌` on
+   purpose; add the style picker once the prop exists.
+3. **Run the glass-style device check** (Section A2 of `device-sweep-v1.md`).
+
+FX-005 (uniform alignment, Section A3) and SPINE-012 (hosting parity / many boundaries / GPU
+resume, Sections A4 + B2) are pure device-verify against the EX-001 harness — no library work.
+The single-pass scenarios live in `device-sweep-v1.md`.
 
 ## U3-001 — hosted effect renderer
 
