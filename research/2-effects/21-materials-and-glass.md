@@ -136,6 +136,14 @@ in `02`). If the lib isn't present, the rung guards out and the ladder degrades 
    `GlassEffectContainer` on iOS 26+; fx exposes no explicit `spacing` or merge-threshold
    prop in V1. The merge-threshold contract is deferred to V2. Glass is the only effect
    that supports cross-item morph in V1.
+6. **The Android glass default + uniform mapping are pinned (FX-003; U3-003 device gate,
+   2026-06-11).** Android's default is the own-content translucent stack with
+   `RenderEffect.createBlurEffect` applied via `setRenderEffect` (API 31+), degrading to the
+   unblurred translucent stack below 31 — never a flat box; true backdrop blur (Haze) stays
+   the planned optional-peer rung. `intensity` normalizes 0–1 on both platforms: iOS
+   `fractionComplete`, Android blur radius (0–24dp) + overlay alpha. Device-verified on
+   hardware (POCO F1, API 35): live intensity easing, both variants, `interactive` inert,
+   and no `RenderEffect` staleness under scroll. Mechanics live in `structure.android.md`.
 
 ## Open questions
 
@@ -143,10 +151,12 @@ in `02`). If the lib isn't present, the rung guards out and the ladder degrades 
   gate, 2026-06-10).** `.regular`/`.clear` confirmed on device (iOS 26, Xcode 26.5) via
   `UIGlassEffect` on the shipped UIKit rung — visually distinct over a moving backdrop.
   `.identity` is moot: this doc ships `regular`/`clear` only and fx does not adopt it.
-- **Android backdrop blur cost** — capturing parent content for true backdrop blur is
-  expensive/stale-prone; decide the default (own-content blur vs Haze) per `structure.android`.
-- **`intensity` semantics across platforms** — `fractionComplete` on iOS vs blur radius on
-  Android; normalize 0–1 consistently.
+- ~~**Android backdrop blur cost**~~ — **resolved (FX-003; U3-003 device gate, 2026-06-11).**
+  The default is own-content blur (Decision 6); Haze stays the planned optional-peer rung.
+  Staleness device-checked clean on hardware.
+- ~~**`intensity` semantics across platforms**~~ — **resolved (FX-003; U3-003 device gate,
+  2026-06-11).** Normalized 0–1: iOS `fractionComplete`, Android blur radius + overlay alpha
+  (Decision 6).
 - **`FxGroup` merge contract for glass** — **resolved (DOC-006, 2026-06-10).** Merge
   semantics are system-owned in V1 via `GlassEffectContainer`; no explicit `spacing` prop.
   See `57` Decision 6 and `21` Decision 5.

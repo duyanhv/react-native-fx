@@ -47,7 +47,29 @@ mismatch (caught by `compileDebugKotlin`).
 
 ## Device results
 
-Device run pending — no Android device attached (`adb devices` empty this session).
-The B1 scenario is written in `evidence/headless.md`; the Debug APK is built.
+### 2026-06-11 — B1 run on POCO F1 (API 35) via agent-device — PASS recommended
 
-Next: attach the POCO F1 and run the device scenario.
+Fresh `./gradlew :app:assembleDebug` → `adb install -r` (APK timestamp current). The B1
+scenario is split across the two material screens (the glass section's slider drives the
+`loop` shader, not the material, so intensity is exercised on the android-material screen):
+
+- **B1-1 render — PASS:** translucent frosted panel over its own stack on both screens (not
+  absent, not a flat/dark box).
+- **Intensity — PASS:** 0.20 vs 0.98 visibly differ in blur radius, applied live in place (no
+  flash/remount). Overlay-opacity difference subtle on the white stage; blur radius unmistakable.
+- **Variant — PASS:** `regular` heavier frost vs `clear` lighter/more transparent (scrim 0.55 vs
+  0.28), in place.
+- **Interactive (inert) — PASS:** toggled `interactive`, pressed the tile — no crash, no behavior
+  change, no press feedback; PID stable, no logcat exception.
+- **Scroll — PASS:** 59.8 fps, 0 stutters (4+) with the material mounted; ~0.9% dropped session
+  cumulative. No B2 regression.
+- **Staleness — observed clean:** the blur tracks the moving/recoloring block (no `RenderEffect`
+  staleness).
+- **Below-31 floor — not exercisable** on an API 35 device (covered by the `SDK_INT` guard + the
+  manifest `select()` test).
+
+Results + PASS/FAIL writeup in `evidence/device.md`; stills in `evidence/device-run-2026-06-11/`.
+The unverified claims above are now all observed PASS on device. `device-verified` NOT ticked.
+
+Next: maintainer ratifies `device-verified` on the evidence — FX-003 closes in `21` only after
+that tick; then `reviewed` / `docs-closed` / `merged`.

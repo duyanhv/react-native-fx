@@ -83,9 +83,9 @@ Subtask: Android material — own-content composition + RenderEffect blur (bluep
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified (human gate — no Android device attached this session)
-- [ ] reviewed
-- [ ] docs-closed
+- [x] device-verified (maintainer-ratified 2026-06-11 — B1 PASS on POCO F1/API 35: render, live intensity, variants, interactive-inert, scroll 59.8 fps, staleness clean; `evidence/device.md` + `evidence/device-run-2026-06-11/`)
+- [x] reviewed (reviewer, 2026-06-11 — `../../reviews/device-batch-2026-06-11.md`)
+- [x] docs-closed (FX-003 closed: `21` Decision 6 + both open questions struck + ledger row resolved)
 - [ ] merged
 
 ## Proof

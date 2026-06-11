@@ -90,3 +90,101 @@ Drop into this folder on a run: the GPU frame capture (or HUD screenshot) for (a
 trace for (b), and a screenshot of a mixed screenful with captions legible. Append a dated
 **Results** section below (follow U4-003's `evidence/device.md` shape — PASS/FAIL per scenario,
 with the allocation count called out).
+
+---
+
+## Results — 2026-06-11 · iOS 26.5 sim (iPhone 17 Pro) + Android (POCO F1, API 35), agent-device
+
+Driven via agent-device. The iOS leg used the **U4-003 log-only instrumentation pattern**: three
+`NSLog("[FXINSTR] …")` lines — one in the static `sharedDevice`/`sharedCommandQueue` initializers
+(device/queue creation, fires once per process), one in `ensureEffectSurface()` (the per-view
+`MTKView` allocation point), one on the pipeline-cache **miss** in `pipeline(for:)` (a compile;
+omitted on cache hit so the per-frame `draw` path is not logged and the perf read is clean). The
+instrumentation has no behavioral effect and was **reverted after the run** — `git diff` on
+`packages/` is empty and `swift:lint` + `bun run lint` pass. Artifacts in this folder:
+`ios-fxinstr-device-log.txt`, `ios-stress-list-screenful.png`, `ios-stress-list-aurora-blank.png`,
+`ios-stress-list-inksmoke-repeat.png`, `ios-a11y-tree.txt`; `android-stress-list-screenful.png`,
+`android-stress-list-scrolled.png`, `android-a11y-tree.txt`.
+
+The stress list assigns shader cells at `index % 4 == 0`, id = `SHADER_IDS[floor(index/4) % 10]`
+(all ten curated ids cycle). The iOS interactive raster path (`FxSurfaceView.fragmentName`)
+implements **five** of them — `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, `dots`; the
+other five (`aurora`, `noise-field`, `plasma`, `caustics`, `edge-glow`) have no raster fragment.
+
+### (a) Multi-instance shared Metal context — **PASS** (iOS)
+
+Final `[FXINSTR]` tally after launch → EX-002 → full down-and-back traversal of the 100-cell list:
+
+```
+MTLDevice created (once per process) = true   ← appears EXACTLY ONCE
+MTLCommandQueue created (once per process) = true   ← appears EXACTLY ONCE
+pipeline COMPILED  ×5  — fractal-clouds, ink-smoke, liquid-chrome, loop, dots (each ONCE)
+allocating MTKView ×28 — every line attributable to a shader cell (see (c))
+```
+
+- **One** `MTLDevice` and **one** `MTLCommandQueue` for the whole process, however many shader
+  surfaces are live — never one per instance.
+- **5 pipeline compiles = the 5 distinct raster ids, each compiled once and never again.** Repeat
+  ids reused the cached pipeline with no recompile: e.g. `ink-smoke` first compiled for cell #4 and
+  rendered again at cell #44 from the same cached `MTLRenderPipelineState`
+  (`ios-stress-list-inksmoke-repeat.png`) — no new COMPILE line. The pipeline cache holds one entry
+  per distinct id, valid across instances. This closes the multi-instance half of U4-003 / F11.
+
+### (b) Scroll perf on the mixed list — **PASS (Android hardware)** · **partial (iOS sim)**
+
+- **Android (physical POCO F1) — PASS.** Full-list flick-scroll to the bottom and back, repeated.
+  Cumulative gfxinfo over the session: **0.9% dropped / 17,507 frames @ 59.9 Hz**; a dedicated
+  scroll window read **0.4% dropped / 11,768 frames**; the heaviest full-list fling window read
+  **2.6% dropped / 2,528 frames**. The app's dev HUD held **UI 59.8 fps** with **0 stutters (4+)**
+  for the entire session — no sustained frame drops, no jank concentrated when shader/fill/material
+  cells scrolled in or out (`android-stress-list-scrolled.png`).
+- **iOS (simulator) — partial.** Apple frame-health sampling is unavailable on the simulator
+  (tooling limitation; the Device Verification Guide also flags simulator perf as unrepresentative).
+  The rule-#1 claim is still observable from the log: native-side work fires only at **mount**
+  (allocations) and **once per id** (compiles) — there is **no per-frame `[FXINSTR]` churn** and the
+  per-frame `draw` path crosses nothing to JS; scroll was visually smooth. The hardware perf number
+  comes from the Android leg above. A representative iOS perf trace wants a physical iPhone.
+
+### (c) Shader-less cells allocate no MTKView at list scale — **PASS** (iOS)
+
+All **28** `MTKView` allocations across the traversal originate in `ensureEffectSurface()`, which is
+reached only through `updateEffectSurfaceVisibility()` when `hasActiveEffect` is true — i.e. only
+when a shader resolves to a usable pipeline. **Motion-only cells (`#3`, `#7`, `#11`, … — no
+`shader` prop) never enter that path, so they allocate zero `MTKView`.** The 28 allocations are
+explained entirely by raster shader cells mounting and recycling under scroll (a recycled cell
+releases its `MTKView` on unmount and allocates a fresh one on re-entry; the count grows with churn,
+bounded per live cell). Motion cells render their wrapped `content only` card correctly with no GPU
+surface. This confirms F2 at list scale.
+
+### Accessibility — **PASS** (both platforms)
+
+- **iOS** (`ios-a11y-tree.txt`): decorative shader/fill/material surfaces appear only as unlabeled
+  generic `Other` containers — no label, trait, or focusable element; they do not steal focus. The
+  motion-only cell's wrapped content is reachable as StaticText (`content only`, `wrapper animates
+  this — no Metal`). The list reads in cell order.
+- **Android** (`android-a11y-tree.txt`): decorative fx surfaces expose no accessibility node at all;
+  the motion-only wrapped content is reachable as its own text nodes; reads in cell order.
+
+### Findings flagged for the maintainer (not blockers for (a)/(b)/(c)/a11y)
+
+1. **Android shader cells render blank** — the stress-list shader cells use the expo-view path
+   (`<FxSurfaceView shader=…>`, `stress-list.tsx:90`), and on Android that path's shader renderer is
+   **not implemented**: `FxSurfaceView.kt` `updateEffectSurfaceVisibility()` is an explicit `TODO`
+   that attaches no render surface (`dispatchShaderLoadState()` only *compiles* the AGSL to fire
+   `onFxLoad`/`onFxError`, never draws it). The hosted path (`FxShaderView.kt onDraw` → `RuntimeShader`)
+   does render — the hosting-parity `loop`/`aurora` tiles draw — but the **interactive (expo-view)
+   shader renderer is a deferred Android phase**. Consequently this scenario doc's claim that the
+   Android leg renders "shader cells via AGSL" is **inaccurate** and should be corrected to "fill /
+   material render; expo-view shader cells are blank pending the Android interactive renderer."
+2. **iOS non-raster shader cells render blank** — `aurora`, `noise-field`, `plasma`, `caustics`,
+   `edge-glow` have no raster fragment on the interactive surface, so those shader cells are blank on
+   iOS too (`ios-stress-list-aurora-blank.png`, cell #20 `aurora`). This is **by design** — the
+   interactive raster path implements a five-id subset (`FxSurfaceView.fragmentName`); the full
+   catalog renders only on the hosted path.
+
+### Recommendation
+
+**(a) PASS, (c) PASS, a11y PASS, (b) PASS on Android hardware / partial on iOS sim.** The shared
+process-wide Metal context, same-id pipeline reuse, and zero-MTKView-for-motion-cells claims are
+proven at list scale. Leave EX-002 `device-pending` for maintainer ratification; address the two
+findings above (the Android-renderer gap is pre-existing, not introduced by EX-002).

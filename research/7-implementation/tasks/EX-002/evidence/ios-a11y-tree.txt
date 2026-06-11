@@ -1,0 +1,23 @@
+EX-002 iOS a11y traversal — iPhone 17 Pro simulator (iOS 26.5), 2026-06-11
+Captured from the agent-device accessibility snapshot of the stress list (cells #29–#34).
+The AX snapshot is the VoiceOver traversal tree.
+
+Decorative fx surfaces (shader / fill / material) appear only as UNLABELED generic
+`Other` containers — no accessibility label, no trait, no focusable/hittable element.
+They do not steal focus or announce themselves. (Caption StaticText nodes are the demo
+screen's own labels above each cell, not the fx surfaces.)
+
+Reachable cell captions, in order:
+  "#29 · fill · FxHostedView"
+  "#30 · material · FxHostedView"
+  "#31 · motion-only · FxSurfaceView (no MTKView)"
+  "#32 · shader · FxSurfaceView (MTKView) · caustics"
+  "#33 · fill · FxHostedView"
+  "#34 · material · FxHostedView"
+
+The motion-only cell's WRAPPED content is reachable as its own StaticText:
+  "content only"
+  "wrapper animates this — no Metal"
+
+PASS: decorative surfaces inert (unlabeled, non-focusable) in the a11y tree; the wrapped
+motion content is reachable with its text; the list reads in cell order.
