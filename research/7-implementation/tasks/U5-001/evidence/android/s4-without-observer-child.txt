@@ -1,0 +1,3 @@
+{"index":57,"type":"android.view.ViewGroup","label":"Tap me, count: 0","bundleId":"expo.modules.fx.example","rect":{"x":265,"y":958,"width":550,"height":550},"enabled":true,"visibleToUser":true,"hittable":true,"depth":18,"parentIndex":56,"ref":"e58"}
+{"index":58,"type":"android.widget.TextView","label":"Tap me","value":"Tap me","bundleId":"expo.modules.fx.example","rect":{"x":475,"y":1179,"width":129,"height":53},"enabled":true,"visibleToUser":true,"depth":19,"parentIndex":57,"ref":"e59"}
+{"index":59,"type":"android.widget.TextView","label":"count: 0","value":"count: 0","bundleId":"expo.modules.fx.example","rect":{"x":481,"y":1243,"width":118,"height":44},"enabled":true,"visibleToUser":true,"depth":19,"parentIndex":57,"ref":"e60"}

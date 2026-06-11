@@ -111,6 +111,40 @@ layout/hit-testing to a `UIHostingController`.
   process-lived and never torn down (only the per-view `MTKView` is released on `deinit`); all
   access is on the main thread (Expo prop application and the `MTKView` display link).
 
+### Layout read (the post-layout frame)
+
+How `FxLayoutObserver` (`33`/`36`) reads the RN-assigned frame of `FxSurfaceView` natively —
+event-driven, read-only, no JS round-trip.
+
+- **Where RN applies the frame.** Fabric resolves Yoga layout *before* mounting
+  (`references/react-native` `ShadowTree.cpp:417`), then applies each view's metrics in
+  `updateLayoutMetrics:oldLayoutMetrics:` by setting **`center` then `bounds`** (never `frame`,
+  because of transforms) — `references/react-native`
+  `React/Fabric/Mounting/UIView+ComponentViewProtocol.mm:84-110`. The applied rect is
+  `RCTCGRectFromRect(layoutMetrics.frame)`: **origin relative to the parent's outer border, in
+  points** (`ReactCommon/react/renderer/core/LayoutMetrics.h:24`).
+- **The read point: KVO on `\.bounds` of the host view.** `updateLayoutMetrics` itself is not
+  reachable from Swift — its signature takes `const facebook::react::LayoutMetrics &`, so
+  overriding it needs an ObjC++ shim against renderer internals (rejected — rule #7's
+  no-shadow-tree-C++ stance). The sanctioned mechanism is expo-modules-core's own in-house
+  template, `ExpoSwiftUI.UIViewFrameObserver`: observe `\.bounds`
+  (`references/expo` `expo-modules-core/ios/Core/Views/SwiftUI/SwiftUIViewFrameObserver.swift:16-31`).
+  Bounds is set **after** center, so the origin is already current when the observation fires;
+  both setters run on every frame change, so **origin-only relayouts notify too**. The captured
+  frame is `CGRect(origin: view.frame.origin, size: bounds.size)` — parent space, points.
+  **Rejected:** `layoutSubviews` as the read point (fires on size changes only — misses
+  origin-only relayouts), any polling/`CADisplayLink` layout watcher, and a JS `onLayout`
+  round-trip.
+- **Window-space reads are live, not captured.** The window origin
+  (`convert(bounds.origin, to: nil)`) and edge-travel distances (window bounds vs the frame in
+  window space) change when an ancestor scrolls or transforms — with no local layout event — so
+  they are computed at read time; only the parent-space frame is captured on layout events.
+  Safe-area insets read on demand from `UIView.safeAreaInsets`.
+- **Threading + lifecycle.** Fabric mounting and the KVO notification run on the main thread;
+  all reads are main-thread synchronous. The observation is created with `FxSurfaceView` and
+  invalidated in its `deinit` — no observation after detach, no retain cycle (the observer
+  holds the view unowned; the KVO handler captures weakly).
+
 ### Version gates
 
 | iOS | Unlocks |

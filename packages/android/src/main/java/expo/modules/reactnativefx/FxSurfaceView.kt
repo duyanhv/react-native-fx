@@ -79,6 +79,12 @@ class FxSurfaceView(
   }
 
   /**
+   * Captures the RN-assigned post-layout frame for synchronous native reads by the
+   * future content-motion driver. Nothing crosses to JS.
+   */
+  internal val layoutObserver = FxLayoutObserver(this)
+
+  /**
    * Measures the host to the incoming specs and then measures the intermediate container
    * with exact dimensions so the RN child tree receives a real size.
    */

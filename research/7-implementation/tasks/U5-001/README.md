@@ -1,6 +1,6 @@
 # U5-001 — FxLayoutObserver: native post-layout frame reads
 
-Type: `implement` · State: `spec'd` · Device: `yes` · Consumes: RT-013 · Closes: RT-013 (**device-gated** — see Closure) · Blocked by: — (U4-001 merged)
+Type: `implement` · State: `ready-to-merge` · Device: `yes` · Consumes: RT-013 · Closes: RT-013 (**closed 2026-06-11** — device-gated, resolved in `33` + the ledger post-ratification) · Blocked by: — (U4-001 merged)
 
 ## Start here
 
@@ -96,13 +96,13 @@ Subtask: FxLayoutObserver — "The Read". A passive native observer owned by FxS
 ## Lifecycle
 
 - [x] spec'd (this README — planner, 2026-06-11)
-- [ ] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
-- [ ] device-verified (human gate)
-- [ ] reviewed
-- [ ] docs-closed (33's answered research questions struck; RT-013 closure per the device gate)
+- [x] rules-gated (2026-06-11 — #9 reads only, KVO/listener, no layout writes; #1 event-driven captures, no polling/JS; #7 pure Swift/Kotlin — the C++-typed `updateLayoutMetrics` override explicitly rejected; #3 expo-view only; no public JS surface)
+- [x] implemented (`ios/FxLayoutObserver.swift` + `android/.../FxLayoutObserver.kt`, owned by `FxSurfaceView`; structure pins written first)
+- [x] commented (iceberg — why bounds-KVO not layoutSubviews, why the listener not onLayout, why window reads are live)
+- [x] headless-done (2026-06-11 — tsc/build/lint/swift:lint/test green; `pod install` + example xcodebuild BUILD SUCCEEDED; `gradlew :app:assembleDebug` BUILD SUCCESSFUL; no TS file changes — the observer has no JS tier; device scenario written to `evidence/device.md`)
+- [x] device-verified (maintainer-ratified 2026-06-11 on the 5/5 PASS run, iOS + Android — `evidence/device.md` §Results; RT-013 two halves recorded)
+- [x] reviewed (2026-06-11, approved — `../../reviews/U5-001.md`; gates re-run post-revert, evidence verified against the tree)
+- [x] docs-closed (2026-06-11 — `33` research question struck + the two §Open questions bullets resolved (strictly `expo-view`; New Arch only) + the falsification test's layout half marked device-proven; ledger RT-013 flipped to resolved citing `33` and the evidence)
 - [ ] merged (human gate)
 
 ## Proof

@@ -75,13 +75,19 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// outer `FxSurfaceView` that Fabric tracks.
   private let intermediateContainer = UIView()
 
+  /// Captures the RN-assigned post-layout frame for synchronous native reads by the
+  /// future content-motion driver. Nothing crosses to JS.
+  internal private(set) var layoutObserver: FxLayoutObserver!
+
   /// Initializes the content-motion container only; the Metal surface is built lazily on the first active shader.
   internal required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
     setUpIntermediateContainer()
+    layoutObserver = FxLayoutObserver(observing: self)
   }
 
   deinit {
+    layoutObserver?.invalidate()
     tearDownMetal()
   }
 

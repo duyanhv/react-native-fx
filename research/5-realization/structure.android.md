@@ -117,6 +117,37 @@ component.
   attach or surface-available callback. The shared `ExpoView` boundary does not clear backend
   resources on ordinary detach.
 
+### Layout read (the post-layout frame)
+
+How `FxLayoutObserver` (`33`/`36`) reads the RN-assigned frame of `FxSurfaceView` natively —
+event-driven, read-only, no JS round-trip.
+
+- **Where RN applies the frame.** Fabric's mounting layer assigns the frame directly:
+  `SurfaceMountingManager.updateLayout` calls `view.measure(...)` with `EXACTLY` specs and then
+  `view.layout(x, y, x + width, y + height)` — `references/react-native`
+  `ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/SurfaceMountingManager.kt:829-859`.
+  The coordinates are **parent-relative, in px**.
+- **The read point: `View.OnLayoutChangeListener` on the host view.** `View.layout()` dispatches
+  registered layout-change listeners whenever any of left/top/right/bottom actually changed —
+  origin-only moves included — *independent of the `onLayout` body*. That independence is
+  load-bearing here: `FxSurfaceView` already overrides `onLayout` without calling `super` (the
+  intermediate-container mechanic above), and the listener keeps the observer decoupled from
+  that override. Expo precedent: `references/expo`
+  `expo-ui/android/src/main/java/expo/modules/ui/RNHostView.kt:131-135` (layout-change listener
+  feeding native state). **Rejected:** a second read inside the `onLayout` override (entangles
+  the two mechanics), any polling/`Choreographer` layout watcher, and a JS `onLayout`
+  round-trip.
+- **Window-space reads are live, not captured.** The window origin (`getLocationInWindow`) and
+  edge-travel distances (against the root view's window size) change when an ancestor scrolls —
+  with no local layout event — so they are computed at read time; only the parent-space frame is
+  captured on layout events. Insets read on demand via `ViewCompat.getRootWindowInsets` (RN's
+  own pattern — `references/react-native`
+  `ReactAndroid/src/main/java/com/facebook/react/runtime/ReactSurfaceView.kt:50-70`).
+- **Threading + lifecycle.** Mounting-layer layout and listener dispatch run on the UI thread;
+  all reads are UI-thread synchronous. The observer is created with `FxSurfaceView`, the view
+  holds the listener on itself (no external reference, lifetime bound to the view — no leak),
+  and `detach()` removes the listener for an explicit teardown.
+
 ### Version gates
 
 | API | Android | Unlocks |
