@@ -79,14 +79,27 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// future content-motion driver. Nothing crosses to JS.
   internal private(set) var layoutObserver: FxLayoutObserver!
 
+  /// Receives internal content-motion completion until the coordinator attaches public semantics.
+  internal var onContentAnimationCompletion: (() -> Void)?
+
+  private var contentAnimationDriver: FxAnimationDriver!
+
+  private func makeContentAnimationDriver() -> FxAnimationDriver {
+    return FxAnimationDriver(targetView: intermediateContainer) { [weak self] in
+      self?.onContentAnimationCompletion?()
+    }
+  }
+
   /// Initializes the content-motion container only; the Metal surface is built lazily on the first active shader.
   internal required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
     setUpIntermediateContainer()
     layoutObserver = FxLayoutObserver(observing: self)
+    contentAnimationDriver = makeContentAnimationDriver()
   }
 
   deinit {
+    contentAnimationDriver.cancel()
     layoutObserver?.invalidate()
     tearDownMetal()
   }
@@ -231,6 +244,14 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     updateInteraction(mode: pendingMode)
   }
 
+  internal func animateContent(to target: FxAnimationVector) {
+    contentAnimationDriver.animate(to: target)
+  }
+
+  internal func cancelContentAnimation() {
+    contentAnimationDriver.cancel()
+  }
+
   /// Reports whether the active shader loaded, once per change. A usable curated id (its
   /// pipeline compiles) fires `onFxLoad`; clearing to empty is silent; any other id has no
   /// renderer on the interactive surface and fires `onFxError`. This is the load-bearing
@@ -367,10 +388,12 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// Pauses the Metal display link when the surface cannot be displayed.
   internal override func pausePresentationLoop() {
     metalView?.isPaused = true
+    contentAnimationDriver.pause()
   }
 
   /// Resumes the Metal display link only while the surface is attached and an effect is active.
   internal override func resumePresentationLoop() {
     metalView?.isPaused = window == nil || !hasActiveEffect
+    contentAnimationDriver.resume()
   }
 }

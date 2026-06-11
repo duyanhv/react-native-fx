@@ -84,6 +84,13 @@ class FxSurfaceView(
    */
   internal val layoutObserver = FxLayoutObserver(this)
 
+  /** Receives internal content-motion completion until the coordinator attaches public semantics. */
+  internal var onContentAnimationCompletion: (() -> Unit)? = null
+
+  private val contentAnimationDriver = FxAnimationDriver(intermediateContainer) {
+    onContentAnimationCompletion?.invoke()
+  }
+
   /**
    * Measures the host to the incoming specs and then measures the intermediate container
    * with exact dimensions so the RN child tree receives a real size.
@@ -137,6 +144,14 @@ class FxSurfaceView(
     pendingInteractionMode = pendingInteractionMode.ifBlank { "none" }
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
+  }
+
+  internal fun animateContentTo(target: FxAnimationVector) {
+    contentAnimationDriver.animateTo(target)
+  }
+
+  internal fun cancelContentAnimation() {
+    contentAnimationDriver.cancel()
   }
 
   /**
@@ -261,5 +276,13 @@ class FxSurfaceView(
     // TODO: when the effect surface view is added, set its visibility here.
     // For now the surface is blank; the visibility rule is recorded so the
     // composition concern (effect + content motion) is not silently dropped.
+  }
+
+  override fun pausePresentationLoop() {
+    contentAnimationDriver.pause()
+  }
+
+  override fun resumePresentationLoop() {
+    contentAnimationDriver.resume()
   }
 }

@@ -1,6 +1,6 @@
 # U6-001 — FxAnimationDriver: the interruptible content-motion spring engine
 
-Type: `implement` · State: `spec'd` · Device: `yes` · Consumes: RT-007 · Closes: RT-007 (**device-gated** — see Closure) · Blocked by: — (U4-001 + U5-001 merged)
+Type: `implement` · State: `headless-done` · Device: `yes` · Consumes: RT-007 · Closes: RT-007 (**device-gated** — see Closure) · Blocked by: — (U4-001 + U5-001 merged)
 
 ## Start here
 
@@ -119,10 +119,10 @@ Subtask: FxAnimationDriver, the CONTENT lane — the native engine that eases th
 ## Lifecycle
 
 - [x] spec'd (this README — planner, 2026-06-11; the spring design pre-ratified in `./preflight.md` / DOC-009)
-- [ ] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
 - [ ] device-verified (human gate)
 - [ ] reviewed
 - [ ] docs-closed (34's answered research questions struck; RT-007 closure per the device gate)
