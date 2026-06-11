@@ -13,6 +13,7 @@ export { FxGroupView, type NativeFxGroupProps } from './runtime/FxGroupView';
 export { FxHostedView, type NativeFxHostedProps } from './runtime/FxHostedView';
 export {
   type FxSurfacePressEvent,
+  type FxSurfaceShaderEvent,
   FxSurfaceView,
   type InteractionMode,
   type NativeFxSurfaceProps,

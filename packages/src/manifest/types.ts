@@ -15,6 +15,12 @@ export type Asset = 'metal' | 'agsl' | 'lottie' | 'none';
 /** the time source when the node animates. */
 export type Clock = 'timeline' | 'display-link' | 'frame-nanos' | 'infinite-transition' | 'none';
 
+/** coarse animation cadence — the scheduling hint above `clock`. `display-rate` ticks a
+ *  per-frame display link (an interactive Metal/AGSL surface); `ambient` runs a coalesced,
+ *  lower-frequency timeline (a decorative hosted overlay); `static` never animates. The
+ *  runtime reads it to decide how aggressively a surface's loop must be paused off-window. */
+export type Cadence = 'ambient' | 'display-rate' | 'static';
+
 export type Phase = 'v1' | 'v2';
 export type NodeKind = 'render-target' | 'modifier' | 'driver';
 
@@ -36,6 +42,8 @@ export interface Lowering {
   asset?: Asset;
   /** time source when animated; null for static. */
   clock?: Clock;
+  /** coarse scheduling hint above `clock`: how fast this rung's loop ticks when it animates. */
+  cadence?: Cadence;
   /** kind:'driver' rungs only — what this rung animates. The selector matches it to
    *  ctx.target ('content' | 'effect'); stated explicitly, not inferred from substrate. */
   target?: 'content' | 'effect';
@@ -54,10 +62,10 @@ export interface Lowering {
 // ── one IR node (capability) ─────────────────────────────────────────
 
 export interface UniformSpec {
-  type: 'number' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
+  type: 'number' | 'string' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
   default: unknown;
-  range?: [number, number];
-  options?: string[];
+  range?: readonly [number, number];
+  options?: readonly string[];
 }
 
 export interface CapabilityNode {
@@ -67,7 +75,10 @@ export interface CapabilityNode {
   phase: Phase;
   uniforms?: Record<string, UniformSpec>;
   properties?: Record<string, UniformSpec>;
-  lower: Record<Platform, Lowering[]>;
+  // The ladder is read-only at the consumer; declaring it `readonly` lets the canonical
+  // manifest be authored `as const` (literals preserved for config derivation) while plain
+  // mutable fixtures stay assignable.
+  lower: Record<Platform, readonly Lowering[]>;
 }
 
 /** the selector's runtime context. `target` chooses a driver node's rung (content vs effect). */

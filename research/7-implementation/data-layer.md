@@ -12,6 +12,13 @@
 > **[research: 02 §Worked examples]** Worked examples exist for `fill`, `shader`, `material`, `motion`, `content-distort`, `shape-morph`.
 > **[research: 23-filters.md §Lowering]** `filter` rungs.
 > **[research: 24-symbols.md §Lowering]** `symbol` rungs.
+> **[finding: U2-003]** The **canonical executable manifest now ships** at
+> `packages/src/manifest/manifest.ts` (authored `as const`; typed config derived in
+> `config.ts`; held in lockstep with the native dispatch by the conformance test). The block
+> below is the design rendering; where the two differ, the shipped file is canonical. Its
+> rungs are reconciled to the shipped native — iOS material is UIKit `UIGlassEffect` /
+> `UIVisualEffectView`, the Android `shader` hosted rung draws through `Paint.onDraw`, and
+> Android material keeps an unblurred `draw` floor. `cadence` annotates each animated rung.
 
 ### Shared types
 
@@ -21,6 +28,7 @@ export type Substrate = 'hosted' | 'expo-view';
 export type Via       = 'native' | 'shader' | 'draw' | 'lib' | 'none';
 export type Asset     = 'metal' | 'agsl' | 'lottie' | 'none';
 export type Clock     = 'timeline' | 'display-link' | 'frame-nanos' | 'infinite-transition' | 'none';
+export type Cadence   = 'ambient' | 'display-rate' | 'static';   // coarse scheduling hint above `clock`
 export type Phase     = 'v1' | 'v2';
 export type NodeKind  = 'render-target' | 'modifier' | 'driver';
 export type Status    = 'supported' | 'planned' | 'out-of-scope';
@@ -32,6 +40,7 @@ export interface Lowering {
   applyVia?: string;
   asset?: Asset;
   clock?: Clock;
+  cadence?: Cadence;        // loop-frequency class when the rung animates (02 decision 16)
   target?: 'content' | 'effect';
   requires: { os: number; substrate: Substrate; feature?: string };
   phase?: Phase;
@@ -39,14 +48,13 @@ export interface Lowering {
   note?: string;
 }
 
-// UniformSpec.type includes boolean and color[] — these are canonical in 02.
-// 02:101 defines only `number | color | vec2 | vec4 | enum`.
-// Pending ratification in 02 or removal from this schema.
+// UniformSpec types are canonical in 02 (§The schema). `'string'` carries open text
+// (a symbol name, a BYO id); `range`/`options` are read-only so the manifest authors `as const`.
 export interface UniformSpec {
-  type: 'number' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
+  type: 'number' | 'string' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
   default: unknown;
-  range?: [number, number];
-  options?: string[];
+  range?: readonly [number, number];
+  options?: readonly string[];
 }
 
 export interface CapabilityNode {
@@ -56,7 +64,7 @@ export interface CapabilityNode {
   phase: Phase;
   uniforms?: Record<string, UniformSpec>;
   properties?: Record<string, UniformSpec>;
-  lower: Record<Platform, Lowering[]>;
+  lower: Record<Platform, readonly Lowering[]>;
 }
 
 export interface SelectCtx {
@@ -125,16 +133,18 @@ const manifest: CapabilityManifest = {
       },
       lower: {
         ios: [
-          { via: 'native', primitive: '.glassEffect', applyVia: '.glassEffect',
-            requires: { os: 26, substrate: 'hosted' }, note: 'Liquid Glass' },
+          { via: 'native', primitive: 'UIGlassEffect', applyVia: 'UIVisualEffectView',
+            requires: { os: 26, substrate: 'hosted' }, note: 'Liquid Glass (UIKit rung, U3-002)' },
           { via: 'native', primitive: '.ultraThinMaterial', applyVia: '.background',
             requires: { os: 15, substrate: 'hosted' }, note: 'pre-26 fallback' },
         ],
         android: [
-          { via: 'native', primitive: 'RenderEffect.createBlurEffect', applyVia: 'graphicsLayer',
-            requires: { os: 31, substrate: 'hosted' }, note: 'blur + overlay glassmorphism' },
+          { via: 'native', primitive: 'RenderEffect.createBlurEffect', applyVia: 'View.setRenderEffect',
+            requires: { os: 31, substrate: 'hosted' }, note: 'own-content translucent stack + blur' },
           { via: 'lib', asset: 'none', applyVia: 'Haze',
-            requires: { os: 21, substrate: 'hosted' }, note: 'pre-31 backport; optional peer dep' },
+            requires: { os: 21, substrate: 'hosted' }, status: 'planned', note: 'pre-31 backport; optional peer dep' },
+          { via: 'draw',
+            requires: { os: 21, substrate: 'hosted' }, note: 'translucent stack without blur — never a flat box' },
         ],
       },
     },
@@ -146,7 +156,7 @@ const manifest: CapabilityManifest = {
     shader: {
       id: 'shader', kind: 'render-target', interaction: 'fx', phase: 'v1',
       uniforms: {                                        // public JS-set uniforms
-        intensity: { type: 'number', default: 1, range: [0, 3] },
+        intensity: { type: 'number', default: 0.8, range: [0, 1] },   // matches the native clamp
         colorA:    { type: 'color', default: '#5B8CFF' },
       },
       // [research: 50:129] `time`/`resolution` are native-injected and NEVER in the resolved record.
@@ -160,8 +170,8 @@ const manifest: CapabilityManifest = {
             requires: { os: 17, substrate: 'expo-view' }, note: 'interactive surface (G runtime)' },
         ],
         android: [
-          { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'hosted' }, note: 'decorative overlay' },
+          { via: 'shader', asset: 'agsl', applyVia: 'Paint.onDraw', clock: 'frame-nanos',
+            requires: { os: 33, substrate: 'hosted' }, note: 'generative AGSL draws through a Paint in onDraw on a plain View' },
           { via: 'shader', asset: 'agsl', applyVia: 'View.setRenderEffect', clock: 'frame-nanos',
             requires: { os: 33, substrate: 'expo-view' },
             note: 'plain View/ViewGroup (RenderNode-backed setRenderEffect), not a Compose modifier; draw-time, touch-safe' },
@@ -240,11 +250,11 @@ const manifest: CapabilityManifest = {
     symbol: {
       id: 'symbol', kind: 'render-target', interaction: 'self', phase: 'v1',   // iOS-native; Android planned
       uniforms: {
-        name:       { type: 'enum',   default: 'heart', options: [] },  // SF Symbol name or drawable ref
+        name:       { type: 'string', default: 'heart' },  // SF Symbol name or drawable ref (open text)
         animation:  { type: 'enum',   default: 'bounce',
                       options: ['bounce', 'pulse', 'scale', 'variableColor', 'appear', 'disappear', 'breathe', 'rotate', 'wiggle'] },
         trigger:    { type: 'enum',   default: 'value', options: ['value', 'state', 'repeat'] },
-        replaceWith: { type: 'enum',  default: undefined },  // symbol→symbol content transition
+        replaceWith: { type: 'string', default: '' },  // symbol→symbol content transition (open text)
       },
       lower: {
         ios: [

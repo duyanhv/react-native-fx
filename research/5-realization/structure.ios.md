@@ -192,9 +192,21 @@ intended tool for in-host glass composition.
   `applyVia:.colorEffect` · `clock:timeline`. The Aurora-class generative glow; draws
   itself, samples nothing; host with `pointerEvents:none`.
 - **Interactive** — `lower:shader, asset:metal` · `requires {os:17, expo-view}` ·
-  `applyVia:MTLRenderPipelineState` · `clock:display-link`. Carries the recognizer +
-  G runtime; press/pointer feed `pressDepth`/`glowX`/`glowY` natively.
+  `applyVia:MTLRenderPipelineState` · `clock:display-link` · `cadence:display-rate`. Carries
+  the recognizer + G runtime; press/pointer feed `pressDepth`/`glowX`/`glowY` natively. The
+  raster path implements a subset of the curated catalog (the rest render only on the
+  decorative `.colorEffect` path); `fragmentName(for:)` returns nil for an id with no raster
+  function, so the pipeline is nil and the surface fires `onFxError` rather than drawing the
+  wrong shader.
 - **BYO** — same two rungs with developer-supplied `.metal`; no special path.
+- **Load/error events** — `FxSurfaceView` dispatches `onFxLoad`/`onFxError` once per shader
+  change (never per frame — rule #1): a usable id whose pipeline compiles loads, clearing to
+  empty is silent, anything else errors. This is the signal a BYO consumer falls back on
+  (`22` §Events). Payload `{ shader, reason? }`.
+- **Absent ⟺ empty ⟺ no effect** — Expo omits an `undefined` prop from the batch, so the
+  native setter never fires and a previously set shader would stick. The JS binding coerces
+  `shader ?? ''` so the prop is always present; native treats `""` as no effect (hides the
+  surface, pauses the loop). Setting `shader` back to `undefined` clears it.
 
 ### `filter`
 - **`.blur`/`.saturation`/`.hueRotation`/`.shadow`/`.drawingGroup`** —

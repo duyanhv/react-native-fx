@@ -64,6 +64,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
 
+  // The last shader a load/error event was dispatched for, so the semantic events fire once
+  // per change — never a per-frame stream. nil until the first shader is applied.
+  private var lastDispatchedShader: String?
+
   private var pressRecognizer: UILongPressGestureRecognizer?
 
   /// A Fabric-invisible container that holds RN children so Fabric cannot clobber
@@ -163,8 +167,9 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
       return cached
     }
     guard let device = sharedDevice, let library = sharedLibrary else { return nil }
-    guard let vertexFunction = library.makeFunction(name: "fx_fullscreen_vertex"),
-      let fragmentFunction = library.makeFunction(name: fragmentName(for: shaderId))
+    guard let fragmentName = fragmentName(for: shaderId),
+      let vertexFunction = library.makeFunction(name: "fx_fullscreen_vertex"),
+      let fragmentFunction = library.makeFunction(name: fragmentName)
     else {
       return nil
     }
@@ -180,15 +185,18 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     return state
   }
 
-  /// Maps a curated shader id to its Metal fragment function.
-  private static func fragmentName(for shaderId: String) -> String {
+  /// Maps a curated shader id to its Metal raster fragment function, or nil when the
+  /// interactive surface has no renderer for it. The interactive raster path implements a
+  /// subset of the curated catalog; the rest render only on the hosted path. A nil here
+  /// yields a nil pipeline, which surfaces as `onFxError` rather than a silent wrong shader.
+  private static func fragmentName(for shaderId: String) -> String? {
     switch shaderId {
     case "fractal-clouds": return "fx_fractal_clouds"
     case "ink-smoke": return "fx_ink_smoke"
     case "liquid-chrome": return "fx_liquid_chrome"
     case "loop": return "fx_loop"
     case "dots": return "fx_dots"
-    default: return "fx_fractal_clouds"
+    default: return nil
     }
   }
 
@@ -213,7 +221,25 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     super.applyResolvedConfig()
     uniforms.intensity = min(max(pendingIntensity, 0), 1)
     updateEffectSurfaceVisibility()
+    dispatchShaderLoadState()
     updateInteraction(mode: pendingMode)
+  }
+
+  /// Reports whether the active shader loaded, once per change. A usable curated id (its
+  /// pipeline compiles) fires `onFxLoad`; clearing to empty is silent; any other id has no
+  /// renderer on the interactive surface and fires `onFxError`. This is the load-bearing
+  /// signal a bring-your-own consumer falls back on when its shader fails to load.
+  private func dispatchShaderLoadState() {
+    guard pendingShader != lastDispatchedShader else { return }
+    lastDispatchedShader = pendingShader
+    if pendingShader.isEmpty {
+      return
+    }
+    if Self.pipeline(for: pendingShader) != nil {
+      onFxLoad(["shader": pendingShader])
+    } else {
+      onFxError(["shader": pendingShader, "reason": "no renderer for shader id"])
+    }
   }
 
   // MARK: - Child routing

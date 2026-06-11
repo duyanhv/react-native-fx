@@ -1,10 +1,20 @@
 package expo.modules.reactnativefx
 
 import android.content.Context
+import android.graphics.RuntimeShader
+import android.os.Build
 import android.view.View
 import android.widget.FrameLayout
 import expo.modules.kotlin.AppContext
+import expo.modules.kotlin.records.Field
+import expo.modules.kotlin.records.Record
 import expo.modules.kotlin.viewevent.EventDispatcher
+
+/** Payload for the shader load/error events: the resolved id, and a reason on failure. */
+data class FxShaderEvent(
+  @Field val shader: String,
+  @Field val reason: String? = null,
+) : Record
 
 /**
  * Registers the expo-view substrate shell for interactive shader rendering and
@@ -35,12 +45,16 @@ class FxSurfaceView(
   val onShaderPressOut by EventDispatcher<Unit>()
 
   val onFxTransitionEnd by EventDispatcher<Unit>()
-  val onFxLoad by EventDispatcher<Unit>()
-  val onFxError by EventDispatcher<Unit>()
+  val onFxLoad by EventDispatcher<FxShaderEvent>()
+  val onFxError by EventDispatcher<FxShaderEvent>()
 
   private var pendingShader = ""
   private var pendingIntensity = 0.8
   private var pendingInteractionMode = "none"
+
+  // The last shader a load/error event was dispatched for, so the semantic events fire once
+  // per change — never a per-frame stream. null until the first shader is applied.
+  private var lastDispatchedShader: String? = null
 
   /**
    * A Fabric-invisible container that holds RN children so Fabric cannot clobber
@@ -116,6 +130,29 @@ class FxSurfaceView(
     pendingIntensity = pendingIntensity.coerceIn(0.0, 1.0)
     pendingInteractionMode = pendingInteractionMode.ifBlank { "none" }
     updateEffectSurfaceVisibility()
+    dispatchShaderLoadState()
+  }
+
+  /**
+   * Reports whether the active shader loaded, once per change — never a per-frame stream.
+   * The curated AGSL asset is opened and compiled to prove the load; success fires onFxLoad,
+   * failure fires onFxError — the signal a bring-your-own consumer falls back on when a shader
+   * fails to load. Below API 33 the shader rung degrades to {via:'none'}, a graceful no-op,
+   * not an error.
+   */
+  private fun dispatchShaderLoadState() {
+    if (pendingShader == lastDispatchedShader) return
+    lastDispatchedShader = pendingShader
+    if (pendingShader.isBlank()) return
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    try {
+      val assetPath = "shaders/${pendingShader.replace('-', '_')}.agsl"
+      val source = context.assets.open(assetPath).bufferedReader().use { it.readText() }
+      RuntimeShader(source)
+      onFxLoad(FxShaderEvent(pendingShader))
+    } catch (error: Exception) {
+      onFxError(FxShaderEvent(pendingShader, error.message ?: "shader load failed"))
+    }
   }
 
   // MARK: - Child routing

@@ -65,7 +65,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-006 | Unit 3 | implement | merged | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); reviewed + confirmed by maintainer (2026-06-09); merged on integration/0.1.x; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | device-pending | yes | FX-009 | — | DOC-008, U3-001 | iOS `.symbolEffect` via hosted slice; Android planned rung skipped by `select()`; A1-1 `replaceWith` fix device-evidenced and maintainer-ratified (2026-06-10); device gate held ONLY for the A1-2 OS-degradation rows — needs a real iOS 17 / sub-17 device (maintainer chose not to waive); [detail](#u3-007--ios-symbol-effect) |
 | U1-006 | Unit 1 | implement | todo | no | — | — | — | critique F9: pull `FxGroupView` + `NativeFxGroupProps` from the public index (`src/index.ts` is the declared stability contract; the native class is an inert stub) until the morph compound lands |
-| U2-003 | Unit 2 | implement | todo | no | — | — | — | critique F3+F6+F11 (audit G1): author the `CapabilityManifest` data (today: schema + `select()` + fixture only — five unsynchronized dispatch renderings); add the manifest↔`ShaderId`↔native-switch conformance test; resolve per-effect typed config as manifest-canonical uniforms → generated TS; add the `clock` cadence hint (ambient vs display-rate) to the schema while it is open. **Also (carry-in from U4-003 review):** wire the declared-but-undispatched `onFxLoad`/`onFxError` events on `FxSurfaceView` (iOS + Android) — the Device Verification Guide expects "BYO shader compilation succeeds or fires onError"; they fire nowhere today. Sibling nuance (U4-003 device run): `shader` set back to `undefined` does not reset the native shader — Expo omits the prop from the batch; resolve the absent-vs-empty contract alongside the typed config |
+| U2-003 | Unit 2 | implement | headless-done | yes | — | — | — | critique F3+F6+F11 (audit G1): canonical `CapabilityManifest` shipped at `src/manifest/manifest.ts` (`as const`, reconciled to shipped native, `cadence` added); per-effect typed config derived at the type level (`config.ts`, no codegen) + asserted against the catalog types; manifest↔`ShaderId`↔native-switch conformance test (34 tests). `cadence`/`'string'` added to the `02` schema (decisions 15+16). **Carry-ins:** `onFxLoad`/`onFxError` now dispatch on `FxSurfaceView` (iOS pipeline-compile; Android asset open+compile) once per change; absent-vs-empty `shader` resolved (binding coerces `undefined → ''`). Headless + iOS xcodebuild + Android compileDebugKotlin green. **device-pending:** shader-reset + load/error scenarios (the iOS raster subset now errors instead of wrong-rendering). [task](./tasks/U2-003/) · [detail](#u2-003--capabilitymanifest-data--typed-config--conformance--cadence) |
 | U3-008 | Unit 3 | rework | merged | yes | — | — | — | critique F1+F10: persistent `UIHostingController` + observed props holder on iOS `FxHostedView` (Expo `SwiftUIHostingView` idiom; the Android sibling and the UIKit glass path already update in place) — unblocks the eased-uniform `transition` channel, symbol state survives prop changes; decorative hosted views default a11y-hidden on both platforms; a11y row added to the Device Verification Guide template. Headless gates + xcodebuild green; agent-device evidence (stills only) in `tasks/U3-008/evidence/device-run-2026-06-10/` — F1 symbol/shader continuity PASS, glass regular/clear + GPU resume PASS, decorative a11y-hidden PASS, interactive-glass reachability PARTIAL (no AX element in either state — the open VoiceOver item, see notes). **device-verified ratified 2026-06-11 (maintainer)** on physical iPhone + POCO F1 (Android 15/API 35): iOS symbol `variableColor`+`repeat` replace-flip and iOS+Android intensity-slider in-place uniform updates PASS (no blank/restart); Android decorative a11y-hidden confirmed via the live accessibility tree (effect view absent, controls present — `FxHostedView.kt:105`); residual — literal Google-TalkBack screen-reader demo needs a TalkBack-equipped device (POCO F1/MIUI ships none); evidence in `tasks/U3-008/evidence/ratify-2026-06-11/`. **Reviewed + docs-closed 2026-06-11** — approved, gates re-run green at `04f77d0`, two non-blocking nits (inert `FxHostedProps.materialConfig`; teardown-wording nuance in `structure.ios.md`) ([review](./reviews/U3-008.md)); **merged 2026-06-11 (maintainer)** on integration/0.1.x ([task](./tasks/U3-008/)) |
 | U4-003 | Unit 4 | rework | merged | yes | — | — | — | critique F2+F11(sharing half): iOS `FxSurfaceView` builds its `MTKView` lazily (first active `shader`) + shares a process-wide static device/queue/library/pipeline cache; Android unaffected (no GPU in the shell). Headless green; `structure.ios.md` §Lifecycle pinned. **device-verified ratified 2026-06-11 (maintainer)** on the agent-device PASS evidence — exactly one `MTKView` allocation per session, zero for content-motion-only, reuse + isolated teardown clean (`tasks/U4-003/evidence/`); multi-instance proof rides EX-002. **Reviewed + docs-closed 2026-06-11** ([review](./reviews/U4-003.md)); **merged 2026-06-11 (maintainer)** on integration/0.1.x. [task](./tasks/U4-003/) · [detail](#u4-003--lazy-metal--shared-static-metal-context) |
 | EX-002 | harness | implement | todo | yes | — | — | — | critique F14: 100-cell list stress screen in the example (mixed fill/shader/material cards) as a standing device-verify scenario — converts F1/F2 from theoretical to measured |
@@ -341,6 +341,49 @@ Proof:
   tick is the maintainer's.
 - docs: `structure.ios.md` §Lifecycle (lazy effect surface + process-shared Metal context). No
   ledger row.
+
+## U2-003 — CapabilityManifest data + typed config + conformance + cadence
+
+Type: `implement` · State: `headless-done` · Device: yes (two carry-in scenarios) · Consumes: — · Closes: — (critique-routed, no ledger row) · [task](./tasks/U2-003/)
+
+Origin: critique F3+F6+F11 (audit G1) + the two U4-003-review carry-ins. Makes the capability
+manifest canonical and shipped, ties the dispatch renderings together, derives per-effect typed
+config from it, adds the `cadence` schema hint, and wires the declared-but-dead surface events.
+
+Checklist:
+- [x] spec'd ([README](./tasks/U2-003/README.md))
+- [x] rules-gated (#1 events per-change not per-frame; #2 agnostic ids over native switches; #7 Expo `Prop`/`Events`, no JSI; #9 no layout writes)
+- [x] implemented
+- [x] commented (iceberg — why coerce the shader prop, why dedup the events, the raster subset)
+- [x] headless-done
+- [ ] device-verified (human — `notes.md` §Unverified claims)
+- [ ] reviewed
+- [ ] docs-closed (source edits landed; reviewer confirms)
+- [ ] merged
+
+Change:
+- **TS (headless):** `src/manifest/manifest.ts` (canonical `as const` manifest, all V1 nodes,
+  reconciled to shipped native, `cadence` on animated rungs); `src/manifest/config.ts`
+  (`ConfigFor<NodeId>` type-level derivation + build-failing assertions vs `MaterialConfig`/
+  `SymbolConfig`); `types.ts` (`Cadence`, `cadence?`, `'string'`, readonly); `catalog.ts`
+  (`CURATED_SHADER_IDS` → `ShaderId`); `manifest-conformance.test.ts` (ids ↔ MSL ↔ AGSL ↔ assets);
+  `manifest-select.test.ts` repointed off the inline fixture; `FxSurfaceView.tsx` wraps the binding
+  to coerce `shader ?? ''` + adds the load/error props.
+- **Native (compile-verified; behavior device-pending):** `ios/FxSurfaceView.swift` — `fragmentName`
+  → `String?`, `dispatchShaderLoadState()` fires `onFxLoad`/`onFxError` once per change.
+  `android/.../FxSurfaceView.kt` — `FxShaderEvent` Record payload + asset-open/compile load proof.
+- **Docs:** `02` (schema + decisions 15/16, typed-config Open question resolved); `data-layer §1`
+  (canonical pointer + reconciled rungs + cadence); `structure.{ios,android}.md` `§shader` (events +
+  reset contract + raster-subset note).
+
+Proof:
+- headless: from `packages/` — `bunx tsc --noEmit`, `bun run build`, `bun run lint`,
+  `bun run swift:lint`, `bun run test` (34 pass); `git diff --check` clean. Native: `pod install`
+  then `xcodebuild` (Debug, iphonesimulator) → BUILD SUCCEEDED; `./gradlew
+  :react-native-fx:compileDebugKotlin` → BUILD SUCCESSFUL.
+- device: shader-reset (undefined clears) + `onFxLoad`/`onFxError` fire once (iOS raster subset
+  now errors instead of wrong-rendering); scenarios in `tasks/U2-003/notes.md`.
+- docs: `02`, `data-layer §1`, `structure.{ios,android}.md`. No ledger row.
 
 ## U2-002 — UniformSpec schema reconciliation
 

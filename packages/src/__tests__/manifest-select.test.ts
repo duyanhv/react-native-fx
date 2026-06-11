@@ -1,270 +1,5 @@
+import { manifest } from '../manifest';
 import { select } from '../manifest/select';
-import type { CapabilityManifest } from '../manifest/types';
-
-const fixture: CapabilityManifest = {
-  schemaVersion: 1,
-  nodes: {
-    // ── shader: multi-rung with planned + out-of-scope rungs ──────────
-    shader: {
-      id: 'shader',
-      kind: 'render-target',
-      interaction: 'fx',
-      phase: 'v1',
-      lower: {
-        ios: [
-          {
-            via: 'shader',
-            asset: 'metal',
-            applyVia: '.colorEffect',
-            clock: 'timeline',
-            requires: { os: 17, substrate: 'hosted' },
-            note: 'decorative overlay',
-          },
-          {
-            via: 'shader',
-            asset: 'metal',
-            applyVia: 'MTLRenderPipelineState',
-            clock: 'display-link',
-            requires: { os: 17, substrate: 'expo-view' },
-            note: 'interactive surface',
-          },
-        ],
-        android: [
-          {
-            via: 'shader',
-            asset: 'agsl',
-            applyVia: 'RenderEffect',
-            clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'hosted' },
-          },
-          {
-            via: 'shader',
-            asset: 'agsl',
-            applyVia: 'View.setRenderEffect',
-            clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'expo-view' },
-          },
-        ],
-      },
-    },
-
-    // ── content-distort: planned on Android, out-of-scope on iOS ──────
-    'content-distort': {
-      id: 'content-distort',
-      kind: 'modifier',
-      interaction: 'none',
-      phase: 'v2',
-      lower: {
-        ios: [
-          {
-            via: 'native',
-            primitive: '.layerEffect',
-            requires: { os: 17, substrate: 'hosted' },
-            status: 'out-of-scope',
-            note: 'hosting RN content severs touch',
-          },
-        ],
-        android: [
-          {
-            via: 'shader',
-            asset: 'agsl',
-            applyVia: 'RenderEffect',
-            clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'expo-view' },
-            status: 'planned',
-            note: 'RenderEffect is draw-time → touch survives',
-          },
-        ],
-      },
-    },
-
-    // ── shape-morph: empty ladder on iOS ──────────────────────────────
-    'shape-morph': {
-      id: 'shape-morph',
-      kind: 'render-target',
-      interaction: 'none',
-      phase: 'v2',
-      lower: {
-        ios: [],
-        android: [
-          {
-            via: 'native',
-            primitive: 'MaterialShapes (morph)',
-            applyVia: 'graphicsLayer',
-            clock: 'frame-nanos',
-            requires: { os: 21, substrate: 'hosted', feature: 'm3-expressive' },
-          },
-        ],
-      },
-    },
-
-    // ── motion: driver node with content + effect rungs ───────────────
-    motion: {
-      id: 'motion',
-      kind: 'driver',
-      interaction: 'none',
-      phase: 'v1',
-      lower: {
-        ios: [
-          {
-            via: 'native',
-            primitive: 'CASpringAnimation',
-            applyVia: 'CALayer',
-            clock: 'none',
-            target: 'content',
-            phase: 'v2',
-            requires: { os: 13, substrate: 'expo-view' },
-          },
-          {
-            via: 'native',
-            primitive: 'SwiftUI .animation',
-            applyVia: '.animation',
-            clock: 'none',
-            target: 'effect',
-            phase: 'v1',
-            requires: { os: 16, substrate: 'hosted' },
-          },
-        ],
-        android: [
-          {
-            via: 'native',
-            primitive: 'SpringAnimation',
-            applyVia: 'View (dynamicanimation)',
-            clock: 'none',
-            target: 'content',
-            phase: 'v2',
-            requires: { os: 21, substrate: 'expo-view' },
-          },
-          {
-            via: 'native',
-            primitive: 'animate*AsState',
-            applyVia: 'Compose',
-            clock: 'infinite-transition',
-            target: 'effect',
-            phase: 'v1',
-            requires: { os: 21, substrate: 'hosted' },
-          },
-        ],
-      },
-    },
-
-    // ── fill: OS-gated ladder with no special statuses ────────────────
-    fill: {
-      id: 'fill',
-      kind: 'render-target',
-      interaction: 'none',
-      phase: 'v1',
-      lower: {
-        ios: [
-          {
-            via: 'native',
-            primitive: 'MeshGradient',
-            applyVia: '.overlay',
-            clock: 'timeline',
-            requires: { os: 18, substrate: 'hosted' },
-          },
-          {
-            via: 'native',
-            primitive: 'LinearGradient',
-            applyVia: '.overlay',
-            requires: { os: 13, substrate: 'hosted' },
-            note: 'pre-18 fallback',
-          },
-        ],
-        android: [
-          {
-            via: 'shader',
-            asset: 'agsl',
-            applyVia: 'ShaderBrush',
-            clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'hosted' },
-          },
-          {
-            via: 'native',
-            primitive: 'Brush.sweepGradient',
-            applyVia: 'background',
-            requires: { os: 21, substrate: 'hosted' },
-            note: 'pre-33 fallback',
-          },
-        ],
-      },
-    },
-
-    // ── material: Android blur rung + planned Haze + unblurred floor ──
-    material: {
-      id: 'material',
-      kind: 'render-target',
-      interaction: 'self',
-      phase: 'v1',
-      lower: {
-        ios: [
-          {
-            via: 'native',
-            primitive: 'UIGlassEffect',
-            applyVia: 'UIVisualEffectView',
-            requires: { os: 26, substrate: 'hosted' },
-          },
-          {
-            via: 'native',
-            primitive: '.ultraThinMaterial',
-            applyVia: '.background',
-            requires: { os: 15, substrate: 'hosted' },
-            note: 'material fallback below 26',
-          },
-        ],
-        android: [
-          {
-            via: 'native',
-            primitive: 'RenderEffect.createBlurEffect',
-            applyVia: 'View.setRenderEffect',
-            requires: { os: 31, substrate: 'hosted' },
-            note: 'own-content translucent stack + blur',
-          },
-          {
-            via: 'lib',
-            applyVia: 'Haze',
-            requires: { os: 21, substrate: 'hosted' },
-            status: 'planned',
-            note: 'true backdrop blur via optional peer — deferred',
-          },
-          {
-            via: 'draw',
-            requires: { os: 21, substrate: 'hosted' },
-            note: 'translucent stack without blur — never a flat box',
-          },
-        ],
-      },
-    },
-
-    // ── symbol: iOS supported, Android planned ────────────────────────
-    symbol: {
-      id: 'symbol',
-      kind: 'render-target',
-      interaction: 'self',
-      phase: 'v1',
-      lower: {
-        ios: [
-          {
-            via: 'native',
-            primitive: '.symbolEffect',
-            applyVia: '.symbolEffect',
-            requires: { os: 17, substrate: 'hosted' },
-          },
-        ],
-        android: [
-          {
-            via: 'lib',
-            asset: 'lottie',
-            applyVia: 'Lottie',
-            requires: { os: 21, substrate: 'hosted' },
-            status: 'planned',
-            note: 'AVD/Lottie is a planned future lowering',
-          },
-        ],
-      },
-    },
-  },
-};
 
 // ── helpers ──────────────────────────────────────────────────────────
 
@@ -275,13 +10,13 @@ describe('select()', () => {
   // ── basic selection ────────────────────────────────────────────
 
   it('returns the first satisfiable rung', () => {
-    const result = select(fixture.nodes.shader, ios, { deviceOS: 18 });
+    const result = select(manifest.nodes.shader, ios, { deviceOS: 18 });
     expect(result.via).toBe('shader');
     expect(result.requires.substrate).toBe('hosted');
   });
 
   it('returns the first rung whose OS guard holds', () => {
-    const result = select(fixture.nodes.fill, ios, { deviceOS: 17 });
+    const result = select(manifest.nodes.fill, ios, { deviceOS: 17 });
     expect(result.via).toBe('native');
     expect(result.primitive).toBe('LinearGradient');
   });
@@ -289,7 +24,7 @@ describe('select()', () => {
   // ── status: planned ────────────────────────────────────────────
 
   it('skips status: planned rungs', () => {
-    const result = select(fixture.nodes['content-distort'], android, { deviceOS: 34 });
+    const result = select(manifest.nodes['content-distort'], android, { deviceOS: 34 });
     expect(result.via).toBe('none');
   });
 
@@ -322,20 +57,20 @@ describe('select()', () => {
   // ── status: out-of-scope ───────────────────────────────────────
 
   it('skips status: out-of-scope rungs', () => {
-    const result = select(fixture.nodes['content-distort'], ios, { deviceOS: 18 });
+    const result = select(manifest.nodes['content-distort'], ios, { deviceOS: 18 });
     expect(result.via).toBe('none');
   });
 
   // ── OS guard ───────────────────────────────────────────────────
 
   it('skips rungs whose OS guard exceeds the device', () => {
-    const result = select(fixture.nodes.fill, android, { deviceOS: 30 });
+    const result = select(manifest.nodes.fill, android, { deviceOS: 30 });
     expect(result.via).toBe('native');
     expect(result.primitive).toBe('Brush.sweepGradient');
   });
 
   it('returns none when all rungs are OS-guarded out', () => {
-    const result = select(fixture.nodes.fill, ios, { deviceOS: 12 });
+    const result = select(manifest.nodes.fill, ios, { deviceOS: 12 });
     // MeshGradient needs 18, LinearGradient needs 13 — both exceed 12
     expect(result.via).toBe('none');
   });
@@ -343,7 +78,7 @@ describe('select()', () => {
   // ── wantInteractive ────────────────────────────────────────────
 
   it('skips hosted rungs for fx interaction when wantInteractive is true', () => {
-    const result = select(fixture.nodes.shader, ios, {
+    const result = select(manifest.nodes.shader, ios, {
       deviceOS: 18,
       wantInteractive: true,
     });
@@ -352,7 +87,7 @@ describe('select()', () => {
   });
 
   it('returns hosted rung for fx interaction when wantInteractive is false', () => {
-    const result = select(fixture.nodes.shader, ios, {
+    const result = select(manifest.nodes.shader, ios, {
       deviceOS: 18,
       wantInteractive: false,
     });
@@ -360,7 +95,7 @@ describe('select()', () => {
   });
 
   it('does not enforce expo-view for non-fx interaction nodes', () => {
-    const result = select(fixture.nodes.fill, ios, {
+    const result = select(manifest.nodes.fill, ios, {
       deviceOS: 18,
       wantInteractive: true,
     });
@@ -372,13 +107,13 @@ describe('select()', () => {
   // ── driver target matching ─────────────────────────────────────
 
   it('matches driver rung by target (effect, default)', () => {
-    const result = select(fixture.nodes.motion, ios, { deviceOS: 18 });
+    const result = select(manifest.nodes.motion, ios, { deviceOS: 18 });
     expect(result.target).toBe('effect');
     expect(result.primitive).toBe('SwiftUI .animation');
   });
 
   it('matches driver rung by explicit target: content', () => {
-    const result = select(fixture.nodes.motion, ios, {
+    const result = select(manifest.nodes.motion, ios, {
       deviceOS: 18,
       target: 'content',
     });
@@ -410,17 +145,17 @@ describe('select()', () => {
   // ── empty / fully-guarded ladders ──────────────────────────────
 
   it('degrades to via: none for an empty ladder', () => {
-    const result = select(fixture.nodes['shape-morph'], ios, { deviceOS: 18 });
+    const result = select(manifest.nodes['shape-morph'], ios, { deviceOS: 18 });
     expect(result.via).toBe('none');
   });
 
   it('degrades to via: none when required feature is not available', () => {
-    const result = select(fixture.nodes['shape-morph'], android, { deviceOS: 21 });
+    const result = select(manifest.nodes['shape-morph'], android, { deviceOS: 21 });
     expect(result.via).toBe('none');
   });
 
   it('selects a rung when required feature is available', () => {
-    const result = select(fixture.nodes['shape-morph'], android, {
+    const result = select(manifest.nodes['shape-morph'], android, {
       deviceOS: 21,
       features: ['m3-expressive'],
     });
@@ -430,62 +165,62 @@ describe('select()', () => {
 
   it('degrades to via: none when all rungs are planned or out-of-scope', () => {
     // content-distort on iOS: out-of-scope; on Android: planned
-    expect(select(fixture.nodes['content-distort'], ios, { deviceOS: 18 }).via).toBe('none');
-    expect(select(fixture.nodes['content-distort'], android, { deviceOS: 34 }).via).toBe('none');
+    expect(select(manifest.nodes['content-distort'], ios, { deviceOS: 18 }).via).toBe('none');
+    expect(select(manifest.nodes['content-distort'], android, { deviceOS: 34 }).via).toBe('none');
   });
 
   // ── material: Android ladder ───────────────────────────────────
 
   it('selects the blur rung for material on Android 31+', () => {
-    const result = select(fixture.nodes.material, android, { deviceOS: 31 });
+    const result = select(manifest.nodes.material, android, { deviceOS: 31 });
     expect(result.via).toBe('native');
     expect(result.primitive).toBe('RenderEffect.createBlurEffect');
     expect(result.applyVia).toBe('View.setRenderEffect');
   });
 
   it('skips the planned Haze rung and degrades material to the unblurred stack below 31', () => {
-    const result = select(fixture.nodes.material, android, { deviceOS: 30 });
+    const result = select(manifest.nodes.material, android, { deviceOS: 30 });
     expect(result.via).toBe('draw');
   });
 
   it('never degrades material to a flat box on Android 21+', () => {
-    const result = select(fixture.nodes.material, android, { deviceOS: 21 });
+    const result = select(manifest.nodes.material, android, { deviceOS: 21 });
     expect(result.via).not.toBe('none');
   });
 
   it('selects the glass rung for material on iOS 26', () => {
-    const result = select(fixture.nodes.material, ios, { deviceOS: 26 });
+    const result = select(manifest.nodes.material, ios, { deviceOS: 26 });
     expect(result.primitive).toBe('UIGlassEffect');
   });
 
   it('falls back to the system material for material below iOS 26', () => {
-    const result = select(fixture.nodes.material, ios, { deviceOS: 18 });
+    const result = select(manifest.nodes.material, ios, { deviceOS: 18 });
     expect(result.primitive).toBe('.ultraThinMaterial');
   });
 
   // ── symbol: iOS supported, Android planned ─────────────────────
 
   it('selects symbol rung on iOS 17+', () => {
-    const result = select(fixture.nodes.symbol, ios, { deviceOS: 17 });
+    const result = select(manifest.nodes.symbol, ios, { deviceOS: 17 });
     expect(result.via).toBe('native');
     expect(result.primitive).toBe('.symbolEffect');
     expect(result.requires.substrate).toBe('hosted');
   });
 
   it('degrades to via: none for symbol on iOS below 17', () => {
-    const result = select(fixture.nodes.symbol, ios, { deviceOS: 16 });
+    const result = select(manifest.nodes.symbol, ios, { deviceOS: 16 });
     expect(result.via).toBe('none');
   });
 
   it('skips planned rung for symbol on Android', () => {
-    const result = select(fixture.nodes.symbol, android, { deviceOS: 34 });
+    const result = select(manifest.nodes.symbol, android, { deviceOS: 34 });
     expect(result.via).toBe('none');
   });
 
   // ── non-driver nodes ignore target ─────────────────────────────
 
   it('ignores target for non-driver nodes', () => {
-    const result = select(fixture.nodes.shader, ios, {
+    const result = select(manifest.nodes.shader, ios, {
       deviceOS: 18,
       target: 'content',
     });

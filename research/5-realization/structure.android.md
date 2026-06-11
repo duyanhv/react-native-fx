@@ -183,6 +183,13 @@ Each section expands the Android rungs from `02`.
   custom native render surface — **not** `Modifier.graphicsLayer`. Draw-time, so touch
   survives even while shading.
 - **BYO** — same rungs with developer-supplied `.agsl`.
+- **Load/error events** — `FxSurfaceView` dispatches `onFxLoad`/`onFxError` once per shader
+  change (never per frame — rule #1): it opens the curated `.agsl` asset and compiles a
+  `RuntimeShader` to prove the load — success fires `onFxLoad`, a failure fires `onFxError`
+  (`22` §Events). Below API 33 the rung degrades to `{via:'none'}`, a graceful no-op rather
+  than an error, so no event fires. Payload `{ shader, reason? }` (an `expo.modules.kotlin`
+  `Record`). The interactive surface render itself stays a later (U8) concern; the load proof
+  lands now so the BYO fallback signal exists. Clearing `shader` to empty is silent.
 
 ### `filter`
 - **`RenderEffect`** chain — `via:native` · `requires {os:31, hosted}`. Draw-time;

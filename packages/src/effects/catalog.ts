@@ -1,19 +1,27 @@
 /**
+ * The curated, build-time shader catalog. This list is the single runtime source
+ * the `ShaderId` type derives from; the manifest conformance test holds it in
+ * lockstep with the native MSL/AGSL dispatch switches and the on-disk assets.
+ */
+export const CURATED_SHADER_IDS = [
+  'fractal-clouds',
+  'ink-smoke',
+  'liquid-chrome',
+  'loop',
+  'dots',
+  'aurora',
+  'noise-field',
+  'plasma',
+  'caustics',
+  'edge-glow',
+] as const;
+
+/**
  * Curated, build-time shaders selected by id. The hosted dispatch in
  * `ios/FxShaderView.swift` and `android/…/FxShaderView.kt` maps each id to
  * its native function.
  */
-export type ShaderId =
-  | 'fractal-clouds'
-  | 'ink-smoke'
-  | 'liquid-chrome'
-  | 'loop'
-  | 'dots'
-  | 'aurora'
-  | 'noise-field'
-  | 'plasma'
-  | 'caustics'
-  | 'edge-glow';
+export type ShaderId = (typeof CURATED_SHADER_IDS)[number];
 
 /**
  * The glass variant vocabulary for the material effect.
