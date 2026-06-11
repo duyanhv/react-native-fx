@@ -95,8 +95,21 @@ layout/hit-testing to a `UIHostingController`.
 
 ### Lifecycle
 
-- Pause the loop off-window/backgrounded; tear down the `MTKView`, pipeline, and
-  recognizer on `deinit` (`31`). The fx `ExpoView` is never flattened by Fabric.
+- Pause the loop off-window/backgrounded; tear down the per-view `MTKView` (drop its
+  delegate, pause it) and recognizer on `deinit` (`31`). The fx `ExpoView` is never
+  flattened by Fabric.
+- **Lazy effect surface.** `FxSurfaceView` builds its `MTKView` only on the first active
+  `shader` — a surface used purely as a content-motion wrapper (no `shader`) allocates no
+  GPU view. The intermediate content container is always present; the GPU view is added in
+  front of it on first need. This keeps a long list of motion wrappers off the GPU (each RN
+  card animating a transform allocates nothing, as RN's own driver does).
+- **Process-shared Metal context.** The `MTLDevice`, command queue, compiled shader library,
+  and the `shaderId → MTLRenderPipelineState` cache are process-wide statics shared by every
+  surface, not per-instance: the system vends one default device, the queue is reusable, the
+  library is the one bundled `default.metallib`, and a pipeline depends only on its functions
+  and the fixed `bgra8Unorm` pixel format — identical for every surface. The context is
+  process-lived and never torn down (only the per-view `MTKView` is released on `deinit`); all
+  access is on the main thread (Expo prop application and the `MTKView` display link).
 
 ### Version gates
 

@@ -31,20 +31,34 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   internal let onFxLoad = EventDispatcher()
   internal let onFxError = EventDispatcher()
 
+  // MARK: - Shared Metal context
+
+  // The GPU resources are process-wide, not per-view. The system vends one default device
+  // per process, a command queue is thread-safe and reusable, the compiled library is the
+  // same bundled `default.metallib` for every surface, and a pipeline state depends only on
+  // its two functions and the fixed pixel format below — so it is valid for every instance.
+  // Sharing them is what lets a long list of motion wrappers avoid N devices/queues/libraries.
+  // All access is on the main thread (Expo prop application and the `MTKView` display link).
+  // The context is process-lived and never torn down; `deinit` releases only the per-view loop.
+  private static let colorPixelFormat: MTLPixelFormat = .bgra8Unorm
+  private static let sharedDevice = MTLCreateSystemDefaultDevice()
+  private static let sharedCommandQueue = sharedDevice?.makeCommandQueue()
+  private static let sharedLibrary = sharedDevice.flatMap(loadSharedLibrary)
+  private static var pipelineCache: [String: MTLRenderPipelineState] = [:]
+
   // MARK: - Private state
 
-  private let metalView = MTKView()
-  private let device = MTLCreateSystemDefaultDevice()
-  private var commandQueue: MTLCommandQueue?
-  private var library: MTLLibrary?
-  private var pipelineCache: [String: MTLRenderPipelineState] = [:]
+  // Allocated lazily on the first active shader (see `ensureEffectSurface`). A surface used
+  // only as a content-motion wrapper never builds a GPU view, so wrapping a long list costs
+  // nothing on the GPU.
+  private var metalView: MTKView?
 
   private var uniforms = FxUniforms()
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
-  // Empty by default: a surface with no `shader` prop runs no effect, so the metalView
-  // stays hidden and never obscures the content-motion container. A non-empty default would
+  // Empty by default: a surface with no `shader` prop runs no effect, so no `MTKView` is
+  // allocated and the content-motion container is never obscured. A non-empty default would
   // render a shader the consumer never asked for (and hide the wrapped content behind it).
   private var pendingShader = ""
   private var pendingIntensity: Float = 0.8
@@ -57,12 +71,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// outer `FxSurfaceView` that Fabric tracks.
   private let intermediateContainer = UIView()
 
-  /// Initializes the Metal surface and the intermediate container while keeping the loop paused until attachment.
+  /// Initializes the content-motion container only; the Metal surface is built lazily on the first active shader.
   internal required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
     setUpIntermediateContainer()
-    setUpMetal()
-    bringSubviewToFront(metalView)
   }
 
   deinit {
@@ -79,27 +91,37 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     addSubview(intermediateContainer)
   }
 
-  /// Creates the Metal view and command resources without starting frame production.
-  private func setUpMetal() {
-    guard let device else { return }
-    commandQueue = device.makeCommandQueue()
-    library = loadShaderLibrary(device: device)
+  /// Builds the Metal view on demand and adds it above the content container, paused.
+  ///
+  /// Called only when an effect actually becomes active, so a content-motion-only surface
+  /// never allocates a GPU view. The view sits in front of the intermediate container, the
+  /// z-order the old eager `bringSubviewToFront` produced.
+  private func ensureEffectSurface() -> MTKView? {
+    if let metalView {
+      return metalView
+    }
+    guard let device = Self.sharedDevice else {
+      return nil
+    }
 
-    metalView.device = device
-    metalView.delegate = self
-    metalView.framebufferOnly = true
-    metalView.colorPixelFormat = .bgra8Unorm
-    metalView.preferredFramesPerSecond = 60
-    metalView.enableSetNeedsDisplay = false
-    metalView.isPaused = true  // runs only while on-window and foregrounded
-    metalView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    metalView.frame = bounds
-    addSubview(metalView)
+    let view = MTKView()
+    view.device = device
+    view.delegate = self
+    view.framebufferOnly = true
+    view.colorPixelFormat = Self.colorPixelFormat
+    view.preferredFramesPerSecond = 60
+    view.enableSetNeedsDisplay = false
+    view.isPaused = true  // runs only while on-window and foregrounded
+    view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    view.frame = bounds
+    addSubview(view)
+    metalView = view
+    return view
   }
 
   /// Loads the compiled shader library from the bundled curated Metal assets.
-  private func loadShaderLibrary(device: MTLDevice) -> MTLLibrary? {
-    if let bundle = shadersBundle() {
+  private static func loadSharedLibrary(device: MTLDevice) -> MTLLibrary? {
+    if let bundle = sharedBundle() {
       if let library = try? device.makeDefaultLibrary(bundle: bundle) {
         return library
       }
@@ -113,7 +135,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   }
 
   /// Resolves the resource bundle that contains the compiled Metal library.
-  private func shadersBundle() -> Bundle? {
+  private static func sharedBundle() -> Bundle? {
     let host = Bundle(for: FxSurfaceView.self)
     let bases = [host.resourceURL, Bundle.main.resourceURL, host.bundleURL, Bundle.main.bundleURL]
     for base in bases.compactMap({ $0 }) {
@@ -125,22 +147,24 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     return nil
   }
 
-  /// Tears down the current Metal view attachment and stops future delegate callbacks.
+  /// Releases the per-view loop. The shared Metal context is process-lived and not torn down.
   private func tearDownMetal() {
-    metalView.delegate = nil
-    metalView.isPaused = true
+    metalView?.delegate = nil
+    metalView?.isPaused = true
   }
 
   // MARK: - Pipeline
 
-  /// Returns the cached render pipeline for a curated shader id.
-  private func pipeline(for shaderId: String) -> MTLRenderPipelineState? {
+  /// Returns the render pipeline for a curated shader id from the process-wide cache,
+  /// compiling and caching it on first request. Shared across instances because the library
+  /// and pixel format are identical for every surface.
+  private static func pipeline(for shaderId: String) -> MTLRenderPipelineState? {
     if let cached = pipelineCache[shaderId] {
       return cached
     }
-    guard let device, let library else { return nil }
+    guard let device = sharedDevice, let library = sharedLibrary else { return nil }
     guard let vertexFunction = library.makeFunction(name: "fx_fullscreen_vertex"),
-      let fragmentFunction = library.makeFunction(name: Self.fragmentName(for: shaderId))
+      let fragmentFunction = library.makeFunction(name: fragmentName(for: shaderId))
     else {
       return nil
     }
@@ -148,7 +172,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     let descriptor = MTLRenderPipelineDescriptor()
     descriptor.vertexFunction = vertexFunction
     descriptor.fragmentFunction = fragmentFunction
-    descriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
+    descriptor.colorAttachments[0].pixelFormat = colorPixelFormat
     guard let state = try? device.makeRenderPipelineState(descriptor: descriptor) else {
       return nil
     }
@@ -212,16 +236,22 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   /// True when a non-empty shader resolves to a usable pipeline.
   private var hasActiveEffect: Bool {
-    !pendingShader.isEmpty && pipeline(for: pendingShader) != nil
+    !pendingShader.isEmpty && Self.pipeline(for: pendingShader) != nil
   }
 
-  /// Hides the GPU surface when no effect is active so it never obscures the content-motion
-  /// container, and pauses the display loop with it. A hidden but unpaused `MTKView` still ticks
-  /// its `CADisplayLink` every frame and congests the main thread (sluggish UI, laggy touch,
-  /// gesture-gate timeouts), so the loop runs only while an effect is actually drawing.
+  /// Builds the GPU surface on first need and shows it, or hides it when no effect is active so
+  /// it never obscures the content-motion container. The loop pauses with it: a hidden but
+  /// unpaused `MTKView` still ticks its `CADisplayLink` every frame and congests the main thread
+  /// (sluggish UI, laggy touch, gesture-gate timeouts), so it runs only while drawing. When no
+  /// shader has ever been set, no `MTKView` exists yet and there is nothing to hide.
   private func updateEffectSurfaceVisibility() {
-    metalView.isHidden = !hasActiveEffect
-    metalView.isPaused = !hasActiveEffect || window == nil
+    guard hasActiveEffect, let view = ensureEffectSurface() else {
+      metalView?.isHidden = true
+      metalView?.isPaused = true
+      return
+    }
+    view.isHidden = false
+    view.isPaused = window == nil
   }
 
   // MARK: - Interaction
@@ -274,8 +304,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   /// Encodes one full-screen triangle draw for the current shader target.
   internal func draw(in view: MTKView) {
-    guard let commandQueue,
-      let state = pipeline(for: pendingShader),
+    guard let commandQueue = Self.sharedCommandQueue,
+      let state = Self.pipeline(for: pendingShader),
       let drawable = view.currentDrawable,
       let passDescriptor = view.currentRenderPassDescriptor,
       let commandBuffer = commandQueue.makeCommandBuffer(),
@@ -304,11 +334,11 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   /// Pauses the Metal display link when the surface cannot be displayed.
   internal override func pausePresentationLoop() {
-    metalView.isPaused = true
+    metalView?.isPaused = true
   }
 
   /// Resumes the Metal display link only while the surface is attached and an effect is active.
   internal override func resumePresentationLoop() {
-    metalView.isPaused = window == nil || !hasActiveEffect
+    metalView?.isPaused = window == nil || !hasActiveEffect
   }
 }

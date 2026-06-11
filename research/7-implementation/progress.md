@@ -67,7 +67,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U1-006 | Unit 1 | implement | todo | no | — | — | — | critique F9: pull `FxGroupView` + `NativeFxGroupProps` from the public index (`src/index.ts` is the declared stability contract; the native class is an inert stub) until the morph compound lands |
 | U2-003 | Unit 2 | implement | todo | no | — | — | — | critique F3+F6+F11 (audit G1): author the `CapabilityManifest` data (today: schema + `select()` + fixture only — five unsynchronized dispatch renderings); add the manifest↔`ShaderId`↔native-switch conformance test; resolve per-effect typed config as manifest-canonical uniforms → generated TS; add the `clock` cadence hint (ambient vs display-rate) to the schema while it is open |
 | U3-008 | Unit 3 | rework | docs-closed | yes | — | — | — | critique F1+F10: persistent `UIHostingController` + observed props holder on iOS `FxHostedView` (Expo `SwiftUIHostingView` idiom; the Android sibling and the UIKit glass path already update in place) — unblocks the eased-uniform `transition` channel, symbol state survives prop changes; decorative hosted views default a11y-hidden on both platforms; a11y row added to the Device Verification Guide template. Headless gates + xcodebuild green; agent-device evidence (stills only) in `tasks/U3-008/evidence/device-run-2026-06-10/` — F1 symbol/shader continuity PASS, glass regular/clear + GPU resume PASS, decorative a11y-hidden PASS, interactive-glass reachability PARTIAL (no AX element in either state — the open VoiceOver item, see notes). **device-verified ratified 2026-06-11 (maintainer)** on physical iPhone + POCO F1 (Android 15/API 35): iOS symbol `variableColor`+`repeat` replace-flip and iOS+Android intensity-slider in-place uniform updates PASS (no blank/restart); Android decorative a11y-hidden confirmed via the live accessibility tree (effect view absent, controls present — `FxHostedView.kt:105`); residual — literal Google-TalkBack screen-reader demo needs a TalkBack-equipped device (POCO F1/MIUI ships none); evidence in `tasks/U3-008/evidence/ratify-2026-06-11/`. **Reviewed + docs-closed 2026-06-11** — approved, gates re-run green at `481ad0c`, two non-blocking nits (inert `FxHostedProps.materialConfig`; teardown-wording nuance in `structure.ios.md`) ([review](./reviews/U3-008.md)); remaining gate: `merged` (maintainer) ([task](./tasks/U3-008/)) |
-| U4-003 | Unit 4 | rework | todo | yes | — | — | — | critique F2+F11: lazy Metal in `FxSurfaceView` (allocate on first non-empty `shader`) + shared static device/command-queue/pipeline cache — pre-requisite for V2 motion-on-lists |
+| U4-003 | Unit 4 | rework | device-pending | yes | — | — | — | critique F2+F11(sharing half): iOS `FxSurfaceView` now builds its `MTKView` lazily (first active `shader`) + shares a process-wide static device/queue/library/pipeline cache; Android unaffected (no GPU in the shell). Headless-done — tsc/build/lint/swift:lint/test + example xcodebuild BUILD SUCCEEDED; `structure.ios.md` §Lifecycle pinned; device scenario in `evidence/device.md` (human gate). [task](./tasks/U4-003/) · [detail](#u4-003--lazy-metal--shared-static-metal-context) |
 | EX-002 | harness | implement | todo | yes | — | — | — | critique F14: 100-cell list stress screen in the example (mixed fill/shader/material cards) as a standing device-verify scenario — converts F1/F2 from theoretical to measured |
 
 ### V2 build — Units 4–9
@@ -295,6 +295,48 @@ Proof:
   - **Android:** `./gradlew :react-native-fx:compileDebugKotlin` → BUILD SUCCESSFUL. Reimplemented to match `expo-blur` `ExpoBlurTargetView.kt` exactly: full `addView`/`removeView`/`updateViewLayout`/`onMeasure`/`onLayout` family with identity guards. `onMeasure` added (explicit `setMeasuredDimension` + `intermediateContainer.measure`) as the missing half of the 0×0 fix.
 - device: mount an RN child inside `<FxSurfaceView>` (no `shader` prop — `metalView` hidden), confirm it lands in the intermediate container, renders correctly (layout + draw, not 0×0), and hit-testing survives. The scenario must exercise layout, draw, and touch correctness. **iOS: capture console logs and answer:** (1) does `unmountChildComponentView` fire on hide? (2) if it fires, does `removeFromSuperview()` remove the child? (3) is there double-parenting (`self.subviews` vs `intermediateContainer.subviews`)? Mid-flight caveat per `34`.
 - docs: `structure.ios.md` / `structure.android.md` — intermediate container mechanic + effect surface visibility rule + explicit layout note; `34` — open item about effect↔content composition.
+
+## U4-003 — lazy Metal + shared static Metal context
+
+Type: `rework` · State: `device-pending` · Device: yes · Consumes: — · Closes: — (no ledger row) · [task](./tasks/U4-003/)
+
+Origin: critique F2 (HIGH) + F11's sharing half. `FxSurfaceView` is the `expo-view` substrate
+every V2 motion/press/presence component rides; on iOS it allocated Metal eagerly and
+per-instance, so wrapping a long list multiplied `MTKView`s/queues/libraries to animate
+transforms that draw no shader.
+
+Checklist:
+- [x] spec'd
+- [x] rules-gated (perf rework; #1/#3/#7/#9 hold, no tension)
+- [x] implemented (lazy `MTKView`; static shared device/queue/library/pipeline cache)
+- [x] commented (iceberg — why lazy, why process-lived, main-thread cache access)
+- [x] headless-done
+- [ ] device-verified (human gate — `tasks/U4-003/evidence/device.md`)
+- [ ] reviewed (reviewer; headless pre-review passed 2026-06-11 — formal tick rides the device gate)
+- [x] docs-closed (`structure.ios.md` §Lifecycle mechanic pinned; no ledger row)
+- [ ] merged (human gate)
+
+Change (iOS-only — `packages/ios/FxSurfaceView.swift`):
+- **Lazy Metal** — `init` builds only the content container; the `MTKView` (now `MTKView?`)
+  is created by `ensureEffectSurface()` on the first active `shader`. A content-motion-only
+  surface allocates no GPU view.
+- **Process-shared Metal context** — `device`/`commandQueue`/`library`/`pipelineCache` moved
+  to `private static` (one device, one queue, the one bundled `default.metallib`, a
+  `shaderId`-keyed pipeline cache valid across instances because the pixel format is the fixed
+  `bgra8Unorm`). Process-lived; `deinit` releases only the per-view `MTKView`.
+- **Android** — unchanged; `FxSurfaceView.kt` holds no GPU resources. The cadence half of F11
+  is out of scope (split to U2-003).
+
+Proof:
+- headless: from `packages/` — `bunx tsc --noEmit`, `bun run build`, `bun run lint`,
+  `bun run swift:lint`, `bun run test` (26 pass); `git diff --check` clean. Native:
+  `xcodebuild` (Debug, iphonesimulator, Xcode 26.5) on `reactnativefxexample` → BUILD
+  SUCCEEDED (after a `pod install` to refresh a stale Pods project — see `tasks/U4-003/notes.md`).
+- device: iOS scenario in `tasks/U4-003/evidence/device.md` — GPU-capture a no-shader surface
+  to confirm zero allocation; lazy first activation; shared context across instances;
+  pause/resume + isolated teardown; a11y. Human gate.
+- docs: `structure.ios.md` §Lifecycle (lazy effect surface + process-shared Metal context). No
+  ledger row.
 
 ## U2-002 — UniformSpec schema reconciliation
 
