@@ -1,12 +1,13 @@
 import { Stack } from "expo-router";
+import { Platform } from "react-native";
 
 export default function SettingsLayout() {
 	return (
 		<Stack
 			screenOptions={{
 				headerLargeTitle: true,
-				headerTransparent: true,
-				headerShadowVisible: false,
+				headerTransparent: Platform.OS === "ios",
+				headerShadowVisible: Platform.OS !== "ios",
 				headerLargeTitleShadowVisible: false,
 				headerLargeStyle: { backgroundColor: "transparent" },
 			}}
