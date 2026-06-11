@@ -1,0 +1,20 @@
+# U2-003 iOS device log (iPhone 17 Pro · iOS 26 simulator) — FxU2003 temporary NSLog markers
+# Markers were log-only instrumentation, reverted after the run. Times are wall-clock.
+
+## Scenario B — loop (raster id) load: exactly one onFxLoad
+2026-06-11 12:40:45.186 Df reactnativefxexample[48029:b91fde] [FxU2003] surface visible (paused=0 shader=loop)
+2026-06-11 12:40:45.186 Df reactnativefxexample[48029:b91fde] [FxU2003] onFxLoad shader=loop
+
+## Scenario B — intensity drag while shader=loop: applyResolvedConfig re-ran 47x, dispatch deduped every time (zero events, never per-frame)
+   (47 'dispatch skipped (dedup): shader=loop' lines total — 3 representative samples shown)
+2026-06-11 12:42:11.950 Df reactnativefxexample[48029:b91fde] [FxU2003] dispatch skipped (dedup): shader=loop
+2026-06-11 12:42:12.364 Df reactnativefxexample[48029:b91fde] [FxU2003] dispatch skipped (dedup): shader=loop
+2026-06-11 12:42:12.747 Df reactnativefxexample[48029:b91fde] [FxU2003] dispatch skipped (dedup): shader=loop
+
+## Scenario A — clear (loop -> undefined): surface hidden+paused, silent (no event)
+2026-06-11 12:42:33.724 Df reactnativefxexample[48029:b91fde] [FxU2003] surface hidden+paused (hasActiveEffect=0 metalViewExists=1)
+2026-06-11 12:42:33.724 Df reactnativefxexample[48029:b91fde] [FxU2003] shader cleared (loop -> <none>): silent, no event
+
+## Scenario B — aurora (non-raster id) on the interactive surface: exactly one onFxError, surface hidden+paused (no silent fractal-clouds fallback)
+2026-06-11 12:42:58.340 Df reactnativefxexample[48029:b91fde] [FxU2003] surface hidden+paused (hasActiveEffect=0 metalViewExists=1)
+2026-06-11 12:42:58.340 Df reactnativefxexample[48029:b91fde] [FxU2003] onFxError shader=aurora

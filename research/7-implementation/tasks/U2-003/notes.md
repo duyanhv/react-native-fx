@@ -88,3 +88,39 @@ These compile and pass headless but assert runtime behavior that does not run he
 
 Next: the human runs the two device scenarios (shader reset; load/error fire once, with the iOS
 raster-subset error behavior), then review.
+
+## Device run — 2026-06-11 — both scenarios PASS (iOS + Android)
+
+Driven via agent-device on log-instrumented builds. iOS: iPhone 17 Pro / iOS 26 simulator.
+Android: physical POCO F1 / API 35. All instrumentation (NSLog + Log.i + a temporary shader
+panel on `content-motion.tsx`) was reverted — `git diff` over `packages/` and `example/` is
+empty; only `tasks/U2-003/evidence/` is added. Full write-up + stills + device logs in
+`evidence/README.md`.
+
+- **Claim 1 — `shader` reset (absent → undefined clears) — PASS (iOS).** `loop` set then
+  cleared: the surface visually emptied (no stuck frame), the `MTKView` went `hidden+paused`
+  (loop stopped, not torn down), and **no** event fired for the clear (`load=1 error=0`;
+  native log `shader cleared (loop -> <none>): silent`). On Android the clear is likewise
+  silent (`shader cleared … no event`).
+- **Claim 2 — load/error fire once per change, never per frame — PASS (iOS + Android).**
+  - iOS: `loop` → exactly one `onFxLoad`; re-apply → no second event; the intensity drag re-ran
+    `applyResolvedConfig` **47×** with **zero** events (all deduped) — the never-per-frame proof.
+  - iOS behavior change confirmed: `aurora` (non-raster) on the interactive surface fires
+    exactly one `onFxError` (`no renderer for shader id`) and renders **nothing** — it does NOT
+    silently fall back to `fractal-clouds`. Hosted path still renders `aurora` fine (regression
+    clear).
+  - Android: `loop` (valid id) → exactly one `onFxLoad` with the `.agsl` asset opened + compiled
+    (API 35); re-apply → no second event. Surface renders nothing (expected — Android interactive
+    GPU path deferred to U8).
+  - Payload shape `{ shader, reason? }` identical across platforms.
+
+- **Surprise / documented divergence:** on Android, `aurora` fires `onFxLoad` (every curated id
+  ships a `.agsl` asset that opens + compiles), whereas iOS-interactive `aurora` errors (5-of-10
+  raster subset). This is the correct, expected counterpart — Android proves the load by asset
+  compile; the iOS raster-subset error is iOS-specific. No code change needed.
+- **Process note:** `expo run:android`'s device-select prompt is non-interactive and never
+  reaches gradle, so the first Android install was a stale Jun-9 APK (pre-U2-003, showed
+  `load=0`). A fresh `gradlew :app:assembleDebug` + `adb install` was required — worth pinning in
+  the Android device-verify path.
+
+`device-verified`/`merged` remain the maintainer's ticks; this run delivers the evidence only.

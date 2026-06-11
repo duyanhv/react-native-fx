@@ -119,7 +119,7 @@ adds the open `cadence` schema hint, and clears two carry-ins from the U4-003 re
 - [x] implemented
 - [x] commented
 - [x] headless-done (tsc/build/lint/swift:lint/26→34 tests green; iOS xcodebuild + Android compileDebugKotlin BUILD SUCCEEDED)
-- [ ] device-verified (human — the two carry-in scenarios in `notes.md`)
-- [ ] reviewed
-- [ ] docs-closed (the source-doc edits landed; reviewer confirms before tick)
+- [x] device-verified (maintainer-ratified 2026-06-11 on the PASS evidence — iOS 26 sim + POCO F1/API 35; `evidence/README.md`)
+- [x] reviewed (2026-06-11, approved after two rounds — `../../reviews/U2-003.md`)
+- [x] docs-closed (verified in review: `02` decisions 15+16, `data-layer` canonical re-point + intensity reconciliation, `structure.{ios,android}.md` pins; no ledger row)
 - [ ] merged
