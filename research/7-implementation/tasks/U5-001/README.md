@@ -1,6 +1,6 @@
 # U5-001 — FxLayoutObserver: native post-layout frame reads
 
-Type: `implement` · State: `ready-to-merge` · Device: `yes` · Consumes: RT-013 · Closes: RT-013 (**closed 2026-06-11** — device-gated, resolved in `33` + the ledger post-ratification) · Blocked by: — (U4-001 merged)
+Type: `implement` · State: `merged` · Device: `yes` · Consumes: RT-013 · Closes: RT-013 (**closed 2026-06-11** — device-gated, resolved in `33` + the ledger post-ratification) · Blocked by: — (U4-001 merged)
 
 ## Start here
 
@@ -103,7 +103,7 @@ Subtask: FxLayoutObserver — "The Read". A passive native observer owned by FxS
 - [x] device-verified (maintainer-ratified 2026-06-11 on the 5/5 PASS run, iOS + Android — `evidence/device.md` §Results; RT-013 two halves recorded)
 - [x] reviewed (2026-06-11, approved — `../../reviews/U5-001.md`; gates re-run post-revert, evidence verified against the tree)
 - [x] docs-closed (2026-06-11 — `33` research question struck + the two §Open questions bullets resolved (strictly `expo-view`; New Arch only) + the falsification test's layout half marked device-proven; ledger RT-013 flipped to resolved citing `33` and the evidence)
-- [ ] merged (human gate)
+- [x] merged (maintainer, 2026-06-11, on integration/0.1.x) (human gate)
 
 ## Proof
 
