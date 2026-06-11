@@ -2,7 +2,7 @@
 
 ## Metadata
 - **Scope**: All research docs (`0-spine/`, `1-surface/`, `2-effects/`, `3-motion/`, `4-runtime/`, `5-realization/`)
-- **Status**: Research complete, implementation not started
+- **Status**: Point-in-time record (pre-implementation) — kept because downstream docs cite it. Dispositions live downstream: `7-implementation/data-layer.md` §8 resolves I1–I7 and §9 confirms D1–D4; G1 (manifest data) remains open, re-flagged as `wip/critique-2026-06-10.md` F3. Current tracking is `7-implementation/progress.md`.
 - **Audit Date**: 2026-06-06
 - **Severity**: CRITICAL (blocks impl) > HIGH (inconsistency) > MEDIUM (risk) > LOW (missing spec)
 
