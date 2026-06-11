@@ -122,4 +122,4 @@ adds the open `cadence` schema hint, and clears two carry-ins from the U4-003 re
 - [x] device-verified (maintainer-ratified 2026-06-11 on the PASS evidence — iOS 26 sim + POCO F1/API 35; `evidence/README.md`)
 - [x] reviewed (2026-06-11, approved after two rounds — `../../reviews/U2-003.md`)
 - [x] docs-closed (verified in review: `02` decisions 15+16, `data-layer` canonical re-point + intensity reconciliation, `structure.{ios,android}.md` pins; no ledger row)
-- [ ] merged
+- [x] merged (maintainer, 2026-06-11, on integration/0.1.x)
