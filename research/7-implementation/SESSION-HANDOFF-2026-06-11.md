@@ -17,9 +17,13 @@ then `progress.md`.
    screen → `variableColor` + `repeat` → flip replace-with mid-animation → it keeps
    animating, no blank flash; then drag a shader intensity slider → no flash, no restart.
    On pass: tick `device-verified` on the U3-008 row, commit.
-2. **`npm login`** (type `! npm login` in the session), then have the agent publish the
-   `react-native-fx` placeholder — critique F15; the name was still unclaimed at last
-   check (404, 2026-06-10).
+2. ~~**`npm login`** … publish the `react-native-fx` placeholder — critique F15.~~ **Done
+   2026-06-11**, with a twist: the unscoped name is unclaimable (npm's typosquat filter
+   rejects it as too close to `react-native-fs`). Claimed `react-native-fxkit@0.0.1` as the
+   placeholder instead (`@duyanhv` scope was declined; `@metainnotech` org route skipped).
+   The product/repo-vs-package name reconciliation is now routed to DEF-015 (decide) and
+   DEF-016 (apply before the real release); `packages/package.json` still names the
+   unpublishable `react-native-fx`. F15 triage row updated.
 3. **Dispatch the next critique batch** (the planner agent proposes these in parallel —
    disjoint files):
    - **U4-003** — lazy Metal in `FxSurfaceView` + shared static device/queue/pipeline
