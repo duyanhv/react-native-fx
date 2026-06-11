@@ -65,9 +65,9 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-006 | Unit 3 | implement | merged | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); reviewed + confirmed by maintainer (2026-06-09); merged on integration/0.1.x; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | device-pending | yes | FX-009 | — | DOC-008, U3-001 | iOS `.symbolEffect` via hosted slice; Android planned rung skipped by `select()`; A1-1 `replaceWith` fix device-evidenced and maintainer-ratified (2026-06-10); device gate held ONLY for the A1-2 OS-degradation rows — needs a real iOS 17 / sub-17 device (maintainer chose not to waive); [detail](#u3-007--ios-symbol-effect) |
 | U1-006 | Unit 1 | implement | todo | no | — | — | — | critique F9: pull `FxGroupView` + `NativeFxGroupProps` from the public index (`src/index.ts` is the declared stability contract; the native class is an inert stub) until the morph compound lands |
-| U2-003 | Unit 2 | implement | todo | no | — | — | — | critique F3+F6+F11 (audit G1): author the `CapabilityManifest` data (today: schema + `select()` + fixture only — five unsynchronized dispatch renderings); add the manifest↔`ShaderId`↔native-switch conformance test; resolve per-effect typed config as manifest-canonical uniforms → generated TS; add the `clock` cadence hint (ambient vs display-rate) to the schema while it is open. **Also (carry-in from U4-003 review):** wire the declared-but-undispatched `onFxLoad`/`onFxError` events on `FxSurfaceView` (iOS + Android) — the Device Verification Guide expects "BYO shader compilation succeeds or fires onError"; they fire nowhere today |
+| U2-003 | Unit 2 | implement | todo | no | — | — | — | critique F3+F6+F11 (audit G1): author the `CapabilityManifest` data (today: schema + `select()` + fixture only — five unsynchronized dispatch renderings); add the manifest↔`ShaderId`↔native-switch conformance test; resolve per-effect typed config as manifest-canonical uniforms → generated TS; add the `clock` cadence hint (ambient vs display-rate) to the schema while it is open. **Also (carry-in from U4-003 review):** wire the declared-but-undispatched `onFxLoad`/`onFxError` events on `FxSurfaceView` (iOS + Android) — the Device Verification Guide expects "BYO shader compilation succeeds or fires onError"; they fire nowhere today. Sibling nuance (U4-003 device run): `shader` set back to `undefined` does not reset the native shader — Expo omits the prop from the batch; resolve the absent-vs-empty contract alongside the typed config |
 | U3-008 | Unit 3 | rework | docs-closed | yes | — | — | — | critique F1+F10: persistent `UIHostingController` + observed props holder on iOS `FxHostedView` (Expo `SwiftUIHostingView` idiom; the Android sibling and the UIKit glass path already update in place) — unblocks the eased-uniform `transition` channel, symbol state survives prop changes; decorative hosted views default a11y-hidden on both platforms; a11y row added to the Device Verification Guide template. Headless gates + xcodebuild green; agent-device evidence (stills only) in `tasks/U3-008/evidence/device-run-2026-06-10/` — F1 symbol/shader continuity PASS, glass regular/clear + GPU resume PASS, decorative a11y-hidden PASS, interactive-glass reachability PARTIAL (no AX element in either state — the open VoiceOver item, see notes). **device-verified ratified 2026-06-11 (maintainer)** on physical iPhone + POCO F1 (Android 15/API 35): iOS symbol `variableColor`+`repeat` replace-flip and iOS+Android intensity-slider in-place uniform updates PASS (no blank/restart); Android decorative a11y-hidden confirmed via the live accessibility tree (effect view absent, controls present — `FxHostedView.kt:105`); residual — literal Google-TalkBack screen-reader demo needs a TalkBack-equipped device (POCO F1/MIUI ships none); evidence in `tasks/U3-008/evidence/ratify-2026-06-11/`. **Reviewed + docs-closed 2026-06-11** — approved, gates re-run green at `481ad0c`, two non-blocking nits (inert `FxHostedProps.materialConfig`; teardown-wording nuance in `structure.ios.md`) ([review](./reviews/U3-008.md)); remaining gate: `merged` (maintainer) ([task](./tasks/U3-008/)) |
-| U4-003 | Unit 4 | rework | device-pending | yes | — | — | — | critique F2+F11(sharing half): iOS `FxSurfaceView` now builds its `MTKView` lazily (first active `shader`) + shares a process-wide static device/queue/library/pipeline cache; Android unaffected (no GPU in the shell). Headless-done — tsc/build/lint/swift:lint/test + example xcodebuild BUILD SUCCEEDED; `structure.ios.md` §Lifecycle pinned; device scenario in `evidence/device.md` (human gate). [task](./tasks/U4-003/) · [detail](#u4-003--lazy-metal--shared-static-metal-context) |
+| U4-003 | Unit 4 | rework | docs-closed | yes | — | — | — | critique F2+F11(sharing half): iOS `FxSurfaceView` builds its `MTKView` lazily (first active `shader`) + shares a process-wide static device/queue/library/pipeline cache; Android unaffected (no GPU in the shell). Headless green; `structure.ios.md` §Lifecycle pinned. **device-verified ratified 2026-06-11 (maintainer)** on the agent-device PASS evidence — exactly one `MTKView` allocation per session, zero for content-motion-only, reuse + isolated teardown clean (`tasks/U4-003/evidence/`); multi-instance proof rides EX-002. **Reviewed + docs-closed 2026-06-11** ([review](./reviews/U4-003.md)); remaining gate: `merged` (maintainer). [task](./tasks/U4-003/) · [detail](#u4-003--lazy-metal--shared-static-metal-context) |
 | EX-002 | harness | implement | todo | yes | — | — | — | critique F14: 100-cell list stress screen in the example (mixed fill/shader/material cards) as a standing device-verify scenario — converts F1/F2 from theoretical to measured |
 
 ### V2 build — Units 4–9
@@ -298,7 +298,7 @@ Proof:
 
 ## U4-003 — lazy Metal + shared static Metal context
 
-Type: `rework` · State: `device-pending` · Device: yes · Consumes: — · Closes: — (no ledger row) · [task](./tasks/U4-003/)
+Type: `rework` · State: `docs-closed` · Device: yes · Consumes: — · Closes: — (no ledger row) · [task](./tasks/U4-003/)
 
 Origin: critique F2 (HIGH) + F11's sharing half. `FxSurfaceView` is the `expo-view` substrate
 every V2 motion/press/presence component rides; on iOS it allocated Metal eagerly and
@@ -311,8 +311,8 @@ Checklist:
 - [x] implemented (lazy `MTKView`; static shared device/queue/library/pipeline cache)
 - [x] commented (iceberg — why lazy, why process-lived, main-thread cache access)
 - [x] headless-done
-- [ ] device-verified (human gate — `tasks/U4-003/evidence/device.md`)
-- [ ] reviewed (reviewer; headless pre-review passed 2026-06-11 — formal tick rides the device gate)
+- [x] device-verified (maintainer-ratified 2026-06-11 on the PASS evidence — iOS 26 sim, agent-device, log-instrumented build reverted after; `tasks/U4-003/evidence/device.md` §Results; multi-instance shared-context proof rides EX-002)
+- [x] reviewed (2026-06-11, approved — `../reviews/U4-003.md`)
 - [x] docs-closed (`structure.ios.md` §Lifecycle mechanic pinned; no ledger row)
 - [ ] merged (human gate)
 
@@ -332,9 +332,13 @@ Proof:
   `bun run swift:lint`, `bun run test` (26 pass); `git diff --check` clean. Native:
   `xcodebuild` (Debug, iphonesimulator, Xcode 26.5) on `reactnativefxexample` → BUILD
   SUCCEEDED (after a `pod install` to refresh a stale Pods project — see `tasks/U4-003/notes.md`).
-- device: iOS scenario in `tasks/U4-003/evidence/device.md` — GPU-capture a no-shader surface
-  to confirm zero allocation; lazy first activation; shared context across instances;
-  pause/resume + isolated teardown; a11y. Human gate.
+- device: **PASS** (2026-06-11, iOS 26 sim iPhone 17 Pro, agent-device on a log-only-instrumented
+  build, reverted after). Exactly one `MTKView` allocation across the session, only on the first
+  active shader; content-motion-only mount = zero alloc; child mount + hit-test intact; lazy
+  `loop` rendered (not blank); reuse + fresh re-mount = no extra alloc; isolated teardown, no
+  crash. Full log + screenshots in `evidence/device.md` §Results. Multi-instance shared-context
+  (EX-002 list) + GPU-capture variant left as the maintainer's confirmation. Formal device-verified
+  tick is the maintainer's.
 - docs: `structure.ios.md` §Lifecycle (lazy effect surface + process-shared Metal context). No
   ledger row.
 

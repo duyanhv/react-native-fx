@@ -84,8 +84,8 @@ The change is a performance rework with no rule tension.
 - [x] implemented (lazy `MTKView`; static shared device/queue/library/pipeline cache)
 - [x] commented (iceberg only — why lazy, why shared/process-lived, main-thread cache access)
 - [x] headless-done (tsc / build / lint / swift:lint / test + native xcodebuild compile green)
-- [ ] device-verified (human gate — scenario in `evidence/device.md`)
-- [ ] reviewed
+- [x] device-verified (maintainer-ratified 2026-06-11 on the PASS evidence — `evidence/device.md` §Results; multi-instance shared-context proof rides EX-002)
+- [x] reviewed (2026-06-11, approved — `../../reviews/U4-003.md`)
 - [x] docs-closed (`structure.ios.md` §Lifecycle records the lazy + shared-static mechanic; no ledger row)
 - [ ] merged (human gate)
 

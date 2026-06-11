@@ -1,13 +1,22 @@
 # U4-003 — notes
 
-## Unverified claims (need the device gate)
+## Device run — 2026-06-11 — PASS (awaiting maintainer's device-verified tick)
 
-- A content-motion-only `FxSurfaceView` (no `shader`) now allocates **no** `MTKView` / GPU
-  resources — claimed from the code path, must be confirmed with a GPU frame capture
-  (`evidence/device.md` §1).
-- Lazy first activation renders correctly (no blank/black, correct size) — §2.
-- The shared process-wide device/queue/library/pipeline cache renders multiple instances
-  correctly and survives an individual surface unmount — §3, §4.
+Driven on an iOS 26 sim (iPhone 17 Pro) via agent-device, on a log-only-instrumented build
+(reverted after; committed code compiles/lints identically). Full write-up + log + screenshots
+in `evidence/device.md` §Results. Headline: **exactly one `MTKView` allocation across the whole
+session**, only when a shader first became active.
+
+- §1 zero GPU for content-motion-only — **PASS** (mount: `metalViewExists=0`, no alloc log).
+- Functional child mount + hit-test on the GPU-free surface — **PASS** (`count: 0 → 2`).
+- §2 lazy first activation renders — **PASS** (one alloc on `shader=loop`; `loop` rendered, not blank).
+- §3 no re-allocation on reuse — **PASS** (later applies: `metalViewExists=1`, no further alloc).
+  Multi-instance shared-context proper wants EX-002; single-instance reuse shown.
+- §4 isolated teardown / re-mount — **PASS** (back→unmount no crash; re-enter = fresh instance, 0 alloc).
+- §5 a11y — observed (the `MTKView` never appeared as its own a11y element; only the child did).
+
+Pre-existing, non-U4-003 nuance noted: `shader` → `undefined` doesn't reset the native shader
+(Expo omits the prop). Orthogonal to lazy/shared Metal; parked next to the U2-003 event wiring.
 
 ## What changed
 
