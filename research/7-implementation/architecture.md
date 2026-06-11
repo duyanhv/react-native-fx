@@ -225,9 +225,11 @@ const FxGroupView   = requireNativeView('ReactNativeFx', 'FxGroupView');    // m
 - `onPressIn/onPressOut/onPress` — interaction events (active mode) [research: 30]
 - `onLoad/onError` — BYO shader compilation result [research: 22]
 
-Native registered event names may be prefixed, for example `onFxLoad` / `onFxError`, when a
-bare semantic name collides with a React Native core event name. JS wrappers own the public
-semantic prop names.
+Native registered event names are **prefixed** to dodge React Native's reserved event props —
+press events as `onShader*` (on `FxSurfaceView`), lifecycle/load as `onFx*` (every view). The
+JS surface components own the remap to the public names above. The **canonical native↔public
+mapping table is `40` §Native ↔ public event-name mapping** — the single home; this list does
+not restate it.
 
 **AsyncFunctions** (imperative, UI-thread, ref-attached):
 - `setUniform({ key, value })` — controlled mode [research: 30]
@@ -337,7 +339,7 @@ ios/FxSurfaceView.swift (extends FxNativeView) — content motion wrapper
        │   │ emits: onTransitionEnd (completion event)
        │   │ rule: interruptible retargeting, no snap
        │   │ default spring: platform's own (the law) [research: 41]
-       │   │ tune: adjusts within platform family (speed/emphasis/distance) [research: 41]
+       │   │ tune: adjusts within platform family (speed/emphasis/distance) — deferred from V1, DOC-019 [research: 41]
        │   └── feeds ──▶ FxLayoutObserver
        │
        ├── FxLayoutObserver

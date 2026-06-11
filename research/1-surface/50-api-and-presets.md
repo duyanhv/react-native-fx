@@ -43,7 +43,7 @@ only, and the `preset`/`motion`/`tune`/`transition` split is the law's shape-nat
 |---|---|---|
 | `preset` | behavior id (`transient`, `lift`, …) | **platform-idiomatic behavior bundle** — fx resolves the *whole shape + timing per platform*. Behavior-named, never UI-named. |
 | `motion` | **typed `MotionSpec` map** | **explicit shape override** — fixes the shape cross-platform. *Different map per component* (phases vs states), never one universal map. |
-| `tune` | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`) |
+| `tune` *(deferred — V1.x / MOT-001)* | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`). Not on the V1 surface (DOC-019). |
 | `transition` | `{ duration?, delay?, easing?, spring? }` | **expert timing override only** — never a shape |
 | `effect` | **`EffectStack`** or effect id | the visual effect bundle/layer(s). **Two meanings by owner:** on `<Fx>` it *is* the fx-owned drawn surface; on `FxView` it is decoration *attached to your content*. |
 | `feedback` | press-behavior id (`native`) | press feedback bundle (`FxPressable`) |
@@ -54,7 +54,9 @@ only, and the `preset`/`motion`/`tune`/`transition` split is the law's shape-nat
 
 `preset` / `feedback` / `effect` are three **preset-like bundles** on three different owned
 surfaces — a clear domain split, not a reduction. Events: `onTransitionEnd` (`{phase}`),
-`onStateChange`, `onPress*`, `onLoad`/`onError`.
+`onStateChange`, `onPress*`, `onLoad`/`onError`. These are the **public** prop names; the
+native views register prefixed names (`onShader*`/`onFx*`) — the canonical mapping is pinned
+in `40` §Native ↔ public event-name mapping.
 
 **Two builders, two data types** (`55`/`41`): `fx.effect.*` → `EffectStack` (visual
 layers); `fx.motion.*` → `MotionSpec` (shape). `motion` takes a `MotionSpec` map; `effect`
@@ -63,7 +65,7 @@ takes an `EffectStack`; `transition` takes a `Transition`. They never cross.
 ### Per-component surfaces (props are scoped, not shared)
 
 ```tsx
-<FxPresence visible preset="transient" motion={{ enter, exit }} tune transition />   // lifecycle
+<FxPresence visible preset="transient" motion={{ enter, exit }} transition />        // lifecycle
 <FxView     state="selected" preset="lift" motion={{ idle, selected }} effect transition />  // mounted state
 <FxPressable feedback="native" onPress />                                            // press recognizer
 <Fx         effect="plasma" interactionMode="active" onPress />                      // drawn effect (+ interactive)
@@ -75,7 +77,7 @@ takes an `EffectStack`; `transition` takes a `Transition`. They never cross.
 `<FxPresence visible><FxView state>…`. The "shared" props are **shared conceptually but
 still scoped by owner** — there is no universal prop:
 
-- `transition` / `tune` apply only where a `motion`/`preset` exists (the components that move).
+- `transition` (and the V1.x-deferred `tune`) applies only where a `motion`/`preset` exists (the components that move).
 - `effect` applies to `<Fx>` (the drawn surface) and optionally to `FxView` (decoration on
   your content) — different meaning per owner.
 - `composition` applies **only to effect layers** (where the effect sits), nowhere else.
@@ -133,7 +135,8 @@ by the runtime.
 2. **One prop language, scoped by ownership; `transition` is timing only.** The
    `preset`/`motion`/`tune`/`transition` split is the law's shape-native engine: `preset`
    resolves the whole behavior per platform, `motion` is the explicit cross-platform shape
-   override, `tune` adjusts intent, `transition` is expert timing. Props are scoped to their
+   override, `tune` adjusts intent, `transition` is expert timing. **V1 ships the
+   `preset`/`motion`/`transition` triad; `tune` is deferred to MOT-001 (DOC-019).** Props are scoped to their
    owning component (`visible`→`FxPresence`, `state`→`FxView`, `feedback`→`FxPressable`,
    `interactionMode`→`<Fx>`), not a flat pool.
 3. **Two builder namespaces, two data types** — `fx.effect`→`EffectStack`,
@@ -147,7 +150,7 @@ by the runtime.
 
 ## Decisions
 
-7. **V1 vocabulary ratified (DOC-005).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` · `sheet` · `modal` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+7. **V1 vocabulary ratified (DOC-005), presence set narrowed (DOC-018).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). `sheet`/`modal` (presence) are **deferred to MOT-001** — they name screen-scale presentations that collide with presence's scope ceiling (`42`, DOC-018). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
 
 ## Open questions
 

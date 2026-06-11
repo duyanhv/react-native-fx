@@ -55,7 +55,10 @@ The manifest is TypeScript — it doubles as the runtime type the consumers impo
 ```ts
 // ── shared vocabularies ──────────────────────────────────────────────
 export type Platform  = 'ios' | 'android';
-/** hosted = SwiftUI/Compose host (decorative, Host boundary, pointerEvents passthrough).
+/** hosted = a host view fx owns (decorative, Host boundary, pointerEvents passthrough):
+ *  SwiftUI on iOS; on Android a plain View drawing the effect directly in V1, with Jetpack
+ *  Compose as the intended future rung. The Android `applyVia` values below name that
+ *  Compose-era mechanism; V1 realizes them through plain-View draw — see structure.android.md.
  *  expo-view = plain native UIView/ViewGroup (the G runtime; required for interaction). */
 export type Substrate = 'hosted' | 'expo-view';
 /** how a candidate is realized. */
@@ -203,8 +206,9 @@ shader: {
         requires: { os: 17, substrate: 'expo-view' }, note: 'interactive surface (G runtime)' },
     ],
     android: [
-      { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-        requires: { os: 33, substrate: 'hosted' } },
+      { via: 'shader', asset: 'agsl', applyVia: 'Paint.onDraw', clock: 'frame-nanos',
+        requires: { os: 33, substrate: 'hosted' },
+        note: 'generative AGSL draws through a Paint in onDraw on a plain View; createRuntimeShaderEffect filters existing content and is not used — see structure.android.md' },
       { via: 'shader', asset: 'agsl', applyVia: 'View.setRenderEffect', clock: 'frame-nanos',
         requires: { os: 33, substrate: 'expo-view' }, note: 'plain View/ViewGroup (RenderNode-backed setRenderEffect), not a Compose modifier; draw-time, touch-safe' },
     ],

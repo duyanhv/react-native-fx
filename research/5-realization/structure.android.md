@@ -12,8 +12,12 @@ iOS peer is `structure.ios.md`.
 
 ### Substrates
 
-- **`hosted`** — a Jetpack Compose composable hosted inside RN via Expo's Compose
-  host. Decorative or self-gesturing. The main path for generative effects.
+- **`hosted`** — a host view fx owns, decorative or self-gesturing; the main path for
+  generative effects. **V1 ships a plain `View`** that draws the effect directly
+  (`RuntimeShader` through a `Paint` in `onDraw`, gradients via `LinearGradient`, materials
+  via `RenderEffect`), driven by a `Choreographer` clock. Jetpack Compose (the `ShaderBrush`/
+  `Brush.*`/`withFrameNanos` idiom) is the intended future rung, deferred until the
+  library-module Compose setup is resolved (§ Render paths).
 - **`expo-view`** — a plain `ExpoView` (`View`/`ViewGroup`) hosting the render surface
   **or wrapping RN content**; a first-class Android view in the dispatch hierarchy. Carries
   the **owned runtime** — interaction (G) **and** content motion (the wrapped-content
@@ -39,9 +43,10 @@ component.
 
 ### Hosting mechanics (when on `hosted`)
 
-- Compose host via Expo's Android `RNHostView` equivalent. The auto-Host boundary
-  (#46549) covers Android too. For decorative full-surface effects, keep the host
-  non-intercepting so touches reach RN content below.
+- Host view via Expo's Android `RNHostView` equivalent — a plain `View` in V1 (Compose
+  deferred, § Substrates). The auto-Host boundary (#46549) covers Android too. For
+  decorative full-surface effects, keep the host non-intercepting so touches reach RN
+  content below.
 - **Child layout on the plain-`View` host.** When the host swaps its decorative child
   on a prop update (effect or `intensity` change recreates the inner render view), the
   new child is added natively *outside* RN's layout pass. `ExpoView` defaults
@@ -65,8 +70,10 @@ component.
 
 ### Clock (what advances `time`)
 
-- **`hosted`** → `withFrameNanos` / `rememberInfiniteTransition` (Compose, on the
-  `Choreographer`).
+- **`hosted`** → a `Choreographer.FrameCallback` on the plain-`View` host, advancing
+  `time` and invalidating each frame (the V1 path). `withFrameNanos` /
+  `rememberInfiniteTransition` is the equivalent Compose idiom, deferred with the Compose
+  rung.
 - **`expo-view`** → a `Choreographer` frame callback driving the render. Pause on
   `onDetachedFromWindow`/background (`31`). Resource release is a separate renderer-owned
   lifecycle step, not part of ordinary detach.
@@ -79,12 +86,15 @@ component.
   The Compose compiler dependency at library level is deferred; the `hosted`
   substrate's intended Compose path (`Brush.linearGradient`, `Canvas`/`DrawScope`)
   is activated when the library-module Compose setup is resolved.
-- **Shader**: `RuntimeShader` (AGSL) applied via
-  `RenderEffect.createRuntimeShaderEffect` + `Modifier.graphicsLayer`, or as a
-  `ShaderBrush`. AGSL source files ship under `src/main/assets/shaders/` and are
-  read at runtime via `context.assets.open("shaders/<id>.agsl")`. No build-time
-  shader compile step is required. Below API 33 the shader rung guards out and
-  degrades to `{ via: 'none' }`.
+- **Shader**: a `RuntimeShader` (AGSL) drawn through a `Paint` in `onDraw()` on the
+  plain-`View` host — the path for a *generative* shader that produces its own pixels.
+  `RenderEffect.createRuntimeShaderEffect` is deliberately **not** used here: it filters
+  *existing* view content through an `eval`'d input shader, which a generative shader does
+  not have. (`createRuntimeShaderEffect` + `Modifier.graphicsLayer` / `ShaderBrush` is the
+  Compose-era mechanism, deferred with the Compose rung.) AGSL source files ship under
+  `src/main/assets/shaders/` and are read at runtime via
+  `context.assets.open("shaders/<id>.agsl")`. No build-time shader compile step is required.
+  Below API 33 the shader rung guards out and degrades to `{ via: 'none' }`.
 - **Filter/blur**: `RenderEffect` (`createBlurEffect`, color filter, chained).
 
 ### Touch contract (when on `expo-view`)

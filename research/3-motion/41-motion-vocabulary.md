@@ -30,8 +30,16 @@ design motion:
 |---|---|---|
 | **`preset`** | a **platform-idiomatic behavior bundle** — `transient`, `lift`, … | fx resolves the **whole shape + timing per platform** (may diverge) |
 | **`motion`** | an **explicit shape override** (a typed `MotionSpec` map) | the user **fixes** the shape **cross-platform** (opt-in uniformity) |
-| **`tune`** | **intent adjustment** inside the platform family (`speed`/`emphasis`/`distance`) | stays platform-native; never raw curves |
+| **`tune`** *(deferred — V1.x / MOT-001)* | **intent adjustment** inside the platform family (`speed`/`emphasis`/`distance`) | stays platform-native; never raw curves |
 | **`transition`** | **expert timing override** (`duration`/`delay`/`easing`/`spring`) | the escape hatch for timing only |
+
+**V1 ships the `preset`/`motion`/`transition` triad; `tune` is deferred (Decision 13,
+DOC-019).** The triad is load-bearing — the law needs a default behavior, an explicit-override
+channel, and a timing escape hatch. `tune` is a third adjustment axis whose `{speed, emphasis,
+distance}` semantics are invisible until MOT-001 device-tunes the formulas (the open `MOT-002`
+vocabulary), and whose job overlaps `preset` (intent) and `transition` (timing). It resurrects
+with MOT-001's device-proven catalog. The rest of this section keeps `tune`'s design for that
+resurrection; it is simply absent from the V1 surface.
 
 So the default door is `<FxPresence preset="transient" />` — fx picks the
 platform-appropriate transient presentation on each OS. The moment the user supplies a
@@ -120,7 +128,7 @@ The four props are sugar over a deeper layer: an animatable property — a conte
 or an effect uniform, the same thing — bound to a **native driver** (`02` decision 14).
 Three drivers: **`target`** (discrete state → platform-native spring; what ships today),
 **`clock`** (a native timeline: loop, pulse, keyframe sequence, stagger), **`source`**
-(a native scroll/gesture value, mapped natively — `40` decision 7). `preset="sheet"`
+(a native scroll/gesture value, mapped natively — `40` decision 7). `preset="transient"`
 expands to a `target`-driver binding with platform-native springs; the four-prop front
 door does not change. `target` + `clock` build first; `source` is V2 and substrate-tiered.
 
@@ -187,6 +195,7 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
 6. **`preset` / `motion` / `tune` / `transition` are four distinct jobs** — `preset`
    resolves the whole behavior per platform; `motion` is the explicit cross-platform shape
    override; `tune` adjusts intent inside the platform family; `transition` is expert timing.
+   *(V1 ships the `preset`/`motion`/`transition` triad; `tune` is deferred — Decision 13.)*
 7. **Presets are behavior-named, not UI-named** (`transient`/`lift`, never `toast`/`card`);
    `motion` is a typed map, *different per component* (phases vs states), never one universal map.
 8. **Motion-map fallback** = `userMotion[key] ?? presetMotion[key] ?? identity`; no implicit
@@ -219,13 +228,24 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
     `feedback` (`57`). Compose's `fadeIn`/`slideIn` names are not borrowed — the builders
     stay `edgeIn`/`edgeOut`/`scale`/`identity`. Multi-step sequences and one-shot bursts
     arrive with the `clock` driver (`42` decision 6), not as more named primitives.
+13. **V1 ships `preset`/`motion`/`transition`; `tune` is deferred to MOT-001 (DOC-019,
+    2026-06-11).** `tune` is the weak member of the four — a third intent axis whose
+    `{speed, emphasis, distance}` formulas are device-pending (the open `MOT-002`) and whose
+    job overlaps `preset` (intent) and `transition` (timing). No comparison library ships a
+    separate intent axis (Reanimated: entering/exiting + transitions; Framer: variants +
+    transition). It costs nothing to cut now — it does not exist in code. The four-prop design
+    is retained for MOT-001's resurrection; the V1 *surface* exposes the triad only.
 
 ## Open questions
 
 - The minimal animatable-property set and the `tune` vocabulary (`speed`/`emphasis`/
   `distance` — enough?) and the `preset` value set per component.
-  **The V1 preset value set is ratified (DOC-005):** `transient` · `sheet` · `modal` (presence);
-  `lift` (state). The per-platform shape and timing defaults are device-pending, owned by MOT-001.
+  **`tune` is deferred from the V1 surface (DOC-019):** its vocabulary stays the open `MOT-002`
+  device work and resurrects with MOT-001; V1 ships `preset`/`motion`/`transition` only.
+  **The V1 preset value set is ratified (DOC-005), presence narrowed (DOC-018):** `transient`
+  (presence); `lift` (state). `sheet`/`modal` (presence) defer to MOT-001 (`42` — they name
+  screen-scale presentations that collide with presence's scope ceiling). The per-platform
+  shape and timing defaults are device-pending, owned by MOT-001.
 - **Partial-override sugar (`edge`/`origin`) — deferred.** For now it's binary: `preset`
   (full platform default) *or* explicit `motion` (full uniform shape); no `edge="bottom"`
   middle ground. Reconsider as scoped `FxPresence` sugar only if demand is real (the risk is

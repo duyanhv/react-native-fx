@@ -89,7 +89,12 @@ unmount. Two requirements fall out and become **API constraints** on `FxPresence
 - **`FxPresence` must stay mounted to animate exit.** Drive exit with the `visible`
   prop — **not** by conditionally rendering `FxPresence` itself: `{show && <FxPresence/>}`
   unmounts the coordinator before it can animate. The coordinator must live *above* the
-  thing it animates. → a stated contract in `54`.
+  thing it animates. → a stated contract in `54`. The corollary is presence's **scope
+  ceiling**: when the *whole subtree* dies at once — a navigator pop, a parent conditional
+  above the coordinator, list-cell eviction — the coordinator dies with the child and the
+  exit cannot play (the `Teardown-during-exit` invariant above is exactly this path: it
+  cancels, releases, and emits nothing). fx accepts this rather than a native-held model
+  with a Fabric commit hook (rule #7). `42` §The scope ceiling states it as a contract.
 - **Stable child key.** The wrapped content needs an identity stable across renders so the
   coordinator can match "same child, now exiting."
 
@@ -135,6 +140,26 @@ async and JSI-free (`05`).
 - How does the coordinator behave when the view unmounts for a *non-animation* reason
   (parent unmounts, app backgrounds mid-exit)? Teardown must not leak (ties to `31`).
 - What is the re-entrancy model for `tune` / `transition` changing *during* a transition?
+
+### React-semantics edge cases (resolve before / during U7-001)
+
+The coordinator reconciles a *native* lifecycle with React's tree, so React's own lifecycle
+quirks are part of the contract. Reanimated accumulated handling for each of these; fx must
+answer them explicitly before the FSM ships, not discover them on device. These are open
+**questions**, not yet decisions — each becomes a U7-001 implementation rule and a U7-002
+device row.
+
+| case | what React does | the risk for the handshake | reference precedent (`references/reanimated`) |
+|---|---|---|---|
+| **StrictMode** (dev) | mounts → unmounts → remounts every component once | the throwaway first mount must not play `enter`, fire `onTransitionEnd`, or leak a retained-exiting child; identity must survive the remount | tolerates the double-invoke without spurious animations |
+| **Fast Refresh** | remounts the subtree on a code edit, possibly mid-transition | a remount mid-`exiting`/`entering` must not strand the retained child or blindly replay `enter` | reparenting transfer of in-flight state |
+| **Suspense** | hides a subtree offscreen (does not unmount) when a sibling suspends | is an offscreen-hide an `exit`, or a `hold`? `visible` did not change — presence must not read suspension as dismissal | offscreen/`Activity` hidden-state handling |
+| **re-render mid-exit** | a parent re-render while `exiting` may change the child's props or identity | a *prop/identity* change (not a `visible` toggle) must merge into the in-flight exit, not restart it — distinct from the FSM's `visible`-retarget rows | interrupted-exit merging |
+| **list eviction** (FlatList / recycler) | virtualizes a row off-screen; the cell recycles | `exit` must fire on logical *removal*, never on mere recycle/virtualization — else off-screen rows animate phantom exits | `skipExiting` / removal-vs-recycle discrimination |
+
+fx adopts the *model* these answers imply (deferred unmount, interrupt-as-retarget), never
+Reanimated's worklet runtime or commit hook (rule #7). The list-eviction row also ties to the
+scope ceiling (`42`): an evicted cell is whole-subtree teardown, so its exit cannot animate.
 
 ## Open questions
 

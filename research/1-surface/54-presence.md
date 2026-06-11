@@ -14,12 +14,13 @@ cannot defer unmount; only a wrapping component can.
 
 ## The prop surface
 
-A platform-idiomatic `preset`, refined by `tune`/`transition`, or overridden by an explicit
-`motion` map (`50`'s prop language; the shape-native split, `41`):
+A platform-idiomatic `preset`, refined by `transition`, or overridden by an explicit
+`motion` map (`50`'s prop language; the shape-native split, `41`). (`tune` — the fourth
+knob — is deferred from the V1 surface, DOC-019; it resurrects with MOT-001.)
 
 ```tsx
 // preset — fx resolves the platform-idiomatic shape + timing per OS
-<FxPresence visible={open} preset="transient" tune={{ speed: 'fast' }} />
+<FxPresence visible={open} preset="transient" />
 
 // explicit motion map — fixes the shape cross-platform (opt-in uniformity)
 <FxPresence
@@ -43,8 +44,9 @@ A platform-idiomatic `preset`, refined by `tune`/`transition`, or overridden by 
 - **`motion` is a typed map of *lifecycle phases*** — `{ enter, exit }` — not mounted states
   (that is `FxView`, `57`). Fallback: `userMotion[k] ?? presetMotion[k] ?? identity`; no
   implicit reverse (`41`).
-- **`tune` adjusts intent inside the platform family; `transition` is expert timing** — both
-  refine a `preset` *or* an explicit `motion`. Neither is a shape.
+- **`transition` is expert timing** — it refines a `preset` *or* an explicit `motion`, and is
+  never a shape. (`tune`, the intent-adjustment knob, would refine the same way but is deferred
+  from the V1 surface — DOC-019.)
 - **`children`** — see the children rule below; fx wraps them in one managed host view and
   transforms that (transform/opacity only ⇒ touch-safe).
 - **`appear`** — whether `visible: true` on the *initial* mount plays the enter envelope or
@@ -76,8 +78,9 @@ mounted; flip `visible`. The wrapped child should carry a stable key.
 1. **`FxPresence` is a stateful coordinator, not a dumb wrapper** — it owns deferred
    unmount via the `35` handshake.
 2. **`preset` (platform-idiomatic) is the default; `motion` is the explicit cross-platform
-   shape override.** `tune`/`transition` refine either and are never a shape; `visible` is
-   `FxPresence`-only. The shape-native split (`41`).
+   shape override.** `transition` refines either and is never a shape (`tune` would too, but
+   is deferred from the V1 surface — DOC-019); `visible` is `FxPresence`-only. The
+   shape-native split (`41`).
 3. **Any children, one managed wrapper, no per-child motion** — accept fragments/arrays and
    wrap them in one transform target; per-child motion is the `33`/`05` boundary trigger,
    out of scope. Content motion is transform/opacity only (touch-safe).

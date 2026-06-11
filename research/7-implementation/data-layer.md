@@ -434,6 +434,11 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[research: 42 §The presence preset catalog]**
 > Presets are behavior-named (`transient`/`sheet`/`modal`), not UI-named (`toast`/`card`).
 > The platform owns the geometry — same preset may differ in edge, origin, distance on iOS vs Android.
+>
+> **V1 ships `transient` only (DOC-018).** The `sheet`/`modal` rows below are the provisional
+> catalog targets MOT-001 will device-fill; they are **deferred from the V1 surface** (they name
+> screen-scale presentations that collide with presence's scope ceiling, `42`) and resurrect with
+> that catalog. They remain here as MOT-001 territory, not V1 shipping values.
 
 | Preset | Phase | iOS Source | iOS Shape | iOS Timing | Android Source | Android Shape | Android Timing |
 |--------|-------|-----------|-----------|------------|----------------|---------------|----------------|
@@ -495,6 +500,10 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 
 > **[research: 41 §The preset / motion / tune / transition split]**
 > `tune = { speed, emphasis, distance }` adjusts intent inside the platform family, never raw curves.
+>
+> **`tune` is deferred from the V1 surface (DOC-019).** These formulas are MOT-001/MOT-002
+> territory — provisional, device-pending, and not shipped in V1. They resurrect with the
+> device-tuned catalog; V1 exposes `preset`/`motion`/`transition` only.
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme]**
 

@@ -102,6 +102,32 @@ Constrained to discrete/low-frequency, never a per-frame stream:
 - **Never** — a per-frame native→JS stream. Continuous JS-side tracking of a native
   value is the Reanimated shared-value path (post-V1).
 
+### Native ↔ public event-name mapping (the one canonical table)
+
+The names a developer writes are **not** the names the native views register. React Native
+reserves bare event props (`onPress`, `onLoad`, `onError`, `onLongPress`, …) on its host
+views, so registering a native `EventDispatcher` under a bare name collides with RN core. fx
+therefore **prefixes the native event names** and the thin surface components (`src/surface/`)
+re-expose them under the public contract above. This table is the single home for that
+mapping — consumers (`50`, `architecture.md`, the surface components) point here, never
+restate it.
+
+| Public prop (the contract — `40`/`50`) | Native `Events` name | Registered on | Why renamed |
+|---|---|---|---|
+| `onPress` | `onShaderPress` | `FxSurfaceView` | RN reserves `onPress` (touch responder) |
+| `onPressIn` | `onShaderPressIn` | `FxSurfaceView` | same |
+| `onPressOut` | `onShaderPressOut` | `FxSurfaceView` | same |
+| `onTransitionEnd` | `onFxTransitionEnd` | every view | `Fx` prefix keeps the native namespace clear of RN/host collisions |
+| `onLoad` | `onFxLoad` | every view | RN reserves `onLoad` (media) |
+| `onError` | `onFxError` | every view | RN reserves `onError` |
+| `onStateChange` | *(unwired)* | `FxView` (not built) | the `FxView` state event has no native dispatcher yet — wire as `onFxStateChange` |
+| `onLongPress` | *(unwired)* | `FxSurfaceView` | declared in the `30` press contract; native dispatcher not yet added — wire as `onShaderLongPress` |
+
+Conventions this pins: **press events carry the `onShader*` prefix** (they live on the
+shader/interactive `FxSurfaceView`); **lifecycle and load events carry the `onFx*` prefix**
+(every view). When the unwired rows are built, they follow the same prefix rule. The surface
+component owns the remap; the public prop name never leaks the prefix.
+
 ## Event payloads (semantic, low-frequency)
 
 Enough shape to design the API against — discrete only, never a frame stream:

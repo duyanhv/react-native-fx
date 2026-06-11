@@ -16,8 +16,10 @@ conflicts that come with them. Platform-specific mechanics live in
 
 ## The two substrates
 
-- **`hosted`** — a SwiftUI view (iOS) or Jetpack Compose composable (Android)
-  hosted inside RN via Expo's `Host`/`RNHostView`. **Decorative or self-gesturing.**
+- **`hosted`** — a host view fx owns, inside RN via Expo's `Host`/`RNHostView`: a SwiftUI
+  view on iOS; on Android a plain `View` drawing the effect directly in V1, with Jetpack
+  Compose as the intended future rung (the mechanic and its deferral live in
+  `structure.android.md`). **Decorative or self-gesturing.**
   The host owns layout and offers only a coarse `pointerEvents` hit-test lever. This
   is the **main path** for generative effects (gradients, mesh, materials, glass,
   generative shaders, symbols).
@@ -50,8 +52,8 @@ fully interactive. Mechanics to respect:
   attaches an RN touch handler to the first child view
   (`createAndAttachTouchHandler`). Never nest an interactive fx view as that child.
 - **fx owns its boundary.** fx is **not** built as an `@expo/ui` universal component;
-  it hosts SwiftUI/Compose itself with a boundary it controls, so it never hands its
-  layout/hit-testing to the auto-Host.
+  it hosts its own view (SwiftUI on iOS; the Android host per `structure.android.md`) with a
+  boundary it controls, so it never hands its layout/hit-testing to the auto-Host.
 
 ## The expo-view world
 
@@ -85,7 +87,7 @@ preserved touch) is therefore out-of-scope on iOS.
 
 ## The Android softening
 
-Android mirrors the substrate split (Compose host vs plain `ExpoView`) but relaxes
+Android mirrors the substrate split (the hosted host view vs plain `ExpoView`) but relaxes
 one constraint: `RenderEffect`/AGSL are **draw-time**, independent of input
 dispatch, so shading *over live content* does **not** sever touch. That is why
 `content-distort` is `planned` on Android while out-of-scope on iOS, and why the
