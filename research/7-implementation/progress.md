@@ -80,7 +80,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U6-001 | Unit 6 | implement | todo | yes | RT-007 | RT-007 | U4-001, U5-001 | device: interruptible spring, no snap; spring dispositions pre-ratified (DOC-009) — see [preflight](./tasks/U6-001/preflight.md) |
 | U6-002 | Unit 6 | device-verify | todo | yes | — | RT-016 | U6-001 | device: animators handle hard retarget, else build integrator |
 | U6-003 | Unit 6 | device-verify | todo | yes | — | MOT-002, REAL-001 | U6-001 | device: tune formulas feel right; M3 floor + fallback |
-| U7-001 | Unit 7 | implement | todo | yes | MOT-001 | — | U6-001, DOC-018 | device: presence FSM + deferred-unmount handshake (must answer the `35` React-semantics rows) |
+| U7-001 | Unit 7 | implement | todo | yes | MOT-001 | — | U6-001, DOC-018 | device: presence FSM + deferred-unmount handshake; preflight done — see [preflight](./tasks/U7-001/preflight.md) (verdict: sound — JS mount retention validated without the commit hook; the `35` React-semantics rows resolved to FSM rules) |
 | U7-002 | Unit 7 | device-verify | todo | yes | — | MOT-001 | U7-001 | device: per-platform preset catalog filled, passes law test |
 | U8-001 | Unit 8 | implement | todo | yes | RT-006 | RT-005 | U1-002, U3-001 | device: press recognizer + SDF hit-test |
 | U8-002 | Unit 8 | device-verify | todo | yes | — | RT-001 | U8-001 | device: cancel path + full RNGH coexistence matrix |

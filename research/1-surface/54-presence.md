@@ -73,6 +73,10 @@ fires per phase so JS can sequence (advance a queue, chain transient overlays).
 <FxPresence/>}` unmounts the coordinator before it can animate (`35`). Keep `FxPresence`
 mounted; flip `visible`. The wrapped child should carry a stable key.
 
+**While exiting, the retained child is a snapshot** — the children captured when `visible`
+flipped false; later re-renders do not propagate into the exiting child, and config changes
+apply from the next phase (the `35` snapshot-semantics invariant, U7-001 preflight).
+
 ## Decisions
 
 1. **`FxPresence` is a stateful coordinator, not a dumb wrapper** — it owns deferred
