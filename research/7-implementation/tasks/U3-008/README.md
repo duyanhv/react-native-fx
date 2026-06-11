@@ -67,7 +67,7 @@ Subtask: persistent UIHostingController + observed props on iOS FxHostedView;
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified (human gate — agent-device evidence recorded in `evidence/device-run-2026-06-10/`; maintainer ratifies)
+- [x] device-verified (maintainer-ratified 2026-06-11 on physical iPhone + POCO F1/API-35; evidence in `evidence/device-run-2026-06-10/` + `evidence/ratify-2026-06-11/`; residual: literal Google-TalkBack screen-reader demo needs a TalkBack-equipped device)
 - [ ] reviewed
 - [ ] docs-closed
 - [ ] merged
@@ -81,7 +81,12 @@ Subtask: persistent UIHostingController + observed props on iOS FxHostedView;
 - **device:** stills-only evidence in `evidence/device-run-<date>/` — symbol-animation
   continuity across an unrelated prop change, shader intensity drag without a blank flash
   or clock reset, glass regression, a11y tree dumps (decorative hidden / interactive glass
-  reachable), GPU resume. Human gate.
+  reachable), GPU resume. Human gate — **ratified 2026-06-11** (`evidence/ratify-2026-06-11/`):
+  iOS `variableColor`+`repeat` replace-flip and iOS+Android intensity-slider updates render
+  in place with no blank/restart; Android decorative a11y-hidden confirmed via the live
+  accessibility tree (effect view absent, chips + seekbar present — `FxHostedView.kt:105`).
+  Residual: the literal Google-TalkBack screen-reader walk-through still needs a
+  TalkBack-equipped Android device (POCO F1/MIUI has no TalkBack service installed).
 - **docs:** structure.ios.md §Hosting mechanics pins the persistent-host + a11y mechanic;
   the Device Verification Guide gains the a11y expectation.
 
