@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "EX-002",
+		title: "100-cell mixed stress list",
+		platform: "iOS · Android",
+		what: "shared Metal context · scroll perf · no MTKView without a shader",
+		status: "todo",
+		screen: "stress-list",
+	},
 	{
 		id: "U4-002",
 		title: "mountChildComponentView override",
