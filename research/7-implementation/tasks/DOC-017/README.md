@@ -1,6 +1,6 @@
 # DOC-017 — reconcile the spine to the shipped Android hosted mechanic
 
-Type: `rework` · State: `todo` · Device: no · Consumes: — · Closes: — (no ledger row)
+Type: `rework` · State: `merged` · Device: no · Consumes: — · Closes: — (no ledger row)
 
 Origin: critique F4 (HIGH, spine docs). The spine defines `hosted` as the
 "SwiftUI/Compose host" and `02`'s worked examples lower Android shaders via Compose

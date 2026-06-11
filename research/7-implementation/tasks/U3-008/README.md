@@ -1,6 +1,6 @@
 # U3-008 — persistent hosting controller + observed props; decorative-host a11y defaults
 
-Unit 3 · type: `rework` · state: `docs-closed` · device: `yes`
+Unit 3 · type: `rework` · state: `merged` · device: `yes`
 Consumes: — · Closes: — (critique F1 + F10, maintainer-accepted) · Blocked by: — (U3-002 merged path)
 
 ## Start here
@@ -70,7 +70,7 @@ Subtask: persistent UIHostingController + observed props on iOS FxHostedView;
 - [x] device-verified (maintainer-ratified 2026-06-11 on physical iPhone + POCO F1/API-35; evidence in `evidence/device-run-2026-06-10/` + `evidence/ratify-2026-06-11/`; residual: literal Google-TalkBack screen-reader demo needs a TalkBack-equipped device)
 - [x] reviewed (2026-06-11, approved — `../../reviews/U3-008.md`; two non-blocking nits recorded)
 - [x] docs-closed (verified in review: `structure.ios.md` §Hosting mechanics persistent-host + a11y bullets, Device Verification Guide a11y row — both in `64fb1e7`; `Closes: —`, no ledger row)
-- [ ] merged
+- [x] merged (maintainer, 2026-06-11, on integration/0.1.x)
 
 ## Proof
 

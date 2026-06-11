@@ -1,6 +1,6 @@
 # DOC-020 — pin the native ↔ public event-name mapping
 
-Type: `ratify` · State: `todo` · Device: no · Consumes: — · Closes: — (no ledger row)
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: — (no ledger row)
 
 Origin: critique F18 (LOW, API). The shipped native `Events` are prefixed to dodge React
 Native's reserved event names — `onShaderPress`/`onShaderPressIn`/`onShaderPressOut` (press,

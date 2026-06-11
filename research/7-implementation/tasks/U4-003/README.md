@@ -87,7 +87,7 @@ The change is a performance rework with no rule tension.
 - [x] device-verified (maintainer-ratified 2026-06-11 on the PASS evidence — `evidence/device.md` §Results; multi-instance shared-context proof rides EX-002)
 - [x] reviewed (2026-06-11, approved — `../../reviews/U4-003.md`)
 - [x] docs-closed (`structure.ios.md` §Lifecycle records the lazy + shared-static mechanic; no ledger row)
-- [ ] merged (human gate)
+- [x] merged (maintainer, 2026-06-11, on integration/0.1.x)
 
 ## Proof
 

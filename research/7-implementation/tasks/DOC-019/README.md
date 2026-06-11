@@ -1,6 +1,6 @@
 # DOC-019 — defer `tune` from the V1 surface
 
-Type: `ratify` · State: `todo` · Device: no · Consumes: — · Closes: — (no ledger row)
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: — (no ledger row)
 
 Origin: critique F8 (MEDIUM, API). Four motion knobs (`preset`/`motion`/`tune`/`transition`);
 `tune` is the weak member. Its `{speed, emphasis, distance}` semantics are invisible until

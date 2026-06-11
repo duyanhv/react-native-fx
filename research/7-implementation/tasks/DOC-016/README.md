@@ -1,6 +1,6 @@
 # DOC-016 — human-contributor path in the Contributing Guide
 
-Type: `doc-cleanup` · State: `todo` · Device: no · Consumes: — · Closes: — (no ledger row)
+Type: `doc-cleanup` · State: `merged` · Device: no · Consumes: — · Closes: — (no ledger row)
 
 Origin: critique F19 (LOW, process). The binding agent/guide system
 (`agents/`, the session + subtask protocols, the research-driven task lifecycle) is the

@@ -1,6 +1,6 @@
 # DOC-018 — presence scope ceiling + `sheet`/`modal` naming + React-semantics rows
 
-Type: `ratify` · State: `todo` · Device: no · Consumes: — · Closes: — (no ledger row) · **Blocks U7-001**
+Type: `ratify` · State: `merged` · Device: no · Consumes: — · Closes: — (no ledger row) · **Blocks U7-001**
 
 Origin: critique F5 (HIGH, presence) + F12 (MEDIUM, presence).
 
