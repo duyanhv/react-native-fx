@@ -9,7 +9,6 @@ export type {
   SymbolAnimation,
   SymbolConfig,
 } from './effects/catalog';
-export { FxGroupView, type NativeFxGroupProps } from './runtime/FxGroupView';
 export { FxHostedView, type NativeFxHostedProps } from './runtime/FxHostedView';
 export {
   type FxSurfacePressEvent,

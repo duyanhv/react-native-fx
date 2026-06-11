@@ -64,11 +64,11 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-005 | Unit 3 | device-verify | merged | yes | — | REAL-002, REAL-003 | U3-001 | headless-done + docs-closed (2026-06-09); REAL-002 build-verified on Xcode 26.5; REAL-003 path recorded in `structure.android.md`; both ledger rows resolved; reviewed (approved, incl. fix-round addendum); merged on integration/0.1.x; [detail](#u3-005--shader-asset-packaging--runtime-load-proof) · [review](./reviews/U3-005.md) |
 | U3-006 | Unit 3 | implement | merged | yes | FX-004, REAL-004 | — | — | 10 MSL `[[stitchable]]` + 10 AGSL shaders; hosted dispatch on iOS + Android; `ShaderId` = 10 ids; headless green; **device-verified iOS + Android (2026-06-08)**, incl. blank-on-switch + intensity-flicker fixes; docs-closed (`22` reconciled); reviewed + confirmed by maintainer (2026-06-09); merged on integration/0.1.x; [detail](#u3-006--curated-shader-implementation) |
 | U3-007 | Unit 3 | implement | device-pending | yes | FX-009 | — | DOC-008, U3-001 | iOS `.symbolEffect` via hosted slice; Android planned rung skipped by `select()`; A1-1 `replaceWith` fix device-evidenced and maintainer-ratified (2026-06-10); device gate held ONLY for the A1-2 OS-degradation rows — needs a real iOS 17 / sub-17 device (maintainer chose not to waive); [detail](#u3-007--ios-symbol-effect) |
-| U1-006 | Unit 1 | implement | todo | no | — | — | — | critique F9: pull `FxGroupView` + `NativeFxGroupProps` from the public index (`src/index.ts` is the declared stability contract; the native class is an inert stub) until the morph compound lands |
+| U1-006 | Unit 1 | implement | reviewed | no | — | — | — | critique F9: `FxGroupView` + `NativeFxGroupProps` pulled from the public index (`src/index.ts`) — the binding file + its `.web` stub + the inert native class stay; no example/skills import existed; gates green; awaiting review; [detail](#u1-006--drop-fxgroupview-from-the-public-index); **reviewed 2026-06-11 (approved, no separate doc — see detail block)**; remaining gate: `merged` |
 | U2-003 | Unit 2 | implement | merged | yes | — | — | — | critique F3+F6+F11 (audit G1): canonical `CapabilityManifest` shipped at `src/manifest/manifest.ts` (`as const`, reconciled to shipped native, `cadence` added); per-effect typed config derived at the type level (`config.ts`, no codegen) + asserted against the catalog types; manifest↔`ShaderId`↔native-switch conformance test (34 tests). `cadence`/`'string'` added to the `02` schema (decisions 15+16). **Carry-ins:** `onFxLoad`/`onFxError` now dispatch on `FxSurfaceView` (iOS pipeline-compile; Android asset open+compile) once per change; absent-vs-empty `shader` resolved (binding coerces `undefined → ''`). Headless + iOS xcodebuild + Android compileDebugKotlin green. **device-verified ratified 2026-06-11 (maintainer)** on the agent-device PASS evidence — shader-reset silent + loop-pausing, load/error once per change (47-reapply drag = zero events), iOS raster subset errors instead of wrong-rendering, hosted path unaffected, Android load-by-asset-compile divergence documented; evidence in `tasks/U2-003/evidence/`. **Reviewed + docs-closed 2026-06-11** after two review rounds — intensity contract reconciled to the native clamp, comments/style sweep clean ([review](./reviews/U2-003.md)); **merged 2026-06-11 (maintainer)** on integration/0.1.x. [task](./tasks/U2-003/) · [detail](#u2-003--capabilitymanifest-data--typed-config--conformance--cadence) |
 | U3-008 | Unit 3 | rework | merged | yes | — | — | — | critique F1+F10: persistent `UIHostingController` + observed props holder on iOS `FxHostedView` (Expo `SwiftUIHostingView` idiom; the Android sibling and the UIKit glass path already update in place) — unblocks the eased-uniform `transition` channel, symbol state survives prop changes; decorative hosted views default a11y-hidden on both platforms; a11y row added to the Device Verification Guide template. Headless gates + xcodebuild green; agent-device evidence (stills only) in `tasks/U3-008/evidence/device-run-2026-06-10/` — F1 symbol/shader continuity PASS, glass regular/clear + GPU resume PASS, decorative a11y-hidden PASS, interactive-glass reachability PARTIAL (no AX element in either state — the open VoiceOver item, see notes). **device-verified ratified 2026-06-11 (maintainer)** on physical iPhone + POCO F1 (Android 15/API 35): iOS symbol `variableColor`+`repeat` replace-flip and iOS+Android intensity-slider in-place uniform updates PASS (no blank/restart); Android decorative a11y-hidden confirmed via the live accessibility tree (effect view absent, controls present — `FxHostedView.kt:105`); residual — literal Google-TalkBack screen-reader demo needs a TalkBack-equipped device (POCO F1/MIUI ships none); evidence in `tasks/U3-008/evidence/ratify-2026-06-11/`. **Reviewed + docs-closed 2026-06-11** — approved, gates re-run green at `04f77d0`, two non-blocking nits (inert `FxHostedProps.materialConfig`; teardown-wording nuance in `structure.ios.md`) ([review](./reviews/U3-008.md)); **merged 2026-06-11 (maintainer)** on integration/0.1.x ([task](./tasks/U3-008/)) |
 | U4-003 | Unit 4 | rework | merged | yes | — | — | — | critique F2+F11(sharing half): iOS `FxSurfaceView` builds its `MTKView` lazily (first active `shader`) + shares a process-wide static device/queue/library/pipeline cache; Android unaffected (no GPU in the shell). Headless green; `structure.ios.md` §Lifecycle pinned. **device-verified ratified 2026-06-11 (maintainer)** on the agent-device PASS evidence — exactly one `MTKView` allocation per session, zero for content-motion-only, reuse + isolated teardown clean (`tasks/U4-003/evidence/`); multi-instance proof rides EX-002. **Reviewed + docs-closed 2026-06-11** ([review](./reviews/U4-003.md)); **merged 2026-06-11 (maintainer)** on integration/0.1.x. [task](./tasks/U4-003/) · [detail](#u4-003--lazy-metal--shared-static-metal-context) |
-| EX-002 | harness | implement | todo | yes | — | — | — | critique F14: 100-cell list stress screen in the example (mixed fill/shader/material cards) as a standing device-verify scenario — converts F1/F2 from theoretical to measured |
+| EX-002 | harness | implement | device-pending | yes | — | — | — | critique F14: 100-cell mixed-effect stress list shipped in the example (`screens/stress-list.tsx`, FlatList, 4 cell kinds cycling — shader `FxSurfaceView` / fill+material `FxHostedView` / motion-only `FxSurfaceView`); registered as task EX-002; example tsc green, no native touched; standing device scenario (the U4-003 multi-instance deferral + F1/F2 scroll cost) written for the human gate; [task](./tasks/EX-002/) · [detail](#ex-002--100-cell-mixed-effect-stress-list) |
 
 ### V2 build — Units 4–9
 
@@ -108,6 +108,86 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DEF-015 | 1-surface | ratify | blocked | no | — | — | trigger: surface freeze (Unit 5/6 design) | critique F17 (maintainer-accepted 2026-06-10): one naming-review pass before the surface freezes — `<Fx effect={fx.effect.*}>` stutter, `interactionMode` runtime vocabulary, `hosted`/`expo-view` mechanism leakage. **Now also owns the package-name call (F15):** the npm name is claimed as `react-native-fxkit` (unscoped `react-native-fx` is unclaimable — npm typosquat filter vs `react-native-fs`); decide whether the product/repo identity adopts `fxkit` or keeps `react-native-fx` as the product over a `fxkit` package |
 | DEF-016 | 6-ship | implement | blocked | no | — | — | trigger: pre-publish | critique F13: coexistence matrix (RNGH, Reanimated-alongside, navigation, Expo Go/web) + per-capability parity/degradation story + the platform-exclusives positioning in `skills/`. **Also (F15):** align `packages/package.json` `name` (currently `react-native-fx`, an unpublishable name) and all README/skills/doc references to the published name per DEF-015's call, before the real `0.1.0` ships |
 | DEF-017 | 6-ship | implement | blocked | no | — | — | trigger: post-V1 | critique F16: simulator smoke lane in CI (mount each catalog id, screenshot, diff) — catches the blank-on-switch regression class headlessly |
+
+## EX-002 — 100-cell mixed-effect stress list
+
+Type: `implement` · State: `device-pending` · Device: yes · Consumes: — · Closes: — (critique-routed F14, no ledger row) · [task](./tasks/EX-002/)
+
+Origin: critique F14. A standing device-verify scenario (not a throwaway) that converts the F1/F2
+per-instance-Metal / scroll-cost critique from theoretical to measured, and is where U4-003's
+deferred multi-instance shared-context proof gets run.
+
+Checklist:
+- [x] spec'd ([README](./tasks/EX-002/README.md))
+- [x] rules-gated (#1 native owns the frame loop under scroll; #3 mixes the two substrates only;
+      #9 reads layout — plain RN cells)
+- [x] implemented (`example/screens/stress-list.tsx` + registration)
+- [x] commented (iceberg — why the cell mix, why virtualized, the deterministic generator)
+- [x] headless-done (example `bunx tsc --noEmit` green; example screens carry no unit tier)
+- [ ] device-verified (human — `evidence/device.md` (a)/(b)/(c) + a11y)
+- [ ] reviewed (maintainer)
+- [ ] merged (maintainer)
+
+Change (JS-only — `example/`, no `packages/` native):
+- **`screens/stress-list.tsx`** (`StressListScreen`) — a virtualized `FlatList` of 100
+  deterministic cells, four kinds cycling by `index % 4`: `shader` (`FxSurfaceView shader={id}` —
+  the expo-view Metal path U4-003 reworked), `fill` + `material` (`FxHostedView` — the hosted
+  path), and `motion` (`FxSurfaceView` wrapping content with no shader → no MTKView). Shader cells
+  cycle the ten curated ids so the pipeline cache holds several keys with repeats. Per-cell
+  captions name the kind + shader id for device correlation.
+- **`data/tasks.ts`** — `"stress-list"` added to `DemoScreen`; an `EX-002` `TASKS` entry.
+- **`app/(tasks)/[taskId].tsx`** — `StressListScreen` import + `case "stress-list"` in `renderDemo`.
+
+Why `FxSurfaceView` (not `FxHostedView`) for shader cells: the lazy-MTKView + process-shared static
+Metal context lives in `FxSurfaceView.swift`; proofs (a)/(c) target that path. `FxHostedView` runs
+the separate hosted Metal lane and serves the fill/material cells.
+
+Proof:
+- headless: `bunx tsc --noEmit` from `example/` — green. No example lint gate (Biome scopes to
+  `packages/src`); the file uses tab indentation matching sibling screens. `packages/` untouched.
+- device: `tasks/EX-002/evidence/device.md` — (a) multi-instance shared Metal context (one
+  device/queue, same-id pipeline reuse), (b) scroll perf on the mixed list (no per-frame JS / jank),
+  (c) shader-less cells allocate zero MTKView at scale; plus the a11y row. iOS owns (a)/(c);
+  both platforms run (b). The human gate.
+- docs: none — critique-routed, no ledger row.
+
+## U1-006 — drop FxGroupView from the public index
+
+Type: `implement` · State: `reviewed` · Device: no · Consumes: — · Closes: — (critique-routed, no ledger row)
+
+Origin: critique F9. `src/index.ts` is the declared stability contract, and the grouped-substrate
+binding is an inert stub — its native `FxGroupView` does nothing until the morph compound (DEF-006
+/ `FxGroup` high-level component) lands. Exporting it publishes API surface the runtime can't honor.
+The fix narrows the public surface; nothing else moves.
+
+Checklist:
+- [x] spec'd (single-line export removal; trivial — tracked as a detail block, not a folder)
+- [x] rules-gated (no rule touched — a public-surface narrowing; #2/#3/#7/#9 untouched)
+- [x] implemented (dropped the `FxGroupView` + `NativeFxGroupProps` export from `src/index.ts:12`)
+- [x] commented (no new code; the index header comment still reads true)
+- [x] headless-done
+- [x] reviewed (reviewer, 2026-06-11 — approved: export cut verified in the built `index.d.ts` (zero refs), no stray imports in `example/`/`skills/`/`packages/src`, binding + web stub + native registration correctly kept; no separate review doc for a one-line change)
+- [ ] merged (maintainer)
+
+Change (TS-only):
+- **`src/index.ts`** — removed `export { FxGroupView, type NativeFxGroupProps } from './runtime/FxGroupView'`.
+  The built `index.d.ts` now exposes only `FxHostedView` + `FxSurfaceView` substrate hosts.
+- **Kept:** `src/runtime/FxGroupView.tsx` (the binding), `src/runtime/FxGroupView.web.tsx` (the web
+  stub that imports `NativeFxGroupProps` from it), and the inert native `FxGroupView` registration.
+  Only the public re-export was cut.
+- **Not touched:** the `index.ts` header comment listing the future high-level vocabulary
+  (`Fx`, `FxGroup`, `FxItem`) — those are the unbuilt high-level components, not this low-level
+  binding, so the comment stays accurate.
+
+No `FxGroupView` / `NativeFxGroupProps` import exists anywhere in `example/` or `skills/` (grepped
+both, plus `packages/src`); the only other reference is the binding file and its `.web` sibling.
+
+Proof:
+- headless: from `packages/` — `bunx tsc --noEmit`, `bun run build`, `bun run lint` (Biome, 19 files
+  clean), `bun run test` (34 pass) all green; built `index.d.ts` confirmed to no longer export either
+  symbol.
+- device: N/A — public-surface narrowing, nothing renders.
+- docs: none — critique-routed, no ledger row, no source-doc decision.
 
 ## DOC-014 — runtime-binding ref cleanup
 
