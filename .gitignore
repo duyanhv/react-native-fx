@@ -13,3 +13,7 @@ packages/*/build/
 .idea/
 *.tsbuildinfo
 references/
+
+# device-evidence screen recordings stay local — stills + telemetry carry the proof
+research/**/evidence/**/*.mp4
+research/**/evidence/**/*.mov
