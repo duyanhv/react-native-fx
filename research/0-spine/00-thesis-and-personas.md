@@ -73,6 +73,50 @@ activation energy, cross-platform, with platform-native defaults**, and without 
 shaders or driving frames. Curation is a batteries-included starter set; the moat is the
 cross-platform presentation runtime and the consumer ergonomics.
 
+## Proving the thesis — the wedge-to-moat surface
+
+The thesis is abstract; a skeptic adopts on a concrete result. fx's real-world surface
+ladders from the capability that gets it *into* an app to the one that makes it
+*unremovable*:
+
+- **Wedge** — low activation energy, high frequency, and *shared territory* with
+  Reanimated: presence (enter/exit), press feedback, reactive control-state envelopes
+  (`idle → loading → success`). These earn adoption. Alone they are a weaker Moti — the
+  on-ramp, never the reason fx exists.
+- **Moat** — presentation Reanimated/Moti structurally cannot reach: the **platform-native
+  default** (one config, each platform's own spring/shadow/material — the shape-native law,
+  `41`), and the **effects fx draws whole** (`material`/glass, glow, `symbol`) with no
+  JS-animation analog.
+
+Lead the demo with the wedge; rest the pitch on the moat. Curation (`22`) seeds the wedge;
+the runtime and its platform-native defaults are the moat (this is Decision 4 seen from the
+go-to-market side).
+
+### The V1 proof bet — native feel by default
+
+The first thing the example app proves to a skeptical RN developer is the law itself
+(`41`): identical JS, and each platform renders its own *shape, spring, edge, and material*
+— legible without a label. The anchor domain is a **content/social app**, where the moments
+with the most legible divergence carry the demo:
+
+- **A comments/share sheet** (`presence`) — the same declaration settles with each
+  platform's own spring, shadow, and scrim.
+- **Press feedback on a post card** (`feedback`) — the most instantly legible divergence at
+  the lowest activation energy (one prop on existing content).
+- **A "copied"/"sent" toast** (`presence`) — fx picks the platform's own placement *and*
+  curve, not just its easing.
+
+Selection rule: pick scenarios by **legibility of divergence**, not frequency — a divergence
+a developer recognizes on sight sells the law; a subtle timing delta does not. The realized
+per-platform mechanics live in `5-realization/structure.{ios,android}.md`; this doc names
+only the bet.
+
+**The rule-#4 constraint this surfaces.** A content/social sheet wraps RN content, so it can
+never be a hosted SwiftUI `.sheet` — that severs touch (see "What this rules in and out").
+Native feel here is the platform's own spring/shadow/scrim reproduced over an fx-owned
+wrapper on `expo-view`, with the RN content untouched (`04`). A demo task must bake this in;
+reaching for a hosted platform sheet to get the feel "for free" is a severed-touch defect.
+
 ## What this rules in and out
 
 - **In:** an agnostic effect catalog with deep typed props; content **presence & motion**
@@ -112,6 +156,11 @@ cross-platform presentation runtime and the consumer ergonomics.
    plus the ratified preset/feedback/effect vocabularies (`50`/`56`). Anything outside
    the curated set is BYO (developer-supplied `.metal`+`.agsl` via the `shader` node).
    The compiler/emitter (`03`) is deferred until real novel-composition demand triggers it.
+7. **The V1 proof bet is native feel by default** — the example app proves the shape-native
+   law (`41`) first: identical JS yields each platform's own shape, spring, and material,
+   legible without a label. The anchor domain is a content/social app, and scenarios are
+   chosen by *legibility of divergence* (sheet, press feedback, toast), not frequency. The
+   buildable demo is a separate example-app task; this records the why, not the how.
 
 ## Open questions
 
