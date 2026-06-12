@@ -1,5 +1,5 @@
 # Runtime: the animation driver
-Status: researched (design) · source-audit pass · device proof pending
+Status: researched (design) · source-audit pass · retarget contract device-verified (U6-001, RT-007) · hard-retarget matrix + catalog feel device-pending (U6-002/U6-003)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 41-motion-vocabulary.md, structure.{ios,android}
 
@@ -139,13 +139,21 @@ reduce-motion policy silently fails for exactly the animations fx prefers.
 
 ## Research questions
 
-- What is the minimal interruptible-spring contract the driver must expose so a target
-  change mid-flight retargets cleanly (no snap, no double-animation)?
+- ~~What is the minimal interruptible-spring contract the driver must expose so a target
+  change mid-flight retargets cleanly (no snap, no double-animation)?~~ **Resolved
+  (U6-001, RT-007, 2026-06-12):** animate-to(target vector) with retarget-on-call, cancel
+  (settle in place), and one completion per envelope — implemented as `FxAnimationDriver`
+  and device-verified on both platforms (no snap, completion-once, velocity carry with the
+  opposing-inertia clip; evidence in `7-implementation/tasks/U6-001/evidence/`).
 - How does the driver bind the platform's **default** shape + spring/curve per `preset` (the law:
   platform-native defaults), and how does `tune` (`speed`/`emphasis`/`distance`) adjust
   it without leaving the platform's family?
 - Where does the frame loop live, who pauses it off-window / backgrounded (ties to
   `31-lifecycle-and-teardown`), and how does it stay paused when nothing animates?
+  *(Half-answered by U6-001: the content driver runs frame work only inside a retargeted
+  envelope — iOS starts a display link on handoff and stops it at rest/cancel, device-
+  proven; fire-once envelopes run in the render server with no in-process loop. The
+  off-window / backgrounded pause policy stays owned by `31`.)*
 - How are completion / state-change events emitted back across the thin async boundary
   (`onTransitionEnd`), and what is their ordering guarantee under rapid toggles?
 - Does the content driver and the effect driver share scheduling, or run independently?
