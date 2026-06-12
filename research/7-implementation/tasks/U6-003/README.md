@@ -1,6 +1,6 @@
 # U6-003 — pin the M3 Expressive floor (REAL-001)
 
-Type: `ratify` · State: `todo` (spec'd) · Device: `no` (the fallback's device proof already exists — see Closure) · Consumes: — · Closes: REAL-001 · Blocked by: — (U6-001/U6-002 merged 2026-06-12)
+Type: `ratify` · State: `merged` · Device: `no` (the fallback's device proof already exists — see Closure) · Consumes: — · Closes: REAL-001 (**closed 2026-06-12**) · Blocked by: — (U6-001/U6-002 merged 2026-06-12)
 
 ## Scope note (planner, 2026-06-12)
 
@@ -78,11 +78,18 @@ Subtask: pin the M3 Expressive floor (blueprint Unit 6 periphery; REAL-001) — 
 ## Lifecycle
 
 - [x] spec'd (this README — planner, 2026-06-12)
-- [ ] rules-gated
-- [ ] ratified (the floor pinned in structure.android.md; `02` reconciled)
-- [ ] reviewed
-- [ ] docs-closed (REAL-001 closed in the ledger, fallback half by citation)
-- [ ] merged (human gate)
+- [x] rules-gated (#2 law — M3 stays progressive enhancement, standard `SpringForce` default;
+      #6 divergence localized to `structure.android.md`; #7 — reflection detection, no JS↔native
+      boundary change)
+- [x] ratified (floor pinned in `structure.android.md` § `shape-morph` + § version gates; `02`
+      shape-morph rung + the shipped manifest + `select()` tests reconciled `os:21`→`os:23`)
+- [x] reviewed (planner, 2026-06-12 — no separate review doc, per the ratify-task precedent:
+      pin verified against the release-note facts (material3 1.4.0 / graphics-shapes 1.0.0 /
+      Compose-1.8 minSdk 23), rule #6 altitude check passed (`02` agnostic, coordinates only
+      in `structure.android.md`), gates re-run green (tsc/build/lint/34 tests))
+- [x] docs-closed (REAL-001 → resolved in the ledger; fallback half closed by citation to
+      U6-001/U6-002)
+- [x] merged (human gate — maintainer, 2026-06-12, on `integration/0.1.x`)
 
 ## Proof
 

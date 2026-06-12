@@ -150,13 +150,14 @@ describe('select()', () => {
   });
 
   it('degrades to via: none when required feature is not available', () => {
-    const result = select(manifest.nodes['shape-morph'], android, { deviceOS: 21 });
+    // deviceOS 23 satisfies the M3 Expressive floor, so the feature flag is the only gate left
+    const result = select(manifest.nodes['shape-morph'], android, { deviceOS: 23 });
     expect(result.via).toBe('none');
   });
 
   it('selects a rung when required feature is available', () => {
     const result = select(manifest.nodes['shape-morph'], android, {
-      deviceOS: 21,
+      deviceOS: 23,
       features: ['m3-expressive'],
     });
     expect(result.via).toBe('native');

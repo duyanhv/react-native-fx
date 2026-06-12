@@ -381,7 +381,7 @@ export const manifest = {
             applyVia: 'graphicsLayer',
             clock: 'frame-nanos',
             cadence: 'display-rate',
-            requires: { os: 21, substrate: 'hosted', feature: 'm3-expressive' },
+            requires: { os: 23, substrate: 'hosted', feature: 'm3-expressive' },
             note: 'M3 Expressive native shape morph (Android-only)',
           },
         ],

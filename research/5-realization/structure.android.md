@@ -155,7 +155,11 @@ event-driven, read-only, no JS round-trip.
 | 21 | 5.0 | Compose `Brush` gradients, `Canvas`/`DrawScope` |
 | 31 | 12 | `RenderEffect` (blur, color filter, chain) |
 | 33 | 13 | AGSL `RuntimeShader`, `createRuntimeShaderEffect` |
-| — | recent | Material 3 Expressive (opt-in): physics springs, **shape morph**, 35 shapes |
+| 23* | 6.0 | Material 3 Expressive (opt-in, **library**-gated): `MotionScheme` physics springs, **shape morph** (`MaterialShapes`, 35 shapes). Floor pinned in § `shape-morph`. |
+
+*Not OS-gated like the rows above: API 23 is the floor only because the pinning artifact
+(Compose Material3 ≥ 1.4.0) requires it; the binding gate is the library's runtime presence
+(`feature:m3-expressive`), not the OS level. See § `shape-morph`.
 
 ## § Per-capability realization
 
@@ -252,8 +256,8 @@ The driver node (`02`) lowers two ways, by **target**:
   with value and velocity carried ("continuous movement since last frame") — no custom
   integrator; the on-device proof is U6-002 (RT-016). Spring defaults to the platform's
   **standard** `androidx.dynamicanimation` `SpringForce` (always available, API 21); where
-  **M3 Expressive** is present it upgrades to the motion-scheme spring (progressive
-  enhancement — § version gates / open questions). `tune` adjusts within whichever is
+  **M3 Expressive** is present (the Compose rung with `material3` ≥ 1.4.0 — § `shape-morph`)
+  it upgrades to the `MotionScheme` spring (progressive enhancement). `tune` adjusts within whichever is
   active, authored as `{ stiffness, dampingRatio }` — `SpringForce` values or tokens
   (`STIFFNESS_HIGH`=10000 · `MEDIUM`=1500 · `LOW`=200 · `VERY_LOW`=50; Compose adds
   `StiffnessMediumLow`=400; `DAMPING_RATIO_HIGH_BOUNCY`=0.2 · `MEDIUM_BOUNCY`=0.5 ·
@@ -274,8 +278,9 @@ The driver node (`02`) lowers two ways, by **target**:
   U3 V2 interactive surface and is not yet decided.
 - **effect target** — Compose `animate*AsState` / `updateTransition` / `keyframes` /
   `spring` (`requires {os:21, hosted}`); spring defaults to Compose's standard `spring()`,
-  upgrading to **M3 Expressive** `MotionScheme` springs where present (progressive
-  enhancement). The native side of the eased-`transition` channel (`40`).
+  upgrading to **M3 Expressive** `MotionScheme` springs where present (`material3` ≥ 1.4.0 —
+  § `shape-morph`; progressive enhancement). The native side of the eased-`transition`
+  channel (`40`).
 
 ### `symbol` — planned / optional (deferred from V1)
 - **AVD / Lottie** — `via:native`(AVD) or `via:lib`(Lottie) · `requires {os:21, hosted}` ·
@@ -291,11 +296,32 @@ The driver node (`02`) lowers two ways, by **target**:
   iOS structurally can't offer. Deferred to V2.
 
 ### `shape-morph` — Android-only (a node in `02`)
-- **M3 Expressive shape morph** — native, `requires {os:21, hosted, feature:m3-expressive}`
-  (matching `02`; `os:21` is the schema-shaped floor until the concrete M3 library/API level
-  is pinned — § open questions).
-  A node in `02` with an **empty iOS ladder** (→ `{via:'none'}` on iOS); the canonical way a
-  platform-only capability is expressed.
+- **M3 Expressive shape morph** — native, `requires {os:23, hosted, feature:m3-expressive}`
+  (matching `02`). A node in `02` with an **empty iOS ladder** (→ `{via:'none'}` on iOS); the
+  canonical way a platform-only capability is expressed.
+- **The concrete M3 Expressive floor (pinned).** Two opt-in artifacts:
+  - **`androidx.compose.material3:material3` ≥ `1.4.0`** (first stable carrying M3 Expressive,
+    2025-09-24) — supplies `MaterialShapes` (the 35-shape library) and the `MotionScheme`
+    physics springs (`MotionScheme.expressive()` / `MotionScheme.standard()`).
+  - **`androidx.graphics:graphics-shapes` ≥ `1.0.0`** (first stable, 2024-08-21) — the
+    `RoundedPolygon` + `Morph` engine `MaterialShapes` draws through; pulled transitively by
+    `material3`.
+- **Detection — an optional peer dependency, never bundled** (the `via:'lib'` contract, `53`
+  decision 6 — same treatment as the Haze / Lottie rungs). The app installs `material3`
+  ≥ 1.4.0; fx confirms it at runtime by resolving a sentinel symbol (e.g.
+  `androidx.compose.material3.MaterialShapes`) and adds `'m3-expressive'` to the selector's
+  `features` set only when present. Absent ⇒ the flag stays unset, the ladder degrades to
+  `{via:'none'}`, and motion stays on the standard `SpringForce`. **Bundling is rejected:** it
+  would force Compose + `material3` on every consumer (V1 ships no Compose — § Substrates) and
+  make M3 the de-facto default, breaking the law (rule #2 — M3 Expressive is progressive
+  enhancement over the always-available standard spring, never the default).
+- **API 23, not 21.** Compose 1.8 raised the Compose minSdk from 21 to 23, so `material3`
+  ≥ 1.4.0 — and every `MaterialShapes` / `MotionScheme` API — runs only on **API 23+**. The
+  `graphics-shapes` engine alone is API 21, but the pinned Compose realization is the binding
+  floor, so the rung is `os:23` (reconciled in `02` and the shipped manifest). Because these
+  are Compose APIs (`applyVia:graphicsLayer`), the rung can only resolve once the hosted
+  **Compose** rung is active (deferred — § Substrates / § render paths); the V1 plain-`View`
+  path exposes no shape-morph rung and always runs the standard `SpringForce`.
 
 ### presence presets (the Android default catalog — device-pending)
 
@@ -316,8 +342,12 @@ device-bound:
   no satisfiable rung degrades to `{via:'none'}`, never throws.
 - ~~`lib` dependency contract~~ → **resolved:** `via:'lib'` is an optional peer dependency,
   app-installed, guards out if absent (`53` decision 6); the manifest may name the package.
-- **M3 Expressive is opt-in and version-fluid** — pin a concrete minimum once the Android
-  backend starts; treat its springs/morph as progressive enhancement (device).
+- ~~M3 Expressive is opt-in and version-fluid — pin a concrete minimum~~ → **resolved:** the
+  floor is pinned in § `shape-morph` — `androidx.compose.material3:material3` ≥ `1.4.0` over
+  `androidx.graphics:graphics-shapes` ≥ `1.0.0`, **API 23**, detected as an optional peer
+  dependency; springs/morph stay progressive enhancement over the standard `SpringForce`. The
+  standard-spring fallback is device-proven (the stock `SpringForce` path ran on M3-less MIUI
+  hardware — see the Unit 6 motion device runs).
 - **Android default-catalog values** (presence-preset shapes/springs) are device-pending.
 
 ## § Sources
