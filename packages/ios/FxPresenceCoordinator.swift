@@ -52,6 +52,11 @@ internal final class FxPresenceCoordinator {
   // later edge is a genuine transition that always animates.
   private var isInitialApplication = true
 
+  // True while a fresh enter is held until the first layout pass lands. The initial prop batch
+  // can precede layout, leaving measured travel at 0 — which would play a fade with no slide.
+  // `handleContentLayout` resumes the held enter once the surface has a real size.
+  private var enterAwaitingLayout = false
+
   // Latched config. Per the snapshot-semantics invariant a mid-flight change applies from the
   // next phase, so the away vector is resolved at phase start, not stored pre-resolved.
   private var preset = "transient"
@@ -109,25 +114,45 @@ internal final class FxPresenceCoordinator {
     }
   }
 
+  /// The surface finished a layout pass. If a fresh enter was held because its travel could not
+  /// resolve before layout, re-seat with the now-measured away vector and run the enter.
+  internal func handleContentLayout() {
+    guard enterAwaitingLayout, surface.hasResolvedContentSize else {
+      return
+    }
+    enterAwaitingLayout = false
+    surface.snapContent(to: awayVector(for: .enter))
+    surface.animateContent(to: .identity)
+  }
+
   // MARK: - Phase transitions
 
   private func beginEnter() {
     let fromExiting = (phase == .exiting)
     phase = .entering
+    enterAwaitingLayout = false
     // A fresh enter seats the hidden start first; a re-enter mid-exit keeps the current value
     // so the spring retargets rather than jumping offscreen.
     if !fromExiting {
       surface.snapContent(to: awayVector(for: .enter))
+      // The content is seated hidden; if travel cannot resolve yet because layout has not landed,
+      // hold the animation until the first layout pass rather than play a slide-less fade.
+      if !surface.hasResolvedContentSize {
+        enterAwaitingLayout = true
+        return
+      }
     }
     surface.animateContent(to: .identity)
   }
 
   private func beginExit() {
+    enterAwaitingLayout = false
     phase = .exiting
     surface.animateContent(to: awayVector(for: .exit))
   }
 
   private func snapToPresent() {
+    enterAwaitingLayout = false
     phase = .present
     surface.snapContent(to: .identity)
   }

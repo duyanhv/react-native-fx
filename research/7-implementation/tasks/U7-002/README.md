@@ -117,10 +117,14 @@ Subtask: the per-platform presence default catalog (blueprint Unit 7, the device
 ## Lifecycle
 
 - [x] spec'd (this README — planner, 2026-06-12)
-- [ ] rules-gated
-- [ ] implemented (the bounded fixes + any spring-param plumbing)
-- [ ] commented
-- [ ] headless-done
+- [x] rules-gated (agent, 2026-06-12 — #2 law unchanged; #1 no per-frame JS; #9 transform/opacity
+      only; the fix touches the coordinator/surface seam, NOT `FxAnimationDriver` — U6 retarget
+      mechanics intact)
+- [x] implemented (agent, 2026-06-12 — the two bounded carried fixes shipped; spring-param
+      plumbing is device-gated, a post-comparison follow-up, not done headless)
+- [x] commented (agent, 2026-06-12 — iceberg; no planning-artifact refs in shipped comments)
+- [x] headless-done (agent, 2026-06-12 — `evidence/notes.md` gates: tsc/build/lint/58 tests/
+      swift:lint/diff-check; example tsc; Android `compileDebugKotlin` + iOS `xcodebuild` green)
 - [ ] device-verified (human gate — the catalog + the five rows ratified)
 - [ ] reviewed
 - [ ] docs-closed (MOT-001 per Closure; values propagated to data-layer/`42`/`41`/structure.*)

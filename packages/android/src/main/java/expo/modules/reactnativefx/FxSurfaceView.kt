@@ -129,7 +129,15 @@ class FxSurfaceView(
    */
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
     intermediateContainer.layout(0, 0, right - left, bottom - top)
+    presenceCoordinator.handleContentLayout()
   }
+
+  /**
+   * True once the surface has a non-zero laid-out size, so measured presence travel resolves to a
+   * real magnitude rather than the pre-layout zero fallback.
+   */
+  internal val hasResolvedContentSize: Boolean
+    get() = layoutObserver.readFrameInParent().height() > 0 || height > 0
 
   /**
    * Stashes the shader target until Expo finishes the prop batch.

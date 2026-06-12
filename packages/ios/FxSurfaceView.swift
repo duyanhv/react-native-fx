@@ -281,6 +281,18 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
       motion: pendingPresenceMotion)
   }
 
+  /// True once the surface has a non-zero laid-out size, so measured presence travel resolves to
+  /// a real magnitude rather than the pre-layout zero fallback.
+  internal var hasResolvedContentSize: Bool {
+    return layoutObserver.readFrameInParent().height > 0 || bounds.height > 0
+  }
+
+  /// Resumes a presence enter that was held until the surface had a measured size.
+  internal override func layoutSubviews() {
+    super.layoutSubviews()
+    presenceCoordinator.handleContentLayout()
+  }
+
   internal func animateContent(to target: FxAnimationVector) {
     contentAnimationDriver.animate(to: target)
   }
