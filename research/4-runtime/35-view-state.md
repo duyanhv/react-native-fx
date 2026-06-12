@@ -1,5 +1,5 @@
 # Runtime: view state & the presence handshake
-Status: researched (design) · source-audit + U7-001 preflight pass · device proof pending
+Status: researched (design) · source-audit + U7-001 preflight pass · handshake device-verified (U7-001, 2026-06-12) · React-semantics rows + identity proof device-pending (U7-002 / SPINE-009→U9-002)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 33-shadow-nodes-and-layout.md, structure.{ios,android}
 
@@ -151,10 +151,21 @@ async and JSI-free (`05`).
 
 ## Research questions
 
-- What is the exact JS↔native protocol for deferred unmount, and what guarantees
-  ordering of `onTransitionEnd` under rapid `visible` toggles?
-- Where does the source of truth live — is `visible` authoritative in JS with native as
-  a follower, and how is the follower kept consistent on interrupt?
+- ~~What is the exact JS↔native protocol for deferred unmount, and what guarantees
+  ordering of `onTransitionEnd` under rapid `visible` toggles?~~ **Resolved (U7-001,
+  device-verified 2026-06-12):** the protocol is the discrete `visible` prop down and
+  `onTransitionEnd{owner, phase, finished, interrupted}` up — nothing else crosses. The
+  ordering guarantee, proven identically on both platforms under rapid toggles: a cut-short
+  phase emits `finished:false interrupted:true` at the interrupt edge, *strictly before* the
+  retargeted phase later settles `finished:true`; a settled transition emits exactly one
+  `finished:true interrupted:false`; no spurious or dropped events
+  (`7-implementation/tasks/U7-001/evidence/device.md`).
+- ~~Where does the source of truth live — is `visible` authoritative in JS with native as
+  a follower, and how is the follower kept consistent on interrupt?~~ **Resolved (U7-001):**
+  `visible` is JS-authoritative; the native FSM is the follower, fed once per prop batch.
+  Consistency on interrupt is structural — the only mid-flight edges are `visible` retargets,
+  the follower retargets from its present animated value (never restarts), and a superseded
+  envelope never completes, so the two FSMs cannot diverge. Device-verified both platforms.
 - ~~How does the coordinator behave when the view unmounts for a *non-animation* reason
   (parent unmounts, app backgrounds mid-exit)?~~ **Resolved (U7-001 preflight):** teardown
   takes the `Teardown-during-exit` invariant plus the stranded-exit guard — cancel, release,

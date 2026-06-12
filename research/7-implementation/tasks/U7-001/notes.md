@@ -9,11 +9,19 @@
 - SPINE-009 (identity across commits) stays device-pending — U9-002.
 - (impl) The `transient` envelope shape/timing are provisional `data-layer §3` values, device-
   pending (MOT-001) — only the handshake is proven headless.
-- (impl) `onTransitionEnd` ordering under rapid toggles (`35` open question): the FSM emits the
-  cut-short phase `interrupted:true` then the settling phase `finished:true` — observed order on
-  device is the thing to confirm.
-- (impl) Deferred unmount, reduce-motion single-frame, teardown-during-exit, measured-edge travel
-  via `FxLayoutObserver` — all animation/layout/lifecycle, device-only. Scenario: `evidence/device.md`.
+- (impl) ~~`onTransitionEnd` ordering under rapid toggles (`35` open question)~~ — **ANSWERED on
+  device 2026-06-12** (both platforms): the cut-short phase emits `finished=false interrupted=true`
+  at the interrupt edge, strictly *before* the retargeted phase settles `finished=true`. See
+  `evidence/device.md` S2.
+- (impl) ~~Deferred unmount, reduce-motion single-frame, teardown-during-exit~~ — **device-PASS
+  2026-06-12** (both platforms). Measured-edge travel was not exercised (the `transient` preset uses
+  `contentHeight`, not the `{measure:'edge'}` token; that path stays headless-only until a preset/
+  motion map uses it). Scenario: `evidence/device.md`.
+- (open, layout-timing) First-mount enter is **fade-dominant** — the slide magnitude falls back
+  toward 0 when the first prop batch runs before layout lands (`contentHeight → 0 ⇒ ty=0`); later
+  toggles carry the platform translate (iOS top `ty=-64`, Android bottom `+contentHeight`). Captured
+  as the runbook's documented layout-timing observation, NOT a handshake failure — for the catalog/
+  driver to address.
 
 ## 2026-06-11 — references preflight (read-only research + doc corrections, no code)
 
@@ -131,3 +139,55 @@ Two blocking findings + one watch item, all addressed; gates re-run green.
 Gates re-run: tsc/build/lint/58 tests/swift:lint/diff-check green; example tsc green; Android
 `:react-native-fx:compileDebugKotlin` SUCCESSFUL (comment-only native changes). iOS unchanged at
 the compile level (comment-only; prior `xcodebuild` BUILD SUCCEEDED holds, swift:lint green).
+
+## 2026-06-12 — device gate run (agent-device; results-only, no code changed)
+
+Ran all six `evidence/device.md` scenarios on **both** platforms. **All six PASS** on each.
+Results written into `evidence/device.md` §Results. Tree left clean (only `device.md` + `notes.md`).
+
+- **Devices:** iOS — iPhone 17 Pro **simulator**, iOS 26.5 (xcodebuild Debug + `simctl install`).
+  Android — **POCO F1** physical, Android 15 / API 35 (`gradlew :app:assembleDebug` + `adb install -r`;
+  APK timestamp verified fresh ahead of the run, the committed 11:08 APK was stale vs the 14:45 commit).
+- **Open ordering question (`view-state`) — answered:** cut-short phase emits `finished=false
+  interrupted=true` at the interrupt edge, then the retargeted phase settles `finished=true`; identical
+  on both platforms. Both interrupt directions captured.
+- **Build/install discipline:** Android APK rebuilt fresh (stale APK predated the commit); iOS rebuilt
+  + reinstalled. Reduce-motion toggled per platform and **restored** after (Android scales→1, iOS
+  ReduceMotionEnabled→false).
+- **iOS instrumentation (added, then reverted):** to diagnose an apparent iOS "no event / stuck child"
+  reading, added temporary `NSLog("FXP7:...")` in `FxPresenceCoordinator.swift`,
+  `FxSurfaceView.dispatchPresenceTransitionEnd`, and `FxAnimationDriver` (animate paths + completion).
+  The trace proved the **native emit chain fires correctly** and JS receives every event. **Root cause
+  of the false reading: a duplicate "iPhone 17 Pro" simulator** — agent-device drove a different sim
+  than the build under observation. Deleted the duplicate, pinned to one sim → all green. Instrumentation
+  reverted via `git checkout`; `grep FXP7 packages/` clean; `git status` clean. (RN NSLog does not reach
+  `simctl log`; captured via `simctl launch --console` as the launcher.)
+- **Tooling gotchas for the next runner:** (1) avoid duplicate same-named iOS sims — agent-device name
+  resolution is ambiguous and silently splits taps vs. install/logs across devices; pin by deleting the
+  dupe. (2) POCO F1 dozes/locks between commands — `settings put system screen_off_timeout` + `svc power
+  stayon true` + `wm dismiss-keyguard`. (3) iOS spring ≈750 ms (catchable in bursts); Android spring
+  ≈50–150 ms (slide below burst resolution — read the on-screen log, not frames). (4) example log-list
+  has a benign duplicate-`key` LogBox warning past 8 entries (`presence.tsx`, harness-only).
+- **NOT changed (per gate scope):** did not tick `device-verified`/`reviewed`/`merged`; `progress.md`
+  state stays `headless-done`; coordinator/driver/component untouched (instrumentation reverted).
+
+Next: maintainer reviews this device run and ratifies `device-verified` (PASS both platforms); then
+review → docs-closed (strike `35`'s ordering question — answered here; reconcile architecture coordinator
+state names; flip `54` status line) → merge on integration/0.1.x. The first-mount fade-only enter is a
+layout-timing follow-up for the catalog/driver (U7-002 / MOT-001), not a blocker.
+
+## 2026-06-12 — ratification (planner thread, on the maintainer's PASS)
+
+- Evidence reviewed point-by-point: all six scenarios reconcile; the ordering answer is
+  identical on both platforms and is now struck into the view-state doc's research
+  questions. The sim-duplicate false-FAIL diagnosis accepted as a harness lesson (recorded
+  in the review); instrumentation reversion verified by sweep.
+- Docs-closed executed: `35` status + two research questions struck (protocol/ordering;
+  source-of-truth) with the device answers; `54` status flipped + mechanics question
+  struck; architecture coordinator row reconciled to the `35` state names.
+- Carried to U7-002 (progress row updated): the five React-semantics device rows, the
+  first-mount fade-only layout-timing item, the harness log-key fix.
+- Review at `reviews/U7-001.md`; README ticked through merged; progress → merged
+  (maintainer, 2026-06-12). Closes no ledger row, per the spec.
+
+Next: planner specs U7-002 (the catalog fill + carried items), then dispatch.

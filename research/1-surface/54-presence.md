@@ -1,5 +1,5 @@
 # Surface: FxPresence
-Status: researched (API) · native mechanics open (→ 33/34/35)
+Status: researched (API) · built + handshake device-verified (U7-001, 2026-06-12) · catalog magnitudes device-pending (MOT-001/U7-002)
 Phase: v1 (API) · v2 (the owned runtime behind it)
 Feeds: the public package; consumes 42-presence-and-lifecycle, 41-motion-vocabulary, 55-composition-chain
 Owns: the public `FxPresence` component (the consumer surface for content presence).
@@ -105,7 +105,10 @@ apply from the next phase (the `35` snapshot-semantics invariant, U7-001 preflig
 - ~~**Event payload** — beyond `phase`, does `onTransitionEnd` need timing/interrupt info?~~
   **Resolved in `40`:** `onTransitionEnd` carries `{ owner, phase, finished, interrupted }`
   (the interrupt/completion contract); presence reads `phase` + `interrupted`.
-- The native mechanics (the handshake, the host-view ref) are `open` in `33`/`35`.
+- ~~The native mechanics (the handshake, the host-view ref) are `open` in `33`/`35`.~~
+  **Resolved (U7-001, 2026-06-12):** built (`FxPresence` + `FxPresenceCoordinator` on the
+  content driver) and the handshake device-verified on both platforms; the `35` ordering
+  question is answered there. Shape/timing magnitudes stay device-pending (MOT-001/U7-002).
 
 ## Sources
 

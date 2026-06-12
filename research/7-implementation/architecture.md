@@ -248,7 +248,7 @@ From `research: 36`, the orchestrator owns or delegates to six stable native obj
 |--------|------|-------|-------|------------|
 | **`FxNativeView`** | Expo Modules boundary, diff-based props, shared lifecycle and ref surface | resolved props from `updateProps` | — (concrete views declare `EventDispatcher`) | View (Fabric identity) |
 | **`FxEffectRenderer`** | effect layers, GPU surface (interactive); hosted SwiftUI/Compose or expo-view MTKView/RenderEffect | effect config, pointer uniforms (interactive) | `onLoad`, `onError`, `onPress*` | No (internal; events through view) |
-| **`FxPresenceCoordinator`** | lifecycle FSM (visible → entering → holding → exiting → done), deferred-unmount handshake | `visible` target | `onTransitionEnd({ phase })` via EventDispatcher | No (internal) |
+| **`FxPresenceCoordinator`** | lifecycle FSM (`absent · entering · present · exiting`, the `35` naming — built U7-001), deferred-unmount handshake | `visible` target | `onTransitionEnd({ phase, finished, interrupted })` via EventDispatcher | No (internal) |
 | **`FxAnimationDriver`** | interruptible native animation (spring/timing); content family (CASpringAnimation/SpringAnimation) and effect family (SwiftUI .animation/Compose animate*AsState) | targets, measurements from `FxLayoutObserver` | `onTransitionEnd` (completion) via coordinator | No (internal) |
 | **`FxLayoutObserver`** | post-layout reads of wrapper (size, origin, travel, insets) | Yoga/Fabric frame from `layoutMetrics` | — (passive, read on demand by driver) | No (internal) |
 | **`FxPressHandler`** | 6-state FSM (press recognizer), cooperative slop-yield, coalescing keys | touch location → `pressDepth`/`pointerX`/`pointerY` | `onPress*` via EventDispatcher | No (internal) |

@@ -1,6 +1,6 @@
 # U7-001 — FxPresence: the presence FSM and the deferred-unmount handshake
 
-Type: `implement` · State: `todo` (spec'd) · Device: `yes` · Consumes: MOT-001 · Closes: — (no ledger row; see Closure) · Blocked by: U6-001 (device gate + merge; DOC-018 merged)
+Type: `implement` · State: `merged` · Device: `yes` · Consumes: MOT-001 · Closes: — (no ledger row; see Closure) · Blocked by: U6-001 (device gate + merge; DOC-018 merged)
 
 ## Start here
 
@@ -190,10 +190,16 @@ Subtask: FxPresenceCoordinator + FxPresence (blueprint Unit 7) — the presence 
 - [x] headless-done (tsc/build/lint/`swift:lint`/`git diff --check` green; 58 Tier-1 tests incl. the
       retention FSM + motion builders/fallback/normalization; Android `:react-native-fx:compileDebugKotlin`
       + iOS `pod install` + example `xcodebuild` BUILD SUCCEEDED; example `tsc` green)
-- [ ] device-verified (human gate — scenario at `evidence/device.md`)
-- [ ] reviewed
-- [ ] docs-closed (`35` questions struck per Closure; architecture row reconciled; `54` status line)
-- [ ] merged (human gate)
+- [x] device-verified (human gate — maintainer-ratified 2026-06-12; all six scenarios PASS on
+      iPhone 17 Pro sim / iOS 26.5 + POCO F1 / Android 15 API 35; the `35` ordering question
+      answered identically on both platforms; `evidence/device.md` §Results)
+- [x] reviewed (planner, 2026-06-12 — [review](../../reviews/U7-001.md); two implementation
+      rounds (comment provenance; `transition` narrowed) + the device-gate audit)
+- [x] docs-closed (`35` status + both research questions struck with the device-proven answers;
+      `54` status flipped + mechanics question struck; architecture coordinator row reconciled
+      to the `35` state names; no ledger row — MOT-001/SPINE-009 stay open by design)
+- [x] merged (human gate — maintainer, 2026-06-12; `076e1f0` implementation + the ratification
+      commit on `integration/0.1.x`)
 
 ## Proof
 
