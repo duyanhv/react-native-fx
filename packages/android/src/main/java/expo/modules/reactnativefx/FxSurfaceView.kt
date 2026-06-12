@@ -189,8 +189,8 @@ class FxSurfaceView(
     presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
   }
 
-  internal fun animateContentTo(target: FxAnimationVector) {
-    contentAnimationDriver.animateTo(target)
+  internal fun animateContentTo(target: FxAnimationVector, spring: FxAnimationSpring? = null) {
+    contentAnimationDriver.animateTo(target, spring)
   }
 
   /** Places the content container instantly, without animation. */

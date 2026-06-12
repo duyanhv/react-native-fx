@@ -1,5 +1,6 @@
 package expo.modules.reactnativefx
 
+import androidx.dynamicanimation.animation.SpringForce
 import expo.modules.kotlin.records.Field
 import expo.modules.kotlin.records.Record
 
@@ -110,7 +111,7 @@ internal class FxPresenceCoordinator(private val surface: FxSurfaceView) {
     if (!enterAwaitingLayout || !surface.hasResolvedContentSize) return
     enterAwaitingLayout = false
     surface.snapContent(awayVector(EnvelopePhase.ENTER))
-    surface.animateContentTo(FxAnimationVector())
+    surface.animateContentTo(FxAnimationVector(), spring = presetSpring())
   }
 
   /**
@@ -146,13 +147,13 @@ internal class FxPresenceCoordinator(private val surface: FxSurfaceView) {
         return
       }
     }
-    surface.animateContentTo(FxAnimationVector())
+    surface.animateContentTo(FxAnimationVector(), spring = presetSpring())
   }
 
   private fun beginExit() {
     enterAwaitingLayout = false
     phase = Phase.EXITING
-    surface.animateContentTo(awayVector(EnvelopePhase.EXIT))
+    surface.animateContentTo(awayVector(EnvelopePhase.EXIT), spring = presetSpring())
   }
 
   private fun snapToPresent() {
@@ -179,11 +180,19 @@ internal class FxPresenceCoordinator(private val surface: FxSurfaceView) {
 
   /**
    * The provisional per-platform preset shape. Android `transient` mirrors the snackbar: a
-   * bottom-edge slide with a fade. The magnitudes are device-pending with the motion catalog.
+   * bottom-edge slide with a fade. `presetSpring` keeps that envelope non-bouncy.
    */
   private fun presetAwayVector(): FxAnimationVector? {
     if (preset != "transient") return null
     return FxAnimationVector(opacity = 0f, translationY = contentHeight())
+  }
+
+  private fun presetSpring(): FxAnimationSpring? {
+    if (preset != "transient") return null
+    return FxAnimationSpring(
+      stiffness = SpringForce.STIFFNESS_MEDIUM,
+      dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY,
+    )
   }
 
   private fun resolve(spec: FxMotionPhaseSpec): FxAnimationVector {

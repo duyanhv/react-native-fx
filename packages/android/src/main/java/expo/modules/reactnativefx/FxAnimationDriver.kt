@@ -17,6 +17,11 @@ internal data class FxAnimationVector(
   val rotation: Float = 0f,
 )
 
+internal data class FxAnimationSpring(
+  val stiffness: Float,
+  val dampingRatio: Float,
+)
+
 internal class FxAnimationDriver(
   private val targetView: View,
   private val completion: () -> Unit,
@@ -36,7 +41,7 @@ internal class FxAnimationDriver(
     createAnimation(DynamicAnimation.ROTATION),
   )
 
-  fun animateTo(target: FxAnimationVector) {
+  fun animateTo(target: FxAnimationVector, spring: FxAnimationSpring? = null) {
     envelopeIdentifier += 1
     val identifier = envelopeIdentifier
 
@@ -66,6 +71,7 @@ internal class FxAnimationDriver(
     targets.forEach { (animation, finalPosition) ->
       if (animation.isRunning || !isAtFinalPosition(animation, finalPosition)) {
         activeAnimations.add(animation)
+        applySpring(animation, spring)
         animation.animateToFinalPosition(finalPosition)
       } else {
         setPropertyValue(animation, finalPosition)
@@ -76,6 +82,11 @@ internal class FxAnimationDriver(
       completion()
       return
     }
+  }
+
+  private fun applySpring(animation: SpringAnimation, spring: FxAnimationSpring?) {
+    animation.spring.stiffness = spring?.stiffness ?: SpringForce.STIFFNESS_MEDIUM
+    animation.spring.dampingRatio = spring?.dampingRatio ?: SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
   }
 
   /**

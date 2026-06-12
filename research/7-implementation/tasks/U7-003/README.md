@@ -43,9 +43,13 @@ Subtask: plumb the presence spring parameter on Android (blueprint Unit 7 closeo
                      NOT tune/transition authoring (deferred — MOT-002/the catalog
                      resurrection).
 - Device-verify:     (agent-device, physical Android) (1) the transient enter/exit no
-                     longer overshoots — capture at a slowed animator scale (e.g.
-                     `settings put global animator_duration_scale 5`) so the ~120 ms
-                     envelope resolves in frames, then restore; (2) one mid-flight
+                     longer overshoots — proven by per-frame value capture in logcat
+                     (temporary driver logging, the U6-002 instrumentation pattern,
+                     reverted after the run) plus a default-spring positive control
+                     showing the probe CAN detect bounce. Slowed-scale capture is
+                     invalid: `dynamicanimation:1.0.0` physics springs ignore the
+                     animator duration scale (review correction, 2026-06-12);
+                     (2) one mid-flight
                      retarget on the presence envelope — no snap, completion once (the
                      U6 contract under the new damping); (3) reduce-motion still
                      single-frame. Write evidence/device.md.
@@ -64,10 +68,10 @@ Subtask: plumb the presence spring parameter on Android (blueprint Unit 7 closeo
 ## Lifecycle
 
 - [x] spec'd (this README — planner, 2026-06-12)
-- [ ] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
 - [ ] device-verified (human gate)
 - [ ] reviewed
 - [ ] docs-closed (MOT-001 → resolved; the rider re-homed; data-layer/structure markers flipped)
@@ -76,5 +80,5 @@ Subtask: plumb the presence spring parameter on Android (blueprint Unit 7 closeo
 ## Proof
 
 - **headless:** packages gates + `compileDebugKotlin` (Kotlin-only change; iOS untouched).
-- **device:** `evidence/device.md` — no-overshoot capture (slowed scale), a presence
-  retarget regression, reduce-motion.
+- **device:** `evidence/device.md` — no-overshoot per-frame value capture (+ the
+  default-spring positive control), a presence retarget regression, reduce-motion.
