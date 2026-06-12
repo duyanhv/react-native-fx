@@ -84,11 +84,25 @@ layout/hit-testing to a `UIHostingController`.
 
 - **`hosted`**: the only lever is `pointerEvents`. Coarse and rectangular — fine for
   decorative overlays, insufficient for shaped interaction.
-- **`expo-view`**: `UILongPressGestureRecognizer(minimumPressDuration = 0)`,
-  `cancelsTouchesInView = false`, delegate `shouldRecognizeSimultaneouslyWith → true`;
-  read `location(in:)` each callback; spring back on `.cancelled`. `hitTest` override
-  carries the shaped/SDF pass-through (U8) and the animated-container mid-flight caveat
-  (U4) — the same override composes both concerns. Full mechanics in `30`.
+- **`expo-view`**: a stock `UILongPressGestureRecognizer(minimumPressDuration = 0)`,
+  `cancelsTouchesInView = false` (deliberate divergence from RNGH's `YES` — fx hosts RN
+  children and never severs their touch stream), delegate
+  `shouldRecognizeSimultaneouslyWith → true`; read `location(in:)` each callback; spring
+  back on `.cancelled`. The FSM lives on `FxPressHandler` (plain class), fed by the
+  recognizer callbacks. **Slop self-failure is the scroller yield, not a defense** —
+  simultaneity opts fx out of the OS auto-cancel when an ancestor pan activates, so past
+  the movement slop (`translationX² + translationY² > allowableMovement²`, OR outside the
+  hitSlop-inset bounds when `shouldCancelWhenOutside`) the handler force-fails the stock
+  recognizer with the `isEnabled` false→true toggle (the RNGH mechanism,
+  `RNLongPressHandler.m` `touchesMoved`; a stock recognizer's `state` is
+  subclass-settable only) — the OS delivers `.cancelled`, the handler maps it to
+  `failed`, springs the uniforms back, and emits nothing. **The handler owns the
+  long-press timer** (press-begin rides `minimumPressDuration = 0`, so the recognizer
+  cannot time the long-press): a posted timeout at the UIKit 0.5 s convention, cancelled
+  on slop/exit (U8-001 preflight, 2026-06-12). `hitTest` override carries the shaped/SDF
+  pass-through (U8, `32` D4–5: claim only inside the shader's own shape, evaluated in UV)
+  and the animated-container mid-flight caveat (U4) — the same override composes both
+  concerns. Full mechanics in `30`.
 - **Severing rule:** applying `.layerEffect` to live RN content requires hosting that
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.

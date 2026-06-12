@@ -99,10 +99,17 @@ component.
 
 ### Touch contract (when on `expo-view`)
 
-- Handle in `onTouchEvent`; defend briefly with
+- Handle in `onTouchEvent`; the FSM lives on `FxPressHandler` (plain class), mirroring
+  the RNGH single-handler shape (`core/LongPressGestureHandler.kt`: initialize on
+  `ACTION_DOWN`, post the long-press timeout at
+  `ViewConfiguration.getLongPressTimeout()`, fail past `scaledTouchSlop`, map
+  `ACTION_CANCEL` → cancelled). Defend briefly with
   `requestDisallowInterceptTouchEvent(true)` on `ACTION_DOWN`, release past
-  `scaledTouchSlop`; spring back on `ACTION_CANCEL` (the analogue of iOS
-  `.cancelled`). Full mechanics in `30`.
+  `scaledTouchSlop`; spring back on `ACTION_CANCEL` (the analogue of iOS `.cancelled`).
+  **Watch item (U8-001 preflight, 2026-06-12):** RNGH's lone press handler never calls
+  the disallow — it relies on plain parent interception; if the device gate shows
+  scroll-start lag from the brief disallow, drop it entirely (the RNGH-aligned shape)
+  rather than tune the release. Full mechanics in `30`.
 - Because effects are draw-time, an effect applied to content never interferes with
   `dispatchTouchEvent`/hit-testing.
 
