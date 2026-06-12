@@ -9,7 +9,7 @@ import type { PresenceMotionWire } from '../motion/builders';
 export type InteractionMode = 'none' | 'passive' | 'active' | 'controlled';
 
 /** Carries semantic press events emitted by the native shader surface. */
-export type FxSurfacePressEvent = { nativeEvent: Record<string, never> };
+export type FxSurfacePressEvent = { nativeEvent: { x: number; y: number } };
 
 /** Carries the shader id (or empty when no shader loaded) for load/error events. */
 export type FxSurfaceShaderEvent = { nativeEvent: { shader: string; reason?: string } };
@@ -43,6 +43,7 @@ export type NativeFxSurfaceProps = {
   onShaderPress?: (event: FxSurfacePressEvent) => void;
   onShaderPressIn?: (event: FxSurfacePressEvent) => void;
   onShaderPressOut?: (event: FxSurfacePressEvent) => void;
+  onShaderLongPress?: (event: FxSurfacePressEvent) => void;
   onFxLoad?: (event: FxSurfaceShaderEvent) => void;
   onFxError?: (event: FxSurfaceShaderEvent) => void;
   onFxTransitionEnd?: (event: FxTransitionEndEvent) => void;

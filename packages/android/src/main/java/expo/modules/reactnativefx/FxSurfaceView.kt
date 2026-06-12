@@ -3,6 +3,7 @@ package expo.modules.reactnativefx
 import android.content.Context
 import android.graphics.RuntimeShader
 import android.os.Build
+import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import expo.modules.kotlin.AppContext
@@ -14,6 +15,12 @@ import expo.modules.kotlin.viewevent.EventDispatcher
 data class FxShaderEvent(
   @Field val shader: String,
   @Field val reason: String? = null,
+) : Record
+
+/** Payload for semantic shader press events in view points. */
+data class FxShaderPressEvent(
+  @Field val x: Double,
+  @Field val y: Double,
 ) : Record
 
 /**
@@ -40,9 +47,10 @@ class FxSurfaceView(
   /**
    * Reports a completed shader press with a prefixed name that avoids React Native's reserved event.
    */
-  val onShaderPress by EventDispatcher<Unit>()
-  val onShaderPressIn by EventDispatcher<Unit>()
-  val onShaderPressOut by EventDispatcher<Unit>()
+  val onShaderPress by EventDispatcher<FxShaderPressEvent>()
+  val onShaderPressIn by EventDispatcher<FxShaderPressEvent>()
+  val onShaderPressOut by EventDispatcher<FxShaderPressEvent>()
+  val onShaderLongPress by EventDispatcher<FxShaderPressEvent>()
 
   val onFxTransitionEnd by EventDispatcher<FxTransitionEndEvent>()
   val onFxLoad by EventDispatcher<FxShaderEvent>()
@@ -61,6 +69,8 @@ class FxSurfaceView(
   // The last shader a load/error event was dispatched for, so the semantic events fire once
   // per change — never a per-frame stream. null until the first shader is applied.
   private var lastDispatchedShader: String? = null
+  private var effectSurfaceView: FxSurfaceShaderView? = null
+  private val pressHandler = FxPressHandler(this)
 
   /**
    * A Fabric-invisible container that holds RN children so Fabric cannot clobber
@@ -118,6 +128,10 @@ class FxSurfaceView(
       View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
       View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
     )
+    effectSurfaceView?.measure(
+      View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+    )
   }
 
   /**
@@ -129,6 +143,7 @@ class FxSurfaceView(
    */
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
     intermediateContainer.layout(0, 0, right - left, bottom - top)
+    effectSurfaceView?.layout(0, 0, right - left, bottom - top)
     presenceCoordinator.handleContentLayout()
   }
 
@@ -186,7 +201,13 @@ class FxSurfaceView(
     pendingInteractionMode = pendingInteractionMode.ifBlank { "none" }
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
+    pressHandler.update(pendingInteractionMode)
     presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
+  }
+
+  override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+    val consumedByFx = pressHandler.handle(event)
+    return consumedByFx || super.dispatchTouchEvent(event)
   }
 
   internal fun animateContentTo(target: FxAnimationVector, spring: FxAnimationSpring? = null) {
@@ -208,6 +229,34 @@ class FxSurfaceView(
    */
   internal fun dispatchPresenceTransitionEnd(phase: String, finished: Boolean, interrupted: Boolean) {
     onFxTransitionEnd(FxTransitionEndEvent("presence", phase, finished, interrupted))
+  }
+
+  internal fun updatePressUniforms(x: Float?, y: Float?, depth: Float) {
+    val width = width.coerceAtLeast(1).toFloat()
+    val height = height.coerceAtLeast(1).toFloat()
+    val touchX = (x ?: (width * 0.5f)) / width
+    val touchY = 1f - ((y ?: (height * 0.5f)) / height)
+    effectSurfaceView?.setPressUniforms(touchX, touchY, depth)
+  }
+
+  internal fun dispatchShaderPressIn(x: Float, y: Float) {
+    onShaderPressIn(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+  }
+
+  internal fun dispatchShaderPressOut(x: Float, y: Float) {
+    onShaderPressOut(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+  }
+
+  internal fun dispatchShaderPress(x: Float, y: Float) {
+    onShaderPress(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+  }
+
+  internal fun dispatchShaderLongPress(x: Float, y: Float) {
+    onShaderLongPress(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+  }
+
+  internal fun containsInteractiveShape(x: Float, y: Float): Boolean {
+    return x >= 0f && y >= 0f && x <= width.toFloat() && y <= height.toFloat()
   }
 
   /**
@@ -329,16 +378,29 @@ class FxSurfaceView(
    */
   private fun updateEffectSurfaceVisibility() {
     val hasActiveEffect = pendingShader.isNotBlank()
-    // TODO: when the effect surface view is added, set its visibility here.
-    // For now the surface is blank; the visibility rule is recorded so the
-    // composition concern (effect + content motion) is not silently dropped.
+    val view = if (hasActiveEffect) ensureEffectSurfaceView() else effectSurfaceView
+    view?.setShaderId(if (hasActiveEffect) pendingShader else "")
+    view?.setIntensity(pendingIntensity)
+    view?.visibility = if (hasActiveEffect) View.VISIBLE else View.GONE
+  }
+
+  private fun ensureEffectSurfaceView(): FxSurfaceShaderView {
+    effectSurfaceView?.let { return it }
+    val view = FxSurfaceShaderView(context).apply {
+      layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+    }
+    super.addView(view)
+    effectSurfaceView = view
+    return view
   }
 
   override fun pausePresentationLoop() {
+    effectSurfaceView?.pausePresentationLoop()
     contentAnimationDriver.pause()
   }
 
   override fun resumePresentationLoop() {
+    effectSurfaceView?.resumePresentationLoop()
     contentAnimationDriver.resume()
   }
 }

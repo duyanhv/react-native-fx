@@ -116,7 +116,7 @@ internal class FxShaderView(
 }
 
 /** Maps the public agnostic shader id to its bundled .agsl asset path. */
-private fun agslAssetPathFor(id: String): String {
+internal fun agslAssetPathFor(id: String): String {
   return when (id) {
     "fractal-clouds" -> "shaders/fractal_clouds.agsl"
     "ink-smoke"      -> "shaders/ink_smoke.agsl"

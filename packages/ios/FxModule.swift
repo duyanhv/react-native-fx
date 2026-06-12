@@ -35,7 +35,9 @@ public class FxModule: Module {
     }
 
     View(FxSurfaceView.self) {
-      Events("onShaderPress", "onShaderPressIn", "onShaderPressOut", "onFxTransitionEnd", "onFxLoad", "onFxError")
+      Events(
+        "onShaderPress", "onShaderPressIn", "onShaderPressOut", "onShaderLongPress",
+        "onFxTransitionEnd", "onFxLoad", "onFxError")
 
       Prop("shader") { (view: FxSurfaceView, value: String) in
         view.setShader(value)

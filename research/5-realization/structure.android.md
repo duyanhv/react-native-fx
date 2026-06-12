@@ -99,10 +99,13 @@ component.
 
 ### Touch contract (when on `expo-view`)
 
-- Handle in `onTouchEvent`; the FSM lives on `FxPressHandler` (plain class), mirroring
-  the RNGH single-handler shape (`core/LongPressGestureHandler.kt`: initialize on
-  `ACTION_DOWN`, post the long-press timeout at
-  `ViewConfiguration.getLongPressTimeout()`, fail past `scaledTouchSlop`, map
+- Handle at `dispatchTouchEvent` first, then fall through to child dispatch when fx does not
+  consume. Android has no iOS-style ancestor recognizer that can observe a descendant touch
+  stream without becoming the target; passive mode must keep receiving `MOVE` while it feeds
+  uniforms, so the surface owns the stream as one interactive unit until slop yield. The FSM
+  lives on `FxPressHandler` (plain class), mirroring the RNGH single-handler shape
+  (`core/LongPressGestureHandler.kt`: initialize on `ACTION_DOWN`, post the long-press timeout
+  at `ViewConfiguration.getLongPressTimeout()`, fail past `scaledTouchSlop`, map
   `ACTION_CANCEL` → cancelled). Defend briefly with
   `requestDisallowInterceptTouchEvent(true)` on `ACTION_DOWN`, release past
   `scaledTouchSlop`; spring back on `ACTION_CANCEL` (the analogue of iOS `.cancelled`).

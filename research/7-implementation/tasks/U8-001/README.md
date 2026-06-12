@@ -106,10 +106,10 @@ Subtask: the press recognizer FSM + slop-yield + SDF hit-test (blueprint Unit 8)
 
 - [x] spec'd (this README — planner, 2026-06-12)
 - [x] preflight (SOUND with four corrections — [preflight.md](./preflight.md); deltas folded into structure.{ios,android} §Touch contract, 2026-06-12)
-- [ ] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
+- [x] rules-gated
+- [x] implemented
+- [x] commented
+- [x] headless-done
 - [ ] device-verified (human gate)
 - [ ] reviewed
 - [ ] docs-closed (RT-006 → resolved; feather pinned; `40` event row flipped)

@@ -26,6 +26,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   internal let onShaderPress = EventDispatcher()
   internal let onShaderPressIn = EventDispatcher()
   internal let onShaderPressOut = EventDispatcher()
+  internal let onShaderLongPress = EventDispatcher()
 
   internal let onFxTransitionEnd = EventDispatcher()
   internal let onFxLoad = EventDispatcher()
@@ -54,6 +55,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var metalView: MTKView?
 
   private var uniforms = FxUniforms()
+  private var targetPressDepth: Float = 0
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
@@ -74,7 +76,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   // per change — never a per-frame stream. nil until the first shader is applied.
   private var lastDispatchedShader: String?
 
-  private var pressRecognizer: UILongPressGestureRecognizer?
+  private var pressHandler: FxPressHandler!
 
   /// A Fabric-invisible container that holds RN children so Fabric cannot clobber
   /// the animator's transform/opacity. The animator targets this container, not the
@@ -107,6 +109,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     layoutObserver = FxLayoutObserver(observing: self)
     contentAnimationDriver = makeContentAnimationDriver()
     presenceCoordinator = FxPresenceCoordinator(surface: self)
+    pressHandler = FxPressHandler(surface: self)
     onContentAnimationCompletion = { [weak presenceCoordinator] in
       presenceCoordinator?.handleDriverCompletion()
     }
@@ -115,6 +118,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   deinit {
     contentAnimationDriver.cancel()
     layoutObserver?.invalidate()
+    pressHandler.detach()
     tearDownMetal()
   }
 
@@ -149,6 +153,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     view.preferredFramesPerSecond = 60
     view.enableSetNeedsDisplay = false
     view.isPaused = true  // runs only while on-window and foregrounded
+    view.isUserInteractionEnabled = false
     view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     view.frame = bounds
     addSubview(view)
@@ -371,48 +376,58 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   // MARK: - Interaction
 
-  /// Installs or removes the cooperative press recognizer for active interaction.
   private func updateInteraction(mode: String) {
-    if mode == "active" {
-      guard pressRecognizer == nil else { return }
-      let recognizer = UILongPressGestureRecognizer(target: self, action: #selector(handlePress(_:)))
-      recognizer.minimumPressDuration = 0
-      recognizer.cancelsTouchesInView = false
-      addGestureRecognizer(recognizer)
-      pressRecognizer = recognizer
-    } else if let recognizer = pressRecognizer {
-      removeGestureRecognizer(recognizer)
-      pressRecognizer = nil
-      uniforms.pressDepth = 0
+    pressHandler.update(mode: mode)
+  }
+
+  internal func updatePressUniforms(point: CGPoint?, depth: Float) {
+    targetPressDepth = depth
+    if let point {
+      uniforms.touch = normalizeTouch(point)
     }
   }
 
-  /// Updates shader uniforms and semantic events for a press recognizer transition.
-  @objc private func handlePress(_ recognizer: UILongPressGestureRecognizer) {
-    updateTouch(recognizer)  // tracks the finger on .began and every .changed (drag)
-    switch recognizer.state {
-    case .began:
-      uniforms.pressDepth = 1
-      onShaderPressIn()
-    case .ended:
-      uniforms.pressDepth = 0
-      onShaderPressOut()
-      onShaderPress()
-    case .cancelled, .failed:
-      uniforms.pressDepth = 0
-      onShaderPressOut()
-    default:
-      break  // .changed: touch already updated above
-    }
+  internal func dispatchShaderPressIn(point: CGPoint) {
+    onShaderPressIn(pressPayload(point: point))
   }
 
-  /// Converts the current touch location into shader UV coordinates.
-  private func updateTouch(_ recognizer: UILongPressGestureRecognizer) {
-    let location = recognizer.location(in: self)
+  internal func dispatchShaderPressOut(point: CGPoint) {
+    onShaderPressOut(pressPayload(point: point))
+  }
+
+  internal func dispatchShaderPress(point: CGPoint) {
+    onShaderPress(pressPayload(point: point))
+  }
+
+  internal func dispatchShaderLongPress(point: CGPoint) {
+    onShaderLongPress(pressPayload(point: point))
+  }
+
+  internal func containsInteractiveShape(point: CGPoint) -> Bool {
+    return bounds.contains(point)
+  }
+
+  private func normalizeTouch(_ point: CGPoint) -> SIMD2<Float> {
     let width = max(Float(bounds.width), 1)
     let height = max(Float(bounds.height), 1)
-    // Normalize to 0..1 with y up, matching the shader's UV space.
-    uniforms.touch = SIMD2<Float>(Float(location.x) / width, 1 - Float(location.y) / height)
+    return SIMD2<Float>(Float(point.x) / width, 1 - Float(point.y) / height)
+  }
+
+  private func pressPayload(point: CGPoint) -> [String: Double] {
+    return ["x": Double(point.x), "y": Double(point.y)]
+  }
+
+  internal override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    guard let result = super.hitTest(point, with: event) else {
+      return nil
+    }
+    if result !== self && result !== metalView {
+      return result
+    }
+    guard pendingMode == "passive" || pendingMode == "active" else {
+      return nil
+    }
+    return containsInteractiveShape(point: point) ? result : nil
   }
 
   // MARK: - Render loop
@@ -431,6 +446,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
     uniforms.time = Float(CACurrentMediaTime() - startTime)
     uniforms.resolution = SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height))
+    uniforms.pressDepth += (targetPressDepth - uniforms.pressDepth) * 0.35
 
     encoder.setRenderPipelineState(state)
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<FxUniforms>.stride, index: 0)
