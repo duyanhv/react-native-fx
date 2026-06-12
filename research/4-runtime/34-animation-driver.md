@@ -1,5 +1,5 @@
 # Runtime: the animation driver
-Status: researched (design) · source-audit pass · retarget contract device-verified (U6-001, RT-007) · hard-retarget matrix + catalog feel device-pending (U6-002/U6-003)
+Status: researched (design) · source-audit pass · retarget contract device-verified (U6-001, RT-007) · hard-retarget matrix device-verified (U6-002, RT-016) · catalog feel device-pending (U6-003/MOT-001)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 41-motion-vocabulary.md, structure.{ios,android}
 
@@ -169,7 +169,11 @@ reduce-motion policy silently fails for exactly the animations fx prefers.
   displacement-driven custom integrator is needed for the harder cases.~~ **Design
   disposition recorded (DOC-009):** Android stock (`animateToFinalPosition()` carries
   value + velocity); iOS render-server-first with the `FxSpring` integrator on retarget
-  (§Findings above). The on-device retarget proof stays open — RT-016, owned by U6-002.
+  (§Findings above). **Device-proven (U6-002, RT-016, 2026-06-12):** the nine-row
+  hard-retarget matrix passed in full on both platforms — timing sweep, clip-vs-carry,
+  rapid-fire, zero-displacement, after-rest, rotation+combined, mixed channels,
+  cancel-under-fire, JS silence — so the shipped paths suffice and no custom integrator
+  is needed (evidence in `7-implementation/tasks/U6-002/evidence/`).
 - BYO envelopes — can a curated effect's intro/outro be expressed without hardcoding it
   to one effect (carried open from `40`).
 

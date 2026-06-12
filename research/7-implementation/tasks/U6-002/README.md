@@ -1,6 +1,6 @@
 # U6-002 — the hard-retarget matrix: RT-016's device truth
 
-Type: `device-verify` · State: `todo` (spec'd) · Device: `yes` · Consumes: — · Closes: RT-016 (**device-gated** — see Closure) · Blocked by: — (U6-001 merged 2026-06-12)
+Type: `device-verify` · State: `merged` · Device: `yes` · Consumes: — · Closes: RT-016 (**closed 2026-06-12** — full-matrix PASS) · Blocked by: — (U6-001 merged 2026-06-12)
 
 ## Start here
 
@@ -103,12 +103,16 @@ Subtask: the RT-016 device matrix (blueprint Unit 6, the device-truth half) — 
 ## Lifecycle
 
 - [x] spec'd (this README — planner, 2026-06-12)
-- [ ] rules-gated (instrumentation only — confirm no rule is touched before the run)
-- [ ] device scenario run (the matrix, both platforms)
-- [ ] device-verified (human gate — maintainer ratifies the matrix)
-- [ ] reviewed
-- [ ] docs-closed (RT-016 per Closure; `34` §Findings disposition line annotated with the device truth)
-- [ ] merged (human gate)
+- [x] rules-gated (instrumentation-only: temporary driver logging + a native-timed scenario
+      runner + a temporary module trigger; no per-frame JS (#1), Expo-Modules Swift/Kotlin
+      only (#7), only the intermediate container animated (#9); all reverted after the run)
+- [x] device scenario run (all nine rows × iOS sim + Android hardware, 2026-06-12 — full PASS;
+      [evidence/matrix.md](./evidence/matrix.md), raw logs `ios-raw.log`/`android-raw.log`,
+      local recordings `/tmp/u6-002-{ios,android}.mp4`)
+- [x] device-verified (human gate — maintainer-ratified 2026-06-12; all nine rows PASS, both platforms)
+- [x] reviewed (planner, 2026-06-12 — [review](../../reviews/U6-002.md); write-up spot-checked against the raw logs)
+- [x] docs-closed (RT-016 → resolved in the ledger; `34` status + animator-sufficiency question annotated device-proven; structure pins confirmed, no edit)
+- [x] merged (human gate — maintainer, 2026-06-12; evidence + ratification on `integration/0.1.x`)
 
 ## Proof
 
