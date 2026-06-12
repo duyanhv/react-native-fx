@@ -44,13 +44,19 @@ class FxSurfaceView(
   val onShaderPressIn by EventDispatcher<Unit>()
   val onShaderPressOut by EventDispatcher<Unit>()
 
-  val onFxTransitionEnd by EventDispatcher<Unit>()
+  val onFxTransitionEnd by EventDispatcher<FxTransitionEndEvent>()
   val onFxLoad by EventDispatcher<FxShaderEvent>()
   val onFxError by EventDispatcher<FxShaderEvent>()
 
   private var pendingShader = ""
   private var pendingIntensity = 0.8
   private var pendingInteractionMode = "none"
+
+  // Presence targets, stashed by prop setters and forwarded to the coordinator once per batch.
+  private var pendingVisible = false
+  private var pendingPreset = "transient"
+  private var pendingAppear = true
+  private var pendingPresenceMotion: FxPresenceMotion? = null
 
   // The last shader a load/error event was dispatched for, so the semantic events fire once
   // per change — never a per-frame stream. null until the first shader is applied.
@@ -84,11 +90,19 @@ class FxSurfaceView(
    */
   internal val layoutObserver = FxLayoutObserver(this)
 
-  /** Receives internal content-motion completion until the coordinator attaches public semantics. */
+  /** Routes driver completion to the presence coordinator, the completion source for the FSM. */
   internal var onContentAnimationCompletion: (() -> Unit)? = null
 
   private val contentAnimationDriver = FxAnimationDriver(intermediateContainer) {
     onContentAnimationCompletion?.invoke()
+  }
+
+  /**
+   * Turns the discrete `visible` target into an interruptible enter/exit envelope. A plain
+   * internal object — never bridged to JS.
+   */
+  private val presenceCoordinator = FxPresenceCoordinator(this).also { coordinator ->
+    onContentAnimationCompletion = { coordinator.handleDriverCompletion() }
   }
 
   /**
@@ -138,20 +152,54 @@ class FxSurfaceView(
     pendingInteractionMode = value
   }
 
+  /** Stashes the presence visibility target until Expo finishes the prop batch. */
+  fun setVisible(value: Boolean) {
+    pendingVisible = value
+  }
+
+  /** Stashes the presence preset until Expo finishes the prop batch. */
+  fun setPreset(value: String) {
+    pendingPreset = value
+  }
+
+  /** Stashes the explicit presence motion override until Expo finishes the prop batch. */
+  fun setPresenceMotion(value: FxPresenceMotion?) {
+    pendingPresenceMotion = value
+  }
+
+  /** Stashes whether the initial visible mount plays the enter envelope. */
+  fun setAppear(value: Boolean) {
+    pendingAppear = value
+  }
+
   override fun applyResolvedConfig() {
     super.applyResolvedConfig()
     pendingIntensity = pendingIntensity.coerceIn(0.0, 1.0)
     pendingInteractionMode = pendingInteractionMode.ifBlank { "none" }
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
+    presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
   }
 
   internal fun animateContentTo(target: FxAnimationVector) {
     contentAnimationDriver.animateTo(target)
   }
 
+  /** Places the content container instantly, without animation. */
+  internal fun snapContent(target: FxAnimationVector) {
+    contentAnimationDriver.snap(target)
+  }
+
   internal fun cancelContentAnimation() {
     contentAnimationDriver.cancel()
+  }
+
+  /**
+   * Emits the presence lifecycle completion the coordinator produces, remapped to the public
+   * contract by the surface component. The `onFx` prefix never leaks past JS.
+   */
+  internal fun dispatchPresenceTransitionEnd(phase: String, finished: Boolean, interrupted: Boolean) {
+    onFxTransitionEnd(FxTransitionEndEvent("presence", phase, finished, interrupted))
   }
 
   /**

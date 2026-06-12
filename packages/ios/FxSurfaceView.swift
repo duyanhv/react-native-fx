@@ -64,6 +64,12 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
 
+  // Presence targets, stashed by prop setters and forwarded to the coordinator once per batch.
+  private var pendingVisible = false
+  private var pendingPreset = "transient"
+  private var pendingAppear = true
+  private var pendingPresenceMotion: FxPresenceMotion?
+
   // The last shader a load/error event was dispatched for, so the semantic events fire once
   // per change — never a per-frame stream. nil until the first shader is applied.
   private var lastDispatchedShader: String?
@@ -79,10 +85,14 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// future content-motion driver. Nothing crosses to JS.
   internal private(set) var layoutObserver: FxLayoutObserver!
 
-  /// Receives internal content-motion completion until the coordinator attaches public semantics.
+  /// Routes driver completion to the presence coordinator, the completion source for the FSM.
   internal var onContentAnimationCompletion: (() -> Void)?
 
   private var contentAnimationDriver: FxAnimationDriver!
+
+  /// Turns the discrete `visible` target into an interruptible enter/exit envelope. A plain
+  /// internal object — never bridged to JS.
+  private var presenceCoordinator: FxPresenceCoordinator!
 
   private func makeContentAnimationDriver() -> FxAnimationDriver {
     return FxAnimationDriver(targetView: intermediateContainer) { [weak self] in
@@ -96,6 +106,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     setUpIntermediateContainer()
     layoutObserver = FxLayoutObserver(observing: self)
     contentAnimationDriver = makeContentAnimationDriver()
+    presenceCoordinator = FxPresenceCoordinator(surface: self)
+    onContentAnimationCompletion = { [weak presenceCoordinator] in
+      presenceCoordinator?.handleDriverCompletion()
+    }
   }
 
   deinit {
@@ -236,20 +250,56 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     pendingMode = value
   }
 
+  /// Stashes the presence visibility target until Expo finishes the prop batch.
+  internal func setVisible(_ value: Bool) {
+    pendingVisible = value
+  }
+
+  /// Stashes the presence preset until Expo finishes the prop batch.
+  internal func setPreset(_ value: String) {
+    pendingPreset = value
+  }
+
+  /// Stashes the explicit presence motion override until Expo finishes the prop batch.
+  internal func setPresenceMotion(_ value: FxPresenceMotion?) {
+    pendingPresenceMotion = value
+  }
+
+  /// Stashes whether the initial visible mount plays the enter envelope.
+  internal func setAppear(_ value: Bool) {
+    pendingAppear = value
+  }
+
   internal override func applyResolvedConfig() {
     super.applyResolvedConfig()
     uniforms.intensity = min(max(pendingIntensity, 0), 1)
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
     updateInteraction(mode: pendingMode)
+    presenceCoordinator.update(
+      visible: pendingVisible, appear: pendingAppear, preset: pendingPreset,
+      motion: pendingPresenceMotion)
   }
 
   internal func animateContent(to target: FxAnimationVector) {
     contentAnimationDriver.animate(to: target)
   }
 
+  /// Places the content container instantly, without animation.
+  internal func snapContent(to target: FxAnimationVector) {
+    contentAnimationDriver.snap(to: target)
+  }
+
   internal func cancelContentAnimation() {
     contentAnimationDriver.cancel()
+  }
+
+  /// Emits the presence lifecycle completion the coordinator produces, remapped to the public
+  /// contract by the surface component. The `onFx` prefix never leaks past JS.
+  internal func dispatchPresenceTransitionEnd(phase: String, finished: Bool, interrupted: Bool) {
+    onFxTransitionEnd([
+      "owner": "presence", "phase": phase, "finished": finished, "interrupted": interrupted,
+    ])
   }
 
   /// Reports whether the active shader loaded, once per change. A usable curated id (its

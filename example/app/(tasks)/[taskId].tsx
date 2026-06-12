@@ -5,6 +5,7 @@ import { AndroidMaterialScreen } from "../../screens/android-material";
 import { ContentMotionScreen } from "../../screens/content-motion";
 import { FillMaterialScreen } from "../../screens/fill-material";
 import { HostingParityScreen } from "../../screens/hosting-parity";
+import { PresenceScreen } from "../../screens/presence";
 import { ShaderCatalogScreen } from "../../screens/shader-catalog";
 import { StressListScreen } from "../../screens/stress-list";
 import { SymbolScreen } from "../../screens/symbol";
@@ -26,6 +27,8 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <HostingParityScreen />;
 		case "stress-list":
 			return <StressListScreen />;
+		case "presence":
+			return <PresenceScreen />;
 		default:
 			return <TaskBlankScreen label={label} />;
 	}

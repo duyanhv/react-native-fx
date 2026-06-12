@@ -9,6 +9,8 @@ export type {
   SymbolAnimation,
   SymbolConfig,
 } from './effects/catalog';
+export { fx } from './fx';
+export type { Edge, MotionSpec, Origin, PresenceMotion, Travel } from './motion/types';
 export { FxHostedView, type NativeFxHostedProps } from './runtime/FxHostedView';
 export {
   type FxSurfacePressEvent,
@@ -17,3 +19,10 @@ export {
   type InteractionMode,
   type NativeFxSurfaceProps,
 } from './runtime/FxSurfaceView';
+export {
+  FxPresence,
+  type FxPresenceProps,
+  type FxTransition,
+  type FxTransitionEnd,
+  type PresencePreset,
+} from './surface';

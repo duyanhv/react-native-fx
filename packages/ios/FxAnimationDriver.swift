@@ -58,6 +58,17 @@ internal final class FxAnimationDriver {
     startRenderServerAnimation(to: target, identifier: identifier)
   }
 
+  /// Places the target instantly at a value, stopping any in-flight envelope. The presence
+  /// coordinator uses this to seat an enter at its hidden start before animating to present,
+  /// and to settle reduce-motion / `appear:false` without a frame of motion.
+  internal func snap(to value: FxAnimationVector) {
+    stopDisplayLink()
+    displayLinkTarget = nil
+    renderServerStartTime = nil
+    targetView?.layer.removeAllAnimations()
+    apply(value)
+  }
+
   internal func cancel() {
     guard let targetView else {
       stopDisplayLink()

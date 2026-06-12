@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "U7-001",
+		title: "FxPresence handshake",
+		platform: "iOS · Android",
+		what: "deferred-unmount · interrupt-as-retarget · transient envelope · onTransitionEnd",
+		status: "todo",
+		screen: "presence",
+	},
 	{
 		id: "EX-002",
 		title: "100-cell mixed stress list",

@@ -46,6 +46,18 @@ public class FxModule: Module {
       Prop("interactionMode") { (view: FxSurfaceView, value: String) in
         view.setInteractionMode(value)
       }
+      Prop("visible") { (view: FxSurfaceView, value: Bool) in
+        view.setVisible(value)
+      }
+      Prop("preset") { (view: FxSurfaceView, value: String) in
+        view.setPreset(value)
+      }
+      Prop("presenceMotion") { (view: FxSurfaceView, value: FxPresenceMotion?) in
+        view.setPresenceMotion(value)
+      }
+      Prop("appear") { (view: FxSurfaceView, value: Bool) in
+        view.setAppear(value)
+      }
 
       AsyncFunction("snapshot") { (view: FxSurfaceView) in
         return view.snapshot()

@@ -78,6 +78,16 @@ internal class FxAnimationDriver(
     }
   }
 
+  /**
+   * Places the target instantly at a value, stopping any in-flight envelope. The presence
+   * coordinator seats an enter at its hidden start before animating to present, and settles
+   * reduce-motion / `appear:false` without a frame of motion.
+   */
+  fun snap(target: FxAnimationVector) {
+    cancel()
+    apply(target)
+  }
+
   fun cancel() {
     activeAnimations.clear()
     animations.forEach { animation ->

@@ -178,11 +178,19 @@ Subtask: FxPresenceCoordinator + FxPresence (blueprint Unit 7) — the presence 
 ## Lifecycle
 
 - [x] spec'd (this README — planner, 2026-06-12; the handshake pre-validated in `./preflight.md`)
-- [ ] rules-gated
-- [ ] implemented
-- [ ] commented
-- [ ] headless-done
-- [ ] device-verified (human gate)
+- [x] rules-gated (#1 discrete `visible` down / one completion event up, no per-frame JS; #7 plain
+      internal coordinator, no commit hook / JSI / worklets; #9 JS retention defers unmount, native
+      reads `FxLayoutObserver` and writes no layout; #2 preset resolves shape per platform; #3
+      `expo-view`/`FxSurfaceView`)
+- [x] implemented (the four pieces — `src/motion` builders + wire, `FxPresence` + the pure
+      retention FSM, `FxPresenceCoordinator.{swift,kt}` on the U6-001 driver, the boundary props +
+      `onFxTransitionEnd`→`onTransitionEnd` remap)
+- [x] commented (iceberg — why the retention FSM is a pure reducer, the snapshot/stranded
+      invariants, the provisional preset shapes, the measured-edge composition point)
+- [x] headless-done (tsc/build/lint/`swift:lint`/`git diff --check` green; 58 Tier-1 tests incl. the
+      retention FSM + motion builders/fallback/normalization; Android `:react-native-fx:compileDebugKotlin`
+      + iOS `pod install` + example `xcodebuild` BUILD SUCCEEDED; example `tsc` green)
+- [ ] device-verified (human gate — scenario at `evidence/device.md`)
 - [ ] reviewed
 - [ ] docs-closed (`35` questions struck per Closure; architecture row reconciled; `54` status line)
 - [ ] merged (human gate)
