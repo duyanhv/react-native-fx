@@ -1,6 +1,6 @@
 # U6-001 — FxAnimationDriver: the interruptible content-motion spring engine
 
-Type: `implement` · State: `ready-to-merge` · Device: `yes` · Consumes: RT-007 · Closes: RT-007 (**closed 2026-06-12** — device gate passed) · Blocked by: — (U4-001 + U5-001 merged)
+Type: `implement` · State: `merged` · Device: `yes` · Consumes: RT-007 · Closes: RT-007 (**closed 2026-06-12** — device gate passed) · Blocked by: — (U4-001 + U5-001 merged)
 
 ## Start here
 
@@ -126,7 +126,7 @@ Subtask: FxAnimationDriver, the CONTENT lane — the native engine that eases th
 - [x] device-verified (human gate — maintainer-ratified 2026-06-12; PASS on POCO F1 / Android 15 API 35 + iPhone 17 Pro simulator / iOS 26.5, `evidence/device-run.md`)
 - [x] reviewed (planner, 2026-06-12 — [review](../../reviews/U6-001.md); two implementation rounds 2026-06-11 + the device-gate audit)
 - [x] docs-closed (`34` status + interruptible-contract question struck, frame-loop question annotated; RT-007 → resolved in the ledger)
-- [ ] merged (human gate)
+- [x] merged (human gate — maintainer, 2026-06-12; `a168220` implementation + `3f3a8ae` ratification on `integration/0.1.x`)
 
 ## Proof
 
