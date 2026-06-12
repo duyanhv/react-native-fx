@@ -1,8 +1,8 @@
 # Session handoff — 2026-06-12 (resume here)
 
-Planner/Reviewer session. **Unit 6 is fully closed and Unit 7 is one small task from
-closing.** Everything through `74933cf` is committed on `integration/0.1.x`; the working
-tree is clean. This file is the pickup list — read it, then `progress.md`.
+Planner/Reviewer session. **Units 6 AND 7 are fully closed** (U7-003 merged + MOT-001
+closed late on 2026-06-12; review at `reviews/U7-003.md`). This file is the pickup list —
+read it, then `progress.md`.
 
 ## What landed today (all merged on integration/0.1.x)
 
@@ -40,22 +40,16 @@ Twelve commits (`70cfb65`…`74933cf`), five tasks driven spec → device gate �
 
 ## Pick up here (in order)
 
-1. **Dispatch U7-003** (physical Android required) — the standard cold-start prompt +
-   `Task: U7-003.` A small Kotlin-only change: plumb the presence spring token
-   (`DAMPING_RATIO_NO_BOUNCY` at `STIFFNESS_MEDIUM`, pinned in `structure.android.md`
-   §presence presets) from the coordinator to the driver — **driver default unchanged, iOS
-   untouched**. Device: no-overshoot captured at a slowed animator scale, one presence
-   retarget regression, reduce-motion. Spec: `tasks/U7-003/README.md`.
-2. **On PASS (planner thread):** close **MOT-001** (the V1 catalog filled, parity-checked,
-   AND shipped), **re-home its `sheet`/`modal` rider to a deferred row** (trigger:
-   presence-under-navigation settled), flip the `data-layer` U7-003 markers + the
-   `structure.android` pending note to verified, write `reviews/U7-003.md`, tick through
-   merged. **Unit 7 is then fully closed.**
-3. **U8-001 spec pass (planner)** — the press recognizer (consumes RT-006, closes RT-005;
+1. ~~Dispatch U7-003~~ — **DONE 2026-06-12**: merged on `integration/0.1.x`; device gate
+   PASS on the POCO F1 (per-frame logcat capture + a default-spring positive control — the
+   slowed-animator-scale method was reviewed out: `dynamicanimation:1.0.0` springs ignore
+   the animator scale). **MOT-001 closed**; the `sheet`/`modal` rider re-homed to
+   **DEF-018** (trigger: presence-under-navigation settled). Review: `reviews/U7-003.md`.
+2. **U8-001 spec pass (planner)** — the press recognizer (consumes RT-006, closes RT-005;
    blocked-by U1-002 + U3-001, both long merged). Contract: `30`/`32`; blueprint Unit 8
    (adapt the RNGH FSM + slop-yield pattern; reject RNGH-the-dependency). Consider a
    references preflight first (the U6/U7 preflights both paid off).
-4. **U9-001** is also unblocked (U6-001 + U7-001 merged) if a second lane is wanted —
+3. **U9-001** is also unblocked (U6-001 + U7-001 merged) if a second lane is wanted —
    `Fx*` SharedObjects (blueprint Unit 9); U9-002 then carries the SPINE-009 identity proof.
 
 ## The working protocol (unchanged, proven through five tasks today)

@@ -331,15 +331,18 @@ default catalog and lives here once verified. Each must name an Android source (
 snackbar, bottom-sheet, dialog) and pass the law test (`41`) — and may **diverge in shape**
 from iOS (the point of shape-native).
 
-**`transient` — shape device-verified (U7-002, 2026-06-12); spring adjustment pending
-(U7-003).** Source: the Material snackbar. Enter: bottom-edge slide **up** + fade (away
+**`transient` — shape device-verified (U7-002, 2026-06-12); spring device-verified
+(U7-003, 2026-06-12).** Source: the Material snackbar. Enter: bottom-edge slide **up** + fade (away
 vector `opacity 0, translationY = +contentHeight` → identity). Exit: the idiomatic dismiss —
 slide back **down**, then the deferred unmount releases. Spring: the law test caught the one
 parity gap — the shipped `SpringForce()` default (`STIFFNESS_MEDIUM 1500, dampingRatio
 DAMPING_RATIO_MEDIUM_BOUNCY 0.5`) overshoots ~16 %, and a snackbar does **not** bounce. The
 catalog value is `dampingRatio = DAMPING_RATIO_NO_BOUNCY (1.0)` at `STIFFNESS_MEDIUM`
-(settle ≈ 100–150 ms); plumbing it from the coordinator to the driver and the visual confirm
-are U7-003. `sheet`/`modal` stay deferred with the MOT-001 rider.
+(settle ≈ 100–150 ms), shipped as a per-envelope spring parameter from the presence
+coordinator to the driver — the driver's no-params default stays the stock `SpringForce`
+family — and confirmed on device by per-frame value capture with a default-spring positive
+control (U7-003). `sheet`/`modal` stay deferred (DEF-018, trigger:
+presence-under-navigation settled).
 
 ## § Open questions / schema feedback
 

@@ -1,6 +1,6 @@
 # U7-003 — ship the Android catalog spring (MOT-001's last cell)
 
-Type: `implement` · State: `todo` (spec'd) · Device: `yes` · Consumes: — · Closes: MOT-001 · Blocked by: — (U7-002 merged 2026-06-12)
+Type: `implement` · State: `merged` (2026-06-12) · Device: `yes` · Consumes: — · Closes: MOT-001 (closed 2026-06-12) · Blocked by: — (U7-002 merged 2026-06-12)
 
 ## Why this task exists
 
@@ -72,10 +72,10 @@ Subtask: plumb the presence spring parameter on Android (blueprint Unit 7 closeo
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified (human gate)
-- [ ] reviewed
-- [ ] docs-closed (MOT-001 → resolved; the rider re-homed; data-layer/structure markers flipped)
-- [ ] merged (human gate)
+- [x] device-verified (maintainer-ratified PASS, 2026-06-12 — `evidence/device.md`)
+- [x] reviewed (planner, 2026-06-12 — `reviews/U7-003.md`)
+- [x] docs-closed (MOT-001 → resolved; the rider re-homed to DEF-018; data-layer/structure markers flipped — 2026-06-12)
+- [x] merged (maintainer, 2026-06-12, on integration/0.1.x)
 
 ## Proof
 

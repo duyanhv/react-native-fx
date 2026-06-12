@@ -445,15 +445,16 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > Presets are behavior-named (`transient`/`sheet`/`modal`), not UI-named (`toast`/`card`).
 > The platform owns the geometry — same preset may differ in edge, origin, distance on iOS vs Android.
 >
-> **V1 ships `transient` only (DOC-018).** The `sheet`/`modal` rows below are the provisional
-> catalog targets MOT-001 will device-fill; they are **deferred from the V1 surface** (they name
-> screen-scale presentations that collide with presence's scope ceiling, `42`) and resurrect with
-> that catalog. They remain here as MOT-001 territory, not V1 shipping values.
+> **V1 ships `transient` only (DOC-018); its rows are device-verified both platforms
+> (U7-002/U7-003, MOT-001 closed).** The `sheet`/`modal` rows below are provisional catalog
+> targets; they are **deferred from the V1 surface** (they name screen-scale presentations
+> that collide with presence's scope ceiling, `42`) and resurrect via DEF-018 once
+> presence-under-navigation is settled. They are not V1 shipping values.
 
 | Preset | Phase | iOS Source | iOS Shape | iOS Timing | Android Source | Android Shape | Android Timing |
 |--------|-------|-----------|-----------|------------|----------------|---------------|----------------|
-| `transient` | enter | System banner | Top edge slide-down + fade, translateY = -view.height → 0 **[device-verified U7-002]** | `SwiftUI.Spring()` default (duration 0.5, bounce 0), settle ≈0.75s — kept-default **[device-verified U7-002]** | Snackbar | Bottom edge slide-up + fade, translateY = view.height → 0 **[device-verified U7-002]** | `SpringForce` STIFFNESS_MEDIUM, dampingRatio=DAMPING_RATIO_NO_BOUNCY (1.0), settle ≈100–150ms **[law-test value — plumb + confirm: U7-003]** |
-| `transient` | exit | System banner | Top edge slide-up + fade (idiomatic retraction), translateY = 0 → -view.height **[device-verified U7-002]** | `SwiftUI.Spring()` default — kept-default **[device-verified U7-002]** | Snackbar | Bottom edge slide-down + fade (idiomatic dismiss), translateY = 0 → view.height **[device-verified U7-002]** | same as enter **[U7-003]** |
+| `transient` | enter | System banner | Top edge slide-down + fade, translateY = -view.height → 0 **[device-verified U7-002]** | `SwiftUI.Spring()` default (duration 0.5, bounce 0), settle ≈0.75s — kept-default **[device-verified U7-002]** | Snackbar | Bottom edge slide-up + fade, translateY = view.height → 0 **[device-verified U7-002]** | `SpringForce` STIFFNESS_MEDIUM, dampingRatio=DAMPING_RATIO_NO_BOUNCY (1.0), settle ≈100–150ms **[device-verified U7-003]** |
+| `transient` | exit | System banner | Top edge slide-up + fade (idiomatic retraction), translateY = 0 → -view.height **[device-verified U7-002]** | `SwiftUI.Spring()` default — kept-default **[device-verified U7-002]** | Snackbar | Bottom edge slide-down + fade (idiomatic dismiss), translateY = 0 → view.height **[device-verified U7-002]** | same as enter **[device-verified U7-003]** |
 | `transient` | hold | — | identity | platform idle | — | identity | platform idle |
 | `sheet` | enter | `UISheetPresentationController` | Bottom edge → detent, translateY = view.height → 0 | 0.30s, dampingRatio=0.90 [device-pending] | `ModalBottomSheet` | Bottom edge slide-up, translateY = view.height → 0 | Spring: dampingRatio=0.85, stiffness=400 |
 | `sheet` | exit | `UISheetPresentationController` | Bottom edge slide-out, translateY = view.height | 0.25s, dampingRatio=0.90 [device-pending] | `ModalBottomSheet` | Bottom edge slide-down, translateY = 0 → view.height | 250ms, `DecelerateInterpolator` |
