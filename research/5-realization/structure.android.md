@@ -323,13 +323,23 @@ The driver node (`02`) lowers two ways, by **target**:
   **Compose** rung is active (deferred — § Substrates / § render paths); the V1 plain-`View`
   path exposes no shape-morph rung and always runs the standard `SpringForce`.
 
-### presence presets (the Android default catalog — device-pending)
+### presence presets (the Android default catalog)
 
 Presence presets (`transient`/`sheet`/`modal`, `42`/`56`) lower through the `motion` content
 rung; their **concrete Android shape + spring** is the Android column of `42`'s per-platform
 default catalog and lives here once verified. Each must name an Android source (Material
 snackbar, bottom-sheet, dialog) and pass the law test (`41`) — and may **diverge in shape**
-from iOS (the point of shape-native). Device-pending.
+from iOS (the point of shape-native).
+
+**`transient` — shape device-verified (U7-002, 2026-06-12); spring adjustment pending
+(U7-003).** Source: the Material snackbar. Enter: bottom-edge slide **up** + fade (away
+vector `opacity 0, translationY = +contentHeight` → identity). Exit: the idiomatic dismiss —
+slide back **down**, then the deferred unmount releases. Spring: the law test caught the one
+parity gap — the shipped `SpringForce()` default (`STIFFNESS_MEDIUM 1500, dampingRatio
+DAMPING_RATIO_MEDIUM_BOUNCY 0.5`) overshoots ~16 %, and a snackbar does **not** bounce. The
+catalog value is `dampingRatio = DAMPING_RATIO_NO_BOUNCY (1.0)` at `STIFFNESS_MEDIUM`
+(settle ≈ 100–150 ms); plumbing it from the coordinator to the driver and the visual confirm
+are U7-003. `sheet`/`modal` stay deferred with the MOT-001 rider.
 
 ## § Open questions / schema feedback
 

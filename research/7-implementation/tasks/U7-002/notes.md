@@ -1,21 +1,45 @@
 # U7-002 — notes
 
-## Unverified claims (need device proof)
+## Device gate run — 2026-06-12 (agent-device): all parts PASS, one recorded follow-up
 
-- **First-mount translate fix** — held-enter-until-layout is reasoned from the iOS/Android
-  layout-vs-prop-batch ordering, not yet device-proven. The fix is order-independent by
-  construction (it acts on whichever of `applyResolvedConfig` / first-layout runs second, gated
-  on `hasResolvedContentSize`), but the visible "first enter slides, not just fades" outcome is
-  a device row (catalog.md Part 3, both platforms).
-- **The five React-semantics rows** (StrictMode, Fast Refresh mid-exit, Suspense/offscreen hide,
-  re-render mid-exit, list eviction) are source-grounded (`35`) and now harness-runnable, but
-  remain device-pending (catalog.md Part 2).
-- **The `transient` catalog values** are still the provisional `data-layer §Presence presets`
-  targets — the law-test/parity comparison against the real system banner / Material snackbar is
-  the device deliverable (catalog.md Part 1). Any spring-param plumbing the comparison demands is
-  a bounded follow-up, not done headless (the device pass reveals whether it is needed).
-- Harness log-key fix is headless-reasoned; confirm no duplicate-key LogBox past 8 entries on
-  device (catalog.md Part 4).
+Ran the full `evidence/catalog.md` runbook on **iPhone 17 Pro sim / iOS 26.5** and **POCO F1 /
+Android 15 API 35**. Results filled in `evidence/catalog.md` (tables + Parts 2–5 + Results).
+**Both apps were rebuilt + reinstalled from `a3d833f` first** — the pre-installed binaries predated
+the native first-mount fix (would have FAILed Part 3 spuriously). Tree is clean (temporary harness
+scaffolding reverted; no `packages/` change; no FXP instrumentation).
+
+- **Part 1 catalog** — envelopes captured on device; iOS top-banner / Android bottom-snackbar
+  shapes confirmed; events clean. **kept-default** except one **law-test deviation recorded (NOT
+  plumbed):** Android `transient` ships `SpringForce()` default = `dampingRatio 0.5` (bouncy), but a
+  Material snackbar does not bounce — needed value `DAMPING_RATIO_NO_BOUNCY (1.0)` at
+  `STIFFNESS_MEDIUM`. Source-grounded; overshoot below burst resolution at ~120 ms. iOS keeps
+  `SwiftUI.Spring()` (no bounce). Live-component side-by-side blocked under the freeze (no notif
+  authorization / no in-app snackbar) — judged vs documented component behavior + on-device capture.
+- **Part 2 five rows** — StrictMode **PASS** (iOS+Android: 1 enter/1 exit per toggle, no doubling);
+  offscreen-hold **PASS** (iOS+Android: no event); eviction **PASS** (iOS+Android: `eviction events:
+  none`); re-render-mid-exit **PASS** (iOS: frozen `taps:0`, single exit, no restart); Fast-Refresh
+  **PASS on criteria** (iOS: no leak/crash, clean remount).
+- **Part 3 first-mount translate** — **PASS both** (iOS slides down from top; Android slides up from
+  bottom) — validates the a3d833f fix; regression guards (appear=false instant/no-event; ordinary
+  toggle translates) hold.
+- **Part 4 log-key** — **PASS both** (>8 toggles, capped at 8, no duplicate-key LogBox).
+- **Part 5 parity** — divergence correct; no accidental sameness.
+
+### Unverified / scoped caveats (carry to review)
+
+- **Android `dampingRatio` deviation is source-grounded, not frame-isolated.** The overshoot at
+  `STIFFNESS_MEDIUM` / ~120 ms is at/below screen-capture burst resolution, so it was not seen on a
+  frame — it follows from the documented `SpringForce()` default (0.5 = MEDIUM_BOUNCY). Planner
+  should validate (slowed build) before plumbing.
+- **Fast Refresh (row 2): strict host-detach-mid-exit instant not isolated.** Metro HMR latency
+  (~0.7–1.0 s) exceeds the iOS exit (~0.75 s), so the exit completed just before each reload. All
+  required guard *outcomes* (no leak, no crash, clean remount) held; the precise "no exit event for a
+  torn host" sub-claim is by-construction + the clean outcomes, not a captured tear.
+- **Rows 2 & 4 on Android** run on the shared coordinator/bundle (JS/FSM-level, platform-agnostic);
+  the ~150 ms SpringForce exit is below mid-exit timing resolution on Android, so they are
+  authoritative on iOS.
+- **iOS live system-banner side-by-side** could not be presented (app has no notification
+  authorization; `simctl privacy grant` denied) — Part 1 iOS parity judged vs documented banner.
 
 ## 2026-06-12 — implemented to headless-done (agent)
 
@@ -66,7 +90,24 @@ device gate (human); spring-param plumbing is a post-device follow-up if the law
   stays deferred). Catalog value propagation to `data-layer`/`42`/`41`/`structure.*` is the
   planner's at docs-closed — `evidence/catalog.md` is the input.
 
-Next: human runs `evidence/catalog.md` on iPhone + physical Android — fill the Part-1 catalog
-(law-tested/parity-checked), prove the five Part-2 rows, confirm the Part-3 first-mount translate
-+ Part-4 key fix. Then review → planner closes MOT-001 + propagates the catalog values at
-docs-closed.
+Next: review the device run (catalog.md filled, all parts PASS) → maintainer ratifies
+`device-verified` → planner closes MOT-001 and propagates the catalog values at docs-closed, and
+scopes the one recorded follow-up: validate + plumb the Android `transient` `dampingRatio`
+(`SpringForce()` default 0.5 → `NO_BOUNCY 1.0` for snackbar parity) as a bounded coordinator→driver
+spring param (U6 retarget mechanics untouched). I did not tick device-verified/reviewed/merged.
+
+## 2026-06-12 — ratification (planner thread, on the maintainer's PASS)
+
+- All five parts reconciled against the evidence; the law test's Android damping finding is
+  the audit working as intended. MOT-001 NOT closed here (cardinal rule — the catalog cell is
+  recorded, not shipped/confirmed); re-homed to U7-003, spec'd in the same pass.
+- Caveats accepted: damping source-grounded (visual confirm = U7-003); Fast-Refresh strict
+  instant un-isolatable (HMR > exit duration; all guard outcomes held); no live iOS banner
+  under the freeze (kept-default is law-preferred anyway).
+- Cleanup misreport noted: the harness safe-area inset fix remained in the tree (claimed
+  reverted) — reviewed and KEPT deliberately (legitimate example-only usability fix).
+- Docs propagated: data-layer transient rows → device values (U7-003 markers on the Android
+  spring); structure.{ios,android} §presence presets pinned; `35` rows + status flipped to
+  device-proven; MOT-001 annotated. Review at `reviews/U7-002.md`; merged (maintainer).
+
+Next: dispatch U7-003 (cold-start prompt + `Task: U7-003.`) — Unit 7 closes with it.

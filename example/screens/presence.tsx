@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FxPresence, type FxTransitionEnd } from "react-native-fx";
 import { useTheme } from "../components/theme";
 
@@ -20,6 +21,11 @@ type LogLine = { id: number; text: string };
  */
 export function PresenceScreen() {
 	const { palette } = useTheme();
+	// The (tasks) Stack uses a transparent iOS header, so it reserves no layout space and the
+	// top-anchored controls would render under it. Inset the root by the safe area + the standard
+	// 44pt bar (this screen sets headerLargeTitle: false). Other demo screens dodge this with a
+	// scroll view's contentInsetAdjustmentBehavior; this one is a plain top-aligned View.
+	const insets = useSafeAreaInsets();
 	const [visible, setVisible] = useState(false);
 	const [appear, setAppear] = useState(true);
 	const [offscreen, setOffscreen] = useState(false);
@@ -45,7 +51,12 @@ export function PresenceScreen() {
 	}
 
 	return (
-		<View style={[styles.root, { backgroundColor: palette.background }]}>
+		<View
+			style={[
+				styles.root,
+				{ paddingTop: insets.top + 44, backgroundColor: palette.background },
+			]}
+		>
 			<Text style={{ color: palette.textMuted, fontSize: 13 }}>
 				U7-002 · FxPresence catalog + React-semantics rows
 			</Text>

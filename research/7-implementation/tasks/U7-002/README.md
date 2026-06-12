@@ -1,6 +1,6 @@
 # U7-002 — the presence catalog on device: fill, law-test, and the carried rows
 
-Type: `device-verify` · State: `todo` (spec'd) · Device: `yes` · Consumes: — · Closes: MOT-001 (**device-gated** — see Closure) · Blocked by: — (U7-001 merged 2026-06-12)
+Type: `device-verify` · State: `merged` · Device: `yes` · Consumes: — · Closes: — (MOT-001 **re-homed to U7-003** — the law test found one unshipped cell; see the review) · Blocked by: — (U7-001 merged 2026-06-12)
 
 ## Start here
 
@@ -125,10 +125,17 @@ Subtask: the per-platform presence default catalog (blueprint Unit 7, the device
 - [x] commented (agent, 2026-06-12 — iceberg; no planning-artifact refs in shipped comments)
 - [x] headless-done (agent, 2026-06-12 — `evidence/notes.md` gates: tsc/build/lint/58 tests/
       swift:lint/diff-check; example tsc; Android `compileDebugKotlin` + iOS `xcodebuild` green)
-- [ ] device-verified (human gate — the catalog + the five rows ratified)
-- [ ] reviewed
-- [ ] docs-closed (MOT-001 per Closure; values propagated to data-layer/`42`/`41`/structure.*)
-- [ ] merged (human gate)
+- [x] device-verified (human gate — maintainer-ratified 2026-06-12; all five parts PASS on
+      iPhone 17 Pro sim / iOS 26.5 + POCO F1 / Android 15 API 35; the law test caught the
+      Android bouncy-default gap — the one catalog cell re-homed to U7-003; `evidence/catalog.md`)
+- [x] reviewed (planner, 2026-06-12 — [review](../../reviews/U7-002.md); clean headless round;
+      caveats accepted: damping source-grounded pending U7-003 visual confirm, Fast-Refresh
+      instant un-isolatable under HMR latency, no live banner under the freeze; the kept
+      harness safe-area fix noted)
+- [x] docs-closed (data-layer transient rows → device values; structure.{ios,android}
+      §presence presets pinned; `35` React-semantics rows + status → device-proven; MOT-001
+      annotated, closes with U7-003)
+- [x] merged (human gate — maintainer, 2026-06-12, on `integration/0.1.x`)
 
 ## Proof
 

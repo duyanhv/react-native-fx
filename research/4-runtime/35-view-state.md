@@ -1,5 +1,5 @@
 # Runtime: view state & the presence handshake
-Status: researched (design) · source-audit + U7-001 preflight pass · handshake device-verified (U7-001, 2026-06-12) · React-semantics rows + identity proof device-pending (U7-002 / SPINE-009→U9-002)
+Status: researched (design) · source-audit + U7-001 preflight pass · handshake device-verified (U7-001) · React-semantics rows device-proven (U7-002) · identity proof device-pending (SPINE-009→U9-002)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 33-shadow-nodes-and-layout.md, structure.{ios,android}
 
@@ -181,7 +181,11 @@ The coordinator reconciles a *native* lifecycle with React's tree, so React's ow
 quirks are part of the contract. Reanimated accumulated handling for each of these; fx
 answered them at spec time (the U7-001 preflight,
 `7-implementation/tasks/U7-001/preflight.md`, 2026-06-11). Each row carries the
-implementation rule the FSM adopts; each remains a U7-002 device row.
+implementation rule the FSM adopts. **All five rows are device-proven (U7-002, 2026-06-12,
+both platforms** — StrictMode double-invoke clean, the stranded guard's outcomes held under
+Fast Refresh, an offscreen hide fired no event, the exiting snapshot stayed frozen through a
+parent re-render, and list eviction was silent; evidence in
+`7-implementation/tasks/U7-002/evidence/catalog.md`).
 
 | case | what React does | the rule fx adopts (U7-001 preflight) |
 |---|---|---|

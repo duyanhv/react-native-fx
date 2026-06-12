@@ -306,13 +306,22 @@ The driver node (`02`) lowers two ways, by **target**:
 - **`.layerEffect`** — `requires {os:17, hosted}`, `status:out-of-scope`. Sampling a
   live RN subtree severs RN touch (above). Recorded here so the limit stays in data.
 
-### presence presets (the iOS default catalog — device-pending)
+### presence presets (the iOS default catalog)
 
 Presence presets (`transient`/`sheet`/`modal`, `42`/`56`) are orchestrations over the
 `motion` content rung, not IR nodes — but their **concrete iOS shape + spring** is the iOS
 column of `42`'s per-platform default catalog, and it lives here once verified on device.
 Each must name an iOS source (system banner, `.sheet` presentation, alert) and pass the law
-test (`41`). Device-pending.
+test (`41`).
+
+**`transient` — device-verified (U7-002, 2026-06-12), kept-default.** Source: the system
+banner. Enter: top-edge slide **down** + fade (away vector `opacity 0, translationY =
+-contentHeight` → identity). Exit: the idiomatic retraction — slide **up** the way it came,
+fading, then the deferred unmount releases the child. Spring: `SwiftUI.Spring()` default
+(`duration 0.5, bounce 0`), no overshoot, settle ≈ 0.75 s — the platform's own family, no
+adjustment demanded by the law test (the settle tail reads marginally longer than a live
+banner's, but the nameable-source default wins over invented timing). `sheet`/`modal` stay
+deferred with the MOT-001 rider.
 
 ## § Open questions / schema feedback
 
