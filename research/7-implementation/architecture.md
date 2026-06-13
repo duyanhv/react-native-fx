@@ -558,8 +558,9 @@ ios/FxNativeView.swift  /  android/FxNativeView.kt  ──  (the abstract base, 
 
 > Units 7/8 lower to `FxSurfaceView` (plus the coordinator/recognizer object); dedicated presence/press
 > views are **not planned** — they ship as `src/surface/` components over the existing binding. The
-> runtime-object granularity behind this (driver family-split, scheduling) is the current direction,
-> not a closed call — formally open as RT-008 (`36`, DOC-011's todo).
+> runtime-object granularity behind this (driver family-split, scheduling) is **resolved** (RT-008,
+> U9 ratify 2026-06-13, `36` §Resolved questions): one `FxAnimationDriver` with two families, per-view
+> clocks; the discrete `FxEffectRenderer` object + the `SharedObject` layer are V2 (DEF-020).
 
 ---
 

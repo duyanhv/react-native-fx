@@ -1,6 +1,6 @@
 # Runtime: the object model (the native architecture)
-Status: researched (design) · source-audit pass · device proof pending
-Phase: v2
+Status: researched (design) · V1 object model ratified + device-proven (U9, 2026-06-13)
+Phase: v2 design; the V1 realization is ratified below (§V1 realization)
 Feeds: structure.{ios,android}, the build; consumes 04, 05, 30–35, 51
 Owns: the runtime object graph — which native object owns what, and how they collaborate.
 
@@ -87,15 +87,35 @@ FxPresenceCoordinator (lifecycle FSM, 35) ──drives──▶ FxAnimationDrive
 4. **Data flow is one-way** (boundary → coordinator → driver → observer/renderer; events
    back up), enforcing the `04` ownership boundaries in the object graph.
 
-## Open questions
+## V1 realization (U9, ratified 2026-06-13)
 
-- **Driver: one object with two families, or two objects** (content vs effect)? Lean: one
-  with two families, shared scheduling — confirm when the frame-loop sharing is settled (`34`).
-- **`FxEffectRenderer` vs the interactive-shader surface** — one object or split (decorative
-  vs interactive)? Ties to `30`/`32`.
-- **Object identity across Fabric commits** — the `05` falsification test; device-pending (`35`).
-- **Shared vs per-object scheduling** — does the content driver share a clock with the effect
-  renderer / interactive loop, or run independently (`31`/`34`)?
+The V2 graph above is the design target; the V1 build realizes the load-bearing half and
+defers the rest. **What shipped:** three plain `internal`/`final` native objects —
+`FxAnimationDriver` (U6), `FxPresenceCoordinator` (U7), `FxLayoutObserver` (U5) — plus the
+press recognizer `FxPressHandler` (U8) as a native input source. **They are plain classes,
+not `SharedObject`s and not yet HybridObject-shaped — correctly so: V1 exposes no JS-held
+handle, so no object crosses the JS boundary.** `FxEffectRenderer` is **not** a discrete
+object in V1; effect rendering lives inline in the view classes (`FxShaderView`,
+`FxSurfaceShaderView`, `FxFillView`). The HybridObject *shape* (`equals`/`dispose`/identity)
+and the `Fx*` `SharedObject` layer are V2 groundwork, deferred to **DEF-020** (trigger: the
+first imperative JS-held handle — controlled-mode `setUniform`/`setHighlight` or a runtime
+controller — or per-child control, the `05` Nitro-reconsideration trigger).
+
+## Resolved questions (RT-008, SPINE-009 — 2026-06-13)
+
+- **Driver granularity (RT-008): one object, two families** — `FxAnimationDriver` owns both the
+  content family (U6, shipped) and the effect family (V2); never two objects. Confirmed by the
+  built code.
+- **`FxEffectRenderer` split (RT-008): deferred** — no discrete renderer object in V1; rendering
+  is in the view classes. The decorative-vs-interactive renderer object is V2 (DEF-020).
+- **Scheduling (RT-008): per-view native clocks** — each surface runs its own
+  `CADisplayLink`/`Choreographer`, paused off-window/backgrounded (`31`); there is no global
+  shared scheduler. As built.
+- **Object identity across Fabric commits (SPINE-009): device-proven** — `05`'s falsification
+  test passes on device, not just source-audit: native layout read on `FxSurfaceView`
+  (U5-001/RT-013), and identity-stable driver/coordinator/recognizer across re-renders,
+  retargets, presence cycles, and the touch path (U6-001/U6-002, U7-001/U7-002, U8-001). The
+  one remaining Nitro-reconsideration trigger — per-child control — is out of V1.
 
 ## Sources
 
