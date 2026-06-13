@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-12T16:39:05.211Z",
+  "events": [
+    {
+      "kind": "swipe",
+      "tMs": 697,
+      "x": 350,
+      "y": 1710,
+      "x2": 350,
+      "y2": 1070,
+      "referenceWidth": 1080,
+      "referenceHeight": 2246,
+      "durationMs": 850
+    }
+  ]
+}

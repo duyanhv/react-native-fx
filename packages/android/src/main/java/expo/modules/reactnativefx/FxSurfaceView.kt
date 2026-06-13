@@ -239,20 +239,26 @@ class FxSurfaceView(
     effectSurfaceView?.setPressUniforms(touchX, touchY, depth)
   }
 
+  // Touch coordinates arrive in physical pixels; the JS event payload reports view points (dp) to
+  // match the RN locationX/Y convention and iOS. The internal shape/uniform math stays in pixels.
+  private fun toPoints(value: Float): Double {
+    return (value / context.resources.displayMetrics.density).toDouble()
+  }
+
   internal fun dispatchShaderPressIn(x: Float, y: Float) {
-    onShaderPressIn(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+    onShaderPressIn(FxShaderPressEvent(toPoints(x), toPoints(y)))
   }
 
   internal fun dispatchShaderPressOut(x: Float, y: Float) {
-    onShaderPressOut(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+    onShaderPressOut(FxShaderPressEvent(toPoints(x), toPoints(y)))
   }
 
   internal fun dispatchShaderPress(x: Float, y: Float) {
-    onShaderPress(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+    onShaderPress(FxShaderPressEvent(toPoints(x), toPoints(y)))
   }
 
   internal fun dispatchShaderLongPress(x: Float, y: Float) {
-    onShaderLongPress(FxShaderPressEvent(x.toDouble(), y.toDouble()))
+    onShaderLongPress(FxShaderPressEvent(toPoints(x), toPoints(y)))
   }
 
   internal fun containsInteractiveShape(x: Float, y: Float): Boolean {

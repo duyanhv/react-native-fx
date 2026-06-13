@@ -102,7 +102,13 @@ layout/hit-testing to a `UIHostingController`.
   on slop/exit (U8-001 preflight, 2026-06-12). `hitTest` override carries the shaped/SDF
   pass-through (U8, `32` D4–5: claim only inside the shader's own shape, evaluated in UV)
   and the animated-container mid-flight caveat (U4) — the same override composes both
-  concerns. Full mechanics in `30`.
+  concerns. **The bare-surface hit set is the view itself, the `MTKView`, *and* the
+  always-present intermediate container** (a full-bounds `UIView` `super.hitTest` resolves
+  to even with zero RN children). Only the container *view itself* counts as bare surface; a
+  mounted RN child inside it is a genuine target and returns early untouched. Without the
+  container in the set the override never returns `nil` in `none`/outside-shape, and the
+  touch dies in the empty container instead of passing through to content composited behind.
+  Full mechanics in `30`.
 - **Severing rule:** applying `.layerEffect` to live RN content requires hosting that
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.

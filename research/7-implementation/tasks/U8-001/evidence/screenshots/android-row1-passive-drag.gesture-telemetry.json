@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-12T16:36:02.805Z",
+  "events": [
+    {
+      "kind": "swipe",
+      "tMs": 703,
+      "x": 300,
+      "y": 1212,
+      "x2": 780,
+      "y2": 1212,
+      "referenceWidth": 1080,
+      "referenceHeight": 2246,
+      "durationMs": 1500
+    },
+    {
+      "kind": "swipe",
+      "tMs": 3756,
+      "x": 780,
+      "y": 1212,
+      "x2": 360,
+      "y2": 952,
+      "referenceWidth": 1080,
+      "referenceHeight": 2246,
+      "durationMs": 1500
+    },
+    {
+      "kind": "swipe",
+      "tMs": 6673,
+      "x": 360,
+      "y": 980,
+      "x2": 460,
+      "y2": 1440,
+      "referenceWidth": 1080,
+      "referenceHeight": 2246,
+      "durationMs": 1500
+    }
+  ]
+}

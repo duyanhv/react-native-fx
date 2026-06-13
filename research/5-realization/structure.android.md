@@ -113,6 +113,34 @@ component.
   the disallow — it relies on plain parent interception; if the device gate shows
   scroll-start lag from the brief disallow, drop it entirely (the RNGH-aligned shape)
   rather than tune the release. Full mechanics in `30`.
+- **`none`-mode pass-through.** RN Android delivers JS touches geometrically from the root via
+  `TouchTargetHelper`, which targets the topmost react-tagged view (the fx surface) over content
+  composited behind it — so a native `dispatchTouchEvent` return cannot route a `none`-mode touch
+  to a sibling `Pressable`. The lever is `com.facebook.react.uimanager.ReactPointerEventsView`
+  (`pointerEvents = BOX_NONE` in `none`, `AUTO` for `passive`/`active`): `TouchTargetHelper`
+  reads `getPointerEvents()` on every view it walks, so `BOX_NONE` makes the surface itself
+  untargetable while RN children inside stay targetable — the native parity of the iOS
+  bare-surface pass-through, never `NONE` (which would also block children). `FxSurfaceView`
+  implements the interface and updates the value where the mode is applied
+  (`applyResolvedConfig`), not per event. This is the **Android-native peer** of the iOS
+  `hitTest` lever: same semantic (surface untargetable in `none`), mechanism localized here —
+  RN Android needs an explicit interface where UIKit infers untargetability from the view tree
+  (REAL-005). **Build coupling:** the lever requires `compileOnly("com.facebook.react:react-android")`
+  on the library module — the `expo-module-gradle-plugin` classpath does not carry `react-android`
+  transitively (`expo-modules-core` exposes its React dependency non-transitively), and `compileOnly`
+  is the standard RN-view-library shape (compile against it; the host app provides it at runtime,
+  never bundled). This is the library's first direct `com.facebook.react.*` reference — it
+  participates in RN's native view system, *not* the JS↔native boundary rule #7 governs (events
+  still cross via the Expo `EventDispatcher`; props via Expo setters). Device-pending the one
+  proof a citation can't give (the RN clone is sparse): that Fabric actually consults
+  `getPointerEvents()` on a non-`ReactViewGroup` `ExpoView` at hit-target time. If it does not,
+  the documented fallback is a JS-side `pointerEvents` prop on the surface (`.android.tsx`,
+  asymmetric — iOS already handles `none` in `hitTest`).
+- **JS press events report view points (dp).** Touch coordinates arrive in physical px; the
+  `dispatchShader*` helpers divide by `context.resources.displayMetrics.density` before building
+  the payload, matching the RN `locationX/Y` convention and iOS. The internal shape test
+  (`containsInteractiveShape`) and the UV uniform math stay in px — only the JS-facing payload
+  converts.
 - Because effects are draw-time, an effect applied to content never interferes with
   `dispatchTouchEvent`/hit-testing.
 

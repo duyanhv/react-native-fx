@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-12T16:26:47.659Z",
+  "events": [
+    {
+      "kind": "tap",
+      "tMs": 127.719482421875,
+      "x": 127,
+      "y": 301,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 543.25927734375,
+      "x": 134,
+      "y": 312,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 959.7802734375,
+      "x": 141,
+      "y": 323,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 1366.747314453125,
+      "x": 148,
+      "y": 334,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 1772.955810546875,
+      "x": 155,
+      "y": 345,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 2172.223388671875,
+      "x": 162,
+      "y": 356,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 2560.166748046875,
+      "x": 169,
+      "y": 367,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 2961.54150390625,
+      "x": 176,
+      "y": 378,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 3344.37060546875,
+      "x": 183,
+      "y": 389,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 3744.608642578125,
+      "x": 190,
+      "y": 400,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 4143.058837890625,
+      "x": 197,
+      "y": 411,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 4528.6376953125,
+      "x": 204,
+      "y": 422,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 4908.73583984375,
+      "x": 211,
+      "y": 433,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 5300.86865234375,
+      "x": 218,
+      "y": 444,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 5709.316162109375,
+      "x": 225,
+      "y": 455,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 6125.609130859375,
+      "x": 232,
+      "y": 296,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 6519.07763671875,
+      "x": 239,
+      "y": 307,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 6931.24658203125,
+      "x": 246,
+      "y": 318,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 7361.67333984375,
+      "x": 253,
+      "y": 329,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 7771.432373046875,
+      "x": 260,
+      "y": 340,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 8187.15087890625,
+      "x": 267,
+      "y": 351,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "tap",
+      "tMs": 8585.72509765625,
+      "x": 274,
+      "y": 362,
+      "referenceWidth": 402,
+      "referenceHeight": 874
+    },
+    {
+      "kind": "swipe",
+      "tMs": 9381.577880859375,
+      "x": 110,
+      "y": 315,
+      "x2": 290,
+      "y2": 345,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 823
+    },
+    {
+      "kind": "swipe",
+      "tMs": 10584.154052734375,
+      "x": 110,
+      "y": 330,
+      "x2": 290,
+      "y2": 360,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 846
+    },
+    {
+      "kind": "swipe",
+      "tMs": 11775.53955078125,
+      "x": 110,
+      "y": 345,
+      "x2": 290,
+      "y2": 375,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 836
+    },
+    {
+      "kind": "swipe",
+      "tMs": 12952.387939453125,
+      "x": 110,
+      "y": 360,
+      "x2": 290,
+      "y2": 390,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 838
+    },
+    {
+      "kind": "swipe",
+      "tMs": 14124.923583984375,
+      "x": 110,
+      "y": 375,
+      "x2": 290,
+      "y2": 405,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 795
+    },
+    {
+      "kind": "swipe",
+      "tMs": 15158.039794921875,
+      "x": 110,
+      "y": 390,
+      "x2": 290,
+      "y2": 420,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 766
+    }
+  ]
+}

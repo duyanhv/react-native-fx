@@ -421,7 +421,12 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     guard let result = super.hitTest(point, with: event) else {
       return nil
     }
-    if result !== self && result !== metalView {
+    // The bare surface is the view itself, the Metal layer, and the always-present
+    // wrapper container; only the container view *itself* counts — a mounted RN child
+    // inside it is a real target and returns early untouched. Anything bare falls
+    // through to the mode/shape gate so a `none` (or outside-shape) touch can reach
+    // RN content composited behind the surface.
+    if result !== self && result !== metalView && result !== intermediateContainer {
       return result
     }
     guard pendingMode == "passive" || pendingMode == "active" else {
