@@ -30,5 +30,14 @@
 - Cross-checked `9a874ea` (U8-002 finishing — harness + RT-001 close) and `f9af1bc` (U8-003
   finishing — the probe fix) are on `integration/0.1.x` before flipping the two `merged` cells.
 
-Next: maintainer ticks DEF-015 `merged` (a docs-only commit), then DEF-016 runs once the npm
-`@react-native-fx` scope is claimed.
+## Revision (2026-06-13) — (d) reverted to `react-native-fxkit`
+
+The package-name call first landed on `@react-native-fx/core`. On verifying claimability,
+the org `react-native-fx` was free but **org creation has no CLI path** (`npm org` is
+set/rm/ls only) — it is a website step. The maintainer reverted (d) to the already-owned,
+already-published unscoped **`react-native-fxkit`**, removing the scope-claim blocker. The
+`react-native-fxkit@0.0.1` placeholder stays published (not unpublished). Revised in `50`
+Decision 8, `52` Decision 10, and the two tracker rows. Calls (a)/(b)/(c) unchanged.
+
+Next: DEF-016 runs at pre-publish — rename `packages/package.json` `react-native-fx` →
+`react-native-fxkit` + the install/import snippets across docs (no scope-claim step).

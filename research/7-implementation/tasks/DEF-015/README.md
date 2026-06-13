@@ -80,13 +80,15 @@ Ratified by the maintainer (2026-06-13), driven as a prose design dialogue.
   capability constraints, never substrate names. Recorded in `01` (§The two substrates guard)
   + `02` (§Canonical IR node vocabulary guard); `50` Decision 8. _Scan 2026-06-13: `skills/`
   is already clean — the guard prevents reintroduction._
-- **(d) Package name — publish as `@react-native-fx/core`.** Preserves the `react-native-fx`
-  product identity and every API symbol; the unscoped name is unclaimable (npm typosquat
-  filter vs `react-native-fs`), the scope keeps the exact identity. **The maintainer must
-  claim/control the npm `@react-native-fx` scope before DEF-016 publishes; if the scope
-  cannot be claimed, STOP and reopen DEF-015 — no silent fallback to `react-native-fxkit`.**
-  The mechanical `package.json` + docs rename is DEF-016, not this task. Recorded in `50`
-  Decision 8.
+- **(d) Package name — publish unscoped as `react-native-fxkit`** (revised 2026-06-13). The
+  decision first landed on `@react-native-fx/core`, but claiming that scope needs a by-hand
+  npm org creation (no `npm org create` CLI exists; verified the org was free but the claim
+  is a website step). The maintainer chose the already-owned, already-published
+  `react-native-fxkit@0.0.1` instead — it removes the scope-claim blocker entirely. The
+  unscoped `react-native-fx` stays unclaimable (typosquat filter vs `react-native-fs`). API
+  symbols stay short (`Fx`/`fx.*`); the package name is not an API symbol. The mechanical
+  `package.json` + docs rename is DEF-016, not this task. Recorded in `50` Decision 8 + `52`
+  Decision 10.
 
 ## Proof
 
@@ -101,7 +103,7 @@ Ratified by the maintainer (2026-06-13), driven as a prose design dialogue.
 ## DEF-016 mechanical-reference inventory (not changed here)
 
 The decision-level docs are reconciled. These literal `react-native-fx` install/import
-snippets are the mechanical swap DEF-016 owns (→ `@react-native-fx/core`):
+snippets are the mechanical swap DEF-016 owns (→ `react-native-fxkit`):
 `52` §publishing (l.20 "npm `react-native-fx`", l.73 `from 'react-native-fx'`), `53` install
 snippets (l.33/68), `data-layer.md` l.843 import example, `tasks/EX-001-device-harness`
 import, and `skills/react-native-fx/SKILL.md` (the end-user usage skill — install/import +

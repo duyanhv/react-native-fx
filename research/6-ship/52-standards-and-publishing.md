@@ -139,17 +139,16 @@ The keystone packaging detail — each platform compiles/packages its own shader
 9. **V1 curated shaders are hand-maintained MSL+AGSL pairs** — author the `.metal` and
    `.agsl` implementation for each catalog id directly. The author-once compiler remains
    additive V2 build-time codegen (`03`), not a prerequisite for the V1 catalog.
-10. **Do not scope-split into *multiple* `@react-native-fx/*` packages yet** — version
-    coordination, install friction, and premature boundaries before the product is stable.
-    The only later split worth considering: `@react-native-fx/compiler` (the optional
-    build-time shader/effect emitter, `03`) and `@react-native-fx/lab` (experimental
-    effects/recipes — a home for the "where curation ends" question in `00`, kept out of
-    core's semver). **The single V1 package itself publishes as `@react-native-fx/core`
-    (DEF-015)** — not a split, a name: the unscoped `react-native-fx` is unclaimable on npm
-    (typosquat filter vs `react-native-fs`), so the scope is the only way to keep the exact
-    product identity. Claiming the scope for the core package also reserves the namespace,
-    de-risking the later `compiler`/`lab` split. The mechanical rename of `packages/package.json`
-    + the install/import snippets across docs is DEF-016.
+10. **Do not scope-split into `@react-native-fx/*` packages yet** — version coordination,
+    install friction, and premature boundaries before the product is stable. The only later
+    split worth considering: `@react-native-fx/compiler` (the optional build-time shader/
+    effect emitter, `03`) and `@react-native-fx/lab` (experimental effects/recipes — a home
+    for the "where curation ends" question in `00`, kept out of core's semver). **The V1
+    package publishes unscoped as `react-native-fxkit` (DEF-015, revised 2026-06-13)** — the
+    unscoped `react-native-fx` is unclaimable (npm typosquat filter vs `react-native-fs`) and
+    a scope would force a by-hand npm org claim; `react-native-fxkit` is already owned. The
+    mechanical rename of `packages/package.json` + the install/import snippets across docs is
+    DEF-016.
 11. **Palettes/themes as a shareable artifact are deferred to V2.** Pure-config palettes
     resolve in JS within the core package (`presets/`). Consumer-authored palettes as a
     distribution surface would live in `@react-native-fx/lab` if demand justifies the split.
