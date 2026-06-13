@@ -35,6 +35,13 @@ conflicts that come with them. Platform-specific mechanics live in
 motion** ⇒ `expo-view`. A node's `interaction` (`none | self | fx`) routes interactive use
 to `expo-view`; a `motion` rung's `target:'content'` routes content motion there too (`02`).
 
+**`hosted` and `expo-view` are internal lowering vocabulary, never end-user vocabulary
+(DEF-015).** The substrate is *derived* — the user picks a capability (`preset`/`effect`/
+`interactionMode`) and the adapter selects the substrate. Public docs (`skills/`, README,
+public prop docs) state capability constraints ("interactive effects need an interactive
+surface"), never substrate names. The names live in the research layer and `structure.*`
+only.
+
 ## The hosted world
 
 Hosting a self-contained generative effect as a *layer* is safe and is the whole

@@ -105,6 +105,11 @@ Same `fx` namespace, two sub-builders, two non-interchangeable types. `transitio
    separate `FxLayer`.** It also owns the **interactive effect** surface
    (`interactionMode`/`onPress`/shader uniforms `pressDepth`/`pointerX/Y`, `30`) — distinct
    from `FxPressable`, which wraps *your* content (different runtime ownership).
+7. **The `fx.effect.*` namespace is accepted as the V1 builder entry point (DEF-015).** The
+   `<Fx effect={fx.effect.*}>` repetition is tolerated because it appears only here, at the
+   layer-3 escape hatch; the front door is the string form `<Fx effect="plasma" />` (`50`).
+   **No bare `effect` export ships in V1** — the builder is reached through `fx.effect.*`
+   only, preserving the `fx.effect`/`fx.motion` symmetry (Decision 3).
 
 ## Open questions
 

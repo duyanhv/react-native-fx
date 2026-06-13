@@ -48,6 +48,12 @@ The `runtime` layer (G — touch, hit-test, scheduling, SDF pass-through) is **n
 a render node; it is the substrate the interactive nodes sit on, owned by the
 `3x-*` docs, not the manifest.
 
+The `Substrate` values (`hosted` / `expo-view`, below) are **internal lowering
+vocabulary, never end-user vocabulary (DEF-015)** — the same rule as `swiftui*`/
+`compose*`. They name where a rung lowers, not anything a developer selects; the
+substrate is derived from the chosen capability. Public docs express constraints in
+capability terms, never substrate names (`01`).
+
 ## The schema
 
 The manifest is TypeScript — it doubles as the runtime type the consumers import.
