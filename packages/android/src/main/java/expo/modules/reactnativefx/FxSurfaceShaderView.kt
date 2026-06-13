@@ -9,7 +9,6 @@ import android.view.Choreographer
 import android.view.View
 import com.facebook.react.uimanager.PointerEvents
 import com.facebook.react.uimanager.ReactPointerEventsView
-import java.lang.IllegalArgumentException
 
 internal class FxSurfaceShaderView(
   context: Context,
@@ -60,13 +59,13 @@ internal class FxSurfaceShaderView(
       return
     }
     shaderId = value
-    shader = if (value.isNotBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      val source = context.assets.open(agslAssetPathFor(value)).bufferedReader().use { it.readText() }
-      RuntimeShader(source)
+    val source = if (value.isNotBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      context.assets.open(agslAssetPathFor(value)).bufferedReader().use { it.readText() }
     } else {
       null
     }
-    probeInteractiveUniforms()
+    shader = source?.let { RuntimeShader(it) }
+    scanInteractiveUniforms(source)
     visibility = if (shader == null) GONE else VISIBLE
     if (shader == null) {
       stopLoop()
@@ -150,22 +149,20 @@ internal class FxSurfaceShaderView(
     Choreographer.getInstance().removeFrameCallback(frameCallback)
   }
 
-  private fun probeInteractiveUniforms() {
-    val currentShader = shader
-    supportsPressDepthUniform = currentShader?.supportsFloatUniform("pressDepth", 0f) == true
-    supportsTouchUniform = currentShader?.supportsFloatUniform("touch", 0.5f, 0.5f) == true
+  // Interactive-uniform support is read from the AGSL declarations, never by calling
+  // setFloatUniform for an absent uniform to see whether it throws: on API 33 that native
+  // error path inside RuntimeShader corrupts the message string and CheckJNI aborts the
+  // process. A declared interactive uniform is always safe to write — AGSL strips only UNUSED
+  // uniforms, and the interactive shaders both declare and use pressDepth/touch.
+  private fun scanInteractiveUniforms(source: String?) {
+    supportsPressDepthUniform = source != null && declaresUniform(source, "pressDepth")
+    supportsTouchUniform = source != null && declaresUniform(source, "touch")
   }
 
-  private fun RuntimeShader.supportsFloatUniform(name: String, vararg values: Float): Boolean {
-    return try {
-      if (values.size == 1) {
-        setFloatUniform(name, values[0])
-      } else {
-        setFloatUniform(name, values)
-      }
-      true
-    } catch (_: IllegalArgumentException) {
-      false
-    }
+  // Matches a `uniform <type> <name>;` declaration, not a comment or in-body use of the name:
+  // the `uniform` keyword and a word boundary on the name guard the false positive (the local
+  // `touchPoint` must not satisfy a `touch` scan).
+  private fun declaresUniform(source: String, name: String): Boolean {
+    return Regex("""\buniform\s+\w+\s+${Regex.escape(name)}\b""").containsMatchIn(source)
   }
 }

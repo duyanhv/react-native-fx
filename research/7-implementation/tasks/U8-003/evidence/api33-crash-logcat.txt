@@ -1,0 +1,71 @@
+=== API-33 AVD (fx_api33, Android 13 / API 33) â€” reverted/buggy build crash, 2026-06-13 ===
+=== Captured by dumping logcat -b main/system/crash -d right after the SIGABRT ===
+
+--- abort signature (main buffer) ---
+06-13 20:04:48.247  7341  7341 F ules.fx.example: java_vm_ext.cc:594] JNI DETECTED ERROR IN APPLICATION: input is not valid Modified UTF-8: illegal start byte 0xbb
+06-13 20:04:48.247  7341  7341 F ules.fx.example: java_vm_ext.cc:594]     string: 'unable to find uniform named  »Aë'
+06-13 20:04:48.247  7341  7341 F ules.fx.example: java_vm_ext.cc:594]     in call to NewStringUTF
+06-13 20:04:48.247  7341  7341 F ules.fx.example: java_vm_ext.cc:594]     from void android.graphics.RuntimeShader.nativeUpdateUniforms(long, java.lang.String, float, float, float, float, int)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   native: #09 pc 00000000004660d0  /apex/com.android.art/lib64/libart.so (art::JavaVMExt::JniAbort(char const*, char const*)+1612) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   native: #10 pc 000000000034cb08  /apex/com.android.art/lib64/libart.so (art::JavaVMExt::JniAbortV(char const*, char const*, std::__va_list)+108) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   native: #17 pc 0000000000458af4  /system/lib64/libhwui.so (UpdateFloatUniforms(_JNIEnv*, SkRuntimeShaderBuilder*, char const*, float const*, int, bool) (.__uniq.95862021218386289853410123455446837523)+108) (BuildId: 9ef050123dbc50344c83cac2b4bee611)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   native: #18 pc 0000000000458a24  /system/lib64/libhwui.so (RuntimeShader_updateFloatUniforms(_JNIEnv*, _jobject*, long, _jstring*, float, float, float, float, int) (.__uniq.95862021218386289853410123455446837523)+140) (BuildId: 9ef050123dbc50344c83cac2b4bee611)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   at android.graphics.RuntimeShader.nativeUpdateUniforms(Native method)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   at android.graphics.RuntimeShader.setFloatUniform(RuntimeShader.java:385)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   at android.graphics.RuntimeShader.setFloatUniform(RuntimeShader.java:327)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   native: #07 pc 00000000004660d0  /apex/com.android.art/lib64/libart.so (art::JavaVMExt::JniAbort(char const*, char const*)+1612) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.562  7341  7341 F ules.fx.example: runtime.cc:682]   native: #08 pc 000000000034cb08  /apex/com.android.art/lib64/libart.so (art::JavaVMExt::JniAbortV(char const*, char const*, std::__va_list)+108) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.565  7341  7341 F ules.fx.example: runtime.cc:682]   native: #15 pc 0000000000458af4  /system/lib64/libhwui.so (UpdateFloatUniforms(_JNIEnv*, SkRuntimeShaderBuilder*, char const*, float const*, int, bool) (.__uniq.95862021218386289853410123455446837523)+108) (BuildId: 9ef050123dbc50344c83cac2b4bee611)
+06-13 20:04:48.565  7341  7341 F ules.fx.example: runtime.cc:682]   native: #16 pc 0000000000458a24  /system/lib64/libhwui.so (RuntimeShader_updateFloatUniforms(_JNIEnv*, _jobject*, long, _jstring*, float, float, float, float, int) (.__uniq.95862021218386289853410123455446837523)+140) (BuildId: 9ef050123dbc50344c83cac2b4bee611)
+06-13 20:04:48.565  7341  7341 F ules.fx.example: runtime.cc:682]   native: #19 pc 00000000003d245c  /system/framework/framework.jar (android.graphics.RuntimeShader.setFloatUniform+20)
+06-13 20:04:48.565  7341  7341 F ules.fx.example: runtime.cc:682]   native: #21 pc 00000000003d23b6  /system/framework/framework.jar (android.graphics.RuntimeShader.setFloatUniform+14)
+06-13 20:04:48.566  7341  7341 F ules.fx.example: runtime.cc:682]   at android.graphics.RuntimeShader.nativeUpdateUniforms(Native method)
+06-13 20:04:48.566  7341  7341 F ules.fx.example: runtime.cc:682]   at android.graphics.RuntimeShader.setFloatUniform(RuntimeShader.java:385)
+06-13 20:04:48.566  7341  7341 F ules.fx.example: runtime.cc:682]   at android.graphics.RuntimeShader.setFloatUniform(RuntimeShader.java:327)
+06-13 20:04:48.566  7341  7341 F ules.fx.example: runtime.cc:690] JNI DETECTED ERROR IN APPLICATION: input is not valid Modified UTF-8: illegal start byte 0xbb
+06-13 20:04:48.566  7341  7341 F ules.fx.example: runtime.cc:690]     string: 'unable to find uniform named  »Aë'
+06-13 20:04:48.566  7341  7341 F ules.fx.example: runtime.cc:690]     in call to NewStringUTF
+06-13 20:04:48.566  7341  7341 F ules.fx.example: runtime.cc:690]     from void android.graphics.RuntimeShader.nativeUpdateUniforms(long, java.lang.String, float, float, float, float, int)
+06-13 20:04:49.083   302   302 I Zygote  : Process 7341 exited due to signal 6 (Aborted)
+
+--- crash-buffer tombstone (surface-mount chain, top frames) ---
+06-13 20:04:48.569  7341  7341 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 7341 (ules.fx.example), pid 7341 (ules.fx.example)
+06-13 20:04:48.998  7447  7447 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+06-13 20:04:48.998  7447  7447 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_arm64/emu64a:13/TE1A.240213.009/12342917:userdebug/dev-keys'
+06-13 20:04:48.998  7447  7447 F DEBUG   : Revision: '0'
+06-13 20:04:48.998  7447  7447 F DEBUG   : ABI: 'arm64'
+06-13 20:04:48.998  7447  7447 F DEBUG   : Timestamp: 2026-06-13 20:04:48.689915526+0700
+06-13 20:04:48.998  7447  7447 F DEBUG   : Process uptime: 16s
+06-13 20:04:48.998  7447  7447 F DEBUG   : Cmdline: expo.modules.fx.example
+06-13 20:04:48.998  7447  7447 F DEBUG   : pid: 7341, tid: 7341, name: ules.fx.example  >>> expo.modules.fx.example <<<
+06-13 20:04:48.998  7447  7447 F DEBUG   : uid: 10174
+06-13 20:04:48.998  7447  7447 F DEBUG   : tagged_addr_ctrl: 0000000000000001 (PR_TAGGED_ADDR_ENABLE)
+06-13 20:04:48.998  7447  7447 F DEBUG   : pac_enabled_keys: 000000000000000f (PR_PAC_APIAKEY, PR_PAC_APIBKEY, PR_PAC_APDAKEY, PR_PAC_APDBKEY)
+06-13 20:04:48.998  7447  7447 F DEBUG   : signal 6 (SIGABRT), code -1 (SI_QUEUE), fault addr --------
+06-13 20:04:48.998  7447  7447 F DEBUG   : Abort message: 'JNI DETECTED ERROR IN APPLICATION: input is not valid Modified UTF-8: illegal start byte 0xbb
+06-13 20:04:48.998  7447  7447 F DEBUG   :     string: 'unable to find uniform named  »Aë'
+06-13 20:04:48.998  7447  7447 F DEBUG   :     input: '0x75 0x6e 0x61 0x62 0x6c 0x65 0x20 0x74 0x6f 0x20 0x66 0x69 0x6e 0x64 0x20 0x75 0x6e 0x69 0x66 0x6f 0x72 0x6d 0x20 0x6e 0x61 0x6d 0x65 0x64 0x20 0x20 <0xbb> 0x41 0xeb 0x7f'
+06-13 20:04:48.998  7447  7447 F DEBUG   :     in call to NewStringUTF
+06-13 20:04:48.998  7447  7447 F DEBUG   :     from void android.graphics.RuntimeShader.nativeUpdateUniforms(long, java.lang.String, float, float, float, float, int)'
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x0  0000000000000000  x1  0000000000001cad  x2  0000000000000006  x3  0000007feb41ac90
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x4  5151441f43445342  x5  5151441f43445342  x6  5151441f43445342  x7  7f7f7f7f7f7f7f7f
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x8  00000000000000f0  x9  00000072a14e9a00  x10 0000000000000001  x11 00000072a1527de4
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x12 0000000000004c72  x13 000000000000022f  x14 0000007feb419ab0  x15 000000593dfa0f05
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x16 00000072a158cd58  x17 00000072a1569c70  x18 00000072a64f6000  x19 0000000000001cad
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x20 0000000000001cad  x21 00000000ffffffff  x22 0000006ff3015000  x23 0000000000000000
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x24 0000007feb41ae68  x25 00000072a5d10000  x26 00000072a5d10000  x27 0000000000000002
+06-13 20:04:48.998  7447  7447 F DEBUG   :     x28 0000007feb41b7e9  x29 0000007feb41ad10
+06-13 20:04:48.998  7447  7447 F DEBUG   :     lr  00000072a1519968  sp  0000007feb41ac70  pc  00000072a1519994  pst 0000000000001000
+06-13 20:04:48.998  7447  7447 F DEBUG   : backtrace:
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #00 pc 0000000000051994  /apex/com.android.runtime/lib64/bionic/libc.so (abort+164) (BuildId: 4e07915368c859b1910c68c84a8de75f)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #01 pc 00000000006f365c  /apex/com.android.art/lib64/libart.so (art::Runtime::Abort(char const*)+596) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #02 pc 0000000000016ea8  /apex/com.android.art/lib64/libbase.so (android::base::SetAborter(std::__1::function<void (char const*)>&&)::$_3::__invoke(char const*)+80) (BuildId: 420d56eac27a210c92900f3ddb760c86)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #03 pc 0000000000016450  /apex/com.android.art/lib64/libbase.so (android::base::LogMessage::~LogMessage()+352) (BuildId: 420d56eac27a210c92900f3ddb760c86)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #04 pc 00000000004660d0  /apex/com.android.art/lib64/libart.so (art::JavaVMExt::JniAbort(char const*, char const*)+1612) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #05 pc 000000000034cb08  /apex/com.android.art/lib64/libart.so (art::JavaVMExt::JniAbortV(char const*, char const*, std::__va_list)+108) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #06 pc 00000000004a15e0  /apex/com.android.art/lib64/libart.so (art::(anonymous namespace)::ScopedCheck::AbortF(char const*, ...) (.__uniq.99033978352804627313491551960229047428)+144) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #07 pc 00000000004740d4  /apex/com.android.art/lib64/libart.so (art::(anonymous namespace)::ScopedCheck::Check(art::ScopedObjectAccess&, bool, char const*, art::(anonymous namespace)::JniValueType*) (.__uniq.99033978352804627313491551960229047428)+3968) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #08 pc 00000000005db30c  /apex/com.android.art/lib64/libart.so (art::(anonymous namespace)::CheckJNI::NewStringUTF(_JNIEnv*, char const*) (.__uniq.99033978352804627313491551960229047428.llvm.8139211953302824455)+192) (BuildId: 4c9b59b74ca9272f710a71137164c349)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #09 pc 000000000021184c  /system/lib64/libhwui.so (jniThrowException(_JNIEnv*, char const*, char const*) (.__uniq.278450943026423317964280697555388776999)+24) (BuildId: 9ef050123dbc50344c83cac2b4bee611)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #10 pc 0000000000458da4  /system/lib64/libhwui.so (jniThrowExceptionFmt(_JNIEnv*, char const*, char const*, ...) (.__uniq.95862021218386289853410123455446837523)+164) (BuildId: 9ef050123dbc50344c83cac2b4bee611)
+06-13 20:04:48.998  7447  7447 F DEBUG   :       #11 pc 0000000000458cd8  /system/lib64/libhwui.so (ThrowIAEFmt(_JNIEnv*, char const*, ...) (.__uniq.95862021218386289853410123455446837523)+120) (BuildId: 9ef050123dbc50344c83cac2b4bee611)

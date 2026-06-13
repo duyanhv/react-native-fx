@@ -1,0 +1,11 @@
+# logcat — U8-003 coexistence mount, POCO F1, Android 15 / API 35, 2026-06-13
+# Buffer cleared immediately before the 5 open/back mount cycles.
+# Load-bearing negative: grep for the API-33 abort signature across the whole capture.
+
+## grep -iE 'JniAbort|SIGABRT|nativeUpdateUniforms|unable to find uniform|FATAL EXCEPTION|signal 6' :
+  matches: 0
+  (0 matches = no native abort during any mount)
+
+## total lines captured:
+      2177
+## app pid stable at 8454 across all 5 cycles (no crash/restart).

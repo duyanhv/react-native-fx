@@ -279,6 +279,17 @@ Each section expands the Android rungs from `02`.
   than an error, so no event fires. Payload `{ shader, reason? }` (an `expo.modules.kotlin`
   `Record`). The interactive surface render itself stays a later (U8) concern; the load proof
   lands now so the BYO fallback signal exists. Clearing `shader` to empty is silent.
+- **Interactive-uniform support is read from the shader source, never probed by a write.** The
+  `pressDepth`/`touch` uniforms exist only in interactive shaders (`dots`); a decorative shader
+  (`aurora`) omits them. Determine which the loaded shader declares by scanning the in-hand AGSL
+  source text for the uniform declaration — the `uniform` keyword plus the declared name on a
+  word boundary, so an in-body use (the local `touchPoint`) never reads as a declaration — and
+  write each interactive uniform per frame only when its flag is set. Never test existence by
+  calling `setFloatUniform` for an absent uniform inside a try/catch: on API 33 the platform's
+  `RuntimeShader` error path corrupts its own native message string and CheckJNI aborts the
+  process on mount. Scanning is safe because AGSL strips only *unused* uniforms, and an
+  interactive shader both declares and uses `pressDepth`/`touch`, so a declared uniform is
+  always present to write.
 
 ### `filter`
 - **`RenderEffect`** chain — `via:native` · `requires {os:31, hosted}`. Draw-time;
