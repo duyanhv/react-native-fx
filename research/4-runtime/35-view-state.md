@@ -199,19 +199,19 @@ fx adopts the *model* these answers imply (deferred unmount, interrupt-as-retarg
 Reanimated's worklet runtime or commit hook (rule #7). The list-eviction row also ties to the
 scope ceiling (`42`): an evicted cell is whole-subtree teardown, so its exit cannot animate.
 
-## Open questions
+## Resolved
 
-- **Falsification test for the boundary decision (gates `0-spine/05`).** This doc owns
-  the identity/state half: can Expo Modules keep **native object identity** (the
-  coordinator) **across Fabric commits / re-renders**, and run the **deferred-unmount
-  handshake purely on async events** (no synchronous JS↔native read)? If identity can't
-  be held or the handshake needs a synchronous channel, that is a concrete trigger to
-  reconsider Nitro/JSI. Until then, the Expo Modules default holds. **The U7-001 preflight
-  reinforces the handshake half from source:** a retained child generates no `Remove`
-  mutation (Fabric's differ) and Expo view events deliver while the view is mounted — no
-  synchronous channel is needed. Device proof remains (SPINE-009).
-- Whether this generalizes beyond presence to a general "native-eased declarative state"
-  primitive, or stays presence-specific in V1.
+- **Falsification test for the boundary decision (`0-spine/05`) — resolved (SPINE-009,
+  U9-002, 2026-06-13).** Expo Modules holds native object identity (the coordinator) across
+  Fabric commits / re-renders and runs the deferred-unmount handshake purely on async events
+  (no synchronous JS↔native read) — device-proven by citation across the U5–U8 gates (the
+  U7-001 preflight already showed a retained child generates no `Remove` mutation and Expo
+  view events deliver while mounted). The `05` Nitro/JSI reconsideration trigger did not fire.
+- **Does the handshake generalize? — resolved (RT-012, DOC-022, 2026-06-13): V1 stays
+  presence-specific.** No general "native-eased declarative-state" primitive ships in V1; the
+  presence FSM and the deferred-unmount handshake are scoped to `FxPresence`. Generalizing to
+  a declarative-state primitive is V2, trigger-gated as **DEF-012** (trigger: real
+  declarative-state demand).
 
 ## Sources
 
