@@ -157,3 +157,39 @@ Next: planner's call — REAL-005's close condition is NOT met on Android, so in
 documented JS-`pointerEvents` fallback (`.android.tsx`) for the Android none-mode pass-through;
 iOS Row 4 + the px→dp fix are device-proven. RT-006 / feather pin / `40` flip stay held until
 Android Row 4 lands.
+
+## Unverified claims (round 5)
+
+- The Android `none`-mode bare-tap pass-through (Row 4a) reaches a sibling Pressable composited
+  behind the surface, and an RN child mounted inside the surface (Row 4b) stays tappable even
+  under an active AGSL shader. Compile- and assemble-proven; **device proof owed** (the round-5
+  Row-4 re-re-gate, 4a/4b both platforms — 4b now testable under a shader). No regression to the
+  passive/active `AUTO` path (the surface still claims the stream at `dispatchTouchEvent`).
+
+## Round-5 log (2026-06-13) — Android child-occlusion fix (REAL-005 corrected root cause)
+
+- **Root cause (corrected, from running RN 0.85.3 `TouchTargetHelper.kt`):** `FxSurfaceView`'s
+  `BOX_NONE` *is* honored (`:320` consults `getPointerEvents()` on any `ReactPointerEventsView`),
+  but `BOX_NONE` descends into children, and the surface's two full-bounds children — the AGSL
+  `FxSurfaceShaderView` and the `intermediateContainer` — both default to `AUTO` and claim a bare
+  tap as a `SELF` target, remapping to the surface tag and swallowing it. The round-4 surface
+  lever alone was insufficient; the Android analogue of the iOS `hitTest` exclusion of
+  `metalView` + `intermediateContainer` was missing.
+- **Fix (Android only, keeps Option A).** `FxSurfaceShaderView` now implements
+  `ReactPointerEventsView` → `pointerEvents = NONE` (purely decorative, `TouchTargetHelper` skips
+  it entirely). `intermediateContainer` is now an `FxPassthroughContainer` (private
+  `FrameLayout` subclass) implementing `ReactPointerEventsView` → `pointerEvents = BOX_NONE`
+  (its RN children stay targetable; the container itself is never a `SELF` target), constructed
+  with the same full-bounds layout params. `FxSurfaceView`'s own `BOX_NONE`/`AUTO` lever, the
+  press FSM, and iOS are untouched.
+- **Verification (all green).** From `packages/`: `bunx tsc --noEmit`, `bun run build`,
+  `bun run lint` (27 files), `bun run swift:lint`, `bun run test` (58 tests, 4 suites) all exit 0.
+  From `example/android/`: `./gradlew :react-native-fx:compileDebugKotlin` BUILD SUCCESSFUL
+  (`:react-native-fx:compileDebugKotlin` *executed*, resolves the interface on both children) and
+  `./gradlew :app:assembleDebug` BUILD SUCCESSFUL (no duplicate-class / runtime-missing). iOS
+  untouched (no rebuild).
+- **Docs.** `structure.android.md` §Touch contract already carries the round-5 "surface lever
+  alone is insufficient" bullet (planner pin); no mechanic change this round.
+
+Next: device-run the Row-4 re-re-gate (4a bare-tap pass-through + 4b inside-child-under-shader,
+both platforms) to device-prove the round-5 fix and close REAL-005 / RT-006.

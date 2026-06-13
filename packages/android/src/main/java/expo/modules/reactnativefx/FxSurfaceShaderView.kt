@@ -7,11 +7,13 @@ import android.graphics.RuntimeShader
 import android.os.Build
 import android.view.Choreographer
 import android.view.View
+import com.facebook.react.uimanager.PointerEvents
+import com.facebook.react.uimanager.ReactPointerEventsView
 import java.lang.IllegalArgumentException
 
 internal class FxSurfaceShaderView(
   context: Context,
-) : View(context) {
+) : View(context), ReactPointerEventsView {
   private val paint = Paint()
   private var shader: RuntimeShader? = null
   private var shaderId: String = ""
@@ -47,6 +49,11 @@ internal class FxSurfaceShaderView(
     setWillNotDraw(false)
     isClickable = false
   }
+
+  // Purely decorative: this view draws shader pixels and is never a touch target. NONE makes
+  // TouchTargetHelper skip it entirely as it walks the surface's children, so a `none`-mode tap
+  // passes through to content behind and an RN child stays tappable even under an active shader.
+  override val pointerEvents: PointerEvents = PointerEvents.NONE
 
   fun setShaderId(value: String) {
     if (shaderId == value) {

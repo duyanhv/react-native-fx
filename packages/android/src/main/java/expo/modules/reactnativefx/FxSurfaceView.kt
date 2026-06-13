@@ -86,7 +86,7 @@ class FxSurfaceView(
    * the animator's transform/opacity. The animator targets this container, not the
    * outer `FxSurfaceView` that Fabric tracks.
    */
-  private val intermediateContainer = FrameLayout(context).apply {
+  private val intermediateContainer = FxPassthroughContainer(context).apply {
     layoutParams = FrameLayout.LayoutParams(
       FrameLayout.LayoutParams.MATCH_PARENT,
       FrameLayout.LayoutParams.MATCH_PARENT
@@ -427,4 +427,14 @@ class FxSurfaceView(
     effectSurfaceView?.resumePresentationLoop()
     contentAnimationDriver.resume()
   }
+}
+
+/**
+ * Full-bounds wrapper for the RN child tree. BOX_NONE keeps the wrapper itself off
+ * TouchTargetHelper's target search while leaving its RN children targetable, so a bare `none`-mode
+ * tap finds no child here and falls through to content composited behind the surface, yet an RN
+ * child inside stays tappable.
+ */
+private class FxPassthroughContainer(context: Context) : FrameLayout(context), ReactPointerEventsView {
+  override val pointerEvents: PointerEvents = PointerEvents.BOX_NONE
 }
