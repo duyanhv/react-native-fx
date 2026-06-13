@@ -110,10 +110,10 @@ Subtask: the press recognizer FSM + slop-yield + SDF hit-test (blueprint Unit 8)
 - [x] implemented
 - [x] commented
 - [x] headless-done
-- [ ] device-verified (human gate)
-- [ ] reviewed
-- [ ] docs-closed (RT-006 → resolved; feather pinned; `40` event row flipped)
-- [ ] merged (human gate)
+- [x] device-verified (maintainer-ratified PASS both platforms, 2026-06-13 — `evidence/device.md` + `device-regate.md`; root cause corrected + fixed across rounds 3–5)
+- [x] reviewed (planner, 2026-06-13 — `reviews/U8-001.md`)
+- [x] docs-closed (RT-006 resolved — cost proven, feather → DEF-019; REAL-005 resolved; `40` `onLongPress` wired; `32` cost/feather reconciled)
+- [ ] merged (human gate — awaiting the maintainer's tick)
 
 ## Proof
 

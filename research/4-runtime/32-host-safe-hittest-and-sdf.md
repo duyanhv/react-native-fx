@@ -71,11 +71,12 @@ the `expo-view` child where `onTouchEvent` and the SDF check live. Mechanics in
 ## Open questions
 
 - ~~**SDF source**~~ — resolved: Decision 4 (DOC-011, 2026-06-12).
-- **Feather/threshold** — how much slop around the SDF edge feels right for touch
-  (fat-finger tolerance) without claiming clearly-outside touches. Device-tunes with
-  the press recognizer's gate (RT-006).
-- **Per-frame cost** — evaluating the SDF on `hitTest` is cheap (one point), but
-  confirm no measurable cost under rapid touch; needs-device (RT-006).
+- ~~**Per-frame cost**~~ — resolved (RT-006, U8-001 device 2026-06-13): the per-frame
+  hit-test/uniform path is cheap — ≥30 s rapid tap + drag-scrub showed no jank (Android
+  gfxinfo 1.23%, 0 missed vsync), no reload, stable pid.
+- **Feather/threshold** — deferred (DEF-019, trigger: first shaped shader). V1 ships no
+  shader exposing a shape uniform, so the hit-test runs the Decision 4 full-bounds fallback
+  and there is no SDF edge to feather yet; the tuning resurrects with the first shaped shader.
 - ~~**Coordinate units**~~ — resolved: Decision 5 (DOC-011, 2026-06-12).
 
 ## Sources

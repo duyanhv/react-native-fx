@@ -193,3 +193,36 @@ Android Row 4 lands.
 
 Next: device-run the Row-4 re-re-gate (4a bare-tap pass-through + 4b inside-child-under-shader,
 both platforms) to device-prove the round-5 fix and close REAL-005 / RT-006.
+
+## Row-4 re-re-gate (2026-06-13) — see evidence/device-regate.md (round-5 section)
+
+Device-gate run on commit `9497631`. Rebuilt + reinstalled both apps (Android APK `10:26:08` >
+newest Kotlin source `10:25:32`; iOS app `10:36:45` > Swift source `09:14:22`). Temporary harness
+(`example/screens/press-harness.tsx`, TASKS route `U8-001`): a live-`dots` 240-pt surface over a
+320-pt `behind` Pressable with a 100-pt `inside` child, mode chips, a `scroll` toggle (wraps the
+stage in a `ScrollView` for slop-yield), one monotonic event log. Harness/logging only.
+
+- **Android (POCO F1, A15) — PASS, all rows.** 4a: `none`-mode surface-ring tap fell through →
+  `behind` fired, no `onShader*`/`inside` (was the prior FAIL). 4b: inside child under the live
+  AGSL shader still fires `inside` alone (was prior INCONCLUSIVE — the shader-view `NONE` marking
+  fixes the occlusion). px→dp: active centre → `onShaderPress {x:120,y:120}` dp. Smoke: active
+  In/Out/Press; one long-press + tap suppression; passive zero-events; scroller slop-yield
+  (PressIn→PressOut, no Press, scroller won). No crash; pid stable; only `am`/`UiAutomation`
+  exceptions (agent-device's shell, not fx).
+- **iOS (iPhone 17 Pro sim, iOS 26.5) — PASS, 4a + 4b (re-confirm).** Surface-ring tap → `behind`;
+  inside-child tap → `inside`. iOS source byte-identical to the prior gate (round 5 is
+  Android-only); no regression. Active no-regression not re-exercised — the harness mode chips
+  overlap the iOS large-title nav bar (harness-cosmetic), so the chip couldn't switch off `none`;
+  iOS active claim was device-proven at the prior gate and 4a/4b confirm the none-path intact.
+- **Root-cause correction stands:** the prior-gate "Fabric ignores `pointerEvents`" reading was
+  wrong — Fabric honored `BOX_NONE` on the surface all along; the swallow was the two unmarked
+  full-bounds children. Round 5 marks them; pass-through now works.
+- **Result:** REAL-005 Option A is device-proven on **both** platforms. The JS-`pointerEvents`
+  fallback stays retired.
+- **Cleanup:** harness deleted, `tasks.ts` / `[taskId].tsx` reverted (`git checkout`); `git status
+  -- example packages` clean; sessions closed; logcat stopped. Evidence screenshots under
+  `evidence/regate/r5-*.png`; raw logcat `evidence/logs/android-regate-r5-logcat.log` (gitignored).
+
+Next: planner — close REAL-005 + RT-006, tick `device-verified` for U8-001, and release the held
+docs (RT-006 tuning/cost, the feather pin, the `40` flip). The full RNGH-coexistence matrix stays
+U8-002. (Runner does not tick the gate.)

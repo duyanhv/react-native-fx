@@ -121,7 +121,7 @@ restate it.
 | `onLoad` | `onFxLoad` | every view | RN reserves `onLoad` (media) |
 | `onError` | `onFxError` | every view | RN reserves `onError` |
 | `onStateChange` | *(unwired)* | `FxView` (not built) | the `FxView` state event has no native dispatcher yet — wire as `onFxStateChange` |
-| `onLongPress` | *(unwired)* | `FxSurfaceView` | declared in the `30` press contract; native dispatcher not yet added — wire as `onShaderLongPress` |
+| `onLongPress` | `onShaderLongPress` | `FxSurfaceView` | **wired (U8-001, device-verified 2026-06-13).** `FxPressHandler.{swift,kt}` posts a platform long-press timeout and dispatches `onShaderLongPress` once, with the tap suppressed after a completed long-press; both platforms |
 
 Conventions this pins: **press events carry the `onShader*` prefix** (they live on the
 shader/interactive `FxSurfaceView`); **lifecycle and load events carry the `onFx*` prefix**

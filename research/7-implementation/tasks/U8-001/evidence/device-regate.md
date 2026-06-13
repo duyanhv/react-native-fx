@@ -179,3 +179,182 @@ Planner's call: invoke the REAL-005 JS-`pointerEvents` fallback for the Android 
 pass-through (`.android.tsx`), since the `ReactPointerEventsView` interface is inert on the
 `ExpoView` under Fabric. iOS Row 4 and the px→dp coordinate fix are device-proven and need no
 further work. RT-006 / the feather pin / the `40` flip stay held until Android Row 4 lands.
+
+---
+
+# U8-001 — Row-4 RE-RE-GATE (round 5) — 2026-06-13
+
+The corrected root cause (REAL-005, 2026-06-13) re-opened Option A: `FxSurfaceView`'s `BOX_NONE`
+**was** honored all along; the prior-gate Android 4a FAIL was the two full-bounds children — the
+AGSL `FxSurfaceShaderView` and the `intermediateContainer` — claiming the bare tap as `SELF`
+targets. Round 5 marks both non-targets (`FxSurfaceShaderView` → `pointerEvents NONE`;
+`intermediateContainer` → an `FxPassthroughContainer` returning `BOX_NONE`). This re-re-gate is
+the first device proof of that fix. **The prior "Fabric ignores `pointerEvents`" reading was
+itself wrong** — Fabric honored it; the missing piece was the children, not the surface.
+
+## Result
+
+**Android — PASS on every row, including the load-bearing 4a (was the prior FAIL) and 4b (was
+prior INCONCLUSIVE under shader-occlusion).** A `none`-mode bare tap over the active dots surface
+now falls through to the `Pressable` behind, and an RN child mounted inside the surface stays
+tappable even with the AGSL shader live. The `AUTO` path (passive/active press, long-press,
+slop-yield) is unregressed and px→dp holds. **iOS — PASS on 4a + 4b (re-confirm; iOS source is
+byte-identical to the prior gate — round 5 is Android-only — and did not regress).**
+
+REAL-005's close condition (Option A holds on device) is now **met on both platforms**. The
+retired JS-`pointerEvents` fallback is not needed.
+
+## Devices
+
+- **Android:** POCO F1 (`69424da8`), Android 15. Connected and prepped (`adb reverse
+  tcp:8081`, `svc power stayon`, `wm dismiss-keyguard`).
+- **iOS:** iPhone 17 Pro simulator, iOS 26.5, UDID `995F7068-339A-4353-9211-8DAE01F0CAA5` (sole
+  `iPhone 17 Pro`; 402×874 pt @3×). Simulator is correct — this is hit-testing, not GPU/timing.
+
+## Build and install (re-re-gate commit 9497631, integration/0.1.x)
+
+- **Android:** `:app:assembleDebug` → BUILD SUCCESSFUL; APK `app-debug.apk` mtime **10:26:08**
+  beats the newest Kotlin source (`FxSurfaceView.kt` **10:25:32**, `FxSurfaceShaderView.kt`
+  10:25:17 — the round-5 child markings). `adb install -r` → Success.
+- **iOS:** `xcodebuild … -derivedDataPath build-u8 build` → `** BUILD SUCCEEDED **`; app binary
+  mtime **10:36:45** beats the newest Swift source (`FxSurfaceView.swift` 09:14:22, unchanged
+  since the prior gate). `xcrun simctl install`.
+- Metro serves the temporary harness; example `bunx tsc --noEmit` clean.
+
+## Temporary harness (never committed; reverted after — see notes.md)
+
+`example/screens/press-harness.tsx` (TASKS route `U8-001`): a `dots` `FxSurfaceView` (240 pt,
+shader active) over a full-stage (320 pt) RN `Pressable` (`behind` log), with a 100-pt RN
+`Pressable` mounted as a surface child (`inside` log). The surface is smaller than the stage, so
+a behind-only **margin ring** stays as a reachability control, and the centered child leaves a
+**surface ring** clear for the bare-tap (4a). Mode chips (`none`/`passive`/`active`), a `scroll`
+toggle that wraps the stage in a vertical `ScrollView` (for the slop-yield row), one monotonic
+event counter. Harness/logging only — no `packages/` change, no dependency/lockfile drift
+(diff-checked clean post-revert).
+
+## Android (POCO F1) — geometry (px, density 2.75)
+
+behind/stage `x[100,980] y[606,1486]`; surface (240 dp) `x[210,870] y[716,1376]`; inside child
+(100 dp) `x[403,678] y[909,1184]`. 4a tap `(540,790)` = surface ring above the child; behind
+control `(150,660)` = margin, outside surface; 4b tap `(540,1046)` = child centre.
+
+### 4a — bare pass-through (THE proof, was the prior FAIL) — PASS
+
+`interactionMode="none"`, dots shader live (screenshot `regate/r5-android-4a-passthrough.png`
+shows the `none` chip selected and the AGSL dots rendering):
+
+```
+#1 behind {x:160,y:67}     (the surface-ring tap (540,790) → reached the BEHIND Pressable)
+#0 behind {x:18,y:20}      (the margin control (150,660) → behind is reachable)
+```
+
+The bare tap over the active surface **fell through** — only `behind` fired; no `onShader*`, no
+`inside`. At the prior gate this exact tap was swallowed (count 0). Because the dots shader is
+clearly live in the screenshot, this also retires the prior "4b shader-occlusion" confound for
+the pass-through direction.
+
+### 4b — inside child targetable under a live shader (was prior INCONCLUSIVE) — PASS
+
+`none` mode, dots shader live, tap the inside child `(540,1046)`
+(`regate/r5-android-4b-inside.png`):
+
+```
+#0 inside {x:16,y:8}       (ONLY the inside child; no behind, no onShader*)
+```
+
+The child sits visually behind the opaque AGSL `SurfaceView` (Android composes the effect surface
+above content), yet still receives the touch — exactly the round-5 fix (`FxSurfaceShaderView` is
+`pointerEvents NONE`, so `TouchTargetHelper` skips it and descends to the child). This is the
+representative case (a `none`-wrapper with a live effect); the prior gate could not prove it.
+
+### Coordinate px→dp re-confirm — PASS
+
+`active` mode, centre tap `(540,1046)` → `onShaderPress {x:120,y:120}` — view points (the 240-dp
+surface half-extent), **not** px (~330). Matches iOS convention; round-3 px→dp holds.
+
+### Rows 1–3 smoke (the `AUTO` path is unregressed by the child marking) — PASS
+
+- **active tap** on the surface ring `(540,790)`: `#0 PressIn → #1 PressOut → #2 Press
+  {x:120,y:27}` — correct order, dp.
+- **active long-press** hold 800 ms `(540,790)`: `#0 PressIn → #1 LongPress → #2 PressOut
+  {x:120,y:27}` — exactly one `LongPress`, **no `Press`** (tap suppressed).
+- **passive drag** across the surface: `(no events)` — zero semantic events
+  (`regate/r5-android-passive-drag.png`).
+- **slop-yield** (`scroll` on, surface inside a `ScrollView`): press-drag up past slop `(540,1250)
+  → (540,1000)` → `#0 PressIn {x:120,y:47} → #1 PressOut {x:120,y:38}`, **no `Press`**; the
+  scroller scrolled (the surface shifted up — `regate/r5-android-slopyield.png`). The parent
+  scroller won; the press cancelled.
+
+No app crash across the run (`pidof` stable; no `onFxError`); the only logcat `FATAL`/`E
+AndroidRuntime` lines are `am` / `UiAutomation` from agent-device's own shell instrumentation
+(uid 2000), not react-native-fx. Raw log: `logs/android-regate-r5-logcat.log` (gitignored).
+
+## iOS (iPhone 17 Pro, iOS 26.5) — re-confirm
+
+Geometry (pt): behind/stage `x[41,361] y[137,457]`; surface (240 pt) `x[81,321] y[177,417]`;
+inside child (100 pt) `x[151,251] y[247,347]`. 4a tap `(201,210)` = surface ring above the child;
+behind control `(60,160)` = margin; 4b tap `(201,297)` = child centre. (The interactive AX tree
+intermittently returned sparse on the harness screen; rects read from the full provider tree,
+taps driven by coordinate, the log read back via the text snapshot — consistent results.)
+
+### 4a — bare pass-through — PASS
+
+`none` mode, dots live (`regate/r5-ios-4a-passthrough.png`):
+
+```
+#1 behind {x:160,y:73}     (surface-ring tap (201,210) → BEHIND; 160=201−41, 73=210−137)
+#0 behind {x:19,y:23}      (margin control (60,160) → behind reachable)
+```
+
+Only `behind`; no `onShader*`, no `inside`. Re-confirms the `35e15b0` `hitTest` fix on the
+round-5 build.
+
+### 4b — inside child targetable — PASS
+
+`none` mode, tap the inside child `(201,297)` (`regate/r5-ios-4b-inside.png`):
+
+```
+#0 inside {x:17,y:7}       (ONLY the inside child; no behind, no onShader*)
+```
+
+The child (behind the hit-transparent `MTKView`) still receives the touch in `none` mode.
+
+### iOS active no-regression — not re-exercised this round; proven prior
+
+The harness mode chips overlap the large-title nav bar on iOS (a harness-cosmetic layout issue,
+iOS-only — Android's header clears them), so the `none`→`active` switch could not be driven from
+the chip; the mode stayed `none`. iOS source is byte-identical to the prior gate, where the
+`active` claim path was device-proven (`device-regate.md` round-4 iOS section), and the round-5
+4a/4b passes confirm the `none`-path selection is intact. No iOS regression risk: round 5 touched
+no iOS file.
+
+### Note — inside-child local coordinates
+
+On both platforms a centre tap on the inside child reports a small child-local offset
+(`~{x:16,y:8}` / `~{x:17,y:7}`) rather than the geometric ~50 pt/dp centre. The child sits inside
+fx's managed content container, so its plain-RN `locationX/Y` is offset through that wrapper. This
+is immaterial to the targetability proof and distinct from the `onShader*` surface events, which
+report the correct view-point convention (Android `{120,120}` at the 240-dp surface centre).
+
+## Conclusion
+
+- **Android `none` pass-through (round 5, `9497631`, REAL-005 Option A): device-PROVEN** — 4a
+  falls through to content behind; 4b keeps an inside child targetable under a live AGSL shader.
+  The prior-gate FAIL was the unmarked children, not Fabric ignoring `pointerEvents`.
+- **Android `AUTO` path: unregressed** — active In/Out/Press, single long-press with tap
+  suppression, passive zero-events, and scroller slop-yield all hold; px→dp holds.
+- **iOS `none` pass-through: re-confirmed PASS (4a + 4b)** on the round-5 build; iOS unchanged.
+- **REAL-005 Option A holds on both platforms.** The JS-`pointerEvents` fallback stays retired.
+  RT-006 / the feather pin / the `40` flip are now unblocked for the planner.
+
+## Cleanup
+
+DONE — `example/screens/press-harness.tsx` deleted and the `tasks.ts` / `[taskId].tsx` route
+wirings reverted (`git checkout`); `git status -- example packages` clean. agent-device sessions
+closed; logcat capture stopped.
+
+## Next
+
+Planner's call: REAL-005 Option A is device-proven on both platforms — close REAL-005 and RT-006,
+tick `device-verified` for U8-001, and release the held docs (RT-006 tuning/cost, the feather pin,
+the `40` flip). The full RNGH-coexistence matrix remains U8-002.
