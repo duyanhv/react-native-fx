@@ -19,4 +19,9 @@ android {
 dependencies {
   implementation 'androidx.core:core:1.17.0'
   implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+
+  // The pointer-events lever that makes the surface untargetable in `none` mode is RN's
+  // own view-system interface; the host app provides react-android at runtime, so it is
+  // compiled against but never bundled. Unversioned — the expo-module-gradle-plugin resolves it.
+  compileOnly 'com.facebook.react:react-android'
 }

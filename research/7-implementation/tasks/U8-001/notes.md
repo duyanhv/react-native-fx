@@ -98,3 +98,36 @@ fix to verify; Android STILL FAILS — the `ReactPointerEventsView` lever is blo
 library compile classpath, so resolve the classpath / `react-android` exposure or take the
 JS-side `pointerEvents`-prop fallback before re-gating Android Row 4) plus the px→dp coordinate
 check (Android event payload now in dp; confirm `{x,y}` matches iOS view points).
+
+## Round-4 fix log (Android `none`-mode pass-through — REAL-005 Option A)
+
+The round-3 classpath blocker is resolved: the `ReactPointerEventsView` lever now ships.
+
+- **Build coupling.** Added `compileOnly 'com.facebook.react:react-android'` to the library
+  module's `dependencies` block (`packages/android/build.gradle`) — unversioned, mirroring
+  `expo-modules-core`'s `implementation 'com.facebook.react:react-android'` so the
+  `expo-module-gradle-plugin` resolves the version, but `compileOnly` because the host app
+  provides `react-android` at runtime and fx must not bundle it. This is the library's first
+  direct `com.facebook.react.*` dependency. It puts `com.facebook.react.uimanager.*` on the
+  module's compile classpath, which the round-3 plugin classpath lacked.
+- **The lever.** `FxSurfaceView.kt` now implements `ReactPointerEventsView`: a plain backing
+  field `appliedPointerEvents` (`PointerEvents.BOX_NONE` default) is finalized in
+  `applyResolvedConfig` off the same applied mode the press handler reads — `AUTO` for
+  `passive`/`active`, `BOX_NONE` otherwise (`none`/blank, and `controlled` for now, with a
+  `// TODO:` noting controlled may want `AUTO` when it ships). The `pointerEvents` property
+  override returns that field; nothing is computed per event and nothing calls back into RN.
+  `BOX_NONE` (never `NONE`) keeps the surface itself untargetable while RN children inside stay
+  targetable — the parity of the iOS `hitTest` fix. iOS and the `FxPressHandler` FSM untouched.
+- **Docs.** `structure.android.md` §Touch contract — the build-coupling sentence updated from
+  the planned/blocked framing to **shipped** (compile-proven), keeping the accurate
+  device-pending caveat for the Fabric-consults-`getPointerEvents()` re-gate. Mechanic
+  semantics unchanged (no divergence from the pin).
+- **Verification (all green).** From `packages/`: `bunx tsc --noEmit` exit 0; `bun run build`
+  exit 0; `bun run lint` exit 0 (27 files); `bun run swift:lint` exit 0; `bun run test` exit 0
+  (58 tests, 4 suites). From `example/android/`: `./gradlew :react-native-fx:compileDebugKotlin`
+  BUILD SUCCESSFUL — `:react-native-fx:compileDebugKotlin` *executed* (not up-to-date) and
+  resolved `ReactPointerEventsView` / `PointerEvents`, proving the coupling; `./gradlew
+  :app:assembleDebug` BUILD SUCCESSFUL — no duplicate-class / runtime-missing error, confirming
+  the host provides `react-android` and fx bundled no conflicting copy.
+
+Next: bounded Row-4 re-gate (none-mode pass-through both platforms + px→dp coordinate check).

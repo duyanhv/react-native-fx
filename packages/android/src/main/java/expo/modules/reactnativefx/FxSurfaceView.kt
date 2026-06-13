@@ -6,6 +6,8 @@ import android.os.Build
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import com.facebook.react.uimanager.PointerEvents
+import com.facebook.react.uimanager.ReactPointerEventsView
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.records.Field
 import expo.modules.kotlin.records.Record
@@ -34,7 +36,7 @@ data class FxShaderPressEvent(
 class FxSurfaceView(
   context: Context,
   appContext: AppContext
-) : FxNativeView(context, appContext) {
+) : FxNativeView(context, appContext), ReactPointerEventsView {
 
   /**
    * The content-motion container holds a Fabric-mounted child tree; it is added outside
@@ -59,6 +61,13 @@ class FxSurfaceView(
   private var pendingShader = ""
   private var pendingIntensity = 0.8
   private var pendingInteractionMode = "none"
+
+  // The hit-target verdict TouchTargetHelper reads when it walks the view tree. BOX_NONE keeps the
+  // surface itself off the target search while leaving RN children inside targetable, so a `none`
+  // touch falls through to content composited behind the surface; AUTO claims it for the press
+  // handler. Finalized in applyResolvedConfig off the same applied mode the handler reads — never
+  // computed per event.
+  private var appliedPointerEvents = PointerEvents.BOX_NONE
 
   // Presence targets, stashed by prop setters and forwarded to the coordinator once per batch.
   private var pendingVisible = false
@@ -199,11 +208,20 @@ class FxSurfaceView(
     super.applyResolvedConfig()
     pendingIntensity = pendingIntensity.coerceIn(0.0, 1.0)
     pendingInteractionMode = pendingInteractionMode.ifBlank { "none" }
+    appliedPointerEvents = when (pendingInteractionMode) {
+      "passive", "active" -> PointerEvents.AUTO
+      // TODO: `controlled` collapses to the none path for now (out of V1 scope); it may want AUTO
+      // when controlled mode ships.
+      else -> PointerEvents.BOX_NONE
+    }
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
     pressHandler.update(pendingInteractionMode)
     presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
   }
+
+  override val pointerEvents: PointerEvents
+    get() = appliedPointerEvents
 
   override fun dispatchTouchEvent(event: MotionEvent): Boolean {
     val consumedByFx = pressHandler.handle(event)

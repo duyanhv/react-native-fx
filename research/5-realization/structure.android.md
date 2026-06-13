@@ -125,13 +125,16 @@ component.
   (`applyResolvedConfig`), not per event. This is the **Android-native peer** of the iOS
   `hitTest` lever: same semantic (surface untargetable in `none`), mechanism localized here —
   RN Android needs an explicit interface where UIKit infers untargetability from the view tree
-  (REAL-005). **Build coupling:** the lever requires `compileOnly("com.facebook.react:react-android")`
-  on the library module — the `expo-module-gradle-plugin` classpath does not carry `react-android`
-  transitively (`expo-modules-core` exposes its React dependency non-transitively), and `compileOnly`
-  is the standard RN-view-library shape (compile against it; the host app provides it at runtime,
-  never bundled). This is the library's first direct `com.facebook.react.*` reference — it
-  participates in RN's native view system, *not* the JS↔native boundary rule #7 governs (events
-  still cross via the Expo `EventDispatcher`; props via Expo setters). Device-pending the one
+  (REAL-005). **Build coupling (shipped):** the lever is compiled against
+  `compileOnly("com.facebook.react:react-android")` on the library module — the
+  `expo-module-gradle-plugin` classpath does not carry `react-android` transitively
+  (`expo-modules-core` exposes its React dependency non-transitively), and `compileOnly` is the
+  standard RN-view-library shape (compile against it; the host app provides it at runtime, never
+  bundled — a clean `assembleDebug` confirms no bundled copy). This is the library's first direct
+  `com.facebook.react.*` reference — it participates in RN's native view system, *not* the
+  JS↔native boundary rule #7 governs (events still cross via the Expo `EventDispatcher`; props via
+  Expo setters). The interface and the unversioned `compileOnly` coupling are compile-proven
+  (`:react-native-fx:compileDebugKotlin` resolves the interface). Still device-pending the one
   proof a citation can't give (the RN clone is sparse): that Fabric actually consults
   `getPointerEvents()` on a non-`ReactViewGroup` `ExpoView` at hit-target time. If it does not,
   the documented fallback is a JS-side `pointerEvents` prop on the surface (`.android.tsx`,
