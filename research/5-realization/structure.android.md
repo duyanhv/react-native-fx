@@ -134,11 +134,24 @@ component.
   `com.facebook.react.*` reference — it participates in RN's native view system, *not* the
   JS↔native boundary rule #7 governs (events still cross via the Expo `EventDispatcher`; props via
   Expo setters). The interface and the unversioned `compileOnly` coupling are compile-proven
-  (`:react-native-fx:compileDebugKotlin` resolves the interface). Still device-pending the one
-  proof a citation can't give (the RN clone is sparse): that Fabric actually consults
-  `getPointerEvents()` on a non-`ReactViewGroup` `ExpoView` at hit-target time. If it does not,
-  the documented fallback is a JS-side `pointerEvents` prop on the surface (`.android.tsx`,
-  asymmetric — iOS already handles `none` in `hitTest`).
+  (`:react-native-fx:compileDebugKotlin` resolves the interface).
+- **The surface lever alone is insufficient — the decorative/wrapper children must also be
+  marked (round 5).** Source-confirmed against the running RN 0.85.3 `TouchTargetHelper.kt`
+  (`example/node_modules`): `getPointerEvents()` *is* consulted on any `view is
+  ReactPointerEventsView` (`:320`, not only `ReactViewGroup`), so `FxSurfaceView`'s `BOX_NONE`
+  is honored — but `BOX_NONE` descends into children (`:355` → `:216`), and the surface's two
+  full-bounds children — the AGSL `FxSurfaceShaderView` and the `intermediateContainer`
+  `FrameLayout` — each default to `AUTO` and claim a bare tap as a `SELF` target (`:388-410`),
+  remapping to the surface's tag and swallowing it (this is also why an inside child is occluded
+  behind the shader). The fix is the Android analogue of the iOS `hitTest` excluding `metalView`
+  + `intermediateContainer`: `FxSurfaceShaderView` implements `ReactPointerEventsView` → `NONE`
+  (purely decorative, never a target — `:339` skips it), and `intermediateContainer` returns
+  `BOX_NONE` (its RN children stay targetable; the container itself is never a target, so a bare
+  tap falls through to content composited behind). With all three layers set, a `none`-mode bare
+  tap reaches the sibling behind and an inside RN child stays tappable even under an active
+  shader. The JS-`pointerEvents` fallback is retired — it sets only the surface's pointer-events
+  and never the occluding children, so it would fail identically. Device-pending the round-5
+  re-re-gate.
 - **JS press events report view points (dp).** Touch coordinates arrive in physical px; the
   `dispatchShader*` helpers divide by `context.resources.displayMetrics.density` before building
   the payload, matching the RN `locationX/Y` convention and iOS. The internal shape test

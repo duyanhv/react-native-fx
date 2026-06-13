@@ -130,4 +130,30 @@ The round-3 classpath blocker is resolved: the `ReactPointerEventsView` lever no
   :app:assembleDebug` BUILD SUCCESSFUL — no duplicate-class / runtime-missing error, confirming
   the host provides `react-android` and fx bundled no conflicting copy.
 
-Next: bounded Row-4 re-gate (none-mode pass-through both platforms + px→dp coordinate check).
+## Row-4 re-gate (2026-06-13) — see evidence/device-regate.md
+
+Bounded re-gate on commit `8894cfe` (both fixes post-`e2ec3dd`-gate). Drove a temporary
+harness (`example/screens/press-harness.tsx`) with an RN Pressable behind the surface AND one
+mounted as a child inside it; reverted after (route files `git checkout`, harness deleted,
+`git status -- example packages` clean).
+
+- **iOS — PASS (4a + 4b).** none-mode tap over the surface reaches the behind Pressable
+  (`#0 behind`); the inside child still fires (`#0 inside`). The `35e15b0` hitTest fix is
+  device-proven; `active` still claims (no regression).
+- **Android coordinate px→dp — PASS.** active-centre tap now reads `{110,110}` dp (was `302` px),
+  matching iOS. Round-3 fix device-proven.
+- **Android 4a (THE proof) — FAIL.** none-mode surface tap is swallowed; behind Pressable
+  silent (mode confirmed none; behind reachable from the margin; tap injected; reproduced).
+  The `ReactPointerEventsView` lever compiles and ships but **Fabric does not consult
+  `getPointerEvents()` on the `ExpoView` at hit-target time** — the documented REAL-005 residual
+  risk. Reported as-is, STOPPED; no fallback improvised.
+- **Android 4b — inconclusive** (the harness child sits behind the opaque AGSL `SurfaceView`, a
+  shader-occlusion confound distinct from iOS's hit-transparent `MTKView`); moot until 4a lands.
+- **Android rows 1–3 smoke — PASS.** passive zero-events, active In/Out/Press, one long-press +
+  suppression, slop-yield (PressIn/PressOut, no Press, scroller wins) — the `AUTO` path is
+  unchanged; the inert lever is not harmful. No app crash.
+
+Next: planner's call — REAL-005's close condition is NOT met on Android, so invoke the
+documented JS-`pointerEvents` fallback (`.android.tsx`) for the Android none-mode pass-through;
+iOS Row 4 + the px→dp fix are device-proven. RT-006 / feather pin / `40` flip stay held until
+Android Row 4 lands.
