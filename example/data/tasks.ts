@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "U8-002",
+		title: "RNGH coexistence matrix",
+		platform: "iOS · Android",
+		what: "active surface inside ScrollView/pager/bottom-sheet/RNGH-pan · cancel path · passive/controlled/nested",
+		status: "todo",
+		screen: "coexistence",
+	},
 	{
 		id: "U7-001",
 		title: "FxPresence handshake",

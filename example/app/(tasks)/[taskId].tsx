@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import type { DemoScreen } from "../../data/tasks";
 import { TASKS } from "../../data/tasks";
 import { AndroidMaterialScreen } from "../../screens/android-material";
+import { CoexistenceScreen } from "../../screens/coexistence";
 import { ContentMotionScreen } from "../../screens/content-motion";
 import { FillMaterialScreen } from "../../screens/fill-material";
 import { HostingParityScreen } from "../../screens/hosting-parity";
@@ -29,6 +30,8 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <StressListScreen />;
 		case "presence":
 			return <PresenceScreen />;
+		case "coexistence":
+			return <CoexistenceScreen />;
 		default:
 			return <TaskBlankScreen label={label} />;
 	}

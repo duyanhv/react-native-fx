@@ -100,7 +100,7 @@ A `device-pending` row closes only with a device check; a `doc-cleanup` row clos
 
 | id | status | source | decision / pending work | blocks | close condition |
 |---|---|---|---|---|---|
-| RT-001 | device-pending | `30` | The cancel path and the full RNGH coexistence matrix (including `@gorhom/bottom-sheet` pan). | — | the device coexistence matrix passes |
+| RT-001 | resolved | `30` | The cancel path and the full RNGH coexistence matrix (including `@gorhom/bottom-sheet` pan). | — | **Resolved (U8-002, device 2026-06-13).** The coexistence matrix passes across both platforms over every distinct mechanism — native scroll, pager, and the `@gorhom` RNGH-pan hard case cancel cleanly (no `onPress`); taps fire once; `passive`/`controlled` silent; nested shader surfaces → the outer claims (`30` Decision 6). Per-platform-redundant rows waived, documented in `30` §Resolved. The Android interactive-uniform probe crash found en route was fixed + device-proven (U8-003, API-33 AVD, repro-validated). |
 | RT-002 | deferred | `30` | Drag/tilt (G3) axis-aware claiming, resolved via `controlled` + RNGH relations. | — | post-V1 |
 | RT-003 | device-pending | `31` | GPU-loop device items — drawable-on-resume with no stall; one queue per view vs a shared singleton; on-demand vs continuous frames for the press/uniform path. | — | device benchmarks |
 | RT-004 | resolved | `31`/`53` | The Expo per-view recycling reset hook (a `prepareToRecycleView` equivalent on the pinned SDK). | — | **Verified on SDK 56 (2026-06-08).** `shouldBeRecycled() = false` is sufficient — no reset hook needed. |
