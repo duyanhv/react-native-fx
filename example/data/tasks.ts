@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "DEF-009",
+		title: "Android content-distort ripple",
+		platform: "Android",
+		what: "ripple AGSL RenderEffect over live RN content · children stay tappable · animates · pauses off-window · pre-33 normal · iOS no-op",
+		status: "todo",
+		screen: "content-distort",
+	},
 	{
 		id: "DEF-008",
 		title: "Runtime shader compilation",

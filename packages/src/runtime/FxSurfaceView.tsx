@@ -38,6 +38,10 @@ export type NativeFxSurfaceProps = {
   shader?: ShaderId | (string & {});
   intensity?: number;
   interactionMode?: InteractionMode;
+  // A draw-time distortion applied over the wrapped content. `'ripple'` is the only value;
+  // Android-only (API 33+) — iOS accepts and ignores it. A deliberately minimal native prop,
+  // not the long-term public surface.
+  contentDistortion?: 'ripple';
   visible?: boolean;
   preset?: string;
   presenceMotion?: PresenceMotionWire;
@@ -53,9 +57,13 @@ export type NativeFxSurfaceProps = {
   children?: ReactNode;
 };
 
-// The native prop accepts the empty-string sentinel that clears the surface; the public
-// prop is a curated `ShaderId`. Absent ⟺ empty ⟺ no effect (see the wrapper below).
-type NativeProps = Omit<NativeFxSurfaceProps, 'shader'> & { shader: ShaderId | (string & {}) | '' };
+// The native props accept the empty-string sentinel that clears: the public props are absent or a
+// concrete value, but Expo omits an `undefined` prop, so a once-set value could never be cleared
+// (the previous value would stick). Coercing absent → `''` keeps every batch carrying the prop.
+type NativeProps = Omit<NativeFxSurfaceProps, 'shader' | 'contentDistortion'> & {
+  shader: ShaderId | (string & {}) | '';
+  contentDistortion: 'ripple' | '';
+};
 
 // `requireNativeView` forwards a ref to the native host but does not type it; the cast adds the
 // `ref` slot so the coordinator (presence) can observe host detachment.
@@ -74,10 +82,17 @@ const NativeFxSurfaceView = requireNativeView<NativeProps>(
  * forwarded to the native host so a coordinator (presence) can detect host detachment.
  */
 function FxSurfaceViewInner(
-  { shader, ...rest }: NativeFxSurfaceProps,
+  { shader, contentDistortion, ...rest }: NativeFxSurfaceProps,
   ref: Ref<unknown>
 ): ReactElement {
-  return <NativeFxSurfaceView ref={ref} shader={shader ?? ''} {...rest} />;
+  return (
+    <NativeFxSurfaceView
+      ref={ref}
+      shader={shader ?? ''}
+      contentDistortion={contentDistortion ?? ''}
+      {...rest}
+    />
+  );
 }
 
 export const FxSurfaceView = forwardRef(FxSurfaceViewInner);

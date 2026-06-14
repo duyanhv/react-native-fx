@@ -331,6 +331,12 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     pendingMode = value
   }
 
+  /// Accepts the content-distort prop and does nothing: distorting live RN content means hosting
+  /// it to sample it, which severs RN touch on iOS, so the capability is out-of-scope here. The
+  /// setter exists only so the shared prop raises no "unsupported prop" noise; content renders
+  /// normally. Android realizes this draw-time, where touch survives.
+  internal func setContentDistortion(_ value: String) {}
+
   /// Stashes the presence visibility target until Expo finishes the prop batch.
   internal func setVisible(_ value: Bool) {
     pendingVisible = value

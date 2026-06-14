@@ -61,6 +61,7 @@ class FxSurfaceView(
   private var pendingShader = ""
   private var pendingIntensity = 0.8
   private var pendingInteractionMode = "none"
+  private var pendingContentDistortion = ""
 
   // The hit-target verdict TouchTargetHelper reads when it walks the view tree. BOX_NONE keeps the
   // surface itself off the target search while leaving RN children inside targetable, so a `none`
@@ -115,6 +116,10 @@ class FxSurfaceView(
   private val contentAnimationDriver = FxAnimationDriver(intermediateContainer) {
     onContentAnimationCompletion?.invoke()
   }
+
+  // Distorts the content container's own rendered output with a draw-time RenderEffect, so the
+  // RN children inside stay a plain, tappable view tree. Android-only; a no-op below API 33.
+  private val contentDistortion = FxContentDistortion(intermediateContainer)
 
   /**
    * Turns the discrete `visible` target into an interruptible enter/exit envelope. A plain
@@ -184,6 +189,14 @@ class FxSurfaceView(
     pendingInteractionMode = value
   }
 
+  /**
+   * Stashes the content-distort target until Expo finishes the prop batch. `'ripple'` is the only
+   * recognized value; absent or unrecognized leaves the content undistorted.
+   */
+  fun setContentDistortion(value: String) {
+    pendingContentDistortion = value
+  }
+
   /** Stashes the presence visibility target until Expo finishes the prop batch. */
   fun setVisible(value: Boolean) {
     pendingVisible = value
@@ -216,6 +229,7 @@ class FxSurfaceView(
     }
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
+    contentDistortion.update(pendingContentDistortion, pendingIntensity)
     pressHandler.update(pendingInteractionMode)
     presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
   }
@@ -436,14 +450,28 @@ class FxSurfaceView(
     return view
   }
 
+  // A continuous loop must pause on background, not only on detach: an attached-but-unfocused
+  // window (app backgrounded, over a system dialog) still keeps the view attached, so detach
+  // alone would leave the content-distort frame loop running off-screen.
+  override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+    super.onWindowFocusChanged(hasWindowFocus)
+    if (hasWindowFocus) {
+      resumePresentationLoop()
+    } else {
+      pausePresentationLoop()
+    }
+  }
+
   override fun pausePresentationLoop() {
     effectSurfaceView?.pausePresentationLoop()
     contentAnimationDriver.pause()
+    contentDistortion.pause()
   }
 
   override fun resumePresentationLoop() {
     effectSurfaceView?.resumePresentationLoop()
     contentAnimationDriver.resume()
+    contentDistortion.resume()
   }
 }
 

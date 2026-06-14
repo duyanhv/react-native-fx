@@ -391,7 +391,6 @@ export const manifest = {
             clock: 'frame-nanos',
             cadence: 'display-rate',
             requires: { os: 33, substrate: 'expo-view' },
-            status: 'planned',
             note: 'RenderEffect is draw-time → touch survives; Android-only capability',
           },
         ],

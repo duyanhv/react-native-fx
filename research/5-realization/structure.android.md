@@ -390,10 +390,49 @@ the Android `source` rung is triggered; this is a documented platform asymmetry,
   asset contract**, **not a different public component** — the public surface stays `<Fx>`
   (`24`). Lottie remains a possible `via:'lib'` optional peer dependency (`53`).
 
-### `content-distort` — planned (Android-only)
-- **AGSL via `RenderEffect`** — `requires {os:33, expo-view}` · `status:planned`.
-  Draw-time means a shader can distort live, still-touchable content — the capability
-  iOS structurally can't offer. Deferred to V2.
+### `content-distort` — ripple demonstrator (Android-only, DEF-009)
+
+The inverse of the `§shader` path: where a generative shader produces its own pixels
+(and deliberately does **not** use `createRuntimeShaderEffect`, § Render paths), a
+content-distort shader *filters live content* — exactly the `eval`'d input-shader use
+that note set aside. It is the one effect that runs **over live RN children**, which
+Android permits and iOS cannot: `RenderEffect` is draw-time, so distorting the content
+never touches input dispatch (the iOS severing reason — rule #4 — does not apply because
+nothing is reparented into a host; the children stay a plain RN view tree).
+
+- **Rung** — `via:shader, asset:agsl` · `applyVia:RenderEffect` · `clock:frame-nanos` ·
+  `requires {os:33, expo-view}`. The iOS rung stays `out-of-scope` (`02`).
+- **Mechanic.** An AGSL **sampler** shader declares `uniform shader content;` plus
+  `resolution`/`time`/`intensity`, and returns `content.eval(distortedCoord)`. The effect
+  is applied to **`FxSurfaceView`'s content container** (the `FxPassthroughContainer` that
+  already holds the routed RN children) via
+  `container.setRenderEffect(RenderEffect.createRuntimeShaderEffect(rippleShader, "content"))`
+  — the second argument names the `content` uniform the program declares, which the platform
+  binds to the container's own rendered output. No reparenting, no host: the same view tree,
+  one draw-time filter on its `RenderNode`.
+- **Touch survives.** `setRenderEffect` is a RenderNode/draw-time concern; `dispatchTouchEvent`
+  and `TouchTargetHelper`'s walk are unaffected, so a child inside the distorted content stays
+  tappable. This is the load-bearing device proof — visible distortion *and* live child touch.
+- **Clock.** A `Choreographer` frame loop advances `time` and refreshes the effect each frame
+  (update the `RuntimeShader` uniform, then re-set the `RenderEffect` so the change takes —
+  verify the exact refresh idiom on device), paused off-window through `FxSurfaceView`'s
+  existing `pausePresentationLoop`/`resumePresentationLoop` (rule #1, no per-frame JS). Strength
+  rides the existing `intensity` (0–1). Uniform writes are guarded by the same
+  source-declaration scan the `§shader` path uses — never a `setFloatUniform` probe (the API-33
+  absent-uniform CheckJNI abort).
+- **V1 scope — one curated demonstrator.** A single `ripple` sampler, authored inline as an
+  AGSL constant (not a manifest `ShaderId` — it is not a generative catalog entry). A broader
+  distortion catalog and a BYO-distortion contract are deferred to real demand (SPINE-001); the
+  task proves the runtime fact, not the final ergonomics.
+- **Surface (deliberately minimal).** A mechanical native/runtime prop `contentDistortion` on
+  `FxSurfaceView` — `'ripple'` is the only recognized value; absent or unrecognized = no effect.
+  Named mechanically, **never `effect`**, so it cannot be confused with the generative `shader`
+  surface, and it is **not** the long-term public API: any high-level sugar is a separate surface
+  decision, deferred. Combining `contentDistortion` with a generative `shader` on the same surface
+  is out of scope for V1 (undefined).
+- **Degradation.** Below API 33 (`createRuntimeShaderEffect`/`RuntimeShader` are 33+, § Version
+  gates) the effect is not applied and content renders normally — `{via:'none'}`, never an error.
+  iOS ignores the prop (out-of-scope). Closes FX-008.
 
 ### `shape-morph` — Android-only (a node in `02`)
 - **M3 Expressive shape morph** — native, `requires {os:23, hosted, feature:m3-expressive}`

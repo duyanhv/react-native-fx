@@ -64,6 +64,9 @@ class FxModule : Module() {
       Prop("interactionMode") { view: FxSurfaceView, value: String ->
         view.setInteractionMode(value)
       }
+      Prop("contentDistortion") { view: FxSurfaceView, value: String ->
+        view.setContentDistortion(value)
+      }
       Prop("visible") { view: FxSurfaceView, value: Boolean ->
         view.setVisible(value)
       }

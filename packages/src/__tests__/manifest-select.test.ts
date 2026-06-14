@@ -23,11 +23,6 @@ describe('select()', () => {
 
   // ── status: planned ────────────────────────────────────────────
 
-  it('skips status: planned rungs', () => {
-    const result = select(manifest.nodes['content-distort'], android, { deviceOS: 34 });
-    expect(result.via).toBe('none');
-  });
-
   it('skips a planned rung and returns the next supported rung', () => {
     const node = {
       id: 'test',
@@ -164,10 +159,23 @@ describe('select()', () => {
     expect(result.primitive).toBe('MaterialShapes (morph)');
   });
 
-  it('degrades to via: none when all rungs are planned or out-of-scope', () => {
-    // content-distort on iOS: out-of-scope; on Android: planned
+  // ── content-distort: the platform asymmetry ────────────────────
+
+  it('resolves the Android content-distort rung at os 33+', () => {
+    const result = select(manifest.nodes['content-distort'], android, { deviceOS: 34 });
+    expect(result.via).toBe('shader');
+    expect(result.applyVia).toBe('RenderEffect');
+    expect(result.requires.substrate).toBe('expo-view');
+  });
+
+  it('degrades content-distort to via: none below Android 33', () => {
+    const result = select(manifest.nodes['content-distort'], android, { deviceOS: 32 });
+    expect(result.via).toBe('none');
+  });
+
+  it('keeps content-distort out-of-scope on iOS (via: none)', () => {
+    // Hosting RN content to sample it severs RN touch — structurally out on iOS.
     expect(select(manifest.nodes['content-distort'], ios, { deviceOS: 18 }).via).toBe('none');
-    expect(select(manifest.nodes['content-distort'], android, { deviceOS: 34 }).via).toBe('none');
   });
 
   // ── material: Android ladder ───────────────────────────────────

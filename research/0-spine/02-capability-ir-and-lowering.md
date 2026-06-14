@@ -274,7 +274,7 @@ on iOS and merely planned on Android, so the landmine lives in data, not folklor
     ],
     android: [
       { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-        requires: { os: 33, substrate: 'expo-view' }, status: 'planned',
+        requires: { os: 33, substrate: 'expo-view' },
         note: 'RenderEffect is draw-time → touch survives; Android-only capability' },
     ],
   },
