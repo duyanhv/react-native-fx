@@ -174,8 +174,12 @@ reduce-motion policy silently fails for exactly the animations fx prefers.
   rapid-fire, zero-displacement, after-rest, rotation+combined, mixed channels,
   cancel-under-fire, JS silence — so the shipped paths suffice and no custom integrator
   is needed (evidence in `7-implementation/tasks/U6-002/evidence/`).
-- BYO envelopes — can a curated effect's intro/outro be expressed without hardcoding it
-  to one effect (carried open from `40`).
+- ~~BYO envelopes — can a curated effect's intro/outro be expressed without hardcoding it
+  to one effect (carried open from `40`).~~ **Resolved by composition (MOT-008, DEF-007,
+  2026-06-14):** the driver needs no BYO-specific envelope — nothing is hardcoded to un-hardcode.
+  Curated and BYO effects share the same three channels (`FxPresence` wrapper envelope, native
+  `time` in-shader, semantic uniforms eased by `transition`). See `40` § Open questions for the
+  contract.
 
 ## Sources
 

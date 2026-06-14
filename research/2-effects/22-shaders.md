@@ -110,6 +110,14 @@ draws itself, samples nothing — safe over content). Feeds `effect=` ids
   `pressDepth`/`pointerX`/`pointerY` natively (`30`); JS never streams the pointer.
 - **state-eased** — semantic uniforms (intensity, colors) change discretely, eased by
   `transition`; `time`/`resolution` are never JS-set.
+- **intro/outro is composed, never a baked envelope (MOT-008, DEF-007).** fx hardcodes no
+  shader-internal intro/outro envelope — not for curated effects, not for BYO. An effect's
+  lifecycle animation is reached through the same three channels for both: the `FxPresence`
+  wrapper envelope (whole-surface appear/disappear, transform/opacity), the shader's own
+  `time`-driven code (the self-contained reveal), and semantic uniforms eased by `transition`
+  / re-fired by `triggerKey` (one-shots, `40`). So a BYO author has full parity by construction;
+  there is no BYO envelope-declaration mechanism and no reserved reveal/lifecycle uniform (`40`
+  § Open questions for the contract).
 
 ## Degradation
 

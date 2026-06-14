@@ -234,8 +234,26 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
   concrete surface is `fx.source.scroll({ axis })` bound to the `Fx.Scroll` hosted scroll
   context (tiles as fx-owned data, never wrapped RN content); `50` owns the surface. The
   ambient-RN-scroll best-effort tier and the Android rung remain deferred.
-- **BYO envelope** — how a BYO author declares an intro/outro envelope in `.metal`/`.agsl`
-  so it isn't hardcoded to the curated glow.
+- ~~**BYO envelope** — how a BYO author declares an intro/outro envelope in `.metal`/`.agsl`
+  so it isn't hardcoded to the curated glow.~~ **Resolved by composition (MOT-008, DEF-007,
+  2026-06-14): the premise is false — fx hardcodes *no* shader-internal intro/outro envelope,
+  for curated effects either.** Curated shaders animate off native `time` + an eased semantic
+  uniform (`intensity`); whole-surface appear/disappear is the `FxPresence` wrapper envelope
+  (transform/opacity). A BYO author therefore reaches full parity through the **same three
+  channels** curated effects use — there is no dedicated BYO mechanism, and none is deferred:
+  1. **Whole-surface lifecycle** → wrap `<Fx>` in `FxPresence` (the platform-native
+     transform/opacity enter/exit envelope, `42`/`54`).
+  2. **Self-contained shader animation** (the "intro reveal driven by `time`") → the author's
+     `.metal`/`.agsl` reads native `time` and animates freely — author shader code, not an fx
+     primitive.
+  3. **Parameter reveals / one-shots** → declare semantic uniforms (`registerShader`, `22`),
+     drive them with discrete targets eased by `transition`, and re-fire bursts via
+     `triggerKey`/`version` (the one-shot trigger model above).
+
+  This is **resolved by composition, not deferred-until-demand.** A reserved lifecycle/reveal
+  uniform would be a *new feature* that must apply to curated shaders too (else BYO would get a
+  mechanism the core catalog does not use); if a concrete BYO intro ever proves inexpressible by
+  the three channels, that is the trigger for a fresh row, not a gap here.
 
 ## Sources
 
