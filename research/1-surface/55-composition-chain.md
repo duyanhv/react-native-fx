@@ -110,11 +110,23 @@ Same `fx` namespace, two sub-builders, two non-interchangeable types. `transitio
    layer-3 escape hatch; the front door is the string form `<Fx effect="plasma" />` (`50`).
    **No bare `effect` export ships in V1** — the builder is reached through `fx.effect.*`
    only, preserving the `fx.effect`/`fx.motion` symmetry (Decision 3).
+8. **No JSX compound over `EffectStack` — the `fx.effect.*` builder *is* the stack API
+   (SURF-008, DEF-004, 2026-06-14).** fx ships no `Fx.Stack` and no `Fx.Layer`. An
+   `EffectStack` is data composited inside **one** `<Fx>` native surface, crossing the bridge
+   once as a resolved record (Decision 1); a JSX compound's layer-children would therefore be
+   *configuration*, not real native views — forbidden by `50` Decision 4 ("compound only for
+   real native layers") and a re-introduction of the `FxLayer` that Decision 6 already
+   rejected. This matches `Fx.Scroll`'s data-not-children shape (DEF-014, where composited
+   content is a data prop, not children). Revisit only if the builder chain demonstrably
+   fails a real use case.
 
 ## Open questions
 
-- **The deferred JSX-compound skin** (`<Fx.Stack>`) over the identical `EffectStack` —
-  build now or on demand? (deferred.)
+- ~~**The deferred JSX-compound skin** (`<Fx.Stack>`) over the identical `EffectStack` —
+  build now or on demand?~~ **Resolved (SURF-008, DEF-004, 2026-06-14): rejected.** The
+  `fx.effect.*` builder is the stack API; no `Fx.Stack`/`Fx.Layer` JSX compound ships
+  (Decision 8 — config-children violate `50` D4 and reintroduce the `FxLayer` rejected by
+  Decision 6).
 - ~~**`SpringTune` shape**~~ — **resolved: `SpringTune` removed.** The canonical API is
   `tune = { speed, emphasis, distance }` (`data-layer.md` I2). `Transition.spring` is
   authored per platform for direct control — iOS `{ duration, bounce }`, Android
