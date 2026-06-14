@@ -58,8 +58,18 @@ The stale merge-tick batch was flipped to `merged` against its in-tree finishing
 `docs-closed` cell normalized), U3-007 `118cae2`/`33c7f98` (with the A1-2 waiver). U8-002
 `9a874ea` and U8-003 `f9af1bc` were ticked earlier in the same cut.
 
-## What still gates the real `0.1.0`
+## Publishing waits for V2
 
-- **DEF-016** — the mechanical rename to `react-native-fxkit` + the coexistence/parity story in
-  `skills/` (pre-publish).
+**There is no V1 npm publish.** The package publishes only once V2 is done (maintainer,
+2026-06-14). So the V1 cut is a *code/docs* milestone, not a release — `react-native-fxkit`
+stays a placeholder and `packages/package.json` keeps the `react-native-fx` name until then.
+DEF-016 (the mechanical rename + the `skills/` coexistence/parity story) does **not** run at
+V1; it fires at the pre-publish moment, which is now after V2.
+
+## What comes next (post-V1 cut)
+
+- **V2 work** — the deferred units / DEF-* triggers that V2 turns on (publishing rides on V2
+  completion).
 - **DEF-014** — the iOS-hosted `source` rung, slated as the first V1.x task (not a V1 blocker).
+- **DEF-016** — deferred to the pre-publish moment (after V2): the rename to `react-native-fxkit`
+  + the parity story in `skills/`.
