@@ -166,8 +166,11 @@ events only — no per-frame pointer stream** (`04`/`35`).
      BYO assets cannot be injected into the library's bundle from the app side at build time.
      They must be present in the fx package's resource paths before the library build runs.
      V2 may add a config plugin or a build-time copy step for app-side BYO asset placement.
-   - **Runtime compilation:** explicitly deferred to V2 (`DEF-008`). V1 BYO is build-time
-     `.metal`/`.agsl` pairs only.
+   - **Runtime compilation:** shipped in V2 (`DEF-008`, 2026-06-14) as the **registry-sourced**
+     path — `registerShader({ id, uniforms, source: { ios, android } })` compiles inline source
+     natively at runtime, so app-side BYO needs no build-path placement and no config plugin
+     (lifting the V1 constraint above). The build-time `.metal`/`.agsl` pair path stays valid; the
+     registry adds a runtime path at the same `<Fx effect="id" />` call site (Decision 7).
    - **Missing platform file:** degrades that platform to `{via:'none'}` (honest guard-out
      per the pair rule; rule #2).
    - **Events:** `onLoad`/`onError` fire for BYO compile/load failures, same as curated.
@@ -182,6 +185,34 @@ events only — no per-frame pointer stream** (`04`/`35`).
      fires with a descriptive error. No hard crash.
    - **Forward pointer:** the actual TypeScript change (applying `ShaderId | (string & {})`
      at the `effect` prop) is an `implement` task, not this one.
+7. **Runtime-source BYO ships via the registry, not a `source` prop (DEF-008, 2026-06-14, closes
+   FX-007).** `registerShader({ id, uniforms, source: { ios, android } })` compiles inline source at
+   runtime; `source` lives only inside `registerShader`, never as a prop on `<Fx>`. The contract:
+   - **Dual source required.** A runtime BYO shader still supplies MSL (iOS) + AGSL (Android) —
+     single-source authoring is the deferred cross-compiler (`DEF-001`). A missing platform source
+     degrades that platform to `{via:'none'}` (the pair rule, Decision 6).
+   - **Curated ids win, native-enforced.** A registration colliding with a curated id is rejected
+     (a JS dev warning), and the native resolver stops on curated ids (an iOS `curatedShaderIds`
+     mirror; Android's `CURATED_SHADER_IDS` set) so a registry source can never satisfy a curated
+     id, even one with no raster fragment.
+   - **iOS lowers through expo-view only (the spike result).** SwiftUI `.colorEffect` cannot consume
+     a runtime-built `MTLLibrary` (no public `ShaderLibrary` init over `MTLLibrary`/`MTLFunction`/MSL
+     source — iOS 26.5 SDK), so runtime shaders use the `FxSurfaceView` (expo-view) Metal path via
+     `MTLDevice.makeLibrary(source:)` even for decorative use. The runtime fragment follows the fx
+     raster ABI (`fx_fragment` over the prepended `FxUniforms`/`VSOut`, linked with the bundled
+     vertex). Android compiles `RuntimeShader(agsl)` directly.
+   - **Caching is platform-shaped.** iOS caches the immutable `MTLRenderPipelineState` process-wide
+     by source string (compile once). Android cannot share a compiled `RuntimeShader` across
+     surfaces — it is *mutable* (holds per-view uniform state via `setFloatUniform`) — so it is
+     constructed per view (matching the curated path); the registry holds the source. A necessary
+     platform divergence, not a defect. Mechanics in `structure.{ios,android}` § shader.
+   - **Errors + safety.** Compile/load failure → `onFxError` (the BYO fallback signal); a malformed
+     source never crashes (iOS nil pipeline; Android guarded `RuntimeShader` construct → no draw).
+     Android reads declared uniforms from the source and guards every write (incl.
+     `time`/`resolution`/`intensity`) — a BYO shader may omit any, and an absent-uniform write
+     aborts on API 33.
+   - **Re-registration.** A new source for an existing id is a clean dev-time replacement (the next
+     mount compiles it); identical source is an idempotent no-op; both-absent source is rejected.
 
 ## Open questions
 
@@ -193,6 +224,8 @@ events only — no per-frame pointer stream** (`04`/`35`).
 - ~~**BYO asset contract**~~ — **resolved (FX-006; U3-004, 2026-06-10).** The registration
   contract is recorded in Decision 6 above. Build wiring, consumption surface, typing idiom,
   and unregistered-id behavior are all pinned.
+- ~~**Runtime shader compilation**~~ — **resolved (FX-007; DEF-008, 2026-06-14).** Ships as the
+  registry-sourced path (Decision 7); device-verified on both platforms (`tasks/DEF-008`).
 
 ## Sources
 

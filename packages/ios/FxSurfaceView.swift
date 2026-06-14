@@ -47,6 +47,24 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private static let sharedLibrary = sharedDevice.flatMap(loadSharedLibrary)
   private static var pipelineCache: [String: MTLRenderPipelineState] = [:]
 
+  // Runtime (bring-your-own) pipelines compiled from registry source via `makeLibrary(source:)`,
+  // keyed by the full source string — which encodes the iOS platform, the fixed `fx_fragment`
+  // entry point, and the default compile options — so two ids with different source never collide
+  // and the same source never recompiles. Kept separate from the curated `pipelineCache` (keyed by
+  // id over the bundled library), process-lived like it.
+  private static var runtimePipelineCache: [String: MTLRenderPipelineState] = [:]
+
+  // Prepended to every registered MSL source so a bring-your-own fragment can reference the fx
+  // raster ABI. The field order MUST match `FxUniforms` above and the bundled `FxShaders.metal`.
+  // The author supplies `fragment half4 fx_fragment(VSOut in [[stage_in]], constant FxUniforms &u
+  // [[buffer(0)]])`; the bundled `fx_fullscreen_vertex` provides the vertex stage.
+  private static let runtimePreamble = """
+    #include <metal_stdlib>
+    using namespace metal;
+    struct FxUniforms { float time; float2 resolution; float intensity; float pressDepth; float2 touch; };
+    struct VSOut { float4 position [[position]]; float2 uv; };
+    """
+
   // MARK: - Private state
 
   // Allocated lazily on the first active shader (see `ensureEffectSurface`). A surface used
@@ -197,10 +215,19 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   // MARK: - Pipeline
 
+  // The curated shader ids, mirrored from the JS `CURATED_SHADER_IDS` catalog (hand-maintained
+  // per platform, like the Android `CURATED_SHADER_IDS` set). Enforces "curated ids win": a
+  // curated id never falls through to a registry-sourced runtime compile, even when it has no
+  // interactive raster fragment.
+  private static let curatedShaderIds: Set<String> = [
+    "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
+    "aurora", "noise-field", "plasma", "caustics", "edge-glow",
+  ]
+
   /// Returns the render pipeline for a curated shader id from the process-wide cache,
   /// compiling and caching it on first request. Shared across instances because the library
   /// and pixel format are identical for every surface.
-  private static func pipeline(for shaderId: String) -> MTLRenderPipelineState? {
+  private static func curatedPipeline(for shaderId: String) -> MTLRenderPipelineState? {
     if let cached = pipelineCache[shaderId] {
       return cached
     }
@@ -220,6 +247,55 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
       return nil
     }
     pipelineCache[shaderId] = state
+    return state
+  }
+
+  /// Resolves the pipeline for a shader id. A curated id uses the bundled path only — curated ids
+  /// win, so a curated id never falls through to a registry-sourced runtime compile (even a
+  /// hosted-only curated id with no raster fragment reports no renderer). Any non-curated id falls
+  /// back to a registry-sourced runtime compile. nil means no pipeline / no renderer. Note: despite
+  /// the lookup-sounding name this can compile runtime MSL as a side effect (cached by source, so
+  /// off the per-frame path — a cache miss runs only at prop-application time).
+  private static func pipeline(for shaderId: String) -> MTLRenderPipelineState? {
+    if let curated = curatedPipeline(for: shaderId) {
+      return curated
+    }
+    // Curated ids win: never serve a registry source for a curated id. The registry is fed only by
+    // `registerShader`, which already rejects curated-id collisions; this makes the rule
+    // native-enforced rather than dependent on that JS guard.
+    if curatedShaderIds.contains(shaderId) {
+      return nil
+    }
+    guard let source = FxShaderRegistry.shared.source(for: shaderId) else {
+      return nil
+    }
+    return runtimePipeline(forSource: source)
+  }
+
+  /// Compiles a registry-sourced MSL fragment at runtime via `makeLibrary(source:)` and links it
+  /// with the bundled full-screen vertex, caching the pipeline by source. Returns nil when the
+  /// source fails to compile or the bundled vertex is unavailable. Runs at prop-application time,
+  /// not per frame, and only on a cache miss.
+  private static func runtimePipeline(forSource source: String) -> MTLRenderPipelineState? {
+    if let cached = runtimePipelineCache[source] {
+      return cached
+    }
+    guard let device = sharedDevice, let library = sharedLibrary,
+      let runtimeLibrary = try? device.makeLibrary(source: runtimePreamble + "\n" + source, options: nil),
+      let fragmentFunction = runtimeLibrary.makeFunction(name: "fx_fragment"),
+      let vertexFunction = library.makeFunction(name: "fx_fullscreen_vertex")
+    else {
+      return nil
+    }
+
+    let descriptor = MTLRenderPipelineDescriptor()
+    descriptor.vertexFunction = vertexFunction
+    descriptor.fragmentFunction = fragmentFunction
+    descriptor.colorAttachments[0].pixelFormat = colorPixelFormat
+    guard let state = try? device.makeRenderPipelineState(descriptor: descriptor) else {
+      return nil
+    }
+    runtimePipelineCache[source] = state
     return state
   }
 
@@ -331,9 +407,19 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     }
     if Self.pipeline(for: pendingShader) != nil {
       onFxLoad(["shader": pendingShader])
-    } else {
-      onFxError(["shader": pendingShader, "reason": "no renderer for shader id"])
+      return
     }
+    // No pipeline: a registered id with no iOS source degrades to `{via:'none'}` silently (the
+    // pair rule). A registered id whose source failed to compile, or an entirely unknown id, errors.
+    if FxShaderRegistry.shared.isRegistered(id: pendingShader),
+      FxShaderRegistry.shared.source(for: pendingShader) == nil
+    {
+      return
+    }
+    let reason =
+      FxShaderRegistry.shared.isRegistered(id: pendingShader)
+      ? "runtime shader failed to compile" : "no renderer for shader id"
+    onFxError(["shader": pendingShader, "reason": reason])
   }
 
   // MARK: - Child routing
@@ -354,7 +440,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   // MARK: - Effect surface visibility
 
-  /// True when a non-empty shader resolves to a usable pipeline.
+  /// True when a non-empty shader resolves to a usable pipeline (curated or runtime-compiled).
   private var hasActiveEffect: Bool {
     !pendingShader.isEmpty && Self.pipeline(for: pendingShader) != nil
   }

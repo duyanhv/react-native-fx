@@ -33,7 +33,9 @@ export type FxTransitionEndEvent = {
  * This binding remains internal to the runtime layer.
  */
 export type NativeFxSurfaceProps = {
-  shader?: ShaderId;
+  // `ShaderId` keeps autocomplete for curated effects; `string & {}` admits a registered
+  // bring-your-own id (`registerShader`) at the same call site without widening to plain `string`.
+  shader?: ShaderId | (string & {});
   intensity?: number;
   interactionMode?: InteractionMode;
   visible?: boolean;
@@ -53,7 +55,7 @@ export type NativeFxSurfaceProps = {
 
 // The native prop accepts the empty-string sentinel that clears the surface; the public
 // prop is a curated `ShaderId`. Absent ⟺ empty ⟺ no effect (see the wrapper below).
-type NativeProps = Omit<NativeFxSurfaceProps, 'shader'> & { shader: ShaderId | '' };
+type NativeProps = Omit<NativeFxSurfaceProps, 'shader'> & { shader: ShaderId | (string & {}) | '' };
 
 // `requireNativeView` forwards a ref to the native host but does not type it; the cast adds the
 // `ref` slot so the coordinator (presence) can observe host detachment.

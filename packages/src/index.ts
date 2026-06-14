@@ -9,6 +9,13 @@ export type {
   SymbolAnimation,
   SymbolConfig,
 } from './effects/catalog';
+export {
+  isRegisteredShader,
+  type RegisterShaderSpec,
+  registeredShaderIds,
+  registerShader,
+  type ShaderSource,
+} from './effects/registry';
 export { fx } from './fx';
 export type { Edge, MotionSpec, Origin, PresenceMotion, Travel } from './motion/types';
 export { FxHostedView, type NativeFxHostedProps } from './runtime/FxHostedView';

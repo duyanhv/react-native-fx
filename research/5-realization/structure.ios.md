@@ -253,6 +253,32 @@ intended tool for in-host glass composition.
   function, so the pipeline is nil and the surface fires `onFxError` rather than drawing the
   wrong shader.
 - **BYO** — same two rungs with developer-supplied `.metal`; no special path.
+- **Runtime compilation (DEF-008 — registry-sourced; spike resolved → expo-view only).** A BYO
+  shader registered with inline source (`registerShader({ source: { ios, android } })`) compiles
+  at runtime instead of needing a build-time `.metallib`. The first-party runtime compile path is
+  **`MTLDevice.makeLibrary(source:)`** → a `MTLFunction` → `MTLRenderPipelineState`, used by the
+  **expo-view raster rung**. **Spike result (DEF-008 step 1): the hosted `.colorEffect` path
+  cannot take a runtime shader, so runtime-source shaders lower through the expo-view Metal path
+  even for decorative use.** The SwiftUI `Shader` surface admits a function only through a
+  `ShaderLibrary`, whose only public initializers are `.default`, `init(url:)`, and `init(data:)`
+  (a *compiled* `.metallib` URL/blob) — there is no public initializer over an `MTLLibrary`,
+  `MTLFunction`, or MSL source string (verified, iOS 26.5 SDK), and `makeLibrary(source:)` yields
+  an `MTLLibrary` with no public path back to metallib `Data`. So a runtime-compiled library has
+  no bridge into `.colorEffect`; the negative is an API-surface fact, not a render quirk. The
+  on-device render of the expo-view lowering is confirmed by the DEF-008 device scenario (point
+  5). **Runtime BYO consumes via the `FxSurfaceView` (expo-view) `shader` prop on both platforms.**
+  The runtime fragment ABI mirrors the bundled raster path: the author supplies MSL that defines
+  `fragment half4 fx_fragment(VSOut in [[stage_in]], constant FxUniforms &u [[buffer(0)]])`; fx
+  prepends a fixed preamble (the `FxUniforms` + `VSOut` struct definitions) and links the bundled
+  `fx_fullscreen_vertex` with the runtime fragment. Compiled pipelines cache by the **source
+  string** (which encodes platform=iOS, the fixed `fx_fragment` name, and the default compile
+  options) in a process-wide runtime cache distinct from the curated `shaderId` cache — so two ids
+  with different source never collide and the same source never recompiles; compile failure →
+  `onFxError`. A registered id with no iOS source degrades to `{via:'none'}` (silent, the pair
+  rule); an unknown id (neither curated nor registered) fires `onFxError`. **Re-registration is a
+  clean dev-time replacement:** re-registering an id with new source overwrites the registry entry;
+  the next mount compiles the new source under its own cache key (the prior pipeline lingers,
+  process-lived and harmless); re-registering identical source is an idempotent no-op.
 - **Load/error events** — `FxSurfaceView` dispatches `onFxLoad`/`onFxError` once per shader
   change (never per frame — rule #1): a usable id whose pipeline compiles loads, clearing to
   empty is silent, anything else errors. This is the signal a BYO consumer falls back on

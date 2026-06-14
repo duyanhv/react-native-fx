@@ -291,6 +291,31 @@ Each section expands the Android rungs from `02`.
   interactive shader both declares and uses `pressDepth`/`touch`, so a declared uniform is
   always present to write.
 
+- **Runtime compilation (DEF-008 — registry-sourced).** Android already compiles
+  `RuntimeShader(agslString)` at runtime from a bundled asset; the DEF-008 delta is small —
+  accept the AGSL string from JS (`registerShader({ source: { ios, android } })`) into a
+  process-wide registry (`FxShaderRegistry`, keyed by id) and compile it the same way. The
+  `shader`-prop path resolves a registered id's source from the registry instead of opening an
+  asset; a curated id still reads its asset. The `FxSurfaceShaderView` reconstructs its
+  `RuntimeShader` only when the resolved **id** changes (the `shaderId` guard), not on
+  intensity/uniform changes — so a uniform change never recompiles, and two ids resolve to two
+  instances with their own source (no collision). A re-registered id keeps rendering its prior
+  source on a live view and picks up the new source on the next mount (the fresh view resolves the
+  current registry entry). A `RuntimeShader`
+  carries mutable per-instance uniform state, so it cannot be shared across views; each view owns
+  its instance (construction from an in-memory source string is a cheap parse — the curated asset
+  read is the only file I/O, and BYO has none). A missing `android` source degrades Android to
+  `{via:'none'}` (silent, the pair rule); a registered id whose AGSL fails to compile fires
+  `onFxError`; an unknown id (neither curated nor registered) fires `onFxError`. **Uniform writes
+  are guarded by the same source-declaration scan** the interactive uniforms use — `time`,
+  `resolution`, and `intensity` are written only when the loaded AGSL declares them, so a BYO
+  shader that omits one never hits the API-33 absent-uniform abort. The interactive raster render
+  of runtime shaders rides whatever the interactive renderer becomes (the deferred Android
+  interactive-render gap); the decorative draw-through-`Paint` path takes the runtime-compiled
+  shader directly. **Re-registration is a clean replacement:** a new source for an existing id
+  overwrites the registry entry and the next mount reconstructs; identical source is an idempotent
+  no-op.
+
 ### `filter`
 - **`RenderEffect`** chain — `via:native` · `requires {os:31, hosted}`. Draw-time;
   unlike iOS, may be applied over content without severing touch (still a step inside an

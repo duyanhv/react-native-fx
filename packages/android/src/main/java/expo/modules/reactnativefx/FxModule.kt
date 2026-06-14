@@ -16,6 +16,12 @@ class FxModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ReactNativeFx")
 
+    // Registers bring-your-own shader source for runtime compilation. The source crosses once,
+    // here; a null source marks a registered id with no android source (silent `{via:'none'}`).
+    Function("registerShader") { id: String, source: String? ->
+      FxShaderRegistry.register(id, source)
+    }
+
     View(FxHostedView::class) {
       Events("onFxTransitionEnd", "onFxLoad", "onFxError")
 

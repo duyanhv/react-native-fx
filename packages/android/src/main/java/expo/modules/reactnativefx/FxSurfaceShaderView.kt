@@ -21,6 +21,9 @@ internal class FxSurfaceShaderView(
   private var targetPressDepth: Float = 0f
   private var pendingTouchX: Float = 0.5f
   private var pendingTouchY: Float = 0.5f
+  private var supportsTimeUniform: Boolean = false
+  private var supportsResolutionUniform: Boolean = false
+  private var supportsIntensityUniform: Boolean = false
   private var supportsPressDepthUniform: Boolean = false
   private var supportsTouchUniform: Boolean = false
   private var isActive: Boolean = false
@@ -59,13 +62,18 @@ internal class FxSurfaceShaderView(
       return
     }
     shaderId = value
-    val source = if (value.isNotBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      context.assets.open(agslAssetPathFor(value)).bufferedReader().use { it.readText() }
-    } else {
-      null
+    val source = resolveShaderSource(value)
+    // A registered source can be malformed; constructing the RuntimeShader parses the AGSL and
+    // throws on a syntax error. Guard so a bad bring-your-own source degrades to no draw rather
+    // than crashing — the load/error event is dispatched separately by the surface.
+    shader = source?.let {
+      try {
+        RuntimeShader(it)
+      } catch (error: Exception) {
+        null
+      }
     }
-    shader = source?.let { RuntimeShader(it) }
-    scanInteractiveUniforms(source)
+    scanUniforms(source)
     visibility = if (shader == null) GONE else VISIBLE
     if (shader == null) {
       stopLoop()
@@ -119,9 +127,15 @@ internal class FxSurfaceShaderView(
     if (width == 0 || height == 0) {
       return
     }
-    currentShader.setFloatUniform("time", currentTime)
-    currentShader.setFloatUniform("resolution", width.toFloat(), height.toFloat())
-    currentShader.setFloatUniform("intensity", pendingIntensity)
+    if (supportsTimeUniform) {
+      currentShader.setFloatUniform("time", currentTime)
+    }
+    if (supportsResolutionUniform) {
+      currentShader.setFloatUniform("resolution", width.toFloat(), height.toFloat())
+    }
+    if (supportsIntensityUniform) {
+      currentShader.setFloatUniform("intensity", pendingIntensity)
+    }
     pendingPressDepth += (targetPressDepth - pendingPressDepth) * 0.35f
     if (supportsPressDepthUniform) {
       currentShader.setFloatUniform("pressDepth", pendingPressDepth)
@@ -149,12 +163,29 @@ internal class FxSurfaceShaderView(
     Choreographer.getInstance().removeFrameCallback(frameCallback)
   }
 
-  // Interactive-uniform support is read from the AGSL declarations, never by calling
-  // setFloatUniform for an absent uniform to see whether it throws: on API 33 that native
-  // error path inside RuntimeShader corrupts the message string and CheckJNI aborts the
-  // process. A declared interactive uniform is always safe to write — AGSL strips only UNUSED
-  // uniforms, and the interactive shaders both declare and use pressDepth/touch.
-  private fun scanInteractiveUniforms(source: String?) {
+  // Resolves the AGSL source for an id: a curated id reads its bundled asset; any other id is a
+  // registered bring-your-own shader whose source comes from the in-memory registry (null when the
+  // id has no android source or is unknown). Below API 33 nothing resolves. The curated asset read
+  // is the only file I/O — bring-your-own source is already in memory.
+  private fun resolveShaderSource(id: String): String? {
+    if (id.isBlank() || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+      return null
+    }
+    if (CURATED_SHADER_IDS.contains(id)) {
+      return context.assets.open(agslAssetPathFor(id)).bufferedReader().use { it.readText() }
+    }
+    return FxShaderRegistry.source(id)
+  }
+
+  // Which uniforms the loaded AGSL declares — read from the source, never probed by calling
+  // setFloatUniform for an absent uniform to see whether it throws: on API 33 that native error
+  // path inside RuntimeShader corrupts the message string and CheckJNI aborts the process. A
+  // declared uniform is always safe to write — AGSL strips only UNUSED uniforms. Curated shaders
+  // declare and use all of these; a bring-your-own shader may omit any, so every write is guarded.
+  private fun scanUniforms(source: String?) {
+    supportsTimeUniform = source != null && declaresUniform(source, "time")
+    supportsResolutionUniform = source != null && declaresUniform(source, "resolution")
+    supportsIntensityUniform = source != null && declaresUniform(source, "intensity")
     supportsPressDepthUniform = source != null && declaresUniform(source, "pressDepth")
     supportsTouchUniform = source != null && declaresUniform(source, "touch")
   }

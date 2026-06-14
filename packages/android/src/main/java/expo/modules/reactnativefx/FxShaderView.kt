@@ -115,6 +115,24 @@ internal class FxShaderView(
   }
 }
 
+/**
+ * The curated, build-time shader ids, kept in lockstep with the JS `CURATED_SHADER_IDS` catalog
+ * and [agslAssetPathFor]. A curated id reads its bundled asset; any other resolved id is a
+ * registered bring-your-own runtime shader.
+ */
+internal val CURATED_SHADER_IDS = setOf(
+  "fractal-clouds",
+  "ink-smoke",
+  "liquid-chrome",
+  "loop",
+  "dots",
+  "aurora",
+  "noise-field",
+  "plasma",
+  "caustics",
+  "edge-glow"
+)
+
 /** Maps the public agnostic shader id to its bundled .agsl asset path. */
 internal fun agslAssetPathFor(id: String): String {
   return when (id) {

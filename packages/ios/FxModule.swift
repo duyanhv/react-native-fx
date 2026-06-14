@@ -9,6 +9,12 @@ public class FxModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ReactNativeFx")
 
+    // Registers bring-your-own shader source for runtime compilation. The source crosses once,
+    // here; a nil source marks a registered id with no iOS source (silent `{via:'none'}`).
+    Function("registerShader") { (id: String, source: String?) in
+      FxShaderRegistry.shared.register(id: id, source: source)
+    }
+
     View(FxHostedView.self) {
       Events("onFxTransitionEnd", "onFxLoad", "onFxError")
 

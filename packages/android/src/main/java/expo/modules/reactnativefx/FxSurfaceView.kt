@@ -295,13 +295,31 @@ class FxSurfaceView(
     lastDispatchedShader = pendingShader
     if (pendingShader.isBlank()) return
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+
+    val curated = CURATED_SHADER_IDS.contains(pendingShader)
+    if (!curated && !FxShaderRegistry.isRegistered(pendingShader)) {
+      onFxError(FxShaderEvent(pendingShader, "no renderer for shader id"))
+      return
+    }
+
+    val source = if (curated) {
+      try {
+        context.assets.open(agslAssetPathFor(pendingShader)).bufferedReader().use { it.readText() }
+      } catch (error: Exception) {
+        onFxError(FxShaderEvent(pendingShader, error.message ?: "shader load failed"))
+        return
+      }
+    } else {
+      // Registered: a null source is a registered id with no android source — degrade silently
+      // to {via:'none'} per the pair rule, no event.
+      FxShaderRegistry.source(pendingShader) ?: return
+    }
+
     try {
-      val assetPath = "shaders/${pendingShader.replace('-', '_')}.agsl"
-      val source = context.assets.open(assetPath).bufferedReader().use { it.readText() }
       RuntimeShader(source)
       onFxLoad(FxShaderEvent(pendingShader))
     } catch (error: Exception) {
-      onFxError(FxShaderEvent(pendingShader, error.message ?: "shader load failed"))
+      onFxError(FxShaderEvent(pendingShader, error.message ?: "shader compile failed"))
     }
   }
 

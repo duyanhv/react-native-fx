@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "DEF-008",
+		title: "Runtime shader compilation",
+		platform: "iOS · Android",
+		what: "app-supplied MSL+AGSL via registerShader · runtime compile · onError on malformed · iOS-only degrades on Android",
+		status: "todo",
+		screen: "runtime-shader",
+	},
 	{
 		id: "DEF-014",
 		title: "Scroll-linked source rung",
