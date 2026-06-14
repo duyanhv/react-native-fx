@@ -10,6 +10,12 @@ ledger process; when it's abandoned, delete it.
 
 ## Current
 
+- [`native-animation-api-extraction.md`](./native-animation-api-extraction.md) — post-v2
+  exploration for extracting native animation concepts and concrete APIs from SwiftUI and Android.
+  Frames the research as two tables — concept extraction and native API extraction — then compares
+  two directions: platform-first surfaces with a universal layer above them, or a combined fx
+  vocabulary first. The provisional answer is hybrid: combined defaults, platform-specific expert
+  timing blocks, and raw native framework APIs private to the resolver.
 - [`lane1-declarative-surface.md`](./lane1-declarative-surface.md) — the JS surface for Lane 1
   interactions, deciding how much of the signal graph to expose. Lands on **preset-first with the
   descriptor as lowered IR**, grounded in the shipped `FxPresence` preset/motion/transition idiom:
