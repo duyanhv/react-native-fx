@@ -100,7 +100,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | DEF-001 | 0-spine | ratify | blocked | no | — | SPINE-008 | trigger: BYO/novel demand | the build-time shader/effect emitter |
 | DEF-002 | 0-spine | ratify | blocked | no | — | SPINE-010 | trigger: per-child control | reconsider Nitro / raw Fabric |
-| DEF-003 | 1-surface | ratify | blocked | no | — | SURF-007 | V2 | portal / root overlay placement |
+| DEF-003 | 1-surface | ratify | merged | no | — | SURF-007 | — | **MERGED on integration/0.1.x (this commit). Ratified Option A (maintainer, 2026-06-14): no fx portal primitive — placement stays the app's job (root-level / the app's portal / RN `Modal`); rules #5/#9 + `54` Decision 4.** fx guarantees portal/`Modal` *coexistence* instead, under the **coordinator-placement invariant** (portal the rendered output, never the `FxPresence` coordinator — same failure mode as the `42` scope ceiling). **SURF-007 resolved.** Docs-closed (planner, 2026-06-14): `54` (new § Placement & portal coexistence + Decision 4 + open question), `42` (scope-ceiling cross-ref), ledger SURF-007 `deferred`→`resolved`. Reviewed — no separate doc (DOC-002/003/005 ratify convention). No code, no device gate. **Fully closed.** [task](./tasks/DEF-003/) |
 | DEF-004 | 1-surface | implement | blocked | no | — | SURF-008 | V2 | `Fx.Stack` JSX-compound skin |
 | DEF-005 | 3-motion | ratify | blocked | no | — | MOT-004 | V2 | `edge`/`origin` partial-override sugar |
 | DEF-006 | 3-motion | implement | blocked | yes | — | MOT-007 | post-V1 | Reanimated UI-thread channel (regime C) |

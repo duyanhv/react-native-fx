@@ -73,7 +73,9 @@ Two consequences:
 
 - **Drive exit with `visible`, not by unmounting the coordinator.** `{show && <FxPresence/>}`
   removes the coordinator before it can animate; the coordinator must live *above* the thing
-  it animates (`35` — a stated `54` contract).
+  it animates (`35` — a stated `54` contract). The same rule governs **portals** (SURF-007,
+  DEF-003): portal the rendered output, never the `FxPresence` coordinator — fx ships no portal
+  primitive but guarantees this coexistence (`54` § Placement & portal coexistence).
 - **Screen-scale presentation is the app's navigator, not a presence preset.** This is why
   the screen-scale `sheet`/`modal` names defer to MOT-001 (above): naming a preset after a
   route-level presentation invites the one use the model cannot serve. `transient` (an

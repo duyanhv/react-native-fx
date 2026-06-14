@@ -77,6 +77,32 @@ mounted; flip `visible`. The wrapped child should carry a stable key.
 flipped false; later re-renders do not propagate into the exiting child, and config changes
 apply from the next phase (the `35` snapshot-semantics invariant, U7-001 preflight).
 
+## Placement & portal coexistence (SURF-007, resolved DEF-003)
+
+fx owns motion, not placement (Decision 4). Overlay content that must escape parent
+clipping/z-order — `transient` banners, the deferred `modal`/`menu`/`tooltip` — is placed by
+the **app**: at the root of its tree, via the app's existing portal (`@gorhom/portal` and the
+like), or inside RN `Modal`, whose native overlay window is the platform's own root layer. fx
+ships **no `Fx.Portal` primitive** — a portal is generic React-tree teleportation (pure JS,
+untouched by the native runtime) and outside the presentation runtime's charter: rule #5 (fx
+wraps any UI kit; it isn't one) and rule #9 (fx reads layout, never owns tree placement).
+
+What fx **does** guarantee is **coexistence**: `FxPresence` works correctly when its rendered
+output is teleported by a portal or hosted in a `Modal`, subject to one invariant.
+
+**The coordinator-placement invariant.** The `FxPresence` coordinator must stay mounted *above*
+the content it animates, so it can hold the exit and hear `onTransitionEnd` — the
+deferred-unmount handshake (`35`). A portal that teleports only the *rendered children* while
+leaving the `FxPresence` element mounted in place is compatible. A portal (or conditional
+render) that unmounts `FxPresence` itself destroys the coordinator before it can animate — the
+same failure mode as the `42` scope ceiling (whole-subtree destruction breaks the handshake).
+So: **portal the children, never the coordinator**, and drive exit with `visible`, not by
+unmounting `FxPresence` (Lifecycle, above).
+
+This is a documentation + coexistence-verification contract, not a feature — the V2 surface
+adds no placement API. Revisit only on the original ledger trigger, if app-owned placement
+proves insufficient in practice.
+
 ## Decisions
 
 1. **`FxPresence` is a stateful coordinator, not a dumb wrapper** — it owns deferred
@@ -89,16 +115,21 @@ apply from the next phase (the `35` snapshot-semantics invariant, U7-001 preflig
    wrap them in one transform target; per-child motion is the `33`/`05` boundary trigger,
    out of scope. Content motion is transform/opacity only (touch-safe).
 4. **fx owns motion, not placement** — overlay positioning is the app's concern via `style`
-   / app layout (or a future portal helper), **not** `FxPresence` and **not** `composition`
-   (which stays effect-layer positioning only, `50`).
+   / app layout, the app's own portal, or RN `Modal`, **not** `FxPresence` and **not**
+   `composition` (which stays effect-layer positioning only, `50`). **No fx portal primitive**
+   (SURF-007, DEF-003); fx guarantees portal/`Modal` *coexistence* instead (§ Placement &
+   portal coexistence).
 5. **Separate component from the effect render-targets** (`<EdgeGlow>` etc.) — it wraps
    content rather than drawing; it may share the native view base (`51`) but is its own
    public component.
 
 ## Open questions
 
-- **Portal** — does fx ever need a root overlay layer for `transient`/`modal`, or is
-  placement always the app's job? Lean: app's job in v1.
+- ~~**Portal** — does fx ever need a root overlay layer for `transient`/`modal`, or is
+  placement always the app's job?~~ **Resolved (SURF-007, DEF-003, 2026-06-14):** placement
+  stays the app's job — no fx portal primitive (rules #5/#9). fx guarantees portal/`Modal`
+  coexistence instead (§ Placement & portal coexistence + Decision 4); revisit only on the
+  original trigger.
 - ~~**`uniforms`/`tune` memoization**~~ — **resolved (SURF-010): same as `50`.** Native
   `previousProps` value-equality (not reference) means inline builders need no manual memo;
   both primitive and nested `Record` props compare by value. Verified on SDK 56, iOS + Android.
