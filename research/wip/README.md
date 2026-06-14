@@ -16,6 +16,15 @@ ledger process; when it's abandoned, delete it.
   two directions: platform-first surfaces with a universal layer above them, or a combined fx
   vocabulary first. The provisional answer is hybrid: combined defaults, platform-specific expert
   timing blocks, and raw native framework APIs private to the resolver.
+- [`interactive-content-distort.md`](./interactive-content-distort.md) — a named **feature**
+  exploration (water-ripple): make DEF-009's stateless Android content-distort *interactive* — a
+  ripple that follows touch, and an `(x,y)` impulse like a rock dropped in water. Classified
+  against the frameworks above as a **Lane 1, Boundary-B `source` → effect-uniform** case
+  (parametric multi-source = additive; height-field simulation = gated regime C). Android-only over
+  live content; iOS only over fx-owned content. Enabled by DEF-020 (imperative handle) / DEF-011
+  (gesture) / DEF-006 (UI-thread channel); its animation composes through the chaining API in
+  `native-animation-api-extraction.md` — so it is **post-v2**. Findings + placement only — no
+  decision, no ledger row.
 - [`lane1-declarative-surface.md`](./lane1-declarative-surface.md) — the JS surface for Lane 1
   interactions, deciding how much of the signal graph to expose. Lands on **preset-first with the
   descriptor as lowered IR**, grounded in the shipped `FxPresence` preset/motion/transition idiom:

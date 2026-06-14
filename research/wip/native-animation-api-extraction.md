@@ -422,5 +422,7 @@ Architecture changes begin only when a capability needs one of these:
 - Local Xcode iOS 26.5 SwiftUICore symbol graph, extracted with `swift-symbolgraph-extract`.
 - `research/wip/capability-boundary-classifier.md` — boundary and regime classifier.
 - `research/wip/lane1-signal-grammar.md` — source-driven Lane 1 grammar.
+- `research/wip/interactive-content-distort.md` — a feature applying this chaining API + the Lane 1
+  `source` grammar: the interactive water-ripple (gesture-driven effect uniform; impulse animation).
 - `research/3-motion/41-motion-vocabulary.md` — `preset` / `motion` / `transition` split.
 - `research/4-runtime/34-animation-driver.md` — target driver and retarget mechanics.
