@@ -14,6 +14,12 @@ packages/*/build/
 *.tsbuildinfo
 references/
 
-# device-evidence screen recordings stay local — stills + telemetry carry the proof
+# device-evidence binaries stay local — the device.md write-up + telemetry (.json/.txt/.log)
+# carry the proof; screenshots and recordings are recoverable from history if ever needed
+research/**/evidence/**/*.png
+research/**/evidence/**/*.jpg
+research/**/evidence/**/*.jpeg
+research/**/evidence/**/*.gif
+research/**/evidence/**/*.webp
 research/**/evidence/**/*.mp4
 research/**/evidence/**/*.mov
