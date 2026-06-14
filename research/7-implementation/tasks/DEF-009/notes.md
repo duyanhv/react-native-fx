@@ -73,6 +73,32 @@
   tsc 0; Android `:react-native-fx:compileDebugKotlin --rerun-tasks` (forced, not UP-TO-DATE) BUILD
   SUCCESSFUL + `:app:assembleDebug` BUILD SUCCESSFUL. iOS unchanged, not rebuilt.
 
+## Rework (executor, 2026-06-15, post-device-gate)
+
+- **Blocking defect (device-confirmed): ripple inert on initial mount and after navigating back.**
+  `startLoop()` is gated on `target.isAttachedToWindow` (the `intermediateContainer` child). The
+  parent `FxNativeView.onAttachedToWindow → resume()` fires *before* the child attaches — a
+  ViewGroup dispatches its own `onAttachedToWindow` ahead of attaching children — so `resume()` saw
+  `attached=false` and bailed, and nothing retried once the child attached. Background→foreground
+  worked only because the view stayed attached. The sibling `FxSurfaceShaderView` dodges this by
+  being a `View` with its own `onAttachedToWindow`; the helper is not a `View`. (Device evidence:
+  `evidence/device.md` + `evidence/logs/choreographer-lifecycle.md`.)
+- **Fix (`FxContentDistortion.kt` only).** Added an `init` block registering a
+  `View.OnAttachStateChangeListener` on `target`: `onViewAttachedToWindow → startLoop()` when
+  `isEnabled`, `onViewDetachedFromWindow → stopLoop()`. This gives the helper the container's *own*
+  attach signal at the correct moment, independent of the parent's premature `onAttachedToWindow`.
+  `update()`/`pause()`/`resume()` unchanged — `startLoop`'s `isLooping` guard and `stopLoop`'s
+  idempotence make the now-redundant calls safe; the listener shares the helper's lifecycle, so no
+  removal. Below API 33 `isEnabled` never flips, so the listener's `startLoop` never fires (inert).
+  `FxSurfaceView.kt` / `FxNativeView.kt` / iOS untouched; the rule-#1 `onWindowFocusChanged` and
+  pause/resume wiring kept.
+- **Re-gate (green):** packages lint clean / tsc --noEmit 0 / build 0 / swift:lint clean / 73 tests;
+  Android `:react-native-fx:compileDebugKotlin --rerun-tasks` (forced, 58 tasks executed, not
+  UP-TO-DATE) BUILD SUCCESSFUL + `:app:assembleDebug` BUILD SUCCESSFUL. iOS unchanged, not rebuilt.
+- **Next:** re-run the Android device gate, focused on the regressed rows — ripple animates on
+  initial mount *without* a toggle, and animates again after navigating away and back — plus a
+  quick re-confirm of background/foreground pause (must still stop off-window).
+
 ## Deferred to docs-closed (planner, after device — README step 6, not done here)
 
 - `02` prose note still reads "merely planned on Android" (the worked-example *data* is flipped;

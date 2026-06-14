@@ -67,6 +67,25 @@ internal class FxContentDistortion(
     }
   }
 
+  // The parent dispatches its own onAttachedToWindow before it attaches this content container, so a
+  // resume() driven off the parent's signal still sees the container detached and bails. Drive the
+  // loop off the container's own attach signal instead, so a mount (or re-navigation) that already
+  // has the effect enabled animates without a manual toggle. isLooping/stopLoop keep this idempotent
+  // with update()/resume(); the listener shares the helper's lifecycle, so it is never removed.
+  init {
+    target.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+      override fun onViewAttachedToWindow(view: View) {
+        if (isEnabled) {
+          startLoop()
+        }
+      }
+
+      override fun onViewDetachedFromWindow(view: View) {
+        stopLoop()
+      }
+    })
+  }
+
   /**
    * Reconciles the distortion target and strength from one resolved prop batch. `'ripple'` is the
    * only recognized value; absent or unrecognized clears the effect. A no-op below API 33.
