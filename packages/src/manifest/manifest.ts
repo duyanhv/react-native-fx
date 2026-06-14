@@ -286,6 +286,38 @@ export const manifest = {
       },
     },
 
+    // ── source — a native scroll value driving presentation ──────────
+    // The third driver node (target / clock / source). A native scroll position maps to
+    // fx's own hosted effect tiles entirely in the render server — zero per-frame JS *and*
+    // zero per-frame main-thread work, the guarantee that holds only on iOS hosted. The
+    // rung drives fx-owned content, never wrapped RN content. Scroll is the clock,
+    // so there is no perpetual loop and no `cadence`. Android's ladder is empty → {via:'none'}
+    // (a separate later rung), as is the ambient-RN-scroll best-effort tier.
+    source: {
+      id: 'source',
+      kind: 'driver',
+      interaction: 'self',
+      phase: 'v2',
+      properties: {
+        opacity: { type: 'number', default: 1, range: [0, 1] },
+        scale: { type: 'number', default: 1, range: [0, 4] },
+      },
+      lower: {
+        ios: [
+          {
+            via: 'native',
+            primitive: 'ScrollView',
+            applyVia: '.scrollTransition',
+            clock: 'none',
+            target: 'effect',
+            requires: { os: 17, substrate: 'hosted' },
+            note: "render-server scroll-linked presentation of fx's own hosted tiles; SwiftUI's standard edge transition is the default",
+          },
+        ],
+        android: [],
+      },
+    },
+
     // ── symbol — SF Symbols on iOS; Android planned ──────────────────
     symbol: {
       id: 'symbol',

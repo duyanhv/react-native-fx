@@ -218,6 +218,33 @@ describe('select()', () => {
     expect(result.via).toBe('none');
   });
 
+  // ── source: iOS hosted render-server tier only ─────────────────
+
+  it('selects the scroll source rung on iOS 17+', () => {
+    const result = select(manifest.nodes.source, ios, { deviceOS: 17 });
+    expect(result.via).toBe('native');
+    expect(result.primitive).toBe('ScrollView');
+    expect(result.applyVia).toBe('.scrollTransition');
+    expect(result.target).toBe('effect');
+    expect(result.requires.substrate).toBe('hosted');
+  });
+
+  it('degrades the scroll source to via: none below iOS 17', () => {
+    const result = select(manifest.nodes.source, ios, { deviceOS: 16 });
+    expect(result.via).toBe('none');
+  });
+
+  it('degrades the scroll source to via: none on Android (empty ladder)', () => {
+    const result = select(manifest.nodes.source, android, { deviceOS: 34 });
+    expect(result.via).toBe('none');
+  });
+
+  it('returns none when the scroll source is asked for the content target', () => {
+    // The render-server tier drives fx's own effect, never wrapped RN content.
+    const result = select(manifest.nodes.source, ios, { deviceOS: 18, target: 'content' });
+    expect(result.via).toBe('none');
+  });
+
   // ── non-driver nodes ignore target ─────────────────────────────
 
   it('ignores target for non-driver nodes', () => {

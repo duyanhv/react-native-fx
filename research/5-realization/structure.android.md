@@ -347,6 +347,16 @@ The driver node (`02`) lowers two ways, by **target**:
   § `shape-morph`; progressive enhancement). The native side of the eased-`transition`
   channel (`40`).
 
+### `source` — deferred (iOS-hosted first)
+
+The `source` driver (`02` decision 14) ships its render-server-fidelity rung on iOS hosted
+first (structure.ios.md § `source`); Android has **no rung yet** → empty ladder, `{via:'none'}`.
+Android's equivalent is the **best-effort** tier of the same driver (zero per-frame JS, but a
+main-thread/UI-thread reader, not render-server fidelity — `02` d14): a Compose
+`scrollable`/`nestedScroll` offset or a native scroll-offset reader mapped to the effect, the
+Compose analogue of SwiftUI's `scrollTransition`/`visualEffect`. It lands with its own task when
+the Android `source` rung is triggered; this is a documented platform asymmetry, not a defect.
+
 ### `symbol` — planned / optional (deferred from V1)
 - **AVD / Lottie** — `via:native`(AVD) or `via:lib`(Lottie) · `requires {os:21, hosted}` ·
   **`status:planned`**. `symbol` stays **iOS-only in V1**; Android AVD/Lottie support is

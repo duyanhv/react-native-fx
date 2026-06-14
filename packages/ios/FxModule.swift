@@ -70,6 +70,23 @@ public class FxModule: Module {
       }
     }
 
+    View(FxScrollView.self) {
+      Prop("axis") { (view: FxScrollView, value: String) in
+        view.setAxis(value)
+      }
+      Prop("tiles") { (view: FxScrollView, value: [FxScrollTile]) in
+        view.setTiles(value)
+      }
+
+      AsyncFunction("snapshot") { (view: FxScrollView) in
+        return view.snapshot()
+      }
+
+      OnViewDidUpdateProps { (view: FxScrollView) in
+        view.applyResolvedConfig()
+      }
+    }
+
     View(FxGroupView.self) {
       Events("onFxTransitionEnd", "onFxLoad", "onFxError")
 

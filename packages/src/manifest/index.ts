@@ -7,6 +7,7 @@ export type {
   MotionConfig,
   NodeId,
   ShaderConfig,
+  SourceConfig,
   SymbolEffectConfig,
 } from './config';
 export { manifest } from './manifest';

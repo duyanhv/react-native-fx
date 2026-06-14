@@ -313,6 +313,41 @@ The driver node (`02`) lowers two ways, by **target**:
   (intro/outro/state) — the native side of the eased-`transition` channel (`40`); JS sets
   discrete targets, SwiftUI animates between them.
 
+### `source`
+
+**Shipped (DEF-014, device-ratified 2026-06-14).** The third driver node (`02` decision 14) —
+a native **scroll** value mapped to presentation
+natively, the render-server-fidelity tier of the `source` driver. iOS hosted is the only
+substrate where the guarantee is both zero per-frame JS *and* zero per-frame main-thread work
+(`02` d14); the rung is hosted-only and drives fx's **own** content, never wrapped RN content.
+
+- **Render-server scroll source** — `requires {os:17, substrate:hosted}` · `target:'effect'` ·
+  `applyVia:.scrollTransition` / `.visualEffect`. fx hosts its own SwiftUI `ScrollView`; the
+  effect items inside it carry `.scrollTransition { content, phase in … }` (the standard
+  per-item edge transition) or `.visualEffect { content, proxy in … }` reading
+  `proxy.frame(in:)` against the scroll coordinate space. SwiftUI runs the mapping in the
+  **render server**, off the main thread — the only tier where both per-frame guarantees hold.
+- **The default mapping is SwiftUI's own** standard scroll transition (edge fade + scale) — the
+  shape-native law, not an invented cross-platform curve. An explicit `source` binding maps
+  scroll progress to the effect's animatable properties; the resting (on-screen, fully-scrolled-in)
+  shape is identity.
+- **Content is fx-owned; the scroll source is fx's hosted `ScrollView`.** Applying a
+  scroll-linked SwiftUI effect to live RN content would require hosting it, severing RN touch —
+  the same severing rule that puts `content-distort` out of scope (§Touch contract, rule #4). An
+  fx view dropped inside an RN `UIScrollView` has no SwiftUI scroll ancestor for
+  `.scrollTransition` / the `.scrollView` coordinate space to resolve against, so render-server
+  fidelity is inherently the self-contained-hosted case.
+- **Clock.** The advancing value is scroll offset, read by SwiftUI's scroll pipeline — no
+  `CADisplayLink`, no `TimelineView`. The scroll *is* the clock; at rest nothing advances.
+- **Hosting boundary.** The hosted `ScrollView` mounts through the proven persistent-
+  `UIHostingController` path (§Hosting mechanics); confirm it sizes through the auto-Host
+  boundary (`shadowNodeProxy.setStyleSize`) and that its own scroll gesture stays self-contained
+  (rule #3 self-gesturing) — never nest interactive RN content as the first child of the
+  `RNHostView` (the §Hosting mechanics landmine).
+- **fallback.** Below iOS 17 the ladder is empty → `{via:'none'}`: content renders static, no
+  scroll-linked motion. The ambient-RN-scroll best-effort tier (a native `contentOffset` reader
+  feeding the hosted view) and the Android rung are separate later rungs, not this one.
+
 ### `symbol`
 - **`.symbolEffect`** — `requires {os:17, hosted}` (`.breathe`/`.rotate`/`.wiggle`
   need 18); `.contentTransition(.symbolEffect)` for symbol→symbol. Self-contained,

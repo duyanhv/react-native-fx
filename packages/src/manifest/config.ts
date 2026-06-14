@@ -57,6 +57,7 @@ export type MaterialEffectConfig = ConfigFor<'material'>;
 export type ShaderConfig = ConfigFor<'shader'>;
 export type FilterConfig = ConfigFor<'filter'>;
 export type MotionConfig = ConfigFor<'motion'>;
+export type SourceConfig = ConfigFor<'source'>;
 export type SymbolEffectConfig = ConfigFor<'symbol'>;
 
 // ── conformance: derived config vs the shipped public catalog types ──

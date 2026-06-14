@@ -180,6 +180,10 @@ Two clean routes, never per-frame `setUniform` from the **JS thread**:
    driver (decision 7)** — phase V2, substrate-tiered: the guarantee is zero per-frame
    **JS** everywhere; render-server-fidelity mapping only on iOS `hosted` (SwiftUI
    `visualEffect`/`scrollTransition`); a main-thread/UI-thread reader elsewhere.
+   **The iOS-hosted render-server tier is shipped (DEF-014):** an fx-owned hosted
+   SwiftUI `ScrollView` drives its own effect tiles via `.scrollTransition`, zero
+   per-frame JS *and* zero per-frame main-thread work. The ambient-RN-scroll best-effort
+   tier and the Android rung remain deferred.
 2. **UI-thread channel** — Reanimated shared values / animated props (gesture writes a
    shared value off the JS thread, bound to a uniform). The silky bring-your-own-gesture
    path; **post-V1**, additive over the same uniform names — the deferred UI-thread tier
@@ -213,7 +217,9 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
    And **the regime-C native source read is the `source` driver** — phase V2 (after
    `target`+`clock`), substrate-tiered: zero per-frame JS everywhere, render-server
    fidelity only on iOS `hosted`, UI-thread-mapped elsewhere. That tier distinction is
-   first-class in the contract, never papered over.
+   first-class in the contract, never papered over. **The iOS-hosted render-server tier
+   is shipped (DEF-014)** — `fx.source.scroll` + the `Fx.Scroll` hosted context; the
+   ambient-RN-scroll and Android tiers stay deferred.
 
 ## Open questions
 
@@ -223,9 +229,11 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
 - **The named-state vocabulary** per `FxView` preset (`idle`/`selected`/… ; ties to `57`/`50`).
   `mood`/`playing` are demoted to effect-specific *uniforms*, never global props.
 - ~~**Native-source-read API** — how an effect declares "track this native scroll/pager"
-  (the Regime-C option-1 surface); is it V1 or V2?~~ **Resolved (decision 7, DOC-009):**
-  the `source` driver, V2, substrate-tiered (zero per-frame JS everywhere; render-server
-  fidelity only on iOS hosted).
+  (the Regime-C option-1 surface); is it V1 or V2?~~ **Resolved (decision 7, DOC-009)** and
+  **shipped on iOS hosted (DEF-014, 2026-06-14):** the `source` driver, substrate-tiered. The
+  concrete surface is `fx.source.scroll({ axis })` bound to the `Fx.Scroll` hosted scroll
+  context (tiles as fx-owned data, never wrapped RN content); `50` owns the surface. The
+  ambient-RN-scroll best-effort tier and the Android rung remain deferred.
 - **BYO envelope** — how a BYO author declares an intro/outro envelope in `.metal`/`.agsl`
   so it isn't hardcoded to the curated glow.
 

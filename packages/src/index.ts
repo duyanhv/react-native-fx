@@ -19,9 +19,13 @@ export {
   type InteractionMode,
   type NativeFxSurfaceProps,
 } from './runtime/FxSurfaceView';
+export type { ScrollAxis, ScrollSourceSpec, SourceSpec } from './source/types';
 export {
+  Fx,
   FxPresence,
   type FxPresenceProps,
+  type FxScrollProps,
+  type FxScrollTile,
   type FxTransition,
   type FxTransitionEnd,
   type PresencePreset,

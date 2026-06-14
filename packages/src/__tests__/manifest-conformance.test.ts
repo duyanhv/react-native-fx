@@ -88,3 +88,25 @@ describe('manifest shader node', () => {
     expect(Object.keys(manifest.nodes.shader.uniforms)).toEqual(['intensity']);
   });
 });
+
+describe('manifest source node', () => {
+  it('declares the third driver, hosted-only and effect-targeted', () => {
+    const source = manifest.nodes.source;
+    expect(source.kind).toBe('driver');
+    // The hosted ScrollView self-gestures.
+    expect(source.interaction).toBe('self');
+  });
+
+  it('ships only the iOS render-server rung; Android is an empty ladder', () => {
+    const source = manifest.nodes.source;
+    expect(source.lower.android).toEqual([]);
+    expect(source.lower.ios).toHaveLength(1);
+
+    const rung = source.lower.ios[0];
+    expect(rung.target).toBe('effect');
+    expect(rung.requires).toEqual({ os: 17, substrate: 'hosted' });
+    // Scroll is the clock — no perpetual loop, so no cadence.
+    expect(rung.clock).toBe('none');
+    expect('cadence' in rung).toBe(false);
+  });
+});
