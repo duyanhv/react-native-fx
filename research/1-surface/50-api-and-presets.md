@@ -42,7 +42,7 @@ only, and the `preset`/`motion`/`tune`/`transition` split is the law's shape-nat
 | Prop | Type | Meaning |
 |---|---|---|
 | `preset` | behavior id (`transient`, `lift`, …) | **platform-idiomatic behavior bundle** — fx resolves the *whole shape + timing per platform*. Behavior-named, never UI-named. |
-| `motion` | **typed `MotionSpec` map** | **explicit shape override** — fixes the shape cross-platform. *Different map per component* (phases vs states), never one universal map. |
+| `motion` | **typed `MotionSpec` map** | **explicit shape override** — fixes the shape cross-platform. *Different map per component* (phases vs states), never one universal map. **The sole shape-override channel — no partial top-level shape props (`edge`/`origin`); MOT-004/DEF-005.** |
 | `tune` *(deferred — V1.x / MOT-001)* | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`). Not on the V1 surface (DOC-019). |
 | `transition` | `{ duration?, delay?, easing?, spring? }` | **expert timing override only** — never a shape |
 | `effect` | **`EffectStack`** or effect id | the visual effect bundle/layer(s). **Two meanings by owner:** on `<Fx>` it *is* the fx-owned drawn surface; on `FxView` it is decoration *attached to your content*. |

@@ -235,6 +235,29 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
     separate intent axis (Reanimated: entering/exiting + transitions; Framer: variants +
     transition). It costs nothing to cut now — it does not exist in code. The four-prop design
     is retained for MOT-001's resurrection; the V1 *surface* exposes the triad only.
+14. **No top-level `edge`/`origin` shape sugar — the binary stays (MOT-004, DEF-005,
+    2026-06-14).** The motion surfaces keep two modes only: `preset` (full platform-native
+    shape *and* timing) or an explicit `motion` map (cross-platform shape override; platform
+    timing still falls back to the preset/default driver unless `transition` overrides it). No
+    `edge=`/`origin=` partial-override prop ships. To relocate a preset's edge, use the
+    `motion` map — `fx.motion.edgeIn/edgeOut({from/to})` fixes the semantic shape while
+    platform timing is preserved:
+
+    ```tsx
+    <FxPresence
+      preset="transient"
+      motion={{
+        enter: fx.motion.edgeIn({ from: 'bottom' }),
+        exit:  fx.motion.edgeOut({ to: 'bottom' }),
+      }}
+    />
+    ```
+
+    A top-level sugar is rejected on three grounds: it **blurs the shape-native law's** clean
+    default-or-uniform dichotomy; it **duplicates the `motion` map**, which already delivers
+    "platform timing + chosen edge"; and a single `edge=` spanning both phases would imply a
+    reverse — conflicting with **no implicit reverse** (Decision 8). Reconsider only if the
+    `motion` map demonstrably fails a real use case.
 
 ## Open questions
 
@@ -246,11 +269,12 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
   (presence); `lift` (state). `sheet`/`modal` (presence) defer to MOT-001 (`42` — they name
   screen-scale presentations that collide with presence's scope ceiling). The per-platform
   shape and timing defaults are device-pending, owned by MOT-001.
-- **Partial-override sugar (`edge`/`origin`) — deferred.** For now it's binary: `preset`
-  (full platform default) *or* explicit `motion` (full uniform shape); no `edge="bottom"`
-  middle ground. Reconsider as scoped `FxPresence` sugar only if demand is real (the risk is
-  a slippery slope — why `edge` but not `distance`/`origin`? — and a semantically fuzzy
-  "platform shape but from the bottom").
+- ~~**Partial-override sugar (`edge`/`origin`)**~~ — **Resolved (MOT-004, DEF-005,
+  2026-06-14): rejected.** The binary stays — `preset` (full platform default) *or* explicit
+  `motion` (cross-platform shape override, platform timing preserved); no `edge="bottom"`
+  middle ground (Decision 14). Edge/origin control lives inside the `motion` map
+  (`fx.motion.edgeIn/edgeOut({from/to})`, `MotionSpec.origin`); a top-level prop would blur the
+  shape-native law, duplicate the map, and conflict with no-implicit-reverse (Decision 8).
 - ~~The selector `target` axis (`content`/`effect`).~~ **Resolved in `0-spine/02`** (decision
   11: declared per-rung, default `'effect'`).
 - ~~Which semantic primitives ship in v1 (`appear`/`dismiss` certain; `emphasis`/

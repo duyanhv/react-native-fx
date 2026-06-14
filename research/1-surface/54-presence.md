@@ -44,6 +44,18 @@ knob — is deferred from the V1 surface, DOC-019; it resurrects with MOT-001.)
 - **`motion` is a typed map of *lifecycle phases*** — `{ enter, exit }` — not mounted states
   (that is `FxView`, `57`). Fallback: `userMotion[k] ?? presetMotion[k] ?? identity`; no
   implicit reverse (`41`).
+- **Relocate a preset's edge through `motion`, not a top-level prop.** There is no
+  `edge=`/`origin=` partial-override sugar (MOT-004/DEF-005); to keep the platform's shape but
+  enter from a different edge, supply a `motion` map — it fixes the semantic shape while
+  platform timing is preserved (unless `transition` overrides it). Specify **`enter` and `exit`
+  separately** — there is no implicit reverse (`41` Decisions 8, 14):
+
+  ```tsx
+  <FxPresence
+    preset="transient"
+    motion={{ enter: fx.motion.edgeIn({ from: 'bottom' }), exit: fx.motion.edgeOut({ to: 'bottom' }) }}
+  />
+  ```
 - **`transition` is expert timing** — it refines a `preset` *or* an explicit `motion`, and is
   never a shape. (`tune`, the intent-adjustment knob, would refine the same way but is deferred
   from the V1 surface — DOC-019.)
