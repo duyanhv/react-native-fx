@@ -110,6 +110,30 @@
   `RuntimeShader`, and scans declared uniforms from the loaded source. Missing or malformed asset
   source clears/no-ops the distortion instead of crashing or starting a draw loop with no shader.
 
+## Asset re-gate — headless (planner, 2026-06-15)
+
+- The bundled-asset path's only headless failure mode (the AGSL asset not merging into the APK) is
+  **disproven**. From `example/android`: `:react-native-fx:compileDebugKotlin --rerun-tasks` (forced,
+  393 actionable / 393 executed) + `:app:assembleDebug` BUILD SUCCESSFUL.
+- `unzip -l app-debug.apk` confirms `assets/shaders/content_ripple.agsl` (552 B) is inside the freshly
+  built APK (11:06), alongside the 10 device-proven sibling shaders (`aurora`, `caustics`, `dots`, …).
+  `ensureShader()` will resolve from the bundled asset on device.
+- This same build also recompiled the post-DEF-009 Android review-fix commits (`5c32983` shader
+  lifecycle, `57bc2dc` rule-#1 focus / BYO same-id reload / unresolved-shader visibility) — Kotlin
+  compiles green with them in tree.
+- **Remaining gap = device only:** a bounded R1 confirm that the ripple still distorts on first render
+  sourced from the bundled asset. R2/R3/touch/intensity/pre-33/iOS are independent of *where* the
+  shader text comes from and stay covered by the prior 7/7 — do not re-run.
+
+## Asset re-gate — device R1 PASS (2026-06-15)
+
+- Device run 3 (Android, content-distort screen, default `rippling=true`, no toggle): **R1 PASS** —
+  heading + both buttons visibly warped on first render, warp phase shifts between two frames
+  (~500 ms apart) confirming the loop runs; ~59.9 fps. Evidence: `evidence/device-run3.md`
+  (+ gitignored `run3-asset-r1-*.png`). Planner independently eyeballed both frames.
+- **DEF-009 fully closed:** prior 7/7 (inline build) + run-3 R1 (bundled-asset build) = the
+  asset-load path is device-proven. State → `ready-to-merge`. Human owns the `merged` tick.
+
 ## Deferred to docs-closed (planner, after device — README step 6, not done here)
 
 - `02` prose note still reads "merely planned on Android" (the worked-example *data* is flipped;
