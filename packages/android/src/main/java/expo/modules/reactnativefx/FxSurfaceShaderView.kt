@@ -16,6 +16,9 @@ internal class FxSurfaceShaderView(
   private val paint = Paint()
   private var shader: RuntimeShader? = null
   private var shaderId: String = ""
+  // The registry source resolved on the last set, so a same-id `registerShader` replacement
+  // (its source changed under an unchanged id) recompiles instead of short-circuiting.
+  private var lastRegistrySource: String? = null
   private var pendingIntensity: Float = 0.8f
   private var pendingPressDepth: Float = 0f
   private var targetPressDepth: Float = 0f
@@ -58,10 +61,16 @@ internal class FxSurfaceShaderView(
   override val pointerEvents: PointerEvents = PointerEvents.NONE
 
   fun setShaderId(value: String) {
-    if (shaderId == value) {
+    // Recompile when the id OR the registry source changes. A curated id reads a stable bundled
+    // asset (registry source null), so an id match alone short-circuits it — no per-batch asset
+    // read during, e.g., an intensity drag. A registered id's source can be replaced under the
+    // same id, which the source comparison catches.
+    val registrySource = if (CURATED_SHADER_IDS.contains(value)) null else FxShaderRegistry.source(value)
+    if (shaderId == value && registrySource == lastRegistrySource) {
       return
     }
     shaderId = value
+    lastRegistrySource = registrySource
     val source = resolveShaderSource(value)
     // A registered source can be malformed; constructing the RuntimeShader parses the AGSL and
     // throws on a syntax error. Guard so a bad bring-your-own source degrades to no draw rather

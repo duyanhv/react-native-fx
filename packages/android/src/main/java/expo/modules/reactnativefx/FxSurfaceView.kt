@@ -77,8 +77,11 @@ class FxSurfaceView(
   private var pendingPresenceMotion: FxPresenceMotion? = null
 
   // The last shader a load/error event was dispatched for, so the semantic events fire once
-  // per change — never a per-frame stream. null until the first shader is applied.
+  // per change — never a per-frame stream. null until the first shader is applied. The registry
+  // source is tracked alongside the id because `registerShader` can replace the same id's source
+  // (valid->broken or broken->valid), which must re-emit even though the id is unchanged.
   private var lastDispatchedShader: String? = null
+  private var lastDispatchedSource: String? = null
   private var effectSurfaceView: FxSurfaceShaderView? = null
   private val pressHandler = FxPressHandler(this)
 
@@ -106,7 +109,7 @@ class FxSurfaceView(
 
   /**
    * Captures the RN-assigned post-layout frame for synchronous native reads by the
-   * future content-motion driver. Nothing crosses to JS.
+   * content-motion driver and the presence coordinator. Nothing crosses to JS.
    */
   internal val layoutObserver = FxLayoutObserver(this)
 
@@ -220,6 +223,15 @@ class FxSurfaceView(
     contentDistortion.update(pendingContentDistortion, pendingIntensity)
     pressHandler.update(pendingInteractionMode)
     presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
+
+    // A config batch can land while the window is unfocused (app backgrounded, behind a dialog) but
+    // still attached, where the shader and content-distort loops start on attach. Re-pause so a
+    // batch never resumes a frame loop while the window lacks focus (rule #1); focus-gain resumes
+    // via onWindowFocusChanged. (The content-motion springs self-suspend off-window — see
+    // FxAnimationDriver.pause.)
+    if (!hasWindowFocus()) {
+      pausePresentationLoop()
+    }
   }
 
   override val pointerEvents: PointerEvents
@@ -293,8 +305,10 @@ class FxSurfaceView(
    * not an error.
    */
   private fun dispatchShaderLoadState() {
-    if (pendingShader == lastDispatchedShader) return
+    val currentSource = FxShaderRegistry.source(pendingShader)
+    if (pendingShader == lastDispatchedShader && currentSource == lastDispatchedSource) return
     lastDispatchedShader = pendingShader
+    lastDispatchedSource = currentSource
     if (pendingShader.isBlank()) return
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
 
@@ -417,14 +431,15 @@ class FxSurfaceView(
 
   /**
    * Pushes the active shader id and intensity onto the effect surface view, creating it on first
-   * use, and hides it when no effect is active so it never obscures the content-motion container.
+   * use. The view shows itself only when the id resolves to a real shader and goes `GONE`
+   * otherwise, so a blank, unknown, source-less, or malformed id never leaves an empty overlay
+   * obscuring the content-motion container.
    */
   private fun updateEffectSurfaceVisibility() {
-    val hasActiveEffect = pendingShader.isNotBlank()
-    val view = if (hasActiveEffect) ensureEffectSurfaceView() else effectSurfaceView
-    view?.setShaderId(if (hasActiveEffect) pendingShader else "")
-    view?.setIntensity(pendingIntensity)
-    view?.visibility = if (hasActiveEffect) View.VISIBLE else View.GONE
+    val hasShaderProp = pendingShader.isNotBlank()
+    val view = if (hasShaderProp) ensureEffectSurfaceView() else effectSurfaceView ?: return
+    view.setShaderId(if (hasShaderProp) pendingShader else "")
+    view.setIntensity(pendingIntensity)
   }
 
   private fun ensureEffectSurfaceView(): FxSurfaceShaderView {
