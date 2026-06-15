@@ -131,7 +131,7 @@ export function RuntimeShaderScreen() {
 				})}
 			</View>
 
-			{/* Re-registering replaces the source in the registry; the surface recompiles and re-emits onFxLoad or onFxError on the next prop apply. The intensity nudge below triggers that apply without changing the shader prop. */}
+			{/* Re-registering replaces the source in the registry; the surface recompiles and re-emits onFxLoad or onFxError on the next prop apply. The intensity change below is a real, visible delta that forces that apply without changing the shader prop. */}
 			<View style={styles.row}>
 				<TouchableOpacity
 					onPress={() => {
@@ -145,7 +145,7 @@ export function RuntimeShaderScreen() {
 								android: next ? PULSE_AGSL_ALT : PULSE_AGSL,
 							},
 						});
-						setIntensity((i) => Math.min(1, Math.max(0, i + (next ? 0.001 : -0.001))));
+						setIntensity(next ? 0.6 : 0.85);
 					}}
 					style={[
 						styles.chip,
