@@ -204,9 +204,10 @@ fragment half4 fx_dots(VSOut in [[stage_in]], constant FxUniforms &u [[buffer(0)
 // ===========================================================================
 // [[stitchable]] variants for .colorEffect / ShaderLibrary — iOS 17+
 //
-// Each receives individual uniforms (discrete only — no per-frame values) and reuses the
-// same shared helpers above. The non-stitchable functions above remain for the
-// future expo-view MTKView path.
+// Each receives its uniforms as individual SwiftUI Shader arguments rather than the FxUniforms
+// struct buffer the raster path uses; `time` still advances per frame (injected by TimelineView).
+// They reuse the same shared helpers above. The non-stitchable raster functions above drive the
+// shipping expo-view MTKView path.
 // ===========================================================================
 
 static inline half4 out4_s(float3 col, float intensity) {

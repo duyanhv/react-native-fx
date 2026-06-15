@@ -8,7 +8,7 @@ Owns: the effect-composition builder — `fx.effect.*` → `EffectStack` (visual
 
 This is the native-chain-flavored way to **stack visual effect layers** — fills,
 materials, shaders, symbols, filters — into one `EffectStack`. It is the escape hatch
-beneath the curated effect presets (`EdgeGlow`, `MeshGradient`; `56`), and what `<Fx effect>`
+beneath the curated effect preset component (`EdgeGlow`; `56`), and what `<Fx effect>`
 mounts.
 
 **Effects are not motion.** This builder composes *visual layers* only. Enter/exit/state
@@ -43,7 +43,9 @@ The builder has **value semantics** — each call returns a new immutable builde
 accumulates an ordered `EffectStack`:
 
 ```ts
-type Transition = { duration?: number; delay?: number; easing?: string; spring?: { stiffness?: number; damping?: number; mass?: number } };
+type Transition = { duration?: number; delay?: number; easing?: string; spring?: SpringSpec };
+// SpringSpec is authored per platform (41 decision 11): { ios?: { duration, bounce },
+// android?: { stiffness, dampingRatio } } — omitting a side keeps that platform's tuned default.
 
 interface EffectStep {
   node: 'fill' | 'shader' | 'material' | 'filter' | 'symbol';  // render-targets + the filter modifier — NOT 'motion'
@@ -103,14 +105,33 @@ Same `fx` namespace, two sub-builders, two non-interchangeable types. `transitio
    separate `FxLayer`.** It also owns the **interactive effect** surface
    (`interactionMode`/`onPress`/shader uniforms `pressDepth`/`pointerX/Y`, `30`) — distinct
    from `FxPressable`, which wraps *your* content (different runtime ownership).
+7. **The `fx.effect.*` namespace is accepted as the V1 builder entry point (DEF-015).** The
+   `<Fx effect={fx.effect.*}>` repetition is tolerated because it appears only here, at the
+   layer-3 escape hatch; the front door is the string form `<Fx effect="plasma" />` (`50`).
+   **No bare `effect` export ships in V1** — the builder is reached through `fx.effect.*`
+   only, preserving the `fx.effect`/`fx.motion` symmetry (Decision 3).
+8. **No JSX compound over `EffectStack` — the `fx.effect.*` builder *is* the stack API
+   (SURF-008, DEF-004, 2026-06-14).** fx ships no `Fx.Stack` and no `Fx.Layer`. An
+   `EffectStack` is data composited inside **one** `<Fx>` native surface, crossing the bridge
+   once as a resolved record (Decision 1); a JSX compound's layer-children would therefore be
+   *configuration*, not real native views — forbidden by `50` Decision 4 ("compound only for
+   real native layers") and a re-introduction of the `FxLayer` that Decision 6 already
+   rejected. This matches `Fx.Scroll`'s data-not-children shape (DEF-014, where composited
+   content is a data prop, not children). Revisit only if the builder chain demonstrably
+   fails a real use case.
 
 ## Open questions
 
-- **The deferred JSX-compound skin** (`<Fx.Stack>`) over the identical `EffectStack` —
-  build now or on demand? (deferred.)
+- ~~**The deferred JSX-compound skin** (`<Fx.Stack>`) over the identical `EffectStack` —
+  build now or on demand?~~ **Resolved (SURF-008, DEF-004, 2026-06-14): rejected.** The
+  `fx.effect.*` builder is the stack API; no `Fx.Stack`/`Fx.Layer` JSX compound ships
+  (Decision 8 — config-children violate `50` D4 and reintroduce the `FxLayer` rejected by
+  Decision 6).
 - ~~**`SpringTune` shape**~~ — **resolved: `SpringTune` removed.** The canonical API is
-  `tune = { speed, emphasis, distance }` (`data-layer.md` I2). `Transition.spring` uses raw
-  spring parameters (`stiffeness`, `damping`, `mass`) for direct control.
+  `tune = { speed, emphasis, distance }` (`data-layer.md` I2). `Transition.spring` is
+  authored per platform for direct control — iOS `{ duration, bounce }`, Android
+  `{ stiffness, dampingRatio }` — never one cross-platform parameter set (`41` decision 11,
+  DOC-009).
 - ~~**Memoization**~~ — **resolved (SURF-010):** an inline-built `EffectStack` rebuilds each
   render, but the native side compares stack *values* via `previousProps`, so a rebuild with
   unchanged content does no native work — no manual memo or `useFx` needed. Verified on SDK 56,

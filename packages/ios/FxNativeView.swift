@@ -50,6 +50,12 @@ internal class FxNativeView: ExpoView {
 
   // MARK: - Private lifecycle helpers
 
+  /// Whether the app is foregrounded, maintained by the background/foreground notifications. A
+  /// prop batch can land while the app is backgrounded but still window-attached; subclasses gate
+  /// their frame-loop resume on this so such a batch cannot un-pause the loop in the background
+  /// (the rule: keep the loop paused off-window or backgrounded).
+  internal private(set) var isAppForegrounded = true
+
   private var observesAppLifecycle = false
 
   /// Registers app lifecycle notifications once per window attachment period.
@@ -57,6 +63,9 @@ internal class FxNativeView: ExpoView {
     guard !observesAppLifecycle else {
       return
     }
+
+    // Sync the flag to the live state in case the view attaches while already backgrounded.
+    isAppForegrounded = UIApplication.shared.applicationState != .background
 
     NotificationCenter.default.addObserver(
       self,
@@ -83,11 +92,13 @@ internal class FxNativeView: ExpoView {
 
   /// Stops presentation work immediately when the app can no longer display it.
   @objc private func handleDidEnterBackground() {
+    isAppForegrounded = false
     pausePresentationLoop()
   }
 
   /// Restarts presentation work only for views still attached to a window.
   @objc private func handleWillEnterForeground() {
+    isAppForegrounded = true
     if window != nil {
       resumePresentationLoop()
     }

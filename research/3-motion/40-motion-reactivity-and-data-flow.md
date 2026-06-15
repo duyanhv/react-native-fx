@@ -102,6 +102,32 @@ Constrained to discrete/low-frequency, never a per-frame stream:
 - **Never** — a per-frame native→JS stream. Continuous JS-side tracking of a native
   value is the Reanimated shared-value path (post-V1).
 
+### Native ↔ public event-name mapping (the one canonical table)
+
+The names a developer writes are **not** the names the native views register. React Native
+reserves bare event props (`onPress`, `onLoad`, `onError`, `onLongPress`, …) on its host
+views, so registering a native `EventDispatcher` under a bare name collides with RN core. fx
+therefore **prefixes the native event names** and the thin surface components (`src/surface/`)
+re-expose them under the public contract above. This table is the single home for that
+mapping — consumers (`50`, `architecture.md`, the surface components) point here, never
+restate it.
+
+| Public prop (the contract — `40`/`50`) | Native `Events` name | Registered on | Why renamed |
+|---|---|---|---|
+| `onPress` | `onShaderPress` | `FxSurfaceView` | RN reserves `onPress` (touch responder) |
+| `onPressIn` | `onShaderPressIn` | `FxSurfaceView` | same |
+| `onPressOut` | `onShaderPressOut` | `FxSurfaceView` | same |
+| `onTransitionEnd` | `onFxTransitionEnd` | every view | `Fx` prefix keeps the native namespace clear of RN/host collisions |
+| `onLoad` | `onFxLoad` | every view | RN reserves `onLoad` (media) |
+| `onError` | `onFxError` | every view | RN reserves `onError` |
+| `onStateChange` | *(unwired)* | `FxView` (not built) | the `FxView` state event has no native dispatcher yet — wire as `onFxStateChange` |
+| `onLongPress` | `onShaderLongPress` | `FxSurfaceView` | **wired (U8-001, device-verified 2026-06-13).** `FxPressHandler.{swift,kt}` posts a platform long-press timeout and dispatches `onShaderLongPress` once, with the tap suppressed after a completed long-press; both platforms |
+
+Conventions this pins: **press events carry the `onShader*` prefix** (they live on the
+shader/interactive `FxSurfaceView`); **lifecycle and load events carry the `onFx*` prefix**
+(every view). When the unwired rows are built, they follow the same prefix rule. The surface
+component owns the remap; the public prop name never leaks the prefix.
+
 ## Event payloads (semantic, low-frequency)
 
 Enough shape to design the API against — discrete only, never a frame stream:
@@ -150,10 +176,18 @@ Two clean routes, never per-frame `setUniform` from the **JS thread**:
 
 1. **Make the source native** — if the driver is a native scroller/pager, read its
    offset natively and write the uniform natively (onboarding morph, scroll-reactive
-   backgrounds; no JS, no Reanimated). The sleeper win.
+   backgrounds; no JS, no Reanimated). The sleeper win. **Ratified as the `source`
+   driver (decision 7)** — phase V2, substrate-tiered: the guarantee is zero per-frame
+   **JS** everywhere; render-server-fidelity mapping only on iOS `hosted` (SwiftUI
+   `visualEffect`/`scrollTransition`); a main-thread/UI-thread reader elsewhere.
+   **The iOS-hosted render-server tier is shipped (DEF-014):** an fx-owned hosted
+   SwiftUI `ScrollView` drives its own effect tiles via `.scrollTransition`, zero
+   per-frame JS *and* zero per-frame main-thread work. The ambient-RN-scroll best-effort
+   tier and the Android rung remain deferred.
 2. **UI-thread channel** — Reanimated shared values / animated props (gesture writes a
    shared value off the JS thread, bound to a uniform). The silky bring-your-own-gesture
-   path; **post-V1**, additive over the same uniform names.
+   path; **post-V1**, additive over the same uniform names — the deferred UI-thread tier
+   of the same `source` driver (MOT-007).
 
 **On `setUniform` itself.** The imperative `setUniform`/`setHighlight` (`4-runtime/30`/`51`)
 are not banned — they are a **low-frequency / debug / `controlled`-mode escape hatch**, not a
@@ -175,16 +209,51 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
    tracking is the post-V1 Reanimated path.
 6. **Regime C routes to a native source read first, the UI-thread channel second** —
    never JS-per-frame.
+7. **The driver vocabulary is `target` / `clock` / `source` (DOC-009, 2026-06-10).**
+   Motion channels and effect uniforms are both animatable properties bound to native
+   drivers (`02` decision 14). Two consequences land here: **`transition` stays
+   surface-scoped** — one timing for all the uniforms of its step/component; per-property
+   control is a driver *binding*, never a per-uniform easing config inside `transition`.
+   And **the regime-C native source read is the `source` driver** — phase V2 (after
+   `target`+`clock`), substrate-tiered: zero per-frame JS everywhere, render-server
+   fidelity only on iOS `hosted`, UI-thread-mapped elsewhere. That tier distinction is
+   first-class in the contract, never papered over. **The iOS-hosted render-server tier
+   is shipped (DEF-014)** — `fx.source.scroll` + the `Fx.Scroll` hosted context; the
+   ambient-RN-scroll and Android tiers stay deferred.
 
 ## Open questions
 
-- **`transition` scope** — all uniforms, or per-uniform easing config?
+- ~~**`transition` scope** — all uniforms, or per-uniform easing config?~~ **Resolved
+  (decision 7, DOC-009):** surface-scoped — one timing per step/component; per-property
+  control is a driver binding, not a `transition` shape.
 - **The named-state vocabulary** per `FxView` preset (`idle`/`selected`/… ; ties to `57`/`50`).
   `mood`/`playing` are demoted to effect-specific *uniforms*, never global props.
-- **Native-source-read API** — how an effect declares "track this native scroll/pager"
-  (the Regime-C option-1 surface); is it V1 or V2?
-- **BYO envelope** — how a BYO author declares an intro/outro envelope in `.metal`/`.agsl`
-  so it isn't hardcoded to the curated glow.
+- ~~**Native-source-read API** — how an effect declares "track this native scroll/pager"
+  (the Regime-C option-1 surface); is it V1 or V2?~~ **Resolved (decision 7, DOC-009)** and
+  **shipped on iOS hosted (DEF-014, 2026-06-14):** the `source` driver, substrate-tiered. The
+  concrete surface is `fx.source.scroll({ axis })` bound to the `Fx.Scroll` hosted scroll
+  context (tiles as fx-owned data, never wrapped RN content); `50` owns the surface. The
+  ambient-RN-scroll best-effort tier and the Android rung remain deferred.
+- ~~**BYO envelope** — how a BYO author declares an intro/outro envelope in `.metal`/`.agsl`
+  so it isn't hardcoded to the curated glow.~~ **Resolved by composition (MOT-008, DEF-007,
+  2026-06-14): the premise is false — fx hardcodes *no* shader-internal intro/outro envelope,
+  for curated effects either.** Curated shaders animate off native `time` + an eased semantic
+  uniform (`intensity`); whole-surface appear/disappear is the `FxPresence` wrapper envelope
+  (transform/opacity). A BYO author therefore reaches full parity through the **same three
+  channels** curated effects use — there is no dedicated BYO mechanism, and none is deferred:
+  1. **Whole-surface lifecycle** → wrap `<Fx>` in `FxPresence` (the platform-native
+     transform/opacity enter/exit envelope, `42`/`54`).
+  2. **Self-contained shader animation** (the "intro reveal driven by `time`") → the author's
+     `.metal`/`.agsl` reads native `time` and animates freely — author shader code, not an fx
+     primitive.
+  3. **Parameter reveals / one-shots** → declare semantic uniforms (`registerShader`, `22`),
+     drive them with discrete targets eased by `transition`, and re-fire bursts via
+     `triggerKey`/`version` (the one-shot trigger model above).
+
+  This is **resolved by composition, not deferred-until-demand.** A reserved lifecycle/reveal
+  uniform would be a *new feature* that must apply to curated shaders too (else BYO would get a
+  mechanism the core catalog does not use); if a concrete BYO intro ever proves inexpressible by
+  the three channels, that is the trigger for a fresh row, not a gap here.
 
 ## Sources
 

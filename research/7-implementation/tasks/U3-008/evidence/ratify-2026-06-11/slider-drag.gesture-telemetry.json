@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-11T01:29:39.317Z",
+  "events": [
+    {
+      "kind": "swipe",
+      "tMs": 1057.01708984375,
+      "x": 312,
+      "y": 522,
+      "x2": 90,
+      "y2": 522,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 834
+    },
+    {
+      "kind": "swipe",
+      "tMs": 2756.486083984375,
+      "x": 90,
+      "y": 522,
+      "x2": 350,
+      "y2": 522,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 917
+    }
+  ]
+}

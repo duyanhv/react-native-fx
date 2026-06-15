@@ -225,9 +225,11 @@ const FxGroupView   = requireNativeView('ReactNativeFx', 'FxGroupView');    // m
 - `onPressIn/onPressOut/onPress` — interaction events (active mode) [research: 30]
 - `onLoad/onError` — BYO shader compilation result [research: 22]
 
-Native registered event names may be prefixed, for example `onFxLoad` / `onFxError`, when a
-bare semantic name collides with a React Native core event name. JS wrappers own the public
-semantic prop names.
+Native registered event names are **prefixed** to dodge React Native's reserved event props —
+press events as `onShader*` (on `FxSurfaceView`), lifecycle/load as `onFx*` (every view). The
+JS surface components own the remap to the public names above. The **canonical native↔public
+mapping table is `40` §Native ↔ public event-name mapping** — the single home; this list does
+not restate it.
 
 **AsyncFunctions** (imperative, UI-thread, ref-attached):
 - `setUniform({ key, value })` — controlled mode [research: 30]
@@ -246,7 +248,7 @@ From `research: 36`, the orchestrator owns or delegates to six stable native obj
 |--------|------|-------|-------|------------|
 | **`FxNativeView`** | Expo Modules boundary, diff-based props, shared lifecycle and ref surface | resolved props from `updateProps` | — (concrete views declare `EventDispatcher`) | View (Fabric identity) |
 | **`FxEffectRenderer`** | effect layers, GPU surface (interactive); hosted SwiftUI/Compose or expo-view MTKView/RenderEffect | effect config, pointer uniforms (interactive) | `onLoad`, `onError`, `onPress*` | No (internal; events through view) |
-| **`FxPresenceCoordinator`** | lifecycle FSM (visible → entering → holding → exiting → done), deferred-unmount handshake | `visible` target | `onTransitionEnd({ phase })` via EventDispatcher | No (internal) |
+| **`FxPresenceCoordinator`** | lifecycle FSM (`absent · entering · present · exiting`, the `35` naming — built U7-001), deferred-unmount handshake | `visible` target | `onTransitionEnd({ phase, finished, interrupted })` via EventDispatcher | No (internal) |
 | **`FxAnimationDriver`** | interruptible native animation (spring/timing); content family (CASpringAnimation/SpringAnimation) and effect family (SwiftUI .animation/Compose animate*AsState) | targets, measurements from `FxLayoutObserver` | `onTransitionEnd` (completion) via coordinator | No (internal) |
 | **`FxLayoutObserver`** | post-layout reads of wrapper (size, origin, travel, insets) | Yoga/Fabric frame from `layoutMetrics` | — (passive, read on demand by driver) | No (internal) |
 | **`FxPressHandler`** | 6-state FSM (press recognizer), cooperative slop-yield, coalescing keys | touch location → `pressDepth`/`pointerX`/`pointerY` | `onPress*` via EventDispatcher | No (internal) |
@@ -337,7 +339,7 @@ ios/FxSurfaceView.swift (extends FxNativeView) — content motion wrapper
        │   │ emits: onTransitionEnd (completion event)
        │   │ rule: interruptible retargeting, no snap
        │   │ default spring: platform's own (the law) [research: 41]
-       │   │ tune: adjusts within platform family (speed/emphasis/distance) [research: 41]
+       │   │ tune: adjusts within platform family (speed/emphasis/distance) — deferred from V1, DOC-019 [research: 41]
        │   └── feeds ──▶ FxLayoutObserver
        │
        ├── FxLayoutObserver
@@ -556,8 +558,9 @@ ios/FxNativeView.swift  /  android/FxNativeView.kt  ──  (the abstract base, 
 
 > Units 7/8 lower to `FxSurfaceView` (plus the coordinator/recognizer object); dedicated presence/press
 > views are **not planned** — they ship as `src/surface/` components over the existing binding. The
-> runtime-object granularity behind this (driver family-split, scheduling) is the current direction,
-> not a closed call — formally open as RT-008 (`36`, DOC-011's todo).
+> runtime-object granularity behind this (driver family-split, scheduling) is **resolved** (RT-008,
+> U9 ratify 2026-06-13, `36` §Resolved questions): one `FxAnimationDriver` with two families, per-view
+> clocks; the discrete `FxEffectRenderer` object + the `SharedObject` layer are V2 (DEF-020).
 
 ---
 

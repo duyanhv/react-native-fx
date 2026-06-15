@@ -110,6 +110,14 @@ draws itself, samples nothing — safe over content). Feeds `effect=` ids
   `pressDepth`/`pointerX`/`pointerY` natively (`30`); JS never streams the pointer.
 - **state-eased** — semantic uniforms (intensity, colors) change discretely, eased by
   `transition`; `time`/`resolution` are never JS-set.
+- **intro/outro is composed, never a baked envelope (MOT-008, DEF-007).** fx hardcodes no
+  shader-internal intro/outro envelope — not for curated effects, not for BYO. An effect's
+  lifecycle animation is reached through the same three channels for both: the `FxPresence`
+  wrapper envelope (whole-surface appear/disappear, transform/opacity), the shader's own
+  `time`-driven code (the self-contained reveal), and semantic uniforms eased by `transition`
+  / re-fired by `triggerKey` (one-shots, `40`). So a BYO author has full parity by construction;
+  there is no BYO envelope-declaration mechanism and no reserved reveal/lifecycle uniform (`40`
+  § Open questions for the contract).
 
 ## Degradation
 
@@ -139,13 +147,85 @@ events only — no per-frame pointer stream** (`04`/`35`).
    assets, not a runtime `source` prop. Curation is the front door.
 5. **Each curated shader is an MSL+AGSL pair** maintained by the library — the 2×
    authoring cost is the price of cross-platform, and the compiler's future target.
+6. **BYO registration contract (V1)** — a developer registers a `.metal`+`.agsl` pair as a
+   `shader` node, consumed at the same call site as curated ids:
+   - **Registration path:** `registerShader({ id, uniforms })` in JS. The `id` must not
+     collide with curated `ShaderId` values; collisions are a dev warning and the curated
+     id wins.
+   - **Asset locations:** BYO `.metal` files live in the **fx package's** `Shaders/` directory
+     (`ios/Shaders/<id>.metal`); BYO `.agsl` files live in the **fx package's** asset tree
+     (`android/src/main/assets/shaders/<id>.agsl`). The app's own `ios/` or `android/`
+     directories do not participate — the files must be present in the library's paths at
+     build time so the existing bundling mechanic picks them up.
+   - **Build wiring:** BYO uses the **same** build mechanism as curated shaders, with no
+     special path. See the single-home mechanic: `structure.ios.md` §shader (hosted +
+     expo-view rungs) and `52` Decision #2 (iOS `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR`)
+     for the full wiring. Android reads from assets at runtime via
+     `context.assets.open("shaders/<id>.agsl")` — no build-time compile step.
+   - **V1 constraint:** there is no config plugin in V1 (`DEF-013`/`SHIP-004` deferred), so
+     BYO assets cannot be injected into the library's bundle from the app side at build time.
+     They must be present in the fx package's resource paths before the library build runs.
+     V2 may add a config plugin or a build-time copy step for app-side BYO asset placement.
+   - **Runtime compilation:** shipped in V2 (`DEF-008`, 2026-06-14) as the **registry-sourced**
+     path — `registerShader({ id, uniforms, source: { ios, android } })` compiles inline source
+     natively at runtime, so app-side BYO needs no build-path placement and no config plugin
+     (lifting the V1 constraint above). The build-time `.metal`/`.agsl` pair path stays valid; the
+     registry adds a runtime path at the same `<Fx effect="id" />` call site (Decision 7).
+   - **Missing platform file:** degrades that platform to `{via:'none'}` (honest guard-out
+     per the pair rule; rule #2).
+   - **Events:** `onLoad`/`onError` fire for BYO compile/load failures, same as curated.
+   - **Consumption surface:** `<Fx effect="id" />` where the `effect` prop accepts the
+     registered id. The `shader` node is the IR node; the `effect` prop is the JSX call
+     site (`55`).
+   - **Typing idiom:** the `effect` prop boundary type is `ShaderId | (string & {})` —
+     curated literals keep autocomplete; registered BYO ids are admitted. `ShaderId`
+     itself stays exactly the curated union.
+   - **Unregistered-id behavior:** referencing an id that is neither curated nor registered
+     → native compile/load fails because the `.metal`/`.agsl` file is missing → `onError`
+     fires with a descriptive error. No hard crash.
+   - **Forward pointer:** the actual TypeScript change (applying `ShaderId | (string & {})`
+     at the `effect` prop) is an `implement` task, not this one.
+7. **Runtime-source BYO ships via the registry, not a `source` prop (DEF-008, 2026-06-14, closes
+   FX-007).** `registerShader({ id, uniforms, source: { ios, android } })` compiles inline source at
+   runtime; `source` lives only inside `registerShader`, never as a prop on `<Fx>`. The contract:
+   - **Dual source required.** A runtime BYO shader still supplies MSL (iOS) + AGSL (Android) —
+     single-source authoring is the deferred cross-compiler (`DEF-001`). A missing platform source
+     degrades that platform to `{via:'none'}` (the pair rule, Decision 6).
+   - **Curated ids win, native-enforced.** A registration colliding with a curated id is rejected
+     (a JS dev warning), and the native resolver stops on curated ids (an iOS `curatedShaderIds`
+     mirror; Android's `CURATED_SHADER_IDS` set) so a registry source can never satisfy a curated
+     id, even one with no raster fragment.
+   - **iOS lowers through expo-view only (the spike result).** SwiftUI `.colorEffect` cannot consume
+     a runtime-built `MTLLibrary` (no public `ShaderLibrary` init over `MTLLibrary`/`MTLFunction`/MSL
+     source — iOS 26.5 SDK), so runtime shaders use the `FxSurfaceView` (expo-view) Metal path via
+     `MTLDevice.makeLibrary(source:)` even for decorative use. The runtime fragment follows the fx
+     raster ABI (`fx_fragment` over the prepended `FxUniforms`/`VSOut`, linked with the bundled
+     vertex). Android compiles `RuntimeShader(agsl)` directly.
+   - **Caching is platform-shaped.** iOS caches the immutable `MTLRenderPipelineState` process-wide
+     by source string (compile once). Android cannot share a compiled `RuntimeShader` across
+     surfaces — it is *mutable* (holds per-view uniform state via `setFloatUniform`) — so it is
+     constructed per view (matching the curated path); the registry holds the source. A necessary
+     platform divergence, not a defect. Mechanics in `structure.{ios,android}` § shader.
+   - **Errors + safety.** Compile/load failure → `onFxError` (the BYO fallback signal); a malformed
+     source never crashes (iOS nil pipeline; Android guarded `RuntimeShader` construct → no draw).
+     Android reads declared uniforms from the source and guards every write (incl.
+     `time`/`resolution`/`intensity`) — a BYO shader may omit any, and an absent-uniform write
+     aborts on API 33.
+   - **Re-registration.** A new source for an existing id is a clean dev-time replacement (the next
+     mount compiles it); identical source is an idempotent no-op; both-absent source is rejected.
 
 ## Open questions
 
-- **Uniform struct alignment (needs-device)** — Swift↔MSL field order/stride, and the
-  AGSL uniform binding equivalent; carried from `_legacy/08`.
-- **BYO asset contract** — how a developer registers a `.metal`+`.agsl` pair + uniform
-  table (build step, manifest entry); ties to `03`/`53`.
+- ~~**Uniform struct alignment (needs-device)**~~ — **resolved (FX-005; U3-002 device
+  gate, 2026-06-10).** Metal: the multi-uniform `loop` shader renders with no
+  garbling/offset on iOS 26 (Swift↔MSL field order/stride aligned). AGSL: the same
+  shader catalog renders correctly on Android (POCO F1/API 35), exercising the AGSL
+  uniform binding.
+- ~~**BYO asset contract**~~ — **resolved (FX-006; U3-004, 2026-06-10).** The registration
+  contract is recorded in Decision 6 above. Build wiring, consumption surface, typing idiom,
+  and unregistered-id behavior are all pinned.
+- ~~**Runtime shader compilation**~~ — **resolved (FX-007; DEF-008, 2026-06-14).** Ships as the
+  registry-sourced path (Decision 7); device-verified on both platforms (`tasks/DEF-008`).
 
 ## Sources
 

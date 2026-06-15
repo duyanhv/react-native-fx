@@ -4,10 +4,9 @@ apply plugin: 'expo-module-gradle-plugin'
 group = 'expo.modules.reactnativefx'
 version = '0.1.0'
 
-// The expo-module-gradle-plugin supplies the Kotlin, compileSdk, and React
-// Native wiring; this module only declares its namespace and minSdk floor.
-// Curated .agsl assets ship under src/main/assets/shaders and are compiled at
-// runtime by RuntimeShader.
+// The expo-module-gradle-plugin supplies the Kotlin, compileSdk, and React Native
+// wiring. Curated .agsl assets ship under src/main/assets/shaders and are compiled
+// at runtime by RuntimeShader.
 android {
   namespace 'expo.modules.reactnativefx'
   defaultConfig {
@@ -15,4 +14,14 @@ android {
     versionCode 1
     versionName '0.1.0'
   }
+}
+
+dependencies {
+  implementation 'androidx.core:core:1.17.0'
+  implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+
+  // The pointer-events lever that makes the surface untargetable in `none` mode is RN's
+  // own view-system interface; the host app provides react-android at runtime, so it is
+  // compiled against but never bundled. Unversioned — the expo-module-gradle-plugin resolves it.
+  compileOnly 'com.facebook.react:react-android'
 }

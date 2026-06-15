@@ -80,6 +80,13 @@ boundary.
 4. **`FxGroup`/`FxItem` is the only honest compound** — each item a real native layer.
 5. **Scoped props** — `state` only on `FxView`, `feedback` only on `FxPressable`; wrap any
    children into one managed wrapper, no per-child motion (`33`/`05`).
+6. **`FxGroup` morph scope is glass-only in V1.** Cross-item morph is supported only for
+   the `material` (glass) effect, via the system's `GlassEffectContainer` on iOS 26+.
+   No other effect nodes (`fill`, `shader`, `symbol`, `filter`) support cross-item morph
+   in V1. The merge-threshold and `spacing` contract is system-owned in V1; explicit
+   `spacing` control is deferred to V2. Below iOS 26, `FxGroup` renders individual glass
+   views without morphing (`.ultraThinMaterial` fallback). Android uses its own material/
+   blur fallback (no morphing); the exact mechanic is owned by `structure.android.md`.
 
 ## Open questions
 
@@ -87,7 +94,7 @@ boundary.
   The per-platform `MotionSpec` map defaults are device-pending, owned by MOT-001.
 - **`FxPressable` `feedback` values** — ratified as `native` (DOC-005). Per-platform
   default catalog is device-pending, owned by MOT-001.
-- **`FxGroup` morph scope** — which effects support cross-item morph beyond glass (`21`).
+- **`FxGroup` morph scope** — **resolved (DOC-006, 2026-06-10).** Glass-only in V1; system-owned merge contract. See Decision 6 above.
 - Native mechanics (the managed wrapper, state handshake) are `open` in `33`/`34`/`35`.
 
 ## Sources

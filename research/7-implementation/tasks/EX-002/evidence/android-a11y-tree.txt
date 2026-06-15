@@ -1,0 +1,19 @@
+EX-002 Android a11y traversal — POCO F1 (Android 15 / API 35), 2026-06-11
+Captured from the agent-device accessibility snapshot of the stress-list top screenful.
+The AX snapshot is the TalkBack traversal tree.
+
+Decorative fx surfaces (shader / fill / material) expose NO accessibility node of their
+own — they are absent from the tree. The only fx-related nodes are:
+
+  - Screen caption TextViews (the demo's own labels above each cell), in cell order:
+      "#0 · shader · FxSurfaceView (MTKView) · fractal-clouds"
+      "#1 · fill · FxHostedView"
+      "#2 · material · FxHostedView"
+      "#3 · motion-only · FxSurfaceView (no MTKView)"
+
+  - The motion-only cell's WRAPPED content, reachable as its own text nodes:
+      "content only"
+      "wrapper animates this — no Metal"
+
+PASS: decorative surfaces inert/absent in the a11y tree; the wrapped motion content is
+reachable with its text; the list reads in cell order.

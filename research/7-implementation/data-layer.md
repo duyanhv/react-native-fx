@@ -12,6 +12,13 @@
 > **[research: 02 §Worked examples]** Worked examples exist for `fill`, `shader`, `material`, `motion`, `content-distort`, `shape-morph`.
 > **[research: 23-filters.md §Lowering]** `filter` rungs.
 > **[research: 24-symbols.md §Lowering]** `symbol` rungs.
+> **[finding: U2-003]** The **canonical executable manifest now ships** at
+> `packages/src/manifest/manifest.ts` (authored `as const`; typed config derived in
+> `config.ts`; held in lockstep with the native dispatch by the conformance test). The block
+> below is the design rendering; where the two differ, the shipped file is canonical. Its
+> rungs are reconciled to the shipped native — iOS material is UIKit `UIGlassEffect` /
+> `UIVisualEffectView`, the Android `shader` hosted rung draws through `Paint.onDraw`, and
+> Android material keeps an unblurred `draw` floor. `cadence` annotates each animated rung.
 
 ### Shared types
 
@@ -21,6 +28,7 @@ export type Substrate = 'hosted' | 'expo-view';
 export type Via       = 'native' | 'shader' | 'draw' | 'lib' | 'none';
 export type Asset     = 'metal' | 'agsl' | 'lottie' | 'none';
 export type Clock     = 'timeline' | 'display-link' | 'frame-nanos' | 'infinite-transition' | 'none';
+export type Cadence   = 'ambient' | 'display-rate' | 'static';   // coarse scheduling hint above `clock`
 export type Phase     = 'v1' | 'v2';
 export type NodeKind  = 'render-target' | 'modifier' | 'driver';
 export type Status    = 'supported' | 'planned' | 'out-of-scope';
@@ -32,6 +40,7 @@ export interface Lowering {
   applyVia?: string;
   asset?: Asset;
   clock?: Clock;
+  cadence?: Cadence;        // loop-frequency class when the rung animates (02 decision 16)
   target?: 'content' | 'effect';
   requires: { os: number; substrate: Substrate; feature?: string };
   phase?: Phase;
@@ -39,14 +48,13 @@ export interface Lowering {
   note?: string;
 }
 
-// UniformSpec.type includes boolean and color[] — these are canonical in 02.
-// 02:101 defines only `number | color | vec2 | vec4 | enum`.
-// Pending ratification in 02 or removal from this schema.
+// UniformSpec types are canonical in 02 (§The schema). `'string'` carries open text
+// (a symbol name, a BYO id); `range`/`options` are read-only so the manifest authors `as const`.
 export interface UniformSpec {
-  type: 'number' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
+  type: 'number' | 'string' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
   default: unknown;
-  range?: [number, number];
-  options?: string[];
+  range?: readonly [number, number];
+  options?: readonly string[];
 }
 
 export interface CapabilityNode {
@@ -56,7 +64,7 @@ export interface CapabilityNode {
   phase: Phase;
   uniforms?: Record<string, UniformSpec>;
   properties?: Record<string, UniformSpec>;
-  lower: Record<Platform, Lowering[]>;
+  lower: Record<Platform, readonly Lowering[]>;
 }
 
 export interface SelectCtx {
@@ -125,16 +133,18 @@ const manifest: CapabilityManifest = {
       },
       lower: {
         ios: [
-          { via: 'native', primitive: '.glassEffect', applyVia: '.glassEffect',
-            requires: { os: 26, substrate: 'hosted' }, note: 'Liquid Glass' },
+          { via: 'native', primitive: 'UIGlassEffect', applyVia: 'UIVisualEffectView',
+            requires: { os: 26, substrate: 'hosted' }, note: 'Liquid Glass (UIKit rung, U3-002)' },
           { via: 'native', primitive: '.ultraThinMaterial', applyVia: '.background',
             requires: { os: 15, substrate: 'hosted' }, note: 'pre-26 fallback' },
         ],
         android: [
-          { via: 'native', primitive: 'RenderEffect.createBlurEffect', applyVia: 'graphicsLayer',
-            requires: { os: 31, substrate: 'hosted' }, note: 'blur + overlay glassmorphism' },
+          { via: 'native', primitive: 'RenderEffect.createBlurEffect', applyVia: 'View.setRenderEffect',
+            requires: { os: 31, substrate: 'hosted' }, note: 'own-content translucent stack + blur' },
           { via: 'lib', asset: 'none', applyVia: 'Haze',
-            requires: { os: 21, substrate: 'hosted' }, note: 'pre-31 backport; optional peer dep' },
+            requires: { os: 21, substrate: 'hosted' }, status: 'planned', note: 'pre-31 backport; optional peer dep' },
+          { via: 'draw',
+            requires: { os: 21, substrate: 'hosted' }, note: 'translucent stack without blur — never a flat box' },
         ],
       },
     },
@@ -146,7 +156,7 @@ const manifest: CapabilityManifest = {
     shader: {
       id: 'shader', kind: 'render-target', interaction: 'fx', phase: 'v1',
       uniforms: {                                        // public JS-set uniforms
-        intensity: { type: 'number', default: 1, range: [0, 3] },
+        intensity: { type: 'number', default: 0.8, range: [0, 1] },   // matches the native clamp
         colorA:    { type: 'color', default: '#5B8CFF' },
       },
       // [research: 50:129] `time`/`resolution` are native-injected and NEVER in the resolved record.
@@ -160,8 +170,8 @@ const manifest: CapabilityManifest = {
             requires: { os: 17, substrate: 'expo-view' }, note: 'interactive surface (G runtime)' },
         ],
         android: [
-          { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'hosted' }, note: 'decorative overlay' },
+          { via: 'shader', asset: 'agsl', applyVia: 'Paint.onDraw', clock: 'frame-nanos',
+            requires: { os: 33, substrate: 'hosted' }, note: 'generative AGSL draws through a Paint in onDraw on a plain View' },
           { via: 'shader', asset: 'agsl', applyVia: 'View.setRenderEffect', clock: 'frame-nanos',
             requires: { os: 33, substrate: 'expo-view' },
             note: 'plain View/ViewGroup (RenderNode-backed setRenderEffect), not a Compose modifier; draw-time, touch-safe' },
@@ -214,8 +224,8 @@ const manifest: CapabilityManifest = {
         ios: [
            { via: 'native', primitive: 'CASpringAnimation', applyVia: 'CALayer', clock: 'none',
              target: 'content', phase: 'v2',
-             requires: { os: 13, substrate: 'expo-view' },
-             note: 'intermediate container inside FxSurfaceView; Core Animation owns timing; transform-only → touch-safe' },
+             requires: { os: 17, substrate: 'expo-view' },   // [02 Decision #14 — SwiftUI.Spring retarget solver floors the rung at 17 (DOC-009)]
+             note: 'intermediate container inside FxSurfaceView; render-server-first springs, FxSpring integrator on retarget; transform-only → touch-safe' },
           { via: 'native', primitive: 'SwiftUI .animation', applyVia: '.animation', clock: 'none',
             target: 'effect', phase: 'v1',
             requires: { os: 16, substrate: 'hosted' },
@@ -240,11 +250,11 @@ const manifest: CapabilityManifest = {
     symbol: {
       id: 'symbol', kind: 'render-target', interaction: 'self', phase: 'v1',   // iOS-native; Android planned
       uniforms: {
-        name:       { type: 'enum',   default: 'heart', options: [] },  // SF Symbol name or drawable ref
+        name:       { type: 'string', default: 'heart' },  // SF Symbol name or drawable ref (open text)
         animation:  { type: 'enum',   default: 'bounce',
                       options: ['bounce', 'pulse', 'scale', 'variableColor', 'appear', 'disappear', 'breathe', 'rotate', 'wiggle'] },
         trigger:    { type: 'enum',   default: 'value', options: ['value', 'state', 'repeat'] },
-        replaceWith: { type: 'enum',  default: undefined },  // symbol→symbol content transition
+        replaceWith: { type: 'string', default: '' },  // symbol→symbol content transition (open text)
       },
       lower: {
         ios: [
@@ -276,7 +286,7 @@ const manifest: CapabilityManifest = {
         ],
         android: [
           { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'expo-view' }, status: 'planned',
+            requires: { os: 33, substrate: 'expo-view' },
             note: 'RenderEffect is draw-time → touch survives; Android-only capability' },
         ],
       },
@@ -434,11 +444,17 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[research: 42 §The presence preset catalog]**
 > Presets are behavior-named (`transient`/`sheet`/`modal`), not UI-named (`toast`/`card`).
 > The platform owns the geometry — same preset may differ in edge, origin, distance on iOS vs Android.
+>
+> **V1 ships `transient` only (DOC-018); its rows are device-verified both platforms
+> (U7-002/U7-003, MOT-001 closed).** The `sheet`/`modal` rows below are provisional catalog
+> targets; they are **deferred from the V1 surface** (they name screen-scale presentations
+> that collide with presence's scope ceiling, `42`) and resurrect via DEF-018 once
+> presence-under-navigation is settled. They are not V1 shipping values.
 
 | Preset | Phase | iOS Source | iOS Shape | iOS Timing | Android Source | Android Shape | Android Timing |
 |--------|-------|-----------|-----------|------------|----------------|---------------|----------------|
-| `transient` | enter | System banner | Top edge slide-in, translateY = -view.height | 0.25s, dampingRatio=0.85, mass=1, stiffness=197, damping=17 [device-pending] | Snackbar | Bottom edge slide-up, translateY = view.height | 250ms, `DecelerateInterpolator(1.5)` |
-| `transient` | exit | System banner | Top edge slide-out, translateY = -view.height | 0.20s, dampingRatio=0.85 [device-pending] | Snackbar | Bottom edge slide-down, translateY = view.height | 200ms, `AccelerateInterpolator(2.0)` |
+| `transient` | enter | System banner | Top edge slide-down + fade, translateY = -view.height → 0 **[device-verified U7-002]** | `SwiftUI.Spring()` default (duration 0.5, bounce 0), settle ≈0.75s — kept-default **[device-verified U7-002]** | Snackbar | Bottom edge slide-up + fade, translateY = view.height → 0 **[device-verified U7-002]** | `SpringForce` STIFFNESS_MEDIUM, dampingRatio=DAMPING_RATIO_NO_BOUNCY (1.0), settle ≈100–150ms **[device-verified U7-003]** |
+| `transient` | exit | System banner | Top edge slide-up + fade (idiomatic retraction), translateY = 0 → -view.height **[device-verified U7-002]** | `SwiftUI.Spring()` default — kept-default **[device-verified U7-002]** | Snackbar | Bottom edge slide-down + fade (idiomatic dismiss), translateY = 0 → view.height **[device-verified U7-002]** | same as enter **[device-verified U7-003]** |
 | `transient` | hold | — | identity | platform idle | — | identity | platform idle |
 | `sheet` | enter | `UISheetPresentationController` | Bottom edge → detent, translateY = view.height → 0 | 0.30s, dampingRatio=0.90 [device-pending] | `ModalBottomSheet` | Bottom edge slide-up, translateY = view.height → 0 | Spring: dampingRatio=0.85, stiffness=400 |
 | `sheet` | exit | `UISheetPresentationController` | Bottom edge slide-out, translateY = view.height | 0.25s, dampingRatio=0.90 [device-pending] | `ModalBottomSheet` | Bottom edge slide-down, translateY = 0 → view.height | 250ms, `DecelerateInterpolator` |
@@ -495,6 +511,10 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 
 > **[research: 41 §The preset / motion / tune / transition split]**
 > `tune = { speed, emphasis, distance }` adjusts intent inside the platform family, never raw curves.
+>
+> **`tune` is deferred from the V1 surface (DOC-019).** These formulas are MOT-001/MOT-002
+> territory — provisional, device-pending, and not shipped in V1. They resurrect with the
+> device-tuned catalog; V1 exposes `preset`/`motion`/`transition` only.
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme]**
 
@@ -620,19 +640,27 @@ interface EffectStack {
 
 ### Transition type
 
-> **[research: 55 §Transition] [research: 41 §transition]**
+> **[research: 55 §Transition] [research: 41 Decision #11 — per-platform spring authoring (DOC-009)]**
 
 ```ts
 type Transition = {
   duration?: number;    // ms
   delay?: number;       // ms
   easing?: string;      // 'ease-in' | 'ease-out' | 'ease-in-out' | 'linear'
-  spring?: {            // overrides easing; mutually exclusive
-    mass?: number;
-    stiffness?: number;
-    damping?: number;
-    dampingRatio?: number;
-    velocity?: number;
+  spring?: SpringSpec;  // overrides easing; mutually exclusive
+};
+
+/** Per-platform native spring authoring (41 Decision #11). Each side uses its platform's
+ *  own parameterization; omitting a side keeps that platform's tuned default (the law).
+ *  Bridge for internal conversion: bounce ≈ 1 − dampingRatio; stiffness ≈ (2π/duration)². */
+type SpringSpec = {
+  ios?: {
+    duration?: number;  // seconds — the iOS 17 unified spring's perceptual duration
+    bounce?: number;    // 0 (no bounce) … 1; negative = overdamped
+  };
+  android?: {
+    stiffness?: number | 'high' | 'medium' | 'mediumLow' | 'low' | 'veryLow';        // SpringForce / Compose tokens
+    dampingRatio?: number | 'highBouncy' | 'mediumBouncy' | 'lowBouncy' | 'noBouncy'; // SpringForce tokens
   };
 };
 ```
@@ -793,11 +821,11 @@ public uniform maps are out of V1.
 
 ---
 
-## §7 BYO Asset Registration (M8) — Provisional Candidate
+## §7 BYO Asset Registration (M8) — Ratified Contract
 
-> **[research: 22 §BYO is a shader node with dev-supplied assets]**
+> **[research: 22 §Decision 6]** The BYO registration contract is ratified in the owning source doc.
 > **[research: 52 §Cross-platform shader asset bundling]**
-> **[ledger: FX-006 status = `open`]** The registration API below is a **provisioned candidate** — pending source-doc closure in `22`/`03`/`53`. The `registerShader` approach is a design proposal, not yet ratified.
+> **[ledger: FX-006 status = `resolved` (U3-004, 2026-06-10).]**
 
 ### Registration API
 
@@ -821,19 +849,52 @@ registerShader(myShaderConfig);
 
 ### Asset location
 
+BYO assets live in the **fx package's** paths, not the app's:
+
 ```
 packages/
 ├── ios/Shaders/
-│   └── my-shader.metal         ← developer .metal file
-├── android/assets/shaders/
-│   └── my-shader.agsl          ← developer .agsl file
+│   └── my-shader.metal         ← developer .metal file (fx package)
+├── android/src/main/assets/shaders/
+│   └── my-shader.agsl          ← developer .agsl file (fx package)
 ```
+
+The app's own `ios/` or `android/` directories do not participate — the files must be present in the library's paths at build time so the existing bundling mechanic picks them up.
 
 ### Build integration
 
-- **iOS**: `.metal` files in `Shaders/` compile into `default.metallib` via podspec `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR` [research: 52 §Cross-platform shader asset bundling]
-- **Android**: `.agsl` files in `assets/shaders/` compiled at runtime by `RuntimeShader` [research: 52 §Cross-platform shader asset bundling]
+BYO uses the **same** build mechanism as curated shaders, with no special path. The single-home mechanic lives in `structure.ios.md` §shader and `52` Decision #2:
+
+- **iOS**: `.metal` files compile into `default.metallib` via the existing podspec `resource_bundles` + `MTL_LIBRARY_OUTPUT_DIR` [research: 52 §Cross-platform shader asset bundling]
+- **Android**: `.agsl` files ship as packaged assets and are compiled at runtime by `RuntimeShader` [research: 52 §Cross-platform shader asset bundling]
 - **compile failure**: `onError` event fires → JS falls back gracefully [research: 22 §Events]
+
+### V1 constraint
+
+There is no config plugin in V1 (`DEF-013`/`SHIP-004` deferred), so BYO assets cannot be injected into the library's bundle from the app side at build time. They must be present in the fx package's resource paths before the library build runs. V2 may add a config plugin or a build-time copy step for app-side BYO asset placement.
+
+### Consumption surface
+
+BYO ids are consumed at the same call site as curated ids: the `effect` prop on `<Fx>`.
+The `shader` node is the IR node; the `effect` prop is the JSX call site (`55`).
+
+### Typing idiom
+
+The `effect` prop boundary type is `ShaderId | (string & {})` — curated literals keep
+autocomplete; registered BYO ids are admitted. `ShaderId` itself stays exactly the curated
+union. The actual TypeScript change is an `implement` task.
+
+### Unregistered-id behavior
+
+Referencing an id that is neither curated nor registered → native compile/load fails
+because the `.metal`/`.agsl` file is missing → `onError` fires with a descriptive error.
+No hard crash.
+
+### Missing platform guard-out
+
+A BYO shader must supply both `.metal` and `.agsl` files. If one platform's file is
+missing, that platform degrades to `{via:'none'}` (honest guard-out per the pair rule;
+rule #2).
 
 ---
 
@@ -864,10 +925,10 @@ packages/
 **Resolution**: `symbol` is terminal in the EffectStack builder. The TypeScript type enforces it — `EffectStep.node` excludes 'symbol' from multi-step stacks. A stack containing `symbol` can only hold that one render-target (filters may still apply).
 **Source**: [research: 55 §EffectStep]
 
-### I5: `content-distort` all-rungs-out-of-scope
+### I5: `content-distort` per-platform asymmetry
 
-**Resolution**: Selector skips `out-of-scope` rungs and continues the ladder. If ALL rungs on a platform are `out-of-scope`, returns `{ via: 'none' }`. This is correct — verified by the worked example in `02`.
-**Source**: [research: 02 §content-distort worked example lines 243-253]
+**Resolution**: Selector skips `out-of-scope` rungs and continues the ladder. iOS lowers to a single `out-of-scope` rung → `{ via: 'none' }` (hosting RN content to sample it severs touch). Android resolves to the live `via: 'shader'` rung (draw-time `RenderEffect`, os 33+) — the `ripple` demonstrator shipped + device-verified under DEF-009 (FX-008). This is correct — verified by the worked example in `02`.
+**Source**: [research: 02 §content-distort worked example]
 
 ### I6: `shape-morph` empty iOS ladder
 
@@ -921,7 +982,7 @@ renderer before those rungs become selectable.
 ## §10 FxGroup/FxItem Scope (G5) — Provisioned Candidate
 
 > **[research: 21 §Glass morphing] [research: 57 §FxGroup/FxItem]**
-> **[ledger: SURF-006 status = `open`]** The scope below is a **provisioned candidate** — pending source-doc closure in `57`/`21` for morph scope and merge-threshold contract.
+> **[ledger: SURF-006 status = `resolved` (DOC-006, 2026-06-10)]** The scope below is **ratified** in `57`/`21`.
 
 ### iOS
 

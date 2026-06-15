@@ -16,6 +16,7 @@ Every task that touches rendering, motion, or touch has a device gate. The agent
 - The render loop pauses off-window and resumes correctly
 - BYO shader compilation succeeds or fires `onError`
 - Tune formulas feel right on each platform
+- What VoiceOver/TalkBack perceives for the effect under test — every `device: yes` scenario answers this: a decorative effect is absent from the accessibility tree; an interactive effect is reachable with a sensible label and trait
 
 **What does not require device verification:**
 - Manifest data compiles and ladders are well-formed (Tier 1: headless)

@@ -18,7 +18,6 @@ concrete shape *and* spring are the platform's own (the shape-native law, `41`).
 <FxPresence
   visible={visible}
   preset="transient"                       // platform-idiomatic presence behavior (56)
-  tune={{ speed: 'fast', emphasis: 'medium', distance: 'compact' }}
 >
   <MyToast />                              {/* YOUR component — fx wraps it, never replaces it */}
 </FxPresence>
@@ -26,10 +25,11 @@ concrete shape *and* spring are the platform's own (the shape-native law, `41`).
 
 - `visible` — the discrete target (regime B of `40`); native runs the envelope.
 - `preset` — the platform-idiomatic behavior; fx resolves the **whole shape + timing per
-  platform** (`56`). Behavior-named (`transient`/`sheet`), never UI-named (`toast`).
-- `tune` — adjust by intent, biased toward the platform (`41`).
+  platform** (`56`). Behavior-named (`transient`), never UI-named (`toast`).
 - `motion={{ enter, exit }}` — the explicit shape override (a typed map, `41`); fixes the
   shape cross-platform. `transition` — expert timing.
+- `tune` — adjust by intent, biased toward the platform (`41`). **Deferred from the V1
+  surface (DOC-019); resurrects with MOT-001.**
 
 ## The presence preset catalog
 
@@ -42,14 +42,47 @@ per-platform shape+curve is the **default catalog** (open, device-filled). All p
 | preset | behavior intent | platform note (shape resolves per OS) |
 |---|---|---|
 | `transient` | a brief, self-dismissing overlay | iOS banner vs Android snackbar — *edge and direction may differ* |
-| `sheet` | a slide-in panel | the platform's sheet presentation (iOS sheet vs Material bottom sheet) |
-| `modal` | a centered, attention-blocking surface | fade + scale family; the scrim/backdrop is the app's, not fx |
+
+**V1 ships `transient` only (Decision 7, DOC-018).** Two further behaviors are designed but
+**deferred to MOT-001** (the device-filled catalog): `sheet` (a slide-in panel — the platform's
+sheet presentation, iOS sheet vs Material bottom sheet) and `modal` (a centered,
+attention-blocking surface — fade + scale, the scrim is the app's, not fx). Their behavior
+intent is settled, but they name *screen-scale* presentations that collide with the scope
+ceiling below, and their per-platform shape is device-pending anyway. They resurrect with the
+catalog once presence-under-navigation is settled.
 
 `menu`/`tooltip` (anchor-origin) are **v2** — their origin is a *child* trigger, the
 per-child case `33`/`05` flag as the Expo-Modules boundary trigger. A **fab** is *composed*
 (`<FxPresence preset="…"><FxPressable feedback="native">`), not a preset — fx never owns a
 UI widget. Anchored/slide behaviors need an **origin/travel** resolved natively from the
 post-layout frame (`33`), with `tune.distance` scaling it.
+
+## The scope ceiling (what presence does not animate)
+
+**Presence animates conditional rendering inside a mounted screen. It does not animate
+navigator transitions.** The exit envelope plays only while `FxPresence` itself stays
+mounted to hold the exiting child and hear `onTransitionEnd` (the deferred-unmount handshake,
+`35`). When the *whole subtree* is destroyed at once — a navigator pop, a parent conditional
+that unmounts the coordinator, list-cell eviction — the coordinator dies with the child and
+the handshake can never fire. This is the honest edge of the JS-held model (rule #9: React
+owns the tree; fx defers unmount, it never seizes it). The native-held alternative
+(Reanimated's `shouldAnimateExitingForTag` + a commit hook) is exactly what rule #7 forbids,
+so fx accepts the ceiling rather than the C++ boundary.
+
+Two consequences:
+
+- **Drive exit with `visible`, not by unmounting the coordinator.** `{show && <FxPresence/>}`
+  removes the coordinator before it can animate; the coordinator must live *above* the thing
+  it animates (`35` — a stated `54` contract). The same rule governs **portals** (SURF-007,
+  DEF-003): portal the rendered output, never the `FxPresence` coordinator — fx ships no portal
+  primitive but guarantees this coexistence (`54` § Placement & portal coexistence).
+- **Screen-scale presentation is the app's navigator, not a presence preset.** This is why
+  the screen-scale `sheet`/`modal` names defer to MOT-001 (above): naming a preset after a
+  route-level presentation invites the one use the model cannot serve. `transient` (an
+  in-screen, self-dismissing overlay) sits safely inside the ceiling.
+
+Whether presence ever generalizes past this — a route-transition-aware mode — is the open
+`35` question (it does not in V1).
 
 ## The native measurement contract (motion reads layout, never writes it)
 
@@ -104,8 +137,10 @@ paragraph of intentions.
   element — so "touch-safe" means hit-testing survives the transform, **not** that a fast tap
   mid-flight lands pixel-exact on iOS. Design transient taps accordingly.
 
-`tune` modulates by intent: `speed` scales duration, `emphasis` scales spring bounce,
-`distance` scales travel — never raw curves (the bias from `41`). **`distance` precedence:**
+`tune` modulates by intent (**this is V1.x design — `tune` is deferred from the V1 surface,
+DOC-019; retained here for MOT-001's resurrection**): `speed` scales duration, `emphasis`
+scales spring bounce, `distance` scales travel — never raw curves (the bias from `41`).
+**`distance` precedence:**
 it scales **preset** motion and **measured** tokens (`{ measure: 'edge' }`, `41`); an
 **explicit numeric** `translateX/Y` in a user `motion` map is the exact shape the user chose
 and is **not** rescaled unless they opt in. Explicit numeric motion wins as the user's exact
@@ -125,8 +160,8 @@ after the snap.
   `ANIMATOR_DURATION_SCALE` = 0.0)
 
 The animated channels (`translateX/Y`, `scale`, `rotate`, `opacity`) all degrade to
-identity in a single frame. Presets (`transient`/`sheet`/`modal`) and explicit `motion`
-overrides are both subject to this degradation. This policy is recorded in `41` and
+identity in a single frame. Presets (`transient`; `sheet`/`modal` when they land) and explicit
+`motion` overrides are both subject to this degradation. This policy is recorded in `41` and
 honored by the driver (`34`).
 
 ## Decisions
@@ -141,6 +176,19 @@ honored by the driver (`34`).
 4. **Presets are overlay-scoped** — no flow-layout; `menu`/`tooltip` (anchor) are v2.
 5. **The envelope is enter → hold → exit**, keyed by `visible`; exit→unmount is the `35`
    handshake. **`exit` is the idiomatic platform dismiss, not a blind reverse of enter.**
+6. **Presence is a `target`-driver orchestration; extended states are `clock` timelines,
+   V2 (DOC-009, 2026-06-10).** The envelope dispatches `visible` to the `target` driver
+   (`02` decision 14) — discrete state in, platform-native spring out. Named states beyond
+   binary `visible` — multi-step intro → hold → outro, one-shot bursts — are `clock`-driver
+   timelines (native keyframe/phase sequences), arriving with the `clock` driver in V2,
+   never as more presence surface.
+7. **V1 ships `transient` only; `sheet`/`modal` defer to MOT-001 (DOC-018, 2026-06-11).**
+   This revises DOC-005's ratified presence set (`transient · sheet · modal` → `transient`).
+   `sheet`/`modal` name *screen-scale* presentations that collide with the scope ceiling
+   (presence does not animate navigator transitions), and their per-platform shape is
+   device-pending with the catalog anyway. They resurrect with MOT-001's device-filled catalog
+   once presence-under-navigation is settled — behavior intent preserved (above), V1 surface
+   narrowed.
 
 ## Open questions
 
@@ -148,11 +196,14 @@ honored by the driver (`34`).
   (each `(preset × phase)` row's source/shape/timing) are the device-filled open work, the
   main deliverable. **Owned by MOT-001** — the spring magnitudes and geometries will be
   validated on device and propagated to `41`/`42`.
-- **The behavior-preset vocabulary** — ratified as `transient` · `sheet` · `modal` for V1
-  (DOC-005). `menu`/`tooltip` (anchor-origin) remain v2.
+- **The behavior-preset vocabulary** — V1 ships **`transient` only** (Decision 7, DOC-018,
+  narrowing DOC-005's `transient · sheet · modal`). `sheet`/`modal` defer to MOT-001's
+  device-filled catalog; `menu`/`tooltip` (anchor-origin) remain v2.
 - **Anchor rect (v2)** — the measurement contract is defined (above); the exact native
   read-timing and the child-anchor-rect path (`menu`/`tooltip`) remain open in `33`.
-- **Named states beyond binary `visible`** — multi-step intro→hold→outro; one-shot bursts.
+- ~~**Named states beyond binary `visible`** — multi-step intro→hold→outro; one-shot
+  bursts.~~ **Resolved (decision 6, DOC-009):** `clock`-driver timelines, V2; V1 stays
+  binary `visible` plus `FxView`'s named `state`.
 
 ## Sources
 

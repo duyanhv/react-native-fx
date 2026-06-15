@@ -1,0 +1,3 @@
+{"parentIndex":24,"type":"Other","hittable":false,"depth":22,"index":32,"enabled":true,"label":"Tap me, count: 0","rect":{"width":200,"x":101,"y":383,"height":200},"ref":"e33"}
+{"parentIndex":32,"type":"Other","hittable":false,"depth":23,"index":33,"enabled":true,"label":"Tap me, count: 0","rect":{"width":200,"x":101,"y":383,"height":200},"ref":"e34"}
+{"parentIndex":33,"type":"Other","hittable":false,"depth":24,"index":34,"enabled":true,"label":"Tap me, count: 0","rect":{"width":200,"x":101,"y":383,"height":200},"ref":"e35"}

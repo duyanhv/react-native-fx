@@ -16,8 +16,10 @@ conflicts that come with them. Platform-specific mechanics live in
 
 ## The two substrates
 
-- **`hosted`** — a SwiftUI view (iOS) or Jetpack Compose composable (Android)
-  hosted inside RN via Expo's `Host`/`RNHostView`. **Decorative or self-gesturing.**
+- **`hosted`** — a host view fx owns, inside RN via Expo's `Host`/`RNHostView`: a SwiftUI
+  view on iOS; on Android a plain `View` drawing the effect directly in V1, with Jetpack
+  Compose as the intended future rung (the mechanic and its deferral live in
+  `structure.android.md`). **Decorative or self-gesturing.**
   The host owns layout and offers only a coarse `pointerEvents` hit-test lever. This
   is the **main path** for generative effects (gradients, mesh, materials, glass,
   generative shaders, symbols).
@@ -32,6 +34,13 @@ conflicts that come with them. Platform-specific mechanics live in
 **The rule:** decorative/generative ⇒ `hosted`; fx-managed interaction **or wrapped-content
 motion** ⇒ `expo-view`. A node's `interaction` (`none | self | fx`) routes interactive use
 to `expo-view`; a `motion` rung's `target:'content'` routes content motion there too (`02`).
+
+**`hosted` and `expo-view` are internal lowering vocabulary, never end-user vocabulary
+(DEF-015).** The substrate is *derived* — the user picks a capability (`preset`/`effect`/
+`interactionMode`) and the adapter selects the substrate. Public docs (`skills/`, README,
+public prop docs) state capability constraints ("interactive effects need an interactive
+surface"), never substrate names. The names live in the research layer and `structure.*`
+only.
 
 ## The hosted world
 
@@ -50,8 +59,8 @@ fully interactive. Mechanics to respect:
   attaches an RN touch handler to the first child view
   (`createAndAttachTouchHandler`). Never nest an interactive fx view as that child.
 - **fx owns its boundary.** fx is **not** built as an `@expo/ui` universal component;
-  it hosts SwiftUI/Compose itself with a boundary it controls, so it never hands its
-  layout/hit-testing to the auto-Host.
+  it hosts its own view (SwiftUI on iOS; the Android host per `structure.android.md`) with a
+  boundary it controls, so it never hands its layout/hit-testing to the auto-Host.
 
 ## The expo-view world
 
@@ -85,7 +94,7 @@ preserved touch) is therefore out-of-scope on iOS.
 
 ## The Android softening
 
-Android mirrors the substrate split (Compose host vs plain `ExpoView`) but relaxes
+Android mirrors the substrate split (the hosted host view vs plain `ExpoView`) but relaxes
 one constraint: `RenderEffect`/AGSL are **draw-time**, independent of input
 dispatch, so shading *over live content* does **not** sever touch. That is why
 `content-distort` is `planned` on Android while out-of-scope on iOS, and why the
@@ -114,15 +123,28 @@ hosted/expo-view boundary is less load-bearing for touch on Android. Details in
    asymmetry is the reason, recorded in the manifest via `status`.
 5. **V1 leans on the Host's passthrough + sizing** for decorative effects, so most of
    the runtime (G) is V2.
+6. **Self-gesturing glass coexists with RN scrollers, and the drag arbitration is
+   rung-specific** (device-grounded; the `research/wip/interactive-glass-touch-delivery.md`
+   spike plus the U3-002 device gate, 2026-06-10). A `self`-interaction glass hosted inside
+   an RN scroller delivers its press, and the parent scroll pans normally. What happens to
+   a drag that *begins on the glass* depends on the realization: the **shipped UIKit rung**
+   (`UIVisualEffectView` + `UIGlassEffect`) lets it pass through — the parent scroller pans
+   (tap → press, drag → scroll-through); the SwiftUI `.glassEffect` rung the spike measured
+   captured such drags via its interaction view. In both cases the arbitration is owned by
+   the system, never by fx — fx installs no recognizer on `hosted`.
 
 ## Open questions
 
-- **Android `RNHostView` parity** — confirm the Android host's touch-handler and
-  sizing behavior match the iOS analysis (the #46549 Android side was not fully read).
-- **Self-gesturing inside a scroller** — how `self`-interaction system components
-  (glass `.interactive()`) behave when hosted inside RN scrollers; device-verify.
-- **When a single screen mixes substrates** — performance of many hosted boundaries
-  vs grouping under one explicit `Host` (the #46549 grouping path).
+- ~~**Android `RNHostView` parity**~~ — **resolved (SPINE-012; U3-002 device gate,
+  2026-06-10).** The Android host passes the device matrix (POCO F1/API 35): the 12-cell
+  mixed grid renders with no blank hosts, tiles size to layout, scroll holds ~60 fps.
+  Touch/sizing parity confirmed for the implemented effects. (The #46549 Android source
+  read remains optional background, not a gate.)
+- ~~**When a single screen mixes substrates**~~ — **resolved (SPINE-012; U3-002 device
+  gate, 2026-06-10).** Twelve mixed fill/shader hosts on one screen hold UI/JS 60 fps on
+  device; no grouping `Host` is needed at V1 scale. One caveat recorded: the
+  interactive-glass stage read ~40 fps on the iOS simulator — watch on hardware, not a
+  blocker.
 
 ## Sources
 
@@ -131,3 +153,5 @@ hosted/expo-view boundary is less load-bearing for touch on Android. Details in
 - `structure.ios.md`, `structure.android.md` — the per-platform hosting/touch mechanics.
 - `02-capability-ir-and-lowering.md` — `requires.substrate` and `interaction`.
 - `30-interaction-and-gestures.md` — the `expo-view` recognizer and RNGH coexistence.
+- `research/wip/interactive-glass-touch-delivery.md` — the device spike behind decision 6
+  (interactive glass press delivery and scroller coexistence).

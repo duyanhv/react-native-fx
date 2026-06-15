@@ -1,0 +1,4 @@
+--------- beginning of main
+06-11 13:18:44.503 24600 24600 I FxU2003 : onFxLoad shader=loop (asset opened + compiled)
+06-11 13:19:56.063 24600 24600 I FxU2003 : shader cleared (loop -> <none>): silent, no event
+06-11 13:20:47.160 24600 24600 I FxU2003 : onFxLoad shader=aurora (asset opened + compiled)

@@ -1,8 +1,21 @@
+export type {
+  ConfigFor,
+  FillConfig,
+  FilterConfig,
+  Manifest,
+  MaterialEffectConfig,
+  MotionConfig,
+  NodeId,
+  ShaderConfig,
+  SourceConfig,
+  SymbolEffectConfig,
+} from './config';
+export { manifest } from './manifest';
 export type { SelectResult } from './select';
-
 export { select } from './select';
 export type {
   Asset,
+  Cadence,
   CapabilityManifest,
   CapabilityNode,
   Clock,

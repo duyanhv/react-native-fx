@@ -1,6 +1,8 @@
 uniform float time;
 uniform vec2 resolution;
 uniform float intensity;
+uniform float pressDepth;
+uniform vec2 touch;
 
 vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
     return a + b * cos(6.28318 * (c * t + d));
@@ -11,7 +13,9 @@ half4 main(float2 fragCoord) {
     vec2 uv = fragCoord / resolution;
     uv.x *= aspect;
     float t = time;
-    float bulge = 0.0;  // touch/pressDepth idle on the decorative hosted path
+    vec2 touchPoint = vec2(touch.x * aspect, 1.0 - touch.y);
+    float touchDistance = length(uv - touchPoint);
+    float bulge = exp(-touchDistance * touchDistance * 7.0) * pressDepth;
     float grid = 15.0;
     vec2 cell = uv * grid;
     vec2 id = floor(cell);

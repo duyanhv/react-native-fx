@@ -10,11 +10,14 @@ import expo.modules.kotlin.modules.ModuleDefinition
  * name. Additional substrate views resolve through their concrete view names.
  */
 class FxModule : Module() {
-  /**
-   * Defines the module name, view registrations, props, events, and ref functions.
-   */
   override fun definition() = ModuleDefinition {
     Name("ReactNativeFx")
+
+    // Registers bring-your-own shader source for runtime compilation. The source crosses once,
+    // here; a null source marks a registered id with no android source (silent `{via:'none'}`).
+    Function("registerShader") { id: String, source: String? ->
+      FxShaderRegistry.register(id, source)
+    }
 
     View(FxHostedView::class) {
       Events("onFxTransitionEnd", "onFxLoad", "onFxError")
@@ -24,6 +27,9 @@ class FxModule : Module() {
       }
       Prop("intensity") { view: FxHostedView, value: Double ->
         view.setIntensity(value)
+      }
+      Prop("materialConfig") { view: FxHostedView, value: MaterialConfig? ->
+        view.setMaterialConfig(value)
       }
 
       AsyncFunction("snapshot") { view: FxHostedView ->
@@ -36,7 +42,15 @@ class FxModule : Module() {
     }
 
     View(FxSurfaceView::class) {
-      Events("onShaderPress", "onShaderPressIn", "onShaderPressOut", "onFxTransitionEnd", "onFxLoad", "onFxError")
+      Events(
+        "onShaderPress",
+        "onShaderPressIn",
+        "onShaderPressOut",
+        "onShaderLongPress",
+        "onFxTransitionEnd",
+        "onFxLoad",
+        "onFxError"
+      )
 
       Prop("shader") { view: FxSurfaceView, value: String ->
         view.setShader(value)
@@ -46,6 +60,21 @@ class FxModule : Module() {
       }
       Prop("interactionMode") { view: FxSurfaceView, value: String ->
         view.setInteractionMode(value)
+      }
+      Prop("contentDistortion") { view: FxSurfaceView, value: String ->
+        view.setContentDistortion(value)
+      }
+      Prop("visible") { view: FxSurfaceView, value: Boolean ->
+        view.setVisible(value)
+      }
+      Prop("preset") { view: FxSurfaceView, value: String ->
+        view.setPreset(value)
+      }
+      Prop("presenceMotion") { view: FxSurfaceView, value: FxPresenceMotion? ->
+        view.setPresenceMotion(value)
+      }
+      Prop("appear") { view: FxSurfaceView, value: Boolean ->
+        view.setAppear(value)
       }
 
       AsyncFunction("snapshot") { view: FxSurfaceView ->

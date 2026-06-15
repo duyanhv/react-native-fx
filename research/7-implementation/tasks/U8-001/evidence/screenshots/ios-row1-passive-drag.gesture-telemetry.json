@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-12T16:16:09.123Z",
+  "events": [
+    {
+      "kind": "swipe",
+      "tMs": 485.2568359375,
+      "x": 110,
+      "y": 378,
+      "x2": 290,
+      "y2": 378,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 861
+    },
+    {
+      "kind": "swipe",
+      "tMs": 1609.69873046875,
+      "x": 290,
+      "y": 378,
+      "x2": 130,
+      "y2": 258,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 848
+    },
+    {
+      "kind": "swipe",
+      "tMs": 2733.340576171875,
+      "x": 130,
+      "y": 258,
+      "x2": 190,
+      "y2": 458,
+      "referenceWidth": 402,
+      "referenceHeight": 874,
+      "durationMs": 858
+    }
+  ]
+}

@@ -36,7 +36,8 @@ Out of scope: how a node lowers (→ `0-spine/02`); what it draws/animates (→ 
   only an explicit `motion` override goes cross-platform-uniform — fixing the semantic shape,
   while measured magnitudes still resolve natively (`edge`/`origin` sugar deferred, `41`).
 - **One word, one meaning; props scoped by ownership.** `transition` = timing **only**;
-  `motion` = `MotionSpec` map (shape); `effect` = `EffectStack`; `preset`/`tune` = semantic.
+  `motion` = `MotionSpec` map (shape); `effect` = `EffectStack`; `preset`/`tune` = semantic
+  (`tune` deferred from the V1 surface — DOC-019).
   `visible`→`FxPresence`, `state`→`FxView`, `feedback`→`FxPressable`, `interactionMode`→`<Fx>`.
 - **The law** — components are **capability-named, never platform-named**; defaults are the
   platform's own. No `SwiftUI*` / `Compose*` in the public API.

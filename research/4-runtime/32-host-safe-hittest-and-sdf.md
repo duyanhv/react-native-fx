@@ -58,18 +58,26 @@ the `expo-view` child where `onTouchEvent` and the SDF check live. Mechanics in
    description, so draw and hit-test never drift.
 3. **Decorative effects use the Host's coarse passthrough**; only shaped interactive
    surfaces need this runtime — keeping V1 (decorative) free of it.
+4. **The SDF source is the shader's own shape uniforms (DOC-011, 2026-06-12)** — no
+   separately declared hit-shape. The hit-test evaluates the same shape description the
+   shader draws with, so the touchable region cannot desync from the visible region;
+   a shader with no shape description hit-tests as its full bounds.
+5. **One coordinate normalization: the shader's UV space (DOC-011, 2026-06-12)** —
+   touch points normalize to the shader's `[0,1]` y-up UV space (location over bounds,
+   the shipped touch-uniform convention) identically across `hitTest`, recognizer
+   uniform writes, and `setHighlight`. JS-facing semantic events carry view points (the
+   RN convention); only uniforms and the SDF evaluation use UV.
 
 ## Open questions
 
-- **SDF source** — derive the hit shape from a uniform the shader already exposes
-  (radius/corner/blob field), or a separate declared hit-shape? Lean: reuse the
-  shader's shape so they can't desync.
-- **Feather/threshold** — how much slop around the SDF edge feels right for touch
-  (fat-finger tolerance) without claiming clearly-outside touches.
-- **Per-frame cost** — evaluating the SDF on `hitTest` is cheap (one point), but
-  confirm no measurable cost under rapid touch; needs-device.
-- **Coordinate units** — normalize touch to the shader's space consistently across
-  `hitTest`, events, and `setHighlight` (ties to `30`).
+- ~~**SDF source**~~ — resolved: Decision 4 (DOC-011, 2026-06-12).
+- ~~**Per-frame cost**~~ — resolved (RT-006, U8-001 device 2026-06-13): the per-frame
+  hit-test/uniform path is cheap — ≥30 s rapid tap + drag-scrub showed no jank (Android
+  gfxinfo 1.23%, 0 missed vsync), no reload, stable pid.
+- **Feather/threshold** — deferred (DEF-019, trigger: first shaped shader). V1 ships no
+  shader exposing a shape uniform, so the hit-test runs the Decision 4 full-bounds fallback
+  and there is no SDF edge to feather yet; the tuning resurrects with the first shaped shader.
+- ~~**Coordinate units**~~ — resolved: Decision 5 (DOC-011, 2026-06-12).
 
 ## Sources
 

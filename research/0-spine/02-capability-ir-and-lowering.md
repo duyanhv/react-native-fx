@@ -36,6 +36,7 @@ vocabulary. Never name anything `swiftui*` or `compose*` above the manifest.
 | `shader` | render-target | fx | v1 |
 | `filter` | modifier | none | v1 |
 | `motion` | driver | none | v1 |
+| `source` | driver | self | v2 (iOS-hosted shipped) |
 | `symbol` | render-target | self | v1 |
 | `shape-morph` | render-target | none | v2 (Android-only) |
 | `content-distort` | modifier | none | v2 / out-of-scope on iOS |
@@ -48,6 +49,12 @@ The `runtime` layer (G — touch, hit-test, scheduling, SDF pass-through) is **n
 a render node; it is the substrate the interactive nodes sit on, owned by the
 `3x-*` docs, not the manifest.
 
+The `Substrate` values (`hosted` / `expo-view`, below) are **internal lowering
+vocabulary, never end-user vocabulary (DEF-015)** — the same rule as `swiftui*`/
+`compose*`. They name where a rung lowers, not anything a developer selects; the
+substrate is derived from the chosen capability. Public docs express constraints in
+capability terms, never substrate names (`01`).
+
 ## The schema
 
 The manifest is TypeScript — it doubles as the runtime type the consumers import.
@@ -55,7 +62,10 @@ The manifest is TypeScript — it doubles as the runtime type the consumers impo
 ```ts
 // ── shared vocabularies ──────────────────────────────────────────────
 export type Platform  = 'ios' | 'android';
-/** hosted = SwiftUI/Compose host (decorative, Host boundary, pointerEvents passthrough).
+/** hosted = a host view fx owns (decorative, Host boundary, pointerEvents passthrough):
+ *  SwiftUI on iOS; on Android a plain View drawing the effect directly in V1, with Jetpack
+ *  Compose as the intended future rung. The Android `applyVia` values below name that
+ *  Compose-era mechanism; V1 realizes them through plain-View draw — see structure.android.md.
  *  expo-view = plain native UIView/ViewGroup (the G runtime; required for interaction). */
 export type Substrate = 'hosted' | 'expo-view';
 /** how a candidate is realized. */
@@ -64,6 +74,11 @@ export type Via       = 'native' | 'shader' | 'draw' | 'lib' | 'none';
 export type Asset     = 'metal' | 'agsl' | 'lottie' | 'none';
 /** the time source when the node animates. */
 export type Clock     = 'timeline' | 'display-link' | 'frame-nanos' | 'infinite-transition' | 'none';
+/** coarse scheduling hint above `clock`: `display-rate` ticks a per-frame display link
+ *  (interactive Metal/AGSL surface), `ambient` a coalesced lower-frequency timeline
+ *  (decorative hosted overlay), `static` never animates. The runtime reads it to decide
+ *  how aggressively to pause a surface's loop off-window. */
+export type Cadence   = 'ambient' | 'display-rate' | 'static';
 export type Phase     = 'v1' | 'v2';
 export type NodeKind  = 'render-target' | 'modifier' | 'driver';
 export type Status    = 'supported' | 'planned' | 'out-of-scope';
@@ -82,6 +97,8 @@ export interface Lowering {
   asset?: Asset;
   /** time source when animated; null for static. */
   clock?: Clock;
+  /** coarse scheduling hint above `clock`: how fast this rung's loop ticks when it animates. */
+  cadence?: Cadence;
   /** kind:'driver' rungs only — what this rung animates. The selector matches it to
    *  ctx.target ('content' | 'effect'); stated explicitly, not inferred from substrate. */
   target?: 'content' | 'effect';
@@ -100,11 +117,13 @@ export interface Lowering {
 
 // ── one IR node (capability) ─────────────────────────────────────────
 export interface UniformSpec {
-  type: 'number' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
-  default: unknown;
-  range?: [number, number];
-  options?: string[];      // for type:'enum'
+  type: 'number' | 'string' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
+  default: unknown;        // 'string' carries open text (a symbol name, a BYO id)
+  range?: readonly [number, number];
+  options?: readonly string[];   // for type:'enum'
 }
+// The shipped manifest is authored `as const` and read read-only, so the executable
+// schema declares `lower`, `range`, and `options` `readonly`; mutable inputs stay assignable.
 
 export interface CapabilityNode {
   id: string;              // canonical node name (the vocabulary authority)
@@ -192,7 +211,7 @@ fill: {
 shader: {
   id: 'shader', kind: 'render-target', interaction: 'fx', phase: 'v1',
   uniforms: {
-    intensity: { type: 'number', default: 1, range: [0, 3] },
+    intensity: { type: 'number', default: 0.8, range: [0, 1] },   // matches the native clamp
     colorA:    { type: 'color',  default: '#5B8CFF' },
   },
   lower: {
@@ -203,8 +222,9 @@ shader: {
         requires: { os: 17, substrate: 'expo-view' }, note: 'interactive surface (G runtime)' },
     ],
     android: [
-      { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-        requires: { os: 33, substrate: 'hosted' } },
+      { via: 'shader', asset: 'agsl', applyVia: 'Paint.onDraw', clock: 'frame-nanos',
+        requires: { os: 33, substrate: 'hosted' },
+        note: 'generative AGSL draws through a Paint in onDraw on a plain View; createRuntimeShaderEffect filters existing content and is not used — see structure.android.md' },
       { via: 'shader', asset: 'agsl', applyVia: 'View.setRenderEffect', clock: 'frame-nanos',
         requires: { os: 33, substrate: 'expo-view' }, note: 'plain View/ViewGroup (RenderNode-backed setRenderEffect), not a Compose modifier; draw-time, touch-safe' },
     ],
@@ -242,7 +262,8 @@ material: {
 ### `content-distort` — the asymmetry, encoded
 
 This is the effect-over-live-RN-content case. The manifest records *why* it is out
-on iOS and merely planned on Android, so the landmine lives in data, not folklore.
+on iOS and realized on Android — a curated `ripple` draw-time demonstrator now ships
+(DEF-009), so the landmine lives in data, not folklore.
 
 ```ts
 'content-distort': {
@@ -254,7 +275,7 @@ on iOS and merely planned on Android, so the landmine lives in data, not folklor
     ],
     android: [
       { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-        requires: { os: 33, substrate: 'expo-view' }, status: 'planned',
+        requires: { os: 33, substrate: 'expo-view' },
         note: 'RenderEffect is draw-time → touch survives; Android-only capability' },
     ],
   },
@@ -275,7 +296,7 @@ platform-only capability is expressed.
     android: [
       { via: 'native', primitive: 'MaterialShapes (morph)', applyVia: 'graphicsLayer',
         clock: 'frame-nanos',
-        requires: { os: 21, substrate: 'hosted', feature: 'm3-expressive' },
+        requires: { os: 23, substrate: 'hosted', feature: 'm3-expressive' },
         note: 'M3 Expressive native shape morph (Android-only)' },
     ],
   },
@@ -309,8 +330,8 @@ motion: {
     ios: [
       { via: 'native', primitive: 'CASpringAnimation', applyVia: 'CALayer', clock: 'none',
         target: 'content', phase: 'v2',
-        requires: { os: 13, substrate: 'expo-view' },
-        note: 'animates the fx-owned wrapper carrying RN content (33); Core Animation owns timing; transform-only ⇒ touch-safe (rule #4)' },
+        requires: { os: 17, substrate: 'expo-view' },
+        note: 'animates the fx-owned wrapper carrying RN content (33); render-server-first springs, SwiftUI.Spring integrator on retarget (structure.ios); transform-only ⇒ touch-safe (rule #4)' },
       { via: 'native', primitive: 'SwiftUI .animation', applyVia: '.animation', clock: 'none',
         target: 'effect', phase: 'v1',
         requires: { os: 16, substrate: 'hosted' },
@@ -335,6 +356,15 @@ primitives.** `FxPresence` (`1-surface/54`) adds the enter/hold/exit lifecycle a
 `preset` defaults in the runtime (`4-runtime/33`–`35`) and surface; the chain attaches a
 `transition` to a stacked layer. Both dispatch to these same rungs. The Motion semantics
 live in `3-motion/41`–`42`; the mechanics in `4-runtime` + `5-realization`.
+
+**The driver vocabulary generalizes to `target` / `clock` / `source` (decision 14).** The
+shipped `motion` node is the `target` driver: a discrete state, eased by the platform's own
+spring. `clock` (a native timeline: loop, keyframe sequence, stagger) and `source` (a native
+scroll or gesture value, mapped natively) are additive driver nodes; their rung schema lands
+with their build tasks. The iOS content rung floors at `os:17` — the retarget path steps
+`SwiftUI.Spring`, and there is no stock solver below 17 — so on earlier iOS the ladder
+degrades to `{ via: 'none' }`: instant placement, consistent with the reduce-motion posture
+(`41` decision 9).
 
 ## Who reads what
 
@@ -404,16 +434,43 @@ proof — each consumer's needs are fields the schema carries.
      (the asset type, if any). The manifest does **not** include version numbers — the
      optional peer dependency is managed by the app, not by the manifest (`53` decision 6).
      The rung guards out if the library is absent.
+14. **The driver vocabulary is `target` / `clock` / `source`, substrate-tiered (DOC-009,
+     2026-06-10).** Motion channels and effect uniforms are both *animatable properties
+     bound to native drivers*. `target` is the shipped `motion` node — discrete state in,
+     platform-native spring out. `clock` (native timeline: loop, keyframe, stagger) and
+     `source` (a native scroll/gesture value, mapped natively) are additive driver nodes,
+     built in that order after `target`. The slicing honors rule #4: content motion
+     (`expo-view`) gets full-fidelity `target`/`clock` and a best-effort `source`;
+     render-server `source` fidelity and all effect-uniform animation live in the hosted
+     effects lane. `source` guarantees "zero per-frame JS" everywhere — not "zero per-frame
+     native work", which is true only on iOS hosted. The iOS content rung floors at `os:17`
+     (the `SwiftUI.Spring` solver; below 17 the ladder degrades to `{ via: 'none' }`).
+     **The `source` node's iOS-hosted render-server rung is shipped (DEF-014):** a native
+     scroll position drives fx's own hosted effect tiles via SwiftUI `.scrollTransition`,
+     `requires {os:17, substrate:hosted}` `target:'effect'`, Android an empty ladder
+     (`{via:'none'}`). The ambient-RN-scroll best-effort tier and the Android rung remain
+     deferred (each its own later rung). The `clock` node is still unbuilt.
+15. **Per-effect typed config is canonical in the manifest, derived in TypeScript (U2-003).**
+     Every node declares its typed inputs inline (`uniforms`, or a driver's `properties`); the
+     config types a developer passes are *generated from* those specs at the type level
+     (`ConfigFor<NodeId>`), not authored separately and not emitted by a codegen step (decision
+     6). The lockstep between the derived config and the public catalog types is enforced by a
+     build-failing type assertion, and the curated shader id set is held in lockstep with the
+     native dispatch by a conformance test. A `'string'` uniform type carries open text.
+16. **`cadence` is the coarse scheduling hint above `clock` (U2-003).** A rung that animates
+     declares `cadence: 'ambient' | 'display-rate' | 'static'` — the loop-frequency class the
+     runtime reads to pause an off-window surface correctly. `clock` still names the concrete
+     time source; `cadence` is the band it falls in. Spring-eased driver rungs carry no
+     `cadence` (they ease to a target, they do not run a perpetual loop).
 
 ## Open questions
 
-- **Where does per-effect typed config live** — every node kind has typed inputs, not just
-  `shader`: `fill`/`material`/`shader`/`symbol` carry `uniforms`-style config, `filter` its
-  modifier params, `motion`/driver its `properties`. The manifest should describe typed
-  config for **every effect node**, fully inline (`uniforms`/`properties`) or via a generated
-  types file. Lean: canonical in the manifest, TS types generated from it. (The worked
-  examples here currently show only `shader`/`motion` config; at implementation they should
-  grow to include `fill`/`material`/`filter`/`symbol` typed config too.)
+- ~~**Where does per-effect typed config live**~~ — **Resolved (decision 15; U2-003):**
+  canonical in the manifest, TS config types **derived from it** at the type level (no codegen
+  step — honors decision 6). Every V1 node carries its `uniforms`/`properties` inline; `ConfigFor<NodeId>`
+  maps each `UniformSpec` to the TypeScript type a developer sets, and a build-failing assertion
+  holds the derived config in lockstep with the public catalog types (`MaterialConfig`,
+  `SymbolConfig`). A `'string'` uniform type was added for open text (a symbol name, a BYO id).
 - **Multiple assets per rung** — a shader needing helper functions or a texture.
   Currently `asset` is singular; promote to `assets: Asset[]` if needed.
 - **`feature` flag vocabulary** — deferred until a real shader or feature case forces it.

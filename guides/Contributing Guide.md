@@ -4,6 +4,15 @@ This guide is the working reference for contributing to react-native-fx: the too
 
 For how to format and name code, read the [Code Style Guide](./Code%20Style%20Guide.md). For comments, the [Code Comments Guide](./Code%20Comments%20Guide.md). For prose, the [Writing Style Guide](./Writing%20Style%20Guide.md).
 
+## Contributing as a human
+
+fx is built by AI agents working a strict protocol: each feature is a task in [research/7-implementation](../research/7-implementation), driven through a fixed lifecycle against the [agents](../agents) docs and the research source of truth. That machinery governs how the architecture gets built, decision by decision. You do not need it for a drive-by fix.
+
+- **A small change** — a typo, a bug fix, a doc correction, a missing test — needs none of the task lifecycle. Branch, make the change, run the checks below, and open a pull request. The bar in [Before you open a pull request](#before-you-open-a-pull-request) is the whole gate.
+- **A change that resolves a design question or alters a capability** touches the research source of truth, so it follows the research path. Start with [research/README.md](../research/README.md) for the mental model, find the doc that owns the area you are changing, and close the loop per [Documentation closure](#documentation-closure). The [decision ledger](../research/7-implementation/decision-ledger.md) tracks what is still open.
+
+The [agents](../agents) folder is the protocol those AI agents follow. Read it to understand how the repo is built, but you are not bound to run an agent "session" to contribute.
+
 ## Toolchain
 
 fx pins its toolchain so every contributor builds against the same versions:

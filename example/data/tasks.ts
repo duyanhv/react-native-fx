@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,54 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "DEF-009",
+		title: "Android content-distort ripple",
+		platform: "Android",
+		what: "ripple AGSL RenderEffect over live RN content · children stay tappable · animates · pauses off-window · pre-33 normal · iOS no-op",
+		status: "todo",
+		screen: "content-distort",
+	},
+	{
+		id: "DEF-008",
+		title: "Runtime shader compilation",
+		platform: "iOS · Android",
+		what: "app-supplied MSL+AGSL via registerShader · runtime compile · onError on malformed · iOS-only degrades on Android",
+		status: "todo",
+		screen: "runtime-shader",
+	},
+	{
+		id: "DEF-014",
+		title: "Scroll-linked source rung",
+		platform: "iOS",
+		what: "hosted ScrollView of fx tiles · render-server scrollTransition · zero per-frame JS · os<17 static",
+		status: "todo",
+		screen: "source-scroll",
+	},
+	{
+		id: "U8-002",
+		title: "RNGH coexistence matrix",
+		platform: "iOS · Android",
+		what: "active surface inside ScrollView/pager/bottom-sheet/RNGH-pan · cancel path · passive/controlled/nested",
+		status: "todo",
+		screen: "coexistence",
+	},
+	{
+		id: "U7-001",
+		title: "FxPresence handshake",
+		platform: "iOS · Android",
+		what: "deferred-unmount · interrupt-as-retarget · transient envelope · onTransitionEnd",
+		status: "todo",
+		screen: "presence",
+	},
+	{
+		id: "EX-002",
+		title: "100-cell mixed stress list",
+		platform: "iOS · Android",
+		what: "shared Metal context · scroll perf · no MTKView without a shader",
+		status: "todo",
+		screen: "stress-list",
+	},
 	{
 		id: "U4-002",
 		title: "mountChildComponentView override",
@@ -25,7 +73,7 @@ export const TASKS: DeviceTask[] = [
 		platform: "iOS",
 		what: "SF Symbol renders through the hosted path",
 		status: "todo",
-		screen: "blank",
+		screen: "symbol",
 	},
 	{
 		id: "U3-005",
@@ -41,7 +89,7 @@ export const TASKS: DeviceTask[] = [
 		platform: "Android",
 		what: "RenderEffect blur · intensity 0–1 · staleness",
 		status: "todo",
-		screen: "blank",
+		screen: "android-material",
 	},
 	{
 		id: "U3-002",
@@ -49,7 +97,7 @@ export const TASKS: DeviceTask[] = [
 		platform: "iOS · Android",
 		what: "glass styles · uniform alignment · hosting parity",
 		status: "todo",
-		screen: "blank",
+		screen: "hosting-parity",
 	},
 	{
 		id: "U3-006",

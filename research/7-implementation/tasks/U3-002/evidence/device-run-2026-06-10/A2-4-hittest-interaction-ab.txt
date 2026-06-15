@@ -1,0 +1,25 @@
+A2-4 hitTest / interaction A/B — backdrop-independent press signal
+Device: iPhone 17 Pro, iOS 26.0 (sim 1F51FEC6). Instrumented FxHostedView.hitTest (temporary, reverted).
+Tap target: glass tile on hosting-parity, interactive ON vs OFF, 5 taps each.
+
+=== OFF (Press response = static) ===
+tree · UIVisualEffectView gestures=[none] interactions=[] effect=UIGlassEffect isInteractive=false
+tree FxGlassSurfaceView gestures=[none] interactions=[]
+winners:
+  40 winner=UIVisualEffectView
+
+=== ON (Press response = interactive) ===
+tree · UIVisualEffectView gestures=[none] interactions=[_UIFlexInteraction,_UIUpdateLinkViewInteraction] effect=UIGlassEffect isInteractive=true
+tree FxGlassSurfaceView gestures=[none] interactions=[]
+winners:
+  45 winner=UIVisualEffectView
+
+READING:
+- The deepest hit-test winner is UIVisualEffectView in BOTH states (the UIKit rung installs
+  no separate hittable interaction VIEW, unlike the SwiftUI rung's UIPlatformGlassInteractionView).
+- The backdrop-independent differentiator is the effect view's UIInteraction set + isInteractive:
+    OFF: UIGlassEffect isInteractive=false, interactions=[]
+    ON : UIGlassEffect isInteractive=true,  interactions=[_UIFlexInteraction,_UIUpdateLinkViewInteraction]
+  _UIFlexInteraction is the system interactive-glass press/flex interaction; it is installed
+  ONLY when interactive and absent when static. This is the press machinery, proven without
+  any frame-diff over the animated backdrop.

@@ -8,7 +8,9 @@ push it forward.
 ## The one mental model
 
 Work is tracked as **tasks**, one per build unit, in [`progress.md`](./progress.md) — that table is
-the live dashboard. Each task moves through a fixed **lifecycle**:
+the live dashboard; [`v1-cut-checklist.md`](./v1-cut-checklist.md) is the standing V1-cut readiness
+record (dispositions, the one remaining gate, waivers, known limitations). Each task moves through a
+fixed **lifecycle**:
 
 ```
 spec'd -> rules-gated -> implemented -> commented -> headless-done -> device-verified -> reviewed -> docs-closed -> merged

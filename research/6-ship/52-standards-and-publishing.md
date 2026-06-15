@@ -68,8 +68,8 @@ import {
   FxView, FxPressable,         // mounted-state + press primitives (57)
   Fx,                          // the effect primitive — single id or EffectStack (55)
   FxGroup, FxItem,             // the glass morph compound (57)
-  // curated effect components (EdgeGlow / MeshGradient / …) are an OPEN ship decision (56):
-  // optional sugar over <Fx effect="…">, NOT committed root exports. Glass stays <Fx effect="glass">.
+  // curated effect component (EdgeGlow) — ratified in DOC-004; MeshGradient is a fill,
+  // reached via <Fx effect="…">. Optional sugar, NOT committed root exports.
 } from 'react-native-fx';
 ```
 
@@ -140,10 +140,24 @@ The keystone packaging detail — each platform compiles/packages its own shader
    `.agsl` implementation for each catalog id directly. The author-once compiler remains
    additive V2 build-time codegen (`03`), not a prerequisite for the V1 catalog.
 10. **Do not scope-split into `@react-native-fx/*` packages yet** — version coordination,
-   install friction, and premature boundaries before the product is stable. The only later
-   split worth considering: `@react-native-fx/compiler` (the optional build-time shader/
-   effect emitter, `03`) and `@react-native-fx/lab` (experimental effects/recipes — a home
-   for the "where curation ends" question in `00`, kept out of core's semver).
+    install friction, and premature boundaries before the product is stable. The only later
+    split worth considering: `@react-native-fx/compiler` (the optional build-time shader/
+    effect emitter, `03`) and `@react-native-fx/lab` (experimental effects/recipes — a home
+    for the "where curation ends" question in `00`, kept out of core's semver). **The V1
+    package publishes unscoped as `react-native-fxkit` (DEF-015, revised 2026-06-13)** — the
+    unscoped `react-native-fx` is unclaimable (npm typosquat filter vs `react-native-fs`) and
+    a scope would force a by-hand npm org claim; `react-native-fxkit` is already owned. The
+    mechanical rename of `packages/package.json` + the install/import snippets across docs is
+    DEF-016.
+11. **Palettes/themes as a shareable artifact are deferred to V2.** Pure-config palettes
+    resolve in JS within the core package (`presets/`). Consumer-authored palettes as a
+    distribution surface would live in `@react-native-fx/lab` if demand justifies the split.
+    This decision is recorded in `00` (SPINE-002, DOC-003).
+12. **V1 named effect-component set ratified (DOC-004).** `EdgeGlow` ships as a component;
+    `MeshGradient` does not. The criterion is: drawn whole by fx, standalone-useful, and the
+    canonical API remains `<Fx effect="…">`. These are sugar over effects already in the
+    curated catalog (DOC-003, SPINE-001) — not new surface. They export from the core package,
+    not `@react-native-fx/lab` (consistent with Decision #10).
 
 ## Findings
 
@@ -162,11 +176,11 @@ The keystone packaging detail — each platform compiles/packages its own shader
 
 ## Open questions
 
-- **`surface/` exports come from the ratified vocabulary (`50`/`54`–`57`), not the folder
-  layout.** The component set is now pinned: `FxPresence` (`54`), `FxView`/`FxPressable`/
-  `FxGroup`/`FxItem` (`57`), `<Fx>` single-or-stack (`55`), plus curated effect components
-  (`EdgeGlow`/…). `FxLayer` was dropped (folded into `<Fx>`). The package must not introduce
-  un-ratified API names.
+- ~~**`surface/` exports come from the ratified vocabulary (`50`/`54`–`57`), not the folder
+  layout.**~~ — **Resolved (DOC-004, DOC-005).** The component set is pinned: `FxPresence`
+  (`54`), `FxView`/`FxPressable`/`FxGroup`/`FxItem` (`57`), `<Fx>` single-or-stack (`55`),
+  plus the curated effect component `EdgeGlow` (`56`). `FxLayer` was dropped (folded into
+  `<Fx>`). The package must not introduce un-ratified API names.
 
 ## Sources
 

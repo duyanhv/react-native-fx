@@ -1,5 +1,5 @@
 # Runtime: shadow nodes & layout
-Status: researched (design) · source-audit pass · device proof pending
+Status: researched (design) · source-audit pass · layout read device-proven (U5-001, 2026-06-11) · identity/hit-test proof pending
 Phase: v2 (the owned content-motion runtime lives on the `expo-view` substrate)
 Feeds: 34-animation-driver.md, 35-view-state.md, 42-presence-and-lifecycle.md, structure.{ios,android}
 
@@ -92,9 +92,16 @@ default holds.
 - How does fx keep a stable handle to the **intermediate container** across
   re-renders, on each platform (iOS UIView, Android ViewGroup)? (fx animates the container it
   owns — no child RN-view ref is needed; #27846.)
-- When is the post-layout frame available, and how does fx read size/position
+- ~~When is the post-layout frame available, and how does fx read size/position
   **natively** to resolve a relative target (e.g. `distance: 'compact'` → the view's
-  own measured height) without a JS round-trip?
+  own measured height) without a JS round-trip?~~ **Answered (U5-001, device-verified
+  2026-06-11).** The frame is available natively at mount (Fabric resolves layout before
+  mounting) and on every layout update. `FxLayoutObserver`, owned by `FxSurfaceView`,
+  captures it event-driven — iOS observes `bounds` (RN applies layout as `center` then
+  `bounds`), Android attaches a layout-change listener — and serves parent-space frame,
+  window origin, edge travel, and insets by synchronous native read; zero JS round-trip,
+  zero layout writes. The per-platform read points live in
+  `5-realization/structure.{ios,android}.md` §Layout read.
 - Does transform animation provably preserve hit-testing on both platforms, including
   mid-animation (the presentation-layer vs model-layer subtlety on iOS)?
 - Is the wrapper layout-transparent enough that inserting `FxPresence` does not change
@@ -110,9 +117,17 @@ default holds.
   Expo Modules can keep that **container's identity stable across re-renders** and let fx
   **read post-layout frames natively**. If either cannot be done cleanly through Expo Modules,
   that is a concrete trigger to reconsider Nitro/JSI. Until one fails on device, the default
-  holds.
-- Whether any of this is reachable on the `hosted` substrate, or strictly `expo-view`.
-- Shadow-node interaction on the New Architecture only, or a Paper fallback at all.
+  holds. **The layout-read half passed on device (U5-001, 2026-06-11)** — Expo Modules reads
+  post-layout frames natively with no C++/JSI; the identity half stays open (the `05` test,
+  U9-002).
+- ~~Whether any of this is reachable on the `hosted` substrate, or strictly `expo-view`.~~
+  **Resolved (RT-013 / U5-001, device-verified 2026-06-11): strictly `expo-view`.** The read
+  rides `FxSurfaceView` with no hosted-substrate involvement; content motion and its layout
+  read are `expo-view`-only (rule #3).
+- ~~Shadow-node interaction on the New Architecture only, or a Paper fallback at all.~~
+  **Resolved (RT-013 / U5-001, device-verified 2026-06-11): New Architecture only.** The
+  read point exists only in Fabric's mounting flow (SDK 56 floor); no Paper fallback is
+  built or supported.
 
 ## Sources
 

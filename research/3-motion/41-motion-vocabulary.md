@@ -30,8 +30,16 @@ design motion:
 |---|---|---|
 | **`preset`** | a **platform-idiomatic behavior bundle** — `transient`, `lift`, … | fx resolves the **whole shape + timing per platform** (may diverge) |
 | **`motion`** | an **explicit shape override** (a typed `MotionSpec` map) | the user **fixes** the shape **cross-platform** (opt-in uniformity) |
-| **`tune`** | **intent adjustment** inside the platform family (`speed`/`emphasis`/`distance`) | stays platform-native; never raw curves |
+| **`tune`** *(deferred — V1.x / MOT-001)* | **intent adjustment** inside the platform family (`speed`/`emphasis`/`distance`) | stays platform-native; never raw curves |
 | **`transition`** | **expert timing override** (`duration`/`delay`/`easing`/`spring`) | the escape hatch for timing only |
+
+**V1 ships the `preset`/`motion`/`transition` triad; `tune` is deferred (Decision 13,
+DOC-019).** The triad is load-bearing — the law needs a default behavior, an explicit-override
+channel, and a timing escape hatch. `tune` is a third adjustment axis whose `{speed, emphasis,
+distance}` semantics are invisible until MOT-001 device-tunes the formulas (the open `MOT-002`
+vocabulary), and whose job overlaps `preset` (intent) and `transition` (timing). It resurrects
+with MOT-001's device-proven catalog. The rest of this section keeps `tune`'s design for that
+resurrection; it is simply absent from the V1 surface.
 
 So the default door is `<FxPresence preset="transient" />` — fx picks the
 platform-appropriate transient presentation on each OS. The moment the user supplies a
@@ -114,6 +122,16 @@ rule applies to presence phases and mounted states alike.
 
 ## Findings
 
+### The driver layer beneath the vocabulary
+
+The four props are sugar over a deeper layer: an animatable property — a content channel
+or an effect uniform, the same thing — bound to a **native driver** (`02` decision 14).
+Three drivers: **`target`** (discrete state → platform-native spring; what ships today),
+**`clock`** (a native timeline: loop, pulse, keyframe sequence, stagger), **`source`**
+(a native scroll/gesture value, mapped natively — `40` decision 7). `preset="transient"`
+expands to a `target`-driver binding with platform-native springs; the four-prop front
+door does not change. `target` + `clock` build first; `source` is V2 and substrate-tiered.
+
 ### One driver node, two targets
 
 The vocabulary lowers to a single manifest node — **`motion` (`kind:'driver'`)** — whose
@@ -121,7 +139,7 @@ ladder splits by *what is animated* (`0-spine/02`):
 
 | Target | iOS rung | Android rung | Substrate |
 |---|---|---|---|
-| **content** (the fx-owned wrapper carrying RN content; transform/opacity) | `CASpringAnimation` on `CALayer` | `dynamicanimation` / `ViewPropertyAnimator` | `expo-view` |
+| **content** (the fx-owned wrapper carrying RN content; transform/opacity) | render-server spring (`CASpringAnimation`); `SwiftUI.Spring` integrator on retarget · `os:17` | `dynamicanimation` / `ViewPropertyAnimator` | `expo-view` |
 | **effect** (fx's own drawn layer) | SwiftUI `.animation` | Compose `animate*AsState` | `hosted` |
 
 Content motion is **transform/opacity only** on the **fx-owned wrapper** (carrying RN content,
@@ -177,6 +195,7 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
 6. **`preset` / `motion` / `tune` / `transition` are four distinct jobs** — `preset`
    resolves the whole behavior per platform; `motion` is the explicit cross-platform shape
    override; `tune` adjusts intent inside the platform family; `transition` is expert timing.
+   *(V1 ships the `preset`/`motion`/`transition` triad; `tune` is deferred — Decision 13.)*
 7. **Presets are behavior-named, not UI-named** (`transient`/`lift`, never `toast`/`card`);
    `motion` is a typed map, *different per component* (phases vs states), never one universal map.
 8. **Motion-map fallback** = `userMotion[key] ?? presetMotion[key] ?? identity`; no implicit
@@ -189,24 +208,82 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
    all content motion (presence enter/exit, state transitions). Opacity-only degradation
    is a deferred V2 refinement. Decorative effects (shaders, materials) have their own
    native clock and are not gated by the motion reduce-motion policy in V1.
+10. **The vocabulary rides the driver layer (DOC-009, 2026-06-10).** `preset` / `motion` /
+    `tune` / `transition` are sugar over *animatable properties bound to native drivers* —
+    `target` / `clock` / `source` (`02` decision 14, `40` decision 7). The four-prop front
+    door is unchanged; drivers are the layer beneath it, and the layer the "feels
+    primitive" fixes land in.
+11. **Springs are authored per platform; the uniform `{damping,mass,stiffness}` shape is
+    dropped (DOC-009, 2026-06-10).** `transition.spring` takes each platform's own
+    parameterization — iOS `{ duration, bounce }` (the iOS 17 unified spring); Android
+    `{ stiffness, dampingRatio }` (`SpringForce` values or tokens; M3 Expressive
+    `MotionScheme` tokens where present). Omitting a side keeps that platform's tuned
+    default — the law, applied to timing authoring. The lossless bridge for internal
+    conversion: `bounce ≈ 1 − dampingRatio`, `stiffness ≈ (2π/duration)²`. One invented
+    cross-platform spring tuned to feel native on both is exactly the janky middle this
+    forbids.
+12. **The V1 primitive layer is the driver vocabulary, not a Compose-style enter/exit set
+    (DOC-009, 2026-06-10).** V1 ships the ratified presets (DOC-005) and the `fx.motion.*`
+    builders over the `target` driver; `emphasis` lives in `tune`, press response in
+    `feedback` (`57`). Compose's `fadeIn`/`slideIn` names are not borrowed — the builders
+    stay `edgeIn`/`edgeOut`/`scale`/`identity`. Multi-step sequences and one-shot bursts
+    arrive with the `clock` driver (`42` decision 6), not as more named primitives.
+13. **V1 ships `preset`/`motion`/`transition`; `tune` is deferred to MOT-001 (DOC-019,
+    2026-06-11).** `tune` is the weak member of the four — a third intent axis whose
+    `{speed, emphasis, distance}` formulas are device-pending (the open `MOT-002`) and whose
+    job overlaps `preset` (intent) and `transition` (timing). No comparison library ships a
+    separate intent axis (Reanimated: entering/exiting + transitions; Framer: variants +
+    transition). It costs nothing to cut now — it does not exist in code. The four-prop design
+    is retained for MOT-001's resurrection; the V1 *surface* exposes the triad only.
+14. **No top-level `edge`/`origin` shape sugar — the binary stays (MOT-004, DEF-005,
+    2026-06-14).** The motion surfaces keep two modes only: `preset` (full platform-native
+    shape *and* timing) or an explicit `motion` map (cross-platform shape override; platform
+    timing still falls back to the preset/default driver unless `transition` overrides it). No
+    `edge=`/`origin=` partial-override prop ships. To relocate a preset's edge, use the
+    `motion` map — `fx.motion.edgeIn/edgeOut({from/to})` fixes the semantic shape while
+    platform timing is preserved:
+
+    ```tsx
+    <FxPresence
+      preset="transient"
+      motion={{
+        enter: fx.motion.edgeIn({ from: 'bottom' }),
+        exit:  fx.motion.edgeOut({ to: 'bottom' }),
+      }}
+    />
+    ```
+
+    A top-level sugar is rejected on three grounds: it **blurs the shape-native law's** clean
+    default-or-uniform dichotomy; it **duplicates the `motion` map**, which already delivers
+    "platform timing + chosen edge"; and a single `edge=` spanning both phases would imply a
+    reverse — conflicting with **no implicit reverse** (Decision 8). Reconsider only if the
+    `motion` map demonstrably fails a real use case.
 
 ## Open questions
 
 - The minimal animatable-property set and the `tune` vocabulary (`speed`/`emphasis`/
   `distance` — enough?) and the `preset` value set per component.
-  **The V1 preset value set is ratified (DOC-005):** `transient` · `sheet` · `modal` (presence);
-  `lift` (state). The per-platform shape and timing defaults are device-pending, owned by MOT-001.
-- **Partial-override sugar (`edge`/`origin`) — deferred.** For now it's binary: `preset`
-  (full platform default) *or* explicit `motion` (full uniform shape); no `edge="bottom"`
-  middle ground. Reconsider as scoped `FxPresence` sugar only if demand is real (the risk is
-  a slippery slope — why `edge` but not `distance`/`origin`? — and a semantically fuzzy
-  "platform shape but from the bottom").
+  **`tune` is deferred from the V1 surface (DOC-019):** its vocabulary stays the open `MOT-002`
+  device work and resurrects with MOT-001; V1 ships `preset`/`motion`/`transition` only.
+  **The V1 preset value set is ratified (DOC-005), presence narrowed (DOC-018):** `transient`
+  (presence); `lift` (state). `sheet`/`modal` (presence) defer to MOT-001 (`42` — they name
+  screen-scale presentations that collide with presence's scope ceiling). The per-platform
+  shape and timing defaults are device-pending, owned by MOT-001.
+- ~~**Partial-override sugar (`edge`/`origin`)**~~ — **Resolved (MOT-004, DEF-005,
+  2026-06-14): rejected.** The binary stays — `preset` (full platform default) *or* explicit
+  `motion` (cross-platform shape override, platform timing preserved); no `edge="bottom"`
+  middle ground (Decision 14). Edge/origin control lives inside the `motion` map
+  (`fx.motion.edgeIn/edgeOut({from/to})`, `MotionSpec.origin`); a top-level prop would blur the
+  shape-native law, duplicate the map, and conflict with no-implicit-reverse (Decision 8).
 - ~~The selector `target` axis (`content`/`effect`).~~ **Resolved in `0-spine/02`** (decision
   11: declared per-rung, default `'effect'`).
-- Which semantic primitives ship in v1 (`appear`/`dismiss` certain; `emphasis`/
-  `pressResponse` — v1 or v2?).
-- Borrow Compose's enter/exit names (`fadeIn`/`slideIn`/`scaleIn`/`expandIn`) for the
-  primitive layer without adopting its API shape (rule #2).
+- ~~Which semantic primitives ship in v1 (`appear`/`dismiss` certain; `emphasis`/
+  `pressResponse` — v1 or v2?).~~ **Resolved (decision 12, DOC-009):** the V1 primitive
+  layer is the driver vocabulary; presets + `fx.motion.*` carry the semantics, `tune`
+  carries emphasis, `feedback` carries press response.
+- ~~Borrow Compose's enter/exit names (`fadeIn`/`slideIn`/`scaleIn`/`expandIn`) for the
+  primitive layer without adopting its API shape (rule #2).~~ **Resolved (decision 12,
+  DOC-009):** not borrowed; the builders stay `edgeIn`/`edgeOut`/`scale`/`identity`.
 
 ## Sources
 

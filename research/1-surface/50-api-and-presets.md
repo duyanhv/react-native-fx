@@ -24,8 +24,8 @@ presentation *behaviors* (presets applied to *your* content), not exported UI co
 | Layer | What it is | Who | Docs |
 |---|---|---|---|
 | **1 · Behavior presets** (platform-native) | named behaviors via props on primitives — `preset="transient"`, `feedback="native"`, `effect="edge-glow"` — applied to *your* content; each resolves the whole behavior per platform. Plus the curated **effect components** fx draws whole (`EdgeGlow`/…) — the one exception. | 95% of users | `56` |
-| **2 · Primitives** | the composable components: `FxPresence`, `FxView`, `FxPressable` (wrap *your* content); `<Fx>` (effects, single or stack); `FxGroup`/`FxItem` | power users | `54`, `55`, `57` |
-| **3 · Builders & data** | `fx.effect.*` → `EffectStack`, `fx.motion.*` → `MotionSpec`; BYO assets | escape hatch | `55` |
+| **2 · Primitives** | the composable components: `FxPresence`, `FxView`, `FxPressable` (wrap *your* content); `<Fx>` (effects, single or stack); `Fx.Scroll` (hosted scroll-source context); `FxGroup`/`FxItem` | power users | `54`, `55`, `57` |
+| **3 · Builders & data** | `fx.effect.*` → `EffectStack`, `fx.motion.*` → `MotionSpec`, `fx.source.*` → `SourceSpec`; BYO assets | escape hatch | `55` |
 
 A preset (layer 1) is a primitive (layer 2) with a `preset`/`feedback`/`effect` + native
 defaults; a primitive accepts builder output (layer 3) when you customize past the
@@ -42,8 +42,8 @@ only, and the `preset`/`motion`/`tune`/`transition` split is the law's shape-nat
 | Prop | Type | Meaning |
 |---|---|---|
 | `preset` | behavior id (`transient`, `lift`, …) | **platform-idiomatic behavior bundle** — fx resolves the *whole shape + timing per platform*. Behavior-named, never UI-named. |
-| `motion` | **typed `MotionSpec` map** | **explicit shape override** — fixes the shape cross-platform. *Different map per component* (phases vs states), never one universal map. |
-| `tune` | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`) |
+| `motion` | **typed `MotionSpec` map** | **explicit shape override** — fixes the shape cross-platform. *Different map per component* (phases vs states), never one universal map. **The sole shape-override channel — no partial top-level shape props (`edge`/`origin`); MOT-004/DEF-005.** |
+| `tune` *(deferred — V1.x / MOT-001)* | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`). Not on the V1 surface (DOC-019). |
 | `transition` | `{ duration?, delay?, easing?, spring? }` | **expert timing override only** — never a shape |
 | `effect` | **`EffectStack`** or effect id | the visual effect bundle/layer(s). **Two meanings by owner:** on `<Fx>` it *is* the fx-owned drawn surface; on `FxView` it is decoration *attached to your content*. |
 | `feedback` | press-behavior id (`native`) | press feedback bundle (`FxPressable`) |
@@ -51,19 +51,24 @@ only, and the `preset`/`motion`/`tune`/`transition` split is the law's shape-nat
 | `visible` | boolean | presence **lifecycle** target (`FxPresence`) — mount retention, exit, unmount |
 | `composition` | `background \| overlay \| surface` | effect-layer position only |
 | `interactionMode` | `none \| passive \| active \| controlled` | interactive **effect** surface (`<Fx>`, `30`) — shader uniforms `pressDepth`/`pointerX/Y` |
+| `source` | **`SourceSpec`** (`fx.source.scroll`) | **native source binding** — drives an fx-owned hosted scroll context's tiles from native scroll position (`Fx.Scroll`, `40`); iOS-hosted render-server (DEF-014), deferred elsewhere |
 
 `preset` / `feedback` / `effect` are three **preset-like bundles** on three different owned
 surfaces — a clear domain split, not a reduction. Events: `onTransitionEnd` (`{phase}`),
-`onStateChange`, `onPress*`, `onLoad`/`onError`.
+`onStateChange`, `onPress*`, `onLoad`/`onError`. These are the **public** prop names; the
+native views register prefixed names (`onShader*`/`onFx*`) — the canonical mapping is pinned
+in `40` §Native ↔ public event-name mapping.
 
-**Two builders, two data types** (`55`/`41`): `fx.effect.*` → `EffectStack` (visual
-layers); `fx.motion.*` → `MotionSpec` (shape). `motion` takes a `MotionSpec` map; `effect`
-takes an `EffectStack`; `transition` takes a `Transition`. They never cross.
+**Builders and data types** (`55`/`41`): `fx.effect.*` → `EffectStack` (visual
+layers); `fx.motion.*` → `MotionSpec` (shape); `fx.source.*` → `SourceSpec` (a native
+source binding — DEF-014). `motion` takes a `MotionSpec` map; `effect` takes an
+`EffectStack`; `source` takes a `SourceSpec`; `transition` takes a `Transition`. They
+never cross.
 
 ### Per-component surfaces (props are scoped, not shared)
 
 ```tsx
-<FxPresence visible preset="transient" motion={{ enter, exit }} tune transition />   // lifecycle
+<FxPresence visible preset="transient" motion={{ enter, exit }} transition />        // lifecycle
 <FxView     state="selected" preset="lift" motion={{ idle, selected }} effect transition />  // mounted state
 <FxPressable feedback="native" onPress />                                            // press recognizer
 <Fx         effect="plasma" interactionMode="active" onPress />                      // drawn effect (+ interactive)
@@ -75,7 +80,7 @@ takes an `EffectStack`; `transition` takes a `Transition`. They never cross.
 `<FxPresence visible><FxView state>…`. The "shared" props are **shared conceptually but
 still scoped by owner** — there is no universal prop:
 
-- `transition` / `tune` apply only where a `motion`/`preset` exists (the components that move).
+- `transition` (and the V1.x-deferred `tune`) applies only where a `motion`/`preset` exists (the components that move).
 - `effect` applies to `<Fx>` (the drawn surface) and optionally to `FxView` (decoration on
   your content) — different meaning per owner.
 - `composition` applies **only to effect layers** (where the effect sits), nowhere else.
@@ -133,11 +138,13 @@ by the runtime.
 2. **One prop language, scoped by ownership; `transition` is timing only.** The
    `preset`/`motion`/`tune`/`transition` split is the law's shape-native engine: `preset`
    resolves the whole behavior per platform, `motion` is the explicit cross-platform shape
-   override, `tune` adjusts intent, `transition` is expert timing. Props are scoped to their
+   override, `tune` adjusts intent, `transition` is expert timing. **V1 ships the
+   `preset`/`motion`/`transition` triad; `tune` is deferred to MOT-001 (DOC-019).** Props are scoped to their
    owning component (`visible`→`FxPresence`, `state`→`FxView`, `feedback`→`FxPressable`,
    `interactionMode`→`<Fx>`), not a flat pool.
-3. **Two builder namespaces, two data types** — `fx.effect`→`EffectStack`,
-   `fx.motion`→`MotionSpec`; they are not interchangeable. `preset`/`feedback`/`effect` are
+3. **Builder namespaces map one-to-one to data types** — `fx.effect`→`EffectStack`,
+   `fx.motion`→`MotionSpec`, `fx.source`→`SourceSpec` (the source-binding builder, DEF-014);
+   they are not interchangeable. `preset`/`feedback`/`effect` are
    three preset-like bundles on different owned surfaces (an honest domain split).
 4. **Props by default; compound only for real native layers** (`FxGroup`/`FxItem`).
 5. **Presets resolve in JS**; palettes/themes are pure config; `time`/`resolution` never in
@@ -147,7 +154,27 @@ by the runtime.
 
 ## Decisions
 
-7. **V1 vocabulary ratified (DOC-005).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` · `sheet` · `modal` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+7. **V1 vocabulary ratified (DOC-005), presence set narrowed (DOC-018).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). `sheet`/`modal` (presence) are **deferred to MOT-001** — they name screen-scale presentations that collide with presence's scope ceiling (`42`, DOC-018). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+8. **Surface-freeze naming pass ratified (DEF-015, 2026-06-13).** The public surface is frozen with four calls:
+   - **`<Fx effect={fx.effect.*}>` stays as-is.** The repetition of the `fx`/`effect` token appears only at the layer-3 builder call site (the power-user escape hatch); the front door is the string form `<Fx effect="plasma" />` and the presets, which do not repeat. The `fx.effect.* → EffectStack` / `fx.motion.* → MotionSpec` symmetry (Decision 3) is a deliberate mnemonic and is not broken to de-stutter a rare site. Lead public docs with the string form; treat `fx.effect.*` as the escape hatch. **No bare `effect` export ships in V1** (`55`).
+   - **`interactionMode` and its `none | passive | active` vocabulary stay.** The names are platform-agnostic (no rule-#2 leak), and the obvious intent-word substitutes collide inside fx's own vocabulary (`pressable` is `FxPressable`; `reactive` reads as Reanimated). The V1 *public* value set is `none | passive | active`; `controlled` is **defined but deferred to DEF-020** (its `setUniform`/`setHighlight` write path has no V1 consumer) — `30`.
+   - **`hosted` / `expo-view` stay research-internal.** They are lowering vocabulary, never end-user vocabulary; the user picks a capability (`preset`/`effect`/`interactionMode`) and the adapter derives the substrate. Public docs state capability constraints ("interactive effects need an interactive surface"), never substrate names (`01`/`02`).
+   - **The package publishes unscoped as `react-native-fxkit`** (revised 2026-06-13 — already owned and published, `react-native-fxkit@0.0.1`). The unscoped `react-native-fx` is unclaimable (npm typosquat filter vs `react-native-fs`), and a scoped `@react-native-fx/core` would force a by-hand npm org creation; `react-native-fxkit` is claimed and removes that step. API symbols stay short — `Fx`, `FxPresence`, `FxView`, `FxPressable`, `EdgeGlow`, `fx.effect.*`/`fx.motion.*` — so install/import read `react-native-fxkit` while the surface keeps the `fx`/`Fx` branding (the package name is not an API symbol). The mechanical `package.json` + docs rename to `react-native-fxkit` is DEF-016 (no scope-claim step).
+9. **The `source` driver surface ratified + shipped on iOS hosted (DEF-014, 2026-06-14).**
+   The native-source binding is `fx.source.scroll({ axis })` → `SourceSpec`, applied to the
+   minimal `Fx.Scroll` hosted scroll context. Three calls, made under the DEF-015 naming
+   discipline (agnostic, no `hosted`/`expo-view` leak):
+   - **`fx.source.scroll` joins `fx.effect.*`/`fx.motion.*`** as the third builder namespace
+     (Decision 3) — one namespace, one data type, mnemonic-consistent.
+   - **`Fx.Scroll` is a compound under `Fx`.** It ships today as an `Fx` namespace object
+     (`{ Scroll }`); when the general `<Fx effect>` surface lands (Decision 8) it becomes a
+     callable component carrying the same `.Scroll` static — forward-compatible, no rename.
+   - **The source binds at the container, with tiles as fx-owned data, not children.** Live RN
+     content cannot be scroll-linked without hosting it (rule #4 — it would sever RN touch), so
+     `Fx.Scroll` takes a `tiles` data prop of fx's own generative effects, not JSX children; the
+     `source` binding is container-scoped. A per-`<Fx>`-item source binding can arrive only for
+     fx-owned effect children, never wrapped RN content. iOS-hosted render-server only; the
+     ambient-RN-scroll and Android tiers are deferred (`40`/`02`).
 
 ## Open questions
 
@@ -156,7 +183,10 @@ by the runtime.
   (Expo's `previousProps` per-prop equality), so an inline builder that re-resolves to the same
   value triggers no native work. React Compiler memoizes the builder chain automatically; without
   it, module-level constants for static presets are an optional optimization, not a correctness need.
-- **Theme distribution** — consumer-authored palettes/themes as a shareable artifact (`52` `lab`).
+- ~~**Theme distribution**~~ — **resolved (SPINE-002; DOC-003).** Consumer-authored
+  palettes/themes as a shareable artifact are deferred to V2. Pure-config palettes resolve
+  in JS within the core package (`presets/`). A distribution surface would live in
+  `@react-native-fx/lab` if demand justifies the split (`52` Decision #11).
 
 ## Sources
 

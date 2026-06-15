@@ -39,8 +39,12 @@ internal struct FxShaderView: View {
         let time = Float(rawTime.truncatingRemainder(dividingBy: 100.0))
         GeometryReader { proxy in
           let resolution = proxy.size
-          Rectangle()
-            .colorEffect(shaderFor(id: shaderId, time: time, resolution: resolution))
+          if let shader = shaderFor(id: shaderId, time: time, resolution: resolution) {
+            Rectangle()
+              .colorEffect(shader)
+          } else {
+            Color.clear
+          }
         }
       }
     } else {
@@ -49,8 +53,8 @@ internal struct FxShaderView: View {
   }
 
   @available(iOS 17.0, *)
-  private func shaderFor(id: String, time: Float, resolution: CGSize) -> Shader {
-    let name = mslFunctionName(for: id)
+  private func shaderFor(id: String, time: Float, resolution: CGSize) -> Shader? {
+    guard let name = mslFunctionName(for: id) else { return nil }
     return FxShaderView.fxShaderLibrary[dynamicMember: name](
       .float(time),
       .float2(
@@ -62,8 +66,9 @@ internal struct FxShaderView: View {
   }
 }
 
-/// Maps the public agnostic shader id to its `[[stitchable]]` MSL function name.
-private func mslFunctionName(for id: String) -> String {
+/// Maps the public agnostic shader id to its `[[stitchable]]` MSL function name, or nil for an
+/// unknown id — which fails closed (renders nothing) rather than silently showing a wrong shader.
+private func mslFunctionName(for id: String) -> String? {
   switch id {
   case "fractal-clouds": return "fx_stitchable_fractal_clouds"
   case "ink-smoke": return "fx_stitchable_ink_smoke"
@@ -75,6 +80,6 @@ private func mslFunctionName(for id: String) -> String {
   case "plasma": return "fx_stitchable_plasma"
   case "caustics": return "fx_stitchable_caustics"
   case "edge-glow": return "fx_stitchable_edge_glow"
-  default: return "fx_stitchable_fractal_clouds"
+  default: return nil
   }
 }

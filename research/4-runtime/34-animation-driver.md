@@ -1,5 +1,5 @@
 # Runtime: the animation driver
-Status: researched (design) · source-audit pass · device proof pending
+Status: researched (design) · source-audit pass · retarget contract device-verified (U6-001, RT-007) · hard-retarget matrix device-verified (U6-002, RT-016) · catalog feel device-pending (U6-003/MOT-001)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 41-motion-vocabulary.md, structure.{ios,android}
 
@@ -18,7 +18,7 @@ same one the manifest already encodes per platform:
 
 | Target | iOS primitive | Android primitive |
 |---|---|---|
-| **wrapped RN content** (transform/opacity) | Core Animation / `UIView.animate` (`CASpringAnimation`) | Android **View** animation (`ViewPropertyAnimator`, `androidx.dynamicanimation` springs) |
+| **wrapped RN content** (transform/opacity) | render-server springs (`UIView.animate(springDuration:bounce:)` / `CASpringAnimation`); `CADisplayLink` + `SwiftUI.Spring` integrator on retarget | Android **View** animation (`ViewPropertyAnimator`, `androidx.dynamicanimation` springs; `animateToFinalPosition()` retargets) |
 | **fx's own effect layers** (glow, glass, mesh) | SwiftUI animation | **Jetpack Compose** animation (`spring()` / platform standard; M3 Expressive where present) |
 
 Content uses the lower UIKit/View layer (it can move real RN views without hosting
@@ -65,6 +65,46 @@ feasible but is deferred to the interaction work (U6/U8) if mid-transition inter
 proves to matter. For now, the model-layer caveat is acceptable for short presence
 envelopes (<300ms).
 
+**The caveat flips during a retarget (DOC-009).** The iOS integrator branch (below) writes
+the **model layer** each tick, so while it runs, hit-testing tracks the *visual* position —
+the same behavior as Android. The model-layer caveat therefore applies only to the
+committed render-server segment of an envelope, not to a retargeted one.
+
+## Findings — the iOS spring disposition (render-server-first, integrator-on-retarget)
+
+Ratified with the U6-001 preflight (DOC-009, 2026-06-10; the preflight artifact lives in
+`7-implementation/tasks/U6-001/preflight.md`):
+
+- **Render-server-first.** Fire-once envelopes — the overwhelming majority of
+  presence/state transitions — commit the iOS 17 unified spring
+  (`UIView.animate(springDuration:bounce:)` / `CASpringAnimation` with Apple's defaults).
+  Committed Core Animation runs in the **render server**, off the app's main thread —
+  the source of Apple-grade smoothness under load. Most transitions never leave this path.
+- **Integrator only on retarget.** When a target actually changes mid-flight, capture the
+  presentation-layer value and hand off to a `CADisplayLink` loop stepping the **`FxSpring`
+  facade**: a thin value type mirroring Apple's `Spring` surface, delegating to
+  `SwiftUI.Spring` — Apple's own solver, a substrate-free `VectorArithmetic` value type
+  that hosts no view, so rule #4 is untouched. The loop carries velocity, clips inertia
+  opposing the new target, writes one transform+opacity envelope to the model layer per
+  tick, rest-tests, and emits a single completion event.
+- **iOS 17 floor (maintainer decision).** `SwiftUI.Spring` only; no hand-rolled 13–16
+  fallback. Below 17 the `motion` content ladder is empty and degrades to `{via:'none'}` —
+  instant placement, consistent with the reduce-motion posture. The `02` content rung
+  reads `os:17`.
+- **Why not the stock alternatives.** Additive `CASpringAnimation` retargeting is only
+  *approximate* — `presentation()` exposes value, not velocity, and `initialVelocity` is a
+  displacement-normalized scalar that degenerates at small displacements.
+  `UIViewPropertyAnimator` cannot retarget a running destination (`continueAnimation` is
+  paused-only and changes timing, not target). UIKit Dynamics is a true live-retarget
+  physics engine but fits the interactive lane (U8), not content motion — opacity is not a
+  dynamic property.
+- **Android needs none of this.** `androidx.dynamicanimation`'s
+  `SpringAnimation.animateToFinalPosition()` retargets the running animation with value and
+  velocity carried — stock, no custom integrator.
+
+Design disposition only: RT-016 stays device-pending; U6-002 owns the on-device retarget
+proof.
+
 ## Findings — verified against source (`references/`)
 
 - **The driver animates an fx-owned, Fabric-invisible intermediate container.**
@@ -92,15 +132,28 @@ on Android), the driver sets the animation duration to 0, applies the target
 immediately, and fires `onTransitionEnd` synchronously. The policy is recorded in
 `41`/`42` and applies to all content motion (presence enter/exit, state transitions).
 
+One Android mechanic to honor (DOC-009): duration-based animators respect
+`ANIMATOR_DURATION_SCALE` automatically, but **springs and physics-based animations do
+not** — the driver gates them manually (`ValueAnimator.areAnimatorsEnabled()`), or the
+reduce-motion policy silently fails for exactly the animations fx prefers.
+
 ## Research questions
 
-- What is the minimal interruptible-spring contract the driver must expose so a target
-  change mid-flight retargets cleanly (no snap, no double-animation)?
+- ~~What is the minimal interruptible-spring contract the driver must expose so a target
+  change mid-flight retargets cleanly (no snap, no double-animation)?~~ **Resolved
+  (U6-001, RT-007, 2026-06-12):** animate-to(target vector) with retarget-on-call, cancel
+  (settle in place), and one completion per envelope — implemented as `FxAnimationDriver`
+  and device-verified on both platforms (no snap, completion-once, velocity carry with the
+  opposing-inertia clip; evidence in `7-implementation/tasks/U6-001/evidence/`).
 - How does the driver bind the platform's **default** shape + spring/curve per `preset` (the law:
   platform-native defaults), and how does `tune` (`speed`/`emphasis`/`distance`) adjust
   it without leaving the platform's family?
 - Where does the frame loop live, who pauses it off-window / backgrounded (ties to
   `31-lifecycle-and-teardown`), and how does it stay paused when nothing animates?
+  *(Half-answered by U6-001: the content driver runs frame work only inside a retargeted
+  envelope — iOS starts a display link on handoff and stops it at rest/cancel, device-
+  proven; fire-once envelopes run in the render server with no in-process loop. The
+  off-window / backgrounded pause policy stays owned by `31`.)*
 - How are completion / state-change events emitted back across the thin async boundary
   (`onTransitionEnd`), and what is their ordering guarantee under rapid toggles?
 - Does the content driver and the effect driver share scheduling, or run independently?
@@ -112,10 +165,21 @@ immediately, and fires `onTransitionEnd` synchronously. The policy is recorded i
 
 ## Open questions
 
-- Whether `CASpringAnimation` / `dynamicanimation` give enough control, or a
-  displacement-driven custom integrator is needed for the harder cases.
-- BYO envelopes — can a curated effect's intro/outro be expressed without hardcoding it
-  to one effect (carried open from `40`).
+- ~~Whether `CASpringAnimation` / `dynamicanimation` give enough control, or a
+  displacement-driven custom integrator is needed for the harder cases.~~ **Design
+  disposition recorded (DOC-009):** Android stock (`animateToFinalPosition()` carries
+  value + velocity); iOS render-server-first with the `FxSpring` integrator on retarget
+  (§Findings above). **Device-proven (U6-002, RT-016, 2026-06-12):** the nine-row
+  hard-retarget matrix passed in full on both platforms — timing sweep, clip-vs-carry,
+  rapid-fire, zero-displacement, after-rest, rotation+combined, mixed channels,
+  cancel-under-fire, JS silence — so the shipped paths suffice and no custom integrator
+  is needed (evidence in `7-implementation/tasks/U6-002/evidence/`).
+- ~~BYO envelopes — can a curated effect's intro/outro be expressed without hardcoding it
+  to one effect (carried open from `40`).~~ **Resolved by composition (MOT-008, DEF-007,
+  2026-06-14):** the driver needs no BYO-specific envelope — nothing is hardcoded to un-hardcode.
+  Curated and BYO effects share the same three channels (`FxPresence` wrapper envelope, native
+  `time` in-shader, semantic uniforms eased by `transition`). See `40` § Open questions for the
+  contract.
 
 ## Sources
 

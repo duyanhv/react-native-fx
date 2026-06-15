@@ -79,9 +79,9 @@ because fx draws those visuals whole.
 
 ### Two more axes that classify any doc (without being its home)
 
-- **Substrate** — `hosted` (SwiftUI/Compose behind the Expo Host; decorative) vs
-  `expo-view` (plain native view; the runtime, interaction, **and now content motion**
-  live here). → `0-spine/01`
+- **Substrate** — `hosted` (a host view behind the Expo Host; decorative — SwiftUI on iOS,
+  a plain `View` in V1 on Android with Compose as a future rung) vs `expo-view` (plain native
+  view; the runtime, interaction, **and now content motion** live here). → `0-spine/01`
 - **Phase** — V1 (decorative effects on `hosted`) vs V2 (the owned interactive +
   content-motion runtime on `expo-view`).
 

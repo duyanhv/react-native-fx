@@ -96,14 +96,18 @@ references for the future lanes and fallback boundary.
 
 ## Open questions
 
-- **The falsification test — first verdict: PASS** (verified against Expo/RN source,
-  `references/`). Stable wrapper/coordinator **identity holds** (Expo `shouldBeRecycled() =
-  false` → views never recycled), and **layout is readable natively** (Fabric resolves Yoga
-  *before* mount; the frame is in `layoutMetrics`). The one verified *constraint*: Fabric
-  re-applies `transform`/`opacity` props on commit, so fx animates an **fx-owned,
-  Fabric-invisible intermediate layer** (`33`/`34`), not a tracked view's prop. With that,
-  **Expo Modules is sufficient** for the container-scoped model. The remaining trigger is
-  precise and unchanged: **per-child control** (staggered children, child-anchored
+- **The falsification test — DEVICE-PROVEN (SPINE-009 closed, U9, 2026-06-13).** The first
+  verdict (source-audit PASS) is now confirmed on hardware across the U5–U8 gates. Stable
+  wrapper/coordinator **identity holds** (Expo `shouldBeRecycled() = false` → views never
+  recycled) — device-proven by identity-stable driver/coordinator/recognizer across
+  re-renders, retargets, presence cycles, and the touch path (U6-001/U6-002, U7-001/U7-002,
+  U8-001). **Layout is readable natively** (Fabric resolves Yoga *before* mount; the frame is
+  in `layoutMetrics`) — device-proven on `FxSurfaceView` (U5-001/RT-013, Fabric-only). The one
+  verified *constraint*: Fabric re-applies `transform`/`opacity` props on commit, so fx animates
+  an **fx-owned, Fabric-invisible intermediate layer** (`33`/`34`), not a tracked view's prop —
+  built (U4) and device-proven. With that, **Expo Modules is sufficient** for the
+  container-scoped model — the whole no-Nitro bet, now device-settled for V1. The remaining
+  trigger is precise and unchanged: **per-child control** (staggered children, child-anchored
   `menu`/`tooltip`) — *that* is the day to reconsider Nitro / raw Fabric.
 - **The Nitro fallback is narrower than it looked.** Verified: **Nitro Hybrid Views do not
   host RN children** (`HybridViewProps` is empty). So a "swap to Nitro" would cover the

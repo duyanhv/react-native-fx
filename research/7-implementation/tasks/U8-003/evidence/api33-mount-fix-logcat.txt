@@ -1,0 +1,8 @@
+=== API-33 AVD (fx_api33, Android 13 / API 33) — WITH the U8-003 fix, 5-cycle mount, 2026-06-13 ===
+logcat -b main/system/crash -d after 5 open->back cycles of the coexistence screen.
+Total lines captured:      688
+App pid stable at 7735 across all 5 cycles + final (no crash+restart).
+
+Abort-signature matches (JniAbort|JNI DETECTED ERROR|nativeUpdateUniforms|unable to find uniform|signal 6 (Aborted)|SIGABRT|FATAL EXCEPTION):
+0
+  -> 0 = clean mount

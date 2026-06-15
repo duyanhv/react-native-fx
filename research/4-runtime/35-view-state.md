@@ -1,5 +1,5 @@
 # Runtime: view state & the presence handshake
-Status: researched (design) · source-audit pass · device proof pending
+Status: researched (design) · source-audit + U7-001 preflight pass · handshake device-verified (U7-001) · React-semantics rows device-proven (U7-002) · identity proof device-pending (SPINE-009→U9-002)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 33-shadow-nodes-and-layout.md, structure.{ios,android}
 
@@ -74,6 +74,17 @@ lifecycle FSM** (`FxPresenceCoordinator` — owns frames) and the **JS mount-ret
   animation, **releases its retained handle** (React unmounts the subtree), and **emits
   nothing** — there is no live `FxPresence` to hear an event. Either way it **never leaks the
   retained-exiting child** (`31`).
+- **Stranded-exit guard** — completion events deliver **only while the native view is
+  mounted**: Expo's view-event dispatcher silently drops events for a dead view (no queue, no
+  will-unmount hook). If the native host detaches (host ref → null) while the JS FSM is
+  `exiting` and JS did not release — a Fast Refresh remount is the real case — JS releases the
+  retained child immediately and expects no event. Production never reaches this path while
+  the stay-mounted contract (`54`) holds. (U7-001 preflight.)
+- **Snapshot semantics** — the retained child is the element tree captured when `visible`
+  flipped false; later re-renders do **not** propagate into the exiting child. Envelope
+  config (`preset`/`motion`/`transition`) latches at phase start; a mid-flight change applies
+  from the next phase, never restarts the current one — `visible` retargets are the only
+  mid-flight FSM edges. (U7-001 preflight.)
 - **`appear=false`** — initial `visible:true` enters at `present` directly (skips `entering`).
 
 The **JS mount-retention FSM** is the mirror: `rendered` (while `visible` *or* `exiting`) →
@@ -89,7 +100,12 @@ unmount. Two requirements fall out and become **API constraints** on `FxPresence
 - **`FxPresence` must stay mounted to animate exit.** Drive exit with the `visible`
   prop — **not** by conditionally rendering `FxPresence` itself: `{show && <FxPresence/>}`
   unmounts the coordinator before it can animate. The coordinator must live *above* the
-  thing it animates. → a stated contract in `54`.
+  thing it animates. → a stated contract in `54`. The corollary is presence's **scope
+  ceiling**: when the *whole subtree* dies at once — a navigator pop, a parent conditional
+  above the coordinator, list-cell eviction — the coordinator dies with the child and the
+  exit cannot play (the `Teardown-during-exit` invariant above is exactly this path: it
+  cancels, releases, and emits nothing). fx accepts this rather than a native-held model
+  with a Fabric commit hook (rule #7). `42` §The scope ceiling states it as a contract.
 - **Stable child key.** The wrapped content needs an identity stable across renders so the
   coordinator can match "same child, now exiting."
 
@@ -107,6 +123,13 @@ native envelope (`34`): a re-toggle retargets, it does not restart.
   defer the `Remove`/`Delete` mutation, keep the view alive, track `WAITING → ANIMATING →
   DEAD`, and emit the final removal via a completion callback. fx adopts this model (the
   native side of the handshake); it does **not** adopt Reanimated's worklet runtime.
+- **JS retention is the platform's own semantics, not an emulation** — Fabric's differ emits
+  `Remove`/`Delete` only when a child leaves the rendered output, so a ref-retained child
+  produces **no mutation at all**; the only post-commit deferral seam
+  (`MountingOverrideDelegate`) is C++-registered inside Fabric and unreachable from Expo
+  Modules. The handshake therefore needs no forbidden mechanism — and an offscreen hide
+  lowers to an `Update` (`view.hidden`), never a `Remove`, so suspension can never masquerade
+  as unmount. (U7-001 preflight, `7-implementation/tasks/U7-001/preflight.md`.)
 
 ## What JS may observe (the exposure model)
 
@@ -128,24 +151,67 @@ async and JSI-free (`05`).
 
 ## Research questions
 
-- What is the exact JS↔native protocol for deferred unmount, and what guarantees
-  ordering of `onTransitionEnd` under rapid `visible` toggles?
-- Where does the source of truth live — is `visible` authoritative in JS with native as
-  a follower, and how is the follower kept consistent on interrupt?
-- How does the coordinator behave when the view unmounts for a *non-animation* reason
-  (parent unmounts, app backgrounds mid-exit)? Teardown must not leak (ties to `31`).
-- What is the re-entrancy model for `tune` / `transition` changing *during* a transition?
+- ~~What is the exact JS↔native protocol for deferred unmount, and what guarantees
+  ordering of `onTransitionEnd` under rapid `visible` toggles?~~ **Resolved (U7-001,
+  device-verified 2026-06-12):** the protocol is the discrete `visible` prop down and
+  `onTransitionEnd{owner, phase, finished, interrupted}` up — nothing else crosses. The
+  ordering guarantee, proven identically on both platforms under rapid toggles: a cut-short
+  phase emits `finished:false interrupted:true` at the interrupt edge, *strictly before* the
+  retargeted phase later settles `finished:true`; a settled transition emits exactly one
+  `finished:true interrupted:false`; no spurious or dropped events
+  (`7-implementation/tasks/U7-001/evidence/device.md`).
+- ~~Where does the source of truth live — is `visible` authoritative in JS with native as
+  a follower, and how is the follower kept consistent on interrupt?~~ **Resolved (U7-001):**
+  `visible` is JS-authoritative; the native FSM is the follower, fed once per prop batch.
+  Consistency on interrupt is structural — the only mid-flight edges are `visible` retargets,
+  the follower retargets from its present animated value (never restarts), and a superseded
+  envelope never completes, so the two FSMs cannot diverge. Device-verified both platforms.
+- ~~How does the coordinator behave when the view unmounts for a *non-animation* reason
+  (parent unmounts, app backgrounds mid-exit)?~~ **Resolved (U7-001 preflight):** teardown
+  takes the `Teardown-during-exit` invariant plus the stranded-exit guard — cancel, release,
+  emit nothing, never leak. Backgrounding is not teardown; the loop-pause stays owned by `31`.
+- ~~What is the re-entrancy model for `tune` / `transition` changing *during* a
+  transition?~~ **Resolved (U7-001 preflight):** config latches at phase start; a mid-flight
+  change applies from the next phase (the snapshot-semantics invariant). `visible` retargets
+  are the only mid-flight edges.
 
-## Open questions
+### React-semantics edge cases (resolved at spec time — U7-001 preflight)
 
-- **Falsification test for the boundary decision (gates `0-spine/05`).** This doc owns
-  the identity/state half: can Expo Modules keep **native object identity** (the
-  coordinator) **across Fabric commits / re-renders**, and run the **deferred-unmount
-  handshake purely on async events** (no synchronous JS↔native read)? If identity can't
-  be held or the handshake needs a synchronous channel, that is a concrete trigger to
-  reconsider Nitro/JSI. Until then, the Expo Modules default holds.
-- Whether this generalizes beyond presence to a general "native-eased declarative state"
-  primitive, or stays presence-specific in V1.
+The coordinator reconciles a *native* lifecycle with React's tree, so React's own lifecycle
+quirks are part of the contract. Reanimated accumulated handling for each of these; fx
+answered them at spec time (the U7-001 preflight,
+`7-implementation/tasks/U7-001/preflight.md`, 2026-06-11). Each row carries the
+implementation rule the FSM adopts. **All five rows are device-proven (U7-002, 2026-06-12,
+both platforms** — StrictMode double-invoke clean, the stranded guard's outcomes held under
+Fast Refresh, an offscreen hide fired no event, the exiting snapshot stayed frozen through a
+parent re-render, and list eviction was silent; evidence in
+`7-implementation/tasks/U7-002/evidence/catalog.md`).
+
+| case | what React does | the rule fx adopts (U7-001 preflight) |
+|---|---|---|
+| **StrictMode** (dev) | mounts → unmounts → remounts every component once | **no guard needed** — the FSM is prop-driven, and StrictMode's double effect invocation does not remount host views; JS effects stay idempotent (subscribe/unsubscribe only) and never imperatively trigger enter/exit. Reanimated ships no StrictMode guard either — only cancellation resilience |
+| **Fast Refresh** | remounts the subtree on a code edit, possibly mid-transition | the **stranded-exit guard** (invariants, above): a host detach while `exiting` releases the retained child immediately, no event expected — dev-only. Reanimated cancels and accepts the same dev limitation |
+| **Suspense** | hides a subtree offscreen (does not unmount) when a sibling suspends | **a hide is a hold** — presence keys exclusively off `visible`; a hide lowers to an `Update` (`view.hidden`), never a `Remove`, so no FSM edge exists for it structurally |
+| **re-render mid-exit** | a parent re-render while `exiting` may change the child's props or identity | **snapshot semantics + latched config** (invariants, above) — re-renders do not propagate into the exiting child; config changes apply from the next phase. Reanimated's analogue merges the new target into the running animation, never restarts |
+| **list eviction** (FlatList / recycler) | virtualizes a row off-screen; the cell recycles | **structurally immune** — eviction is whole-subtree teardown (the `42` ceiling): cancel, release, emit nothing. fx never infers exit from removal, so phantom exits cannot fire; Reanimated needs `skipExiting` precisely because it does |
+
+fx adopts the *model* these answers imply (deferred unmount, interrupt-as-retarget), never
+Reanimated's worklet runtime or commit hook (rule #7). The list-eviction row also ties to the
+scope ceiling (`42`): an evicted cell is whole-subtree teardown, so its exit cannot animate.
+
+## Resolved
+
+- **Falsification test for the boundary decision (`0-spine/05`) — resolved (SPINE-009,
+  U9-002, 2026-06-13).** Expo Modules holds native object identity (the coordinator) across
+  Fabric commits / re-renders and runs the deferred-unmount handshake purely on async events
+  (no synchronous JS↔native read) — device-proven by citation across the U5–U8 gates (the
+  U7-001 preflight already showed a retained child generates no `Remove` mutation and Expo
+  view events deliver while mounted). The `05` Nitro/JSI reconsideration trigger did not fire.
+- **Does the handshake generalize? — resolved (RT-012, DOC-022, 2026-06-13): V1 stays
+  presence-specific.** No general "native-eased declarative-state" primitive ships in V1; the
+  presence FSM and the deferred-unmount handshake are scoped to `FxPresence`. Generalizing to
+  a declarative-state primitive is V2, trigger-gated as **DEF-012** (trigger: real
+  declarative-state demand).
 
 ## Sources
 

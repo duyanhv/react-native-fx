@@ -101,14 +101,22 @@ same contract:
    idempotent teardown, and a defined teardown-during-exit path (`35`); never leak the
    retained-exiting child.
 
-## Open questions
+## Resolved
 
-- **Drawable-on-resume (needs-device)** — confirm fast background↔foreground toggles
-  yield a fresh drawable with no stall.
-- **One queue per view vs device-shared singleton (needs-device)** — measure churn
-  under many simultaneous surfaces.
-- **On-demand vs continuous for the press/uniform path** — does one frame per
-  touch/`setUniform` feel responsive, or do interactive shaders need a short burst?
+The three GPU-loop questions (RT-003) closed **by citation** to already-ratified device gates
+(DOC-022, 2026-06-13) — no new device run; each rests on a maintainer-ratified gate:
+
+- **One queue per view vs device-shared singleton — resolved: device-shared singleton.** A
+  process-wide static device/queue/pipeline cache (U4-003), proven under many simultaneous
+  surfaces by EX-002 (exactly one `MTLDevice` + one `MTLCommandQueue` across the 100-cell
+  stress list).
+- **Drawable-on-resume with no stall — resolved: a fresh drawable on resume, no stall.**
+  Mandatory pause re-acquires a fresh drawable on resume (Decision 1); the GPU-resume path
+  passed on device (U3-008).
+- **On-demand vs continuous for the press/uniform path — resolved: continuous-while-active is
+  cheap; no on-demand burst needed.** RT-006 (U8-001) device-proved a ≥30 s rapid tap+drag on
+  the active surface stays jank-free (Android gfxinfo 1.23 %, 0 missed vsync), and the loop
+  pauses off-window. The continuous-drag path for drag/tilt stays with RT-002/DEF-011 (V2).
 - ~~**Expo per-view recycling reset hook**~~ — **resolved: unnecessary.** `shouldBeRecycled() = false`
   is sufficient — Expo views are never recycled on SDK 56 (verified iOS + Android, 2026-06-08).
   No reset hook is needed.

@@ -30,7 +30,7 @@ attaches a recognizer, and who claims/emits semantics.
 | **`none`** | nothing | touches pass straight through | never |
 | **`passive`** | cooperative recognizer | observes the pointer → feeds a pointer uniform (`glowX`/`glowY`); no `onPress*` | never |
 | **`active`** | the same recognizer, owning the press | full press lifecycle → `pressDepth`/`glowX`/`glowY` + `onPressIn/Out/Press/LongPress`; yields to scrollers on movement | press only |
-| **`controlled`** | nothing (zero arbitration) | the developer's own pipeline writes the uniforms — **discrete writes** via `setUniform`/`setHighlight`, or a future **UI-thread channel** (a Reanimated shared value bound off the JS thread, `40`); **never** per-frame `setUniform` from the JS thread | never |
+| **`controlled`** *(defined, deferred — DEF-020)* | nothing (zero arbitration) | the developer's own pipeline writes the uniforms — **discrete writes** via `setUniform`/`setHighlight`, or a future **UI-thread channel** (a Reanimated shared value bound off the JS thread, `40`); **never** per-frame `setUniform` from the JS thread | never |
 
 ## The cooperative principle
 
@@ -102,15 +102,38 @@ The model to **borrow** (concepts, not the package — no RNGH V1 dep):
    Deep RNGH composition (`simultaneousWithExternalGesture`) and drag/tilt are later.
 6. **Boundary: the surface is ONE interactive unit** — arbitrary RN children inside
    are not individually touchable; layered composition keeps RN children interactive.
+   Nested fx surfaces obey the same rule: a shader-bearing surface nested inside
+   another is occluded and touch-shadowed by the outer (the outer composites its
+   shader above its content container and its recognizer claims the touch), so the
+   outer is the single interactive unit — shader-in-shader is not a V1 composition
+   pattern; use layered composition (device-confirmed, U8-002, API 33).
+7. **V1 public `interactionMode` is `none | passive | active` (DEF-015).** `controlled`
+   stays in the contract but is **deferred to DEF-020** — its `setUniform`/`setHighlight`
+   write path needs the imperative JS-held handle (the `SharedObject` layer) that V1 does
+   not expose, so no consumer can select it. The prop name and the `passive`/`active`
+   vocabulary are frozen as-is: agnostic (no rule-#2 leak) and free of the collisions the
+   intent-word substitutes carry (`pressable` is `FxPressable`; `reactive` reads as
+   Reanimated).
 
 ## Open questions
 
-- **Device validation of the cancel path** — `.cancelled`/`ACTION_CANCEL` fires the
-  instant a scroller/pager/`@gorhom` sheet claims; run the full coexistence matrix.
-- **`@gorhom/bottom-sheet` (RNGH)** vs native sheets — confirm our recognizer is
-  cancelled cleanly by an RNGH pan (the hard case; `01`).
 - **Drag/tilt (G3)** — axis-aware claiming for a shader that wants a drag axis inside
   a sheet; deferred, resolved via `controlled` + RNGH relations.
+
+## Resolved
+
+- **The cancel path + the full coexistence matrix (RT-001 — U8-002, device 2026-06-13).**
+  The cooperative recognizer is cancelled the instant an ancestor claims — device-proven
+  across both platforms over every distinct mechanism: native scroll (iOS + Android),
+  pager (iOS), and the **`@gorhom/bottom-sheet` RNGH-pan hard case (Android)** — each
+  yielding `onPressIn`/`onPressOut` with **no** `onPress`, the ancestor visibly moving,
+  spring-back rendered natively; a still tap fires one `onPress`; `passive`/`controlled`
+  stay semantically silent. Documented waivers (per-platform-redundant, the same
+  recognizer mechanism already proven on the other platform, not re-run): Android pager
+  and raw RNGH-`Pan`, and the iOS hard-case rows; the iOS visual rows are simulator-
+  limited (the curated stitchable shaders render only on a physical iPhone). The Android
+  interactive-uniform probe crash surfaced en route was fixed and device-proven
+  separately (U8-003, API-33 AVD, repro-validated).
 
 ## Sources
 
