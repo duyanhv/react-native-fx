@@ -117,7 +117,28 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DEF-017 | 6-ship | implement | blocked | no | — | — | trigger: post-V1 | critique F16: simulator smoke lane in CI (mount each catalog id, screenshot, diff) — catches the blank-on-switch regression class headlessly |
 | DEF-018 | 3-motion | implement | blocked | yes | — | — | trigger: presence-under-navigation settled | the `sheet`/`modal` presence presets deferred from V1 (DOC-018), re-homed from MOT-001 at its closure (U7-003, 2026-06-12): they name screen-scale presentations that collide with presence's scope ceiling (`42`); provisional catalog targets live in `data-layer` §Presence presets; resurrect them through the proven U7-002 catalog pattern (fill → law test → device gate) once presence-under-navigation is settled |
 | DEF-019 | 4-runtime | implement | blocked | yes | — | — | trigger: first shaped shader ships | SDF feather/threshold tuning, re-homed from RT-006 at its closure (U8-001, 2026-06-13): V1 ships no shader exposing a shape uniform, so the hit-test runs the `32` D4 full-bounds fallback and there is no SDF edge to feather; the per-frame cost half was device-proven cheap and closed with RT-006. Tune the feather on device when the first shaped shader (a glow/blob with a shape uniform) ships |
-| DEF-020 | 4-runtime | implement | blocked | yes | — | — | trigger: first imperative JS-held handle (or per-child control) | the `Fx*` `SharedObject` layer + the discrete `FxEffectRenderer` object + the HybridObject *shape* (`equals`/`dispose`/identity), deferred from Unit 9 at its V1 ratification (U9, 2026-06-13): V1 exposes no JS-held handle, so a `SharedObject` has no consumer and the internal objects stay plain native classes (`36` §V1 realization). Build the SharedObject layer when the first imperative surface needs it — controlled-mode `setUniform`/`setHighlight`, a runtime controller object, or the per-child-control case that is also the `05` Nitro-reconsideration trigger. The HybridObject shape keeps a later Nitro swap mechanical |
+| DEF-020 | 4-runtime | implement | in-progress | yes | — | — | unblocks DEF-011 | **spec'd (planner, 2026-06-15) — [task](./tasks/DEF-020/); detail block ↓.** SCOPE SPLIT (maintainer-accepted 2026-06-15): DEF-020 = the **view-ref `controlled` write path only** — `setUniform`/`setHighlight` as Expo `AsyncFunction`s on the surface ref, **discrete writes only**, into the existing uniform buffer (RT-005 `[0,1]` y-up UV). No `SharedObject`, no `FxEffectRenderer` extraction, no Nitro — unblocks DEF-011 without speculative architecture. Continuous gesture-sourced uniforms stay DEF-006; the true SharedObject/renderer/HybridObject half split to **DEF-021**. Spike-first (a view `AsyncFunction` write observed by the live loop across a Fabric commit) before the full build. Closes no ledger row; flips `30` Decision 7 `controlled` deferred→shipped (discrete subset) at docs-closed. |
+| DEF-021 | 4-runtime | implement | blocked | yes | — | — | trigger: first detached imperative handle (post-v2 impulse API) or per-child control (DEF-002 / the `05` Nitro re-eval) | the true `Fx*` `SharedObject` layer + the discrete `FxEffectRenderer` object + the HybridObject *shape* (`equals`/`dispose`/identity), split from DEF-020 (2026-06-15). Only a *detached* JS-held handle needs it; the view-ref `controlled` write path (DEF-020) does not, so building it now is speculative architecture (the U9 ratification logic) and trips the rule-#7 Nitro boundary. Originally deferred from Unit 9 (2026-06-13): V1 exposes no JS-held handle, so a `SharedObject` has no consumer and the internal objects stay plain native classes (`36` §V1 realization). Keep DEF-020's `setUniform`/`setHighlight` a clean subset so the later swap stays mechanical. |
+
+## DEF-020 — view-ref `controlled` write path (`setUniform` / `setHighlight`)
+
+Type: `implement` · State: `in-progress` (spec'd) · Device: yes · Consumes: — · Closes: — (unblocks DEF-011) · [task](./tasks/DEF-020/)
+
+The minimal half of the original DEF-020 (split accepted by the maintainer, 2026-06-15): the view-ref
+imperative write path that `interactionMode="controlled"` needs and DEF-011 (drag/tilt) hard-depends
+on. **Discrete writes only** — continuous gesture-sourced motion stays DEF-006; the true SharedObject
+layer split to DEF-021. Full spec, authority links, scope in/out, spike, and proof in the task README.
+
+Checklist:
+- [x] spec'd ([README](./tasks/DEF-020/README.md))
+- [ ] rules-gated (#1 discrete-only / no JS frame loop, #7 Expo `AsyncFunction` not JSI, #8 discrete targets)
+- [ ] implemented (spike first — view `AsyncFunction` write observed by the live loop across a Fabric commit — then the full path)
+- [ ] commented
+- [ ] headless-done
+- [ ] device-verified (the 4 device scenarios in the README — human's gate)
+- [ ] reviewed
+- [ ] docs-closed (`30` Decision 7 `controlled` deferred→shipped; the write-path mechanic pinned in `structure.{ios,android}.md`; `DEF-015` note resolved)
+- [ ] merged
 
 ## EX-002 — 100-cell mixed-effect stress list
 
