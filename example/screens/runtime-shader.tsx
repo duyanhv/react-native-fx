@@ -36,6 +36,35 @@ half4 main(float2 fragCoord) {
 }
 `;
 
+// Visibly different source for the same id — tests that re-registration reloads the surface.
+const PULSE_MSL_ALT = `
+fragment half4 fx_fragment(VSOut in [[stage_in]], constant FxUniforms &u [[buffer(0)]]) {
+  float2 uv = in.uv;
+  float2 c = uv - 0.5;
+  float d = length(c);
+  float wave = 0.5 + 0.5 * sin(u.time * 2.0 - d * 30.0);
+  float3 col = mix(float3(0.35, 0.05, 0.10), float3(0.45, 0.95, 0.85), wave);
+  col *= u.intensity;
+  return half4(half3(col), 1.0);
+}
+`;
+
+const PULSE_AGSL_ALT = `
+uniform float time;
+uniform vec2 resolution;
+uniform float intensity;
+
+half4 main(float2 fragCoord) {
+  vec2 uv = fragCoord / resolution;
+  vec2 c = uv - 0.5;
+  float d = length(c);
+  float wave = 0.5 + 0.5 * sin(time * 2.0 - d * 30.0);
+  vec3 col = mix(vec3(0.35, 0.05, 0.10), vec3(0.45, 0.95, 0.85), wave);
+  col *= intensity;
+  return half4(col, 1.0);
+}
+`;
+
 // Deliberately malformed: an undeclared identifier on both platforms. Compiles fail at runtime,
 // so mounting it fires onFxError with no crash — the BYO fallback signal.
 const BROKEN_MSL = `
@@ -70,6 +99,7 @@ export function RuntimeShaderScreen() {
 	const [variant, setVariant] = useState<Variant>("app-pulse");
 	const [intensity, setIntensity] = useState(0.8);
 	const [status, setStatus] = useState("idle");
+	const [useAltPulse, setUseAltPulse] = useState(false);
 
 	return (
 		<ScrollView
@@ -99,6 +129,33 @@ export function RuntimeShaderScreen() {
 						</TouchableOpacity>
 					);
 				})}
+			</View>
+
+			{/* Re-registering an already-mounted shader id with a new source reloads the surface and re-emits load or error without changing the shader prop. */}
+			<View style={styles.row}>
+				<TouchableOpacity
+					onPress={() => {
+						setStatus("idle");
+						const next = !useAltPulse;
+						setUseAltPulse(next);
+						registerShader({
+							id: "app-pulse",
+							source: {
+								ios: next ? PULSE_MSL_ALT : PULSE_MSL,
+								android: next ? PULSE_AGSL_ALT : PULSE_AGSL,
+							},
+						});
+					}}
+					style={[
+						styles.chip,
+						{
+							backgroundColor: palette.surface,
+							borderColor: palette.surfaceBorder,
+						},
+					]}
+				>
+					<Text style={{ color: palette.textMuted }}>Reload pulse (new source)</Text>
+				</TouchableOpacity>
 			</View>
 
 			<FxSurfaceView
