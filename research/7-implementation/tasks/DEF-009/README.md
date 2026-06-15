@@ -67,7 +67,7 @@ Subtask: Android content-distort wrapper — ripple demonstrator (FX-008).
                        generative `shader` surface.
                      - NOT the long-term public API. No high-level component/sugar ships here;
                        that is a separate surface decision, explicitly deferred.
-                     - The ripple AGSL is authored INLINE (a Kotlin AGSL const), NOT a manifest
+                     - The ripple AGSL is a private packaged Android asset, NOT a manifest
                        ShaderId and NOT in CURATED_SHADER_IDS (it is a sampler, not a generative
                        catalog entry).
                      - Strength rides the existing `intensity` (0–1). No new uniform plumbing.
@@ -97,7 +97,7 @@ Subtask: Android content-distort wrapper — ripple demonstrator (FX-008).
    `Build.VERSION.SDK_INT >= TIRAMISU`; below 33 do nothing (content normal). Prefer a focused
    internal helper (e.g. `FxContentDistortion`) over inlining into `FxSurfaceView`, matching the
    `FxAnimationDriver`/`FxPressHandler` idiom.
-2. **The ripple AGSL.** One inline sampler const: declares `uniform shader content;` +
+2. **The ripple AGSL.** One private sampler asset declares `uniform shader content;` +
    `resolution`/`time`/`intensity`; returns `content.eval(distortedCoord)`. A radial sine ripple is
    enough; tune amplitude on device. Reference sketch (executor to finalize/tune):
    ```agsl

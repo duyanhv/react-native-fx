@@ -18,9 +18,10 @@
 
 ## What changed and why
 
-- `packages/android/.../FxContentDistortion.kt` (new): the mechanic. Inline `RIPPLE_AGSL` sampler
-  (`uniform shader content` + `resolution`/`time`/`intensity`, radial sine ripple, center direction
-  guarded against a zero-vector normalize). Applies
+- `packages/android/.../FxContentDistortion.kt` (new): the mechanic. It loads the private
+  `shaders/content_ripple.agsl` sampler asset (`uniform shader content` +
+  `resolution`/`time`/`intensity`, radial sine ripple, center direction guarded against a
+  zero-vector normalize). Applies
   `target.setRenderEffect(RenderEffect.createRuntimeShaderEffect(shader, "content"))` to the content
   container; clears with `setRenderEffect(null)`. Choreographer loop advances `time` (mirrors
   `FxSurfaceShaderView`'s `baseTimeNanos`→`currentTime`); strength rides `intensity`. Uniform writes
@@ -98,6 +99,16 @@
 - **Next:** re-run the Android device gate, focused on the regressed rows — ripple animates on
   initial mount *without* a toggle, and animates again after navigating away and back — plus a
   quick re-confirm of background/foreground pause (must still stop off-window).
+
+## Housekeeping (executor, 2026-06-15, post-plan)
+
+- Moved the ripple sampler out of Kotlin into the private Android asset
+  `packages/android/src/main/assets/shaders/content_ripple.agsl`. This keeps public BYO shader
+  registration intact while making Android's package-owned shader source live with the other AGSL
+  assets.
+- `FxContentDistortion.kt` now reads the asset once through `AssetManager`, compiles it with
+  `RuntimeShader`, and scans declared uniforms from the loaded source. Missing or malformed asset
+  source clears/no-ops the distortion instead of crashing or starting a draw loop with no shader.
 
 ## Deferred to docs-closed (planner, after device — README step 6, not done here)
 
