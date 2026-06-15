@@ -1,15 +1,22 @@
 # DEF-006 — Reanimated UI-thread uniform channel (regime C)
 
-Type: `implement` · State: `in-progress` (spec'd) · Device: `yes` · Closes: MOT-007 ·
-Blocked by: — · Unblocks: DEF-011 (continuous half)
+Type: `implement` · State: `blocked` (trigger-gated) · Device: `yes` · Closes: MOT-007 ·
+Blocked by: trigger — a real app-owned continuous-source integration · Unblocks: — (NOT on the DEF-011 path)
 
 ## Why this task exists
 
+**Re-scoped 2026-06-15 — OPTIONAL, trigger-gated; NOT the path for fx-owned drag/tilt.** Drag/tilt
+is fx-owned interaction and is implemented **natively** (DEF-011, route 1 — a native recognizer
+writing the uniform, no Reanimated). DEF-006 is **only** the *app-owned* continuous-source case:
+an app that already has its own Reanimated pipeline and wants to drive an fx uniform from it. It does
+**not** drive or unblock DEF-011. Spec/build the spike below only when a real app-owned integration
+is actually asked for.
+
 `controlled` (DEF-020, merged) lets a developer write a uniform **discretely** via the view ref —
-but the rule is absolute: **never per-frame `setUniform` from the JS thread**. The continuous case
-— a gesture or animation driving a uniform *every frame* (regime C, "the only lag trap", `40:26`) —
-needs an off-JS-thread transport. DEF-006 is that transport: the **UI-thread tier of the `source`
-driver** (MOT-007), over the **same uniform names** the `controlled` path already writes.
+but the rule is absolute: **never per-frame `setUniform` from the JS thread**. For an **app-owned**
+continuous source, the off-JS-thread transport is the app's own Reanimated driving an fx-exposed
+UI-thread-animatable prop: the **UI-thread tier of the `source` driver** (MOT-007), over the **same
+uniform names** the `controlled` path writes.
 
 ## The rule-#7 disposition (settled — DOC-021 narrow ratification, 2026-06-15)
 
@@ -67,7 +74,7 @@ Record the spike in `notes.md` before building.
 
 **OUT (explicitly):**
 - **No new gesture semantics** — DEF-006 is *continuous uniform delivery only*. Drag/tilt axis
-  claiming is DEF-011 (which consumes this channel).
+  claiming is DEF-011, which is **native-owned and does NOT use this channel**.
 - **No fx worklet / JSI / host-object / `SharedObject`**, no `react-native-reanimated` in
   `packages/`, no fx-shipped `createAnimatedComponent` wrapper (the app does that in `example/`).
 - **No `<FxMotion map={worklet}>` surface** — that is the rejected Lane 2 fx-authored-worklet shape
@@ -105,8 +112,9 @@ Record the spike in `notes.md` before building.
 
 ## Lifecycle checklist
 
-- [x] spec'd (this file; the references-preflight is the DEF-006 authority gather + the DOC-021
-      ownership ratification)
+- [ ] spec'd — **deferred; trigger-gated** (re-scoped 2026-06-15 to an optional app-owned
+      integration spike, off the DEF-011 path). The authority gather + the DOC-021 ownership
+      ratification are done; full spec waits on a real app-owned-integration trigger.
 - [ ] rules-gated (#1 / #7 depth-1 / #8)
 - [ ] implemented (spike first → then the minimal prop path, if any)
 - [ ] commented

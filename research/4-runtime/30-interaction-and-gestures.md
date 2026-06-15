@@ -112,8 +112,10 @@ The model to **borrow** (concepts, not the package — no RNGH V1 dep):
    2026-06-15, both platforms)** as the view-ref discrete write path — `setUniform`/`setHighlight`
    as Expo `AsyncFunction`s on the surface ref, **no `SharedObject` needed** (the true `Fx*`
    SharedObject / detached handle is DEF-021). Discrete writes only: an imperative write wins over
-   the prop value (the clobber rule) and is cleared when the mode leaves `controlled`; continuous
-   gesture-sourced motion stays the UI-thread channel (DEF-006); **never** per-frame `setUniform`
+   the prop value (the clobber rule) and is cleared when the mode leaves `controlled`. Continuous
+   motion splits by ownership (`40`): **fx-owned** interaction (drag/tilt, DEF-011) is written
+   **natively** by a native recognizer (route 1); an **app-owned** continuous source uses the
+   optional Reanimated UI-thread channel (DEF-006, route 2); **never** per-frame `setUniform`
    from the JS thread. The known write set is the scalar pair `intensity`/`pressDepth`
    (`setHighlight` writes `touch`/`pressDepth`), symmetric across both platforms — a feature grows
    it by adding its scalars to both. The prop name and the `none`/`passive`/`active` vocabulary stay
@@ -122,8 +124,13 @@ The model to **borrow** (concepts, not the package — no RNGH V1 dep):
 
 ## Open questions
 
-- **Drag/tilt (G3)** — axis-aware claiming for a shader that wants a drag axis inside
-  a sheet; deferred, resolved via `controlled` + RNGH relations.
+- **Drag/tilt (G3)** — **native-owned** axis-aware claiming (DEF-011): an fx-owned native
+  recognizer claims the shader's drag axis and yields the cross-axis to an ancestor scroller,
+  writing the drag/tilt uniform **natively** into the same buffer (no JS, no Reanimated — route 1,
+  `40`). Tilt is pointer-derived. RNGH/Reanimated stay coexistence / app-owned-integration concerns
+  (example-only) unless a later task proves a `packages/` coupling is required. (Supersedes the
+  earlier "resolved via `controlled` + RNGH relations" framing — `controlled` is the discrete
+  escape hatch, not the drag transport.)
 
 ## Resolved
 
