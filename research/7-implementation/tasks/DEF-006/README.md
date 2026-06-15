@@ -79,8 +79,8 @@ Record the spike in `notes.md` before building.
   `packages/`, no fx-shipped `createAnimatedComponent` wrapper (the app does that in `example/`).
 - **No `<FxMotion map={worklet}>` surface** — that is the rejected Lane 2 fx-authored-worklet shape
   (`classifier.md` § Lane 2). DEF-006 is additive over existing uniform names, not a new component.
-- **No new uniforms** — DEF-011 adds its drag/tilt scalars later (to both platforms), reusing this
-  channel.
+- **No new uniforms here** — a future app-owned integration may reuse the same uniform names after
+  DEF-011 defines them (DEF-011 writes its drag/tilt uniforms **natively**, not through this channel).
 
 ## Authority links
 
