@@ -516,6 +516,15 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
       }
     } else {
       imperativeOverrides.remove(key)
+      // Restore the prop-derived value immediately so clearing behaves the same on both platforms.
+      switch key {
+      case "intensity":
+        uniforms.intensity = min(max(pendingIntensity, 0), 1)
+      case "pressDepth":
+        targetPressDepth = 0
+      default:
+        break
+      }
     }
   }
 

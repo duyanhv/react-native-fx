@@ -24,16 +24,15 @@ build a SharedObject before a consumer holds one).
 - `setUniform(name, value)` and `setHighlight(x, y)` as **imperative methods on the surface
   ref**, implemented as Expo `AsyncFunction(view, …)` (`51` § the thin async boundary — the
   sanctioned discrete-imperative channel). No `SharedObject`, no returned handle object.
-  `setUniform` is **number-only** for this cut; `null` clears the imperative override and lets
-  the prop-derived value win again.
+  `setUniform` is **number-only** for this cut and accepts only the known scalar uniforms
+  `intensity` and `pressDepth`; `null` clears the imperative override and restores the
+  prop-derived value immediately.
 - `interactionMode="controlled"` selectable: attaches no recognizer (identical to `none` for the
   gesture system), but enables the write path.
 - Writes land in the **same uniform buffer the native render loop already reads** (`30` § two
   input sources, one buffer — the renderer is decoupled from which source is active). `setHighlight`
-  is convenience sugar over the highlight uniforms (`touch`/`pressDepth`); `setUniform` is
-  the general escape hatch over any declared uniform, guarded by the existing `declaresUniform`
-  check (the DEF-008 guarded-write precedent). Unknown/undeclared uniform names are a **no-op**
-  on both platforms (no new error channel).
+  is convenience sugar over the `touch` and `pressDepth` uniforms in `[0,1]` y-up UV.
+  Unknown/undeclared uniform names are a **no-op** on both platforms (no new error channel).
 - Coordinate space pinned to **RT-005**: `[0,1]` y-up UV for `setHighlight`/`setUniform` writes
   (the shipped touch-uniform convention); JS-facing events stay in view points.
 
@@ -99,8 +98,9 @@ in `notes.md` and adjust scope. The result finalizes the mechanic section in `st
 
 ## Proof
 
-- headless: packages `tsc` / `build` / `lint` / `swift:lint` + tests (a Tier-1 test that
-  `controlled` selects no recognizer and that an unknown uniform name is rejected by the guard);
+- headless: packages `tsc` / `build` / `lint` / `swift:lint` + existing tests (the `tsc` type-check
+  verifies `InteractionMode` includes `'controlled'` and `FxSurfaceViewRef` shape; no new runtime
+  test because the JS binding is a thin type-only layer over the `AsyncFunction` view ref);
   Android `:react-native-fx:compileDebugKotlin`; iOS `pod install` + example `xcodebuild`.
 - device: (1) the spike — a discrete `setUniform`/`setHighlight` write is observed by the live loop
   on the next frame; (2) the write survives a host re-render (Fabric commit); (3) `controlled`

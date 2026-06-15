@@ -18,6 +18,20 @@
 - **Docs:** `structure.ios.md` and `structure.android.md` updated with the controlled write-path
   mechanic (the clobber rule, the guarded-write rule, the `[0,1]` y-up UV space).
 
+## Review fixes applied (2026-06-15)
+
+- **Android scalar guard:** `setUniform` now only accepts the known scalar uniforms `intensity`
+  and `pressDepth` (matching iOS). The previous `declaredUniforms` guard would accept `resolution`
+  and `touch` (vec2) and call `setFloatUniform` with wrong arity.
+- **iOS clear parity:** `setUniform(name, null)` now restores the prop-derived value immediately
+  (`uniforms.intensity = pendingIntensity` clamped; `targetPressDepth = 0`), matching Android's
+  `customUniforms.remove()` → `onDraw` fallback behavior.
+- **Contract narrowed:** README updated — `setUniform` is no longer described as a "general
+  escape hatch over any declared uniform"; both platforms only support `intensity` and
+  `pressDepth` in this cut.
+- **Tier-1 test:** Proof updated to reflect that `tsc` type-check is the test (the binding is a
+  thin type-only layer); no new runtime test added.
+
 ## Unverified claims
 
 - Device spike (the clobber rule): `setUniform`/`setHighlight` write observed by the live loop on

@@ -109,10 +109,16 @@ internal class FxSurfaceShaderView(
   /**
    * Writes a scalar uniform value into the live shader, or clears it when `value` is null.
    *
-   * The write is guarded by the source-declaration scan: an unknown uniform name is a no-op.
-   * Only `controlled` mode is expected to call this path.
+   * Only the known scalar uniforms `intensity` and `pressDepth` are supported in this cut.
+   * The write is guarded by the source-declaration scan: an unknown or non-scalar uniform name
+   * is a no-op. Only `controlled` mode is expected to call this path.
    */
   fun setUniform(name: String, value: Double?) {
+    // Only known scalar uniforms are supported; `resolution` and `touch` are vec2 and cannot
+    // be written through this scalar path.
+    if (name != "intensity" && name != "pressDepth") {
+      return
+    }
     if (name !in declaredUniforms) {
       return
     }
@@ -184,12 +190,6 @@ internal class FxSurfaceShaderView(
     }
     if (supportsTouchUniform) {
       currentShader.setFloatUniform("touch", pendingTouchX, pendingTouchY)
-    }
-    // Apply any custom uniforms that are not part of the known scalar set.
-    for ((name, value) in customUniforms) {
-      if (name != "intensity" && name != "pressDepth" && name in declaredUniforms) {
-        currentShader.setFloatUniform(name, value)
-      }
     }
     paint.shader = currentShader
     canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
