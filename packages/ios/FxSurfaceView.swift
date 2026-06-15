@@ -110,6 +110,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   // name; clearing a value removes the key, letting the prop-derived value win again.
   private var imperativeOverrides = Set<String>()
 
+  // Tracks the current interaction mode so leaving `controlled` can clear the imperative
+  // overrides and restore prop-derived values.
+  private var currentInteractionMode = "none"
+
   /// A Fabric-invisible container that holds RN children so Fabric cannot clobber
   /// the animator's transform/opacity. The animator targets this container, not the
   /// outer `FxSurfaceView` that Fabric tracks.
@@ -489,6 +493,12 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   private func updateInteraction(mode: String) {
     pressHandler.update(mode: mode)
+    if currentInteractionMode == "controlled" && mode != "controlled" {
+      imperativeOverrides.removeAll()
+      uniforms.intensity = min(max(pendingIntensity, 0), 1)
+      targetPressDepth = 0
+    }
+    currentInteractionMode = mode
   }
 
   // MARK: - Imperative uniform write path (controlled mode)

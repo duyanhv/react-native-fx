@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { ShaderId } from '../effects/catalog';
@@ -52,7 +53,7 @@ export type NativeFxSurfaceProps = {
   onFxError?: (event: FxSurfaceShaderEvent) => void;
   onFxTransitionEnd?: (event: FxTransitionEndEvent) => void;
   style?: StyleProp<ViewStyle>;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 /**

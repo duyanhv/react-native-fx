@@ -90,6 +90,10 @@ class FxSurfaceView(
   // name; clearing a value removes the key, letting the prop-derived value win again.
   internal val imperativeOverrides = mutableSetOf<String>()
 
+  // Tracks the current interaction mode so leaving `controlled` can clear the imperative
+  // overrides and restore prop-derived values.
+  private var currentInteractionMode = "none"
+
   /**
    * A Fabric-invisible container that holds RN children so Fabric cannot clobber
    * the animator's transform/opacity. The animator targets this container, not the
@@ -227,6 +231,12 @@ class FxSurfaceView(
     dispatchShaderLoadState()
     contentDistortion.update(pendingContentDistortion, pendingIntensity)
     pressHandler.update(pendingInteractionMode)
+    if (currentInteractionMode == "controlled" && pendingInteractionMode != "controlled") {
+      imperativeOverrides.clear()
+      effectSurfaceView?.clearCustomUniforms()
+      effectSurfaceView?.setIntensity(pendingIntensity)
+    }
+    currentInteractionMode = pendingInteractionMode
     presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
 
     // A config batch can land while the window is unfocused (app backgrounded, behind a dialog) but

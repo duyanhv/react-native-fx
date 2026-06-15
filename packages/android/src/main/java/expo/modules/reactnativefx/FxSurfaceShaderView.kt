@@ -126,6 +126,9 @@ internal class FxSurfaceShaderView(
       customUniforms[name] = value.toFloat()
     } else {
       customUniforms.remove(name)
+      if (name == "pressDepth") {
+        targetPressDepth = 0f
+      }
     }
     invalidate()
   }
@@ -138,6 +141,17 @@ internal class FxSurfaceShaderView(
     pendingTouchX = x.toFloat().coerceIn(0f, 1f)
     pendingTouchY = y.toFloat().coerceIn(0f, 1f)
     targetPressDepth = 1f
+    invalidate()
+  }
+
+  /**
+   * Clears every imperatively-set custom uniform so the onDraw frame path falls back to
+   * prop-derived values. Called when the interaction mode leaves `controlled`, handing
+   * control back to the declarative props.
+   */
+  fun clearCustomUniforms() {
+    customUniforms.clear()
+    targetPressDepth = 0f
     invalidate()
   }
 
