@@ -131,7 +131,7 @@ export function RuntimeShaderScreen() {
 				})}
 			</View>
 
-			{/* Re-registering an already-mounted shader id with a new source reloads the surface and re-emits load or error without changing the shader prop. */}
+			{/* Re-registering replaces the source in the registry; the surface recompiles and re-emits onFxLoad or onFxError on the next prop apply. The intensity nudge below triggers that apply without changing the shader prop. */}
 			<View style={styles.row}>
 				<TouchableOpacity
 					onPress={() => {
@@ -145,6 +145,7 @@ export function RuntimeShaderScreen() {
 								android: next ? PULSE_AGSL_ALT : PULSE_AGSL,
 							},
 						});
+						setIntensity((i) => Math.min(1, Math.max(0, i + (next ? 0.001 : -0.001))));
 					}}
 					style={[
 						styles.chip,
