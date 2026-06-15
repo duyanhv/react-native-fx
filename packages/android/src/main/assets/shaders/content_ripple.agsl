@@ -1,0 +1,13 @@
+uniform shader content;
+uniform float2 resolution;
+uniform float time;
+uniform float intensity;
+
+half4 main(float2 fragCoord) {
+  float2 uv = fragCoord / resolution;
+  float2 directionFromCenter = uv - float2(0.5);
+  float distanceFromCenter = length(directionFromCenter);
+  float2 sampleDirection = distanceFromCenter > 0.0001 ? directionFromCenter / distanceFromCenter : float2(0.0);
+  float wave = sin(distanceFromCenter * 40.0 - time * 4.0) * 0.012 * intensity;
+  return content.eval(fragCoord + sampleDirection * wave * resolution);
+}

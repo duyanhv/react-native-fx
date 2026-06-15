@@ -6,28 +6,10 @@ import android.os.Build
 import android.view.Choreographer
 import android.view.View
 
-// The one curated content-distort sampler. `uniform shader content` is the live rendered output
-// of the view the effect is attached to — createRuntimeShaderEffect binds it by name — so this
-// distorts existing content rather than generating its own pixels. A radial sine ripple offsets
-// each sample coordinate; strength rides `intensity` and `time` advances on the frame clock. The
-// center direction is guarded so a fragment at the exact midpoint does not normalize a zero vector.
-private const val RIPPLE_AGSL = """
-uniform shader content;
-uniform float2 resolution;
-uniform float time;
-uniform float intensity;
-half4 main(float2 fragCoord) {
-  float2 uv = fragCoord / resolution;
-  float2 d = uv - float2(0.5);
-  float dist = length(d);
-  float2 dir = dist > 0.0001 ? d / dist : float2(0.0);
-  float wave = sin(dist * 40.0 - time * 4.0) * 0.012 * intensity;
-  return content.eval(fragCoord + dir * wave * resolution);
-}
-"""
+private const val RIPPLE_ASSET_PATH = "shaders/content_ripple.agsl"
 
 /**
- * Applies the ripple content-distort sampler to a content view as a draw-time [RenderEffect].
+ * Applies the private ripple content-distort sampler to a content view as a draw-time [RenderEffect].
  *
  * Because [RenderEffect] is a RenderNode concern, the distortion never touches input dispatch:
  * the children inside the distorted view stay a plain RN view tree and remain tappable. The whole
@@ -47,8 +29,8 @@ internal class FxContentDistortion(
 
   // Which uniforms the sampler declares. Writing an undeclared uniform corrupts the native error
   // path inside RuntimeShader and CheckJNI aborts the process on API 33 — so writes are scanned
-  // from the source, never probed. The const declares all three today; the scan keeps a later edit
-  // that drops one from aborting.
+  // from the source, never probed. The packaged sampler declares all three today; the scan keeps a
+  // later edit that drops one from aborting.
   private var declaresResolution = false
   private var declaresTime = false
   private var declaresIntensity = false
@@ -96,18 +78,26 @@ internal class FxContentDistortion(
       return
     }
     val shouldRun = distortion == "ripple"
-    if (shouldRun == isEnabled) {
-      return
-    }
-    isEnabled = shouldRun
-    if (shouldRun) {
-      ensureShader()
-      if (target.isAttachedToWindow) {
-        startLoop()
-      }
-    } else {
+    if (!shouldRun) {
+      isEnabled = false
       stopLoop()
       clearEffect()
+      return
+    }
+
+    if (isEnabled) {
+      return
+    }
+
+    if (!ensureShader()) {
+      stopLoop()
+      clearEffect()
+      return
+    }
+
+    isEnabled = true
+    if (target.isAttachedToWindow) {
+      startLoop()
     }
   }
 
@@ -123,14 +113,28 @@ internal class FxContentDistortion(
     }
   }
 
-  private fun ensureShader() {
+  private fun ensureShader(): Boolean {
     if (shader != null) {
-      return
+      return true
     }
-    shader = RuntimeShader(RIPPLE_AGSL)
-    declaresResolution = declaresUniform(RIPPLE_AGSL, "resolution")
-    declaresTime = declaresUniform(RIPPLE_AGSL, "time")
-    declaresIntensity = declaresUniform(RIPPLE_AGSL, "intensity")
+    val source = loadRippleSource() ?: return false
+    shader = try {
+      RuntimeShader(source)
+    } catch (error: Exception) {
+      null
+    }
+    declaresResolution = declaresUniform(source, "resolution")
+    declaresTime = declaresUniform(source, "time")
+    declaresIntensity = declaresUniform(source, "intensity")
+    return shader != null
+  }
+
+  private fun loadRippleSource(): String? {
+    return try {
+      target.context.assets.open(RIPPLE_ASSET_PATH).bufferedReader().use { it.readText() }
+    } catch (error: Exception) {
+      null
+    }
   }
 
   private fun startLoop() {
