@@ -54,6 +54,12 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   // id over the bundled library), process-lived like it.
   private static var runtimePipelineCache: [String: MTLRenderPipelineState] = [:]
 
+  // Sources whose runtime compile failed, so a broken bring-your-own shader compiles once and then
+  // returns nil from cache. Without this, `hasActiveEffect` (called every prop batch) would re-run
+  // `makeLibrary(source:)` for the same broken source each time. Compilation is deterministic for a
+  // given source, so a failure never needs re-trying.
+  private static var runtimeCompileFailures: Set<String> = []
+
   // Prepended to every registered MSL source so a bring-your-own fragment can reference the fx
   // raster ABI. The field order MUST match `FxUniforms` above and the bundled `FxShaders.metal`.
   // The author supplies `fragment half4 fx_fragment(VSOut in [[stage_in]], constant FxUniforms &u
@@ -91,8 +97,11 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var pendingPresenceMotion: FxPresenceMotion?
 
   // The last shader a load/error event was dispatched for, so the semantic events fire once
-  // per change — never a per-frame stream. nil until the first shader is applied.
+  // per change — never a per-frame stream. nil until the first shader is applied. The registry
+  // source is tracked alongside the id because `registerShader` can replace the same id's source
+  // (valid->broken or broken->valid), which must re-emit even though the id is unchanged.
   private var lastDispatchedShader: String?
+  private var lastDispatchedSource: String?
 
   private var pressHandler: FxPressHandler!
 
@@ -102,7 +111,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private let intermediateContainer = UIView()
 
   /// Captures the RN-assigned post-layout frame for synchronous native reads by the
-  /// future content-motion driver. Nothing crosses to JS.
+  /// content-motion driver and the presence coordinator. Nothing crosses to JS.
   internal private(set) var layoutObserver: FxLayoutObserver!
 
   /// Routes driver completion to the presence coordinator, the completion source for the FSM.
@@ -280,11 +289,15 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     if let cached = runtimePipelineCache[source] {
       return cached
     }
+    if runtimeCompileFailures.contains(source) {
+      return nil
+    }
     guard let device = sharedDevice, let library = sharedLibrary,
       let runtimeLibrary = try? device.makeLibrary(source: runtimePreamble + "\n" + source, options: nil),
       let fragmentFunction = runtimeLibrary.makeFunction(name: "fx_fragment"),
       let vertexFunction = library.makeFunction(name: "fx_fullscreen_vertex")
     else {
+      runtimeCompileFailures.insert(source)
       return nil
     }
 
@@ -293,6 +306,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     descriptor.fragmentFunction = fragmentFunction
     descriptor.colorAttachments[0].pixelFormat = colorPixelFormat
     guard let state = try? device.makeRenderPipelineState(descriptor: descriptor) else {
+      runtimeCompileFailures.insert(source)
       return nil
     }
     runtimePipelineCache[source] = state
@@ -316,17 +330,16 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   // MARK: - Props
 
-  /// Stashes the shader target until Expo finishes the prop batch.
+  // The prop setters stash their target; `applyResolvedConfig()` reconciles the whole batch once
+  // Expo finishes it. Only constraints the signature can't carry are commented.
   internal func setShader(_ value: String) {
     pendingShader = value
   }
 
-  /// Stashes the intensity target until Expo finishes the prop batch.
   internal func setIntensity(_ value: Double) {
     pendingIntensity = Float(value)
   }
 
-  /// Stashes the interaction target until Expo finishes the prop batch.
   internal func setInteractionMode(_ value: String) {
     pendingMode = value
   }
@@ -337,22 +350,19 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// normally. Android realizes this draw-time, where touch survives.
   internal func setContentDistortion(_ value: String) {}
 
-  /// Stashes the presence visibility target until Expo finishes the prop batch.
   internal func setVisible(_ value: Bool) {
     pendingVisible = value
   }
 
-  /// Stashes the presence preset until Expo finishes the prop batch.
   internal func setPreset(_ value: String) {
     pendingPreset = value
   }
 
-  /// Stashes the explicit presence motion override until Expo finishes the prop batch.
   internal func setPresenceMotion(_ value: FxPresenceMotion?) {
     pendingPresenceMotion = value
   }
 
-  /// Stashes whether the initial visible mount plays the enter envelope.
+  /// Whether the initial visible mount plays the enter envelope.
   internal func setAppear(_ value: Bool) {
     pendingAppear = value
   }
@@ -406,8 +416,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// renderer on the interactive surface and fires `onFxError`. This is the load-bearing
   /// signal a bring-your-own consumer falls back on when its shader fails to load.
   private func dispatchShaderLoadState() {
-    guard pendingShader != lastDispatchedShader else { return }
+    let currentSource = FxShaderRegistry.shared.source(for: pendingShader)
+    guard pendingShader != lastDispatchedShader || currentSource != lastDispatchedSource else { return }
     lastDispatchedShader = pendingShader
+    lastDispatchedSource = currentSource
     if pendingShader.isEmpty {
       return
     }
@@ -463,7 +475,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
       return
     }
     view.isHidden = false
-    view.isPaused = window == nil
+    view.isPaused = window == nil || !isAppForegrounded
   }
 
   // MARK: - Interaction
@@ -566,9 +578,17 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     contentAnimationDriver.pause()
   }
 
-  /// Resumes the Metal display link only while the surface is attached and an effect is active.
+  /// Resumes the Metal display link and the content driver only while the surface is attached and
+  /// foregrounded (the Metal loop additionally only when an effect is active). Otherwise both stay
+  /// paused, so a resume triggered while still backgrounded — e.g. attaching to a window in the
+  /// background — cannot start frame work.
   internal override func resumePresentationLoop() {
-    metalView?.isPaused = window == nil || !hasActiveEffect
-    contentAnimationDriver.resume()
+    let canPlay = window != nil && isAppForegrounded
+    metalView?.isPaused = !canPlay || !hasActiveEffect
+    if canPlay {
+      contentAnimationDriver.resume()
+    } else {
+      contentAnimationDriver.pause()
+    }
   }
 }

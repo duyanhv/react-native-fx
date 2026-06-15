@@ -134,11 +134,15 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
 
   private func scheduleLongPress() {
     longPressTimer?.invalidate()
-    longPressTimer = Timer.scheduledTimer(withTimeInterval: longPressDuration, repeats: false) { [weak self] _ in
+    // Added in `.common` mode so the long-press still fires while the run loop is in a tracking
+    // mode (an active scroll/drag); a default-mode timer would stall until tracking ends.
+    let timer = Timer(timeInterval: longPressDuration, repeats: false) { [weak self] _ in
       guard let self, let surface = self.surface, self.didBeginActivePress, !self.didFireLongPress else { return }
       self.didFireLongPress = true
       surface.dispatchShaderLongPress(point: self.origin)
     }
+    RunLoop.main.add(timer, forMode: .common)
+    longPressTimer = timer
   }
 
   private func shouldFail(at location: CGPoint) -> Bool {

@@ -18,6 +18,11 @@ internal final class FxAnimationDriver {
   private var renderServerTarget = FxAnimationVector.identity
   private var renderServerStartTime: CFTimeInterval?
 
+  // True while the host has paused the driver (off-window or backgrounded). A new envelope started
+  // while paused seats its final value with no frame loop rather than animating off-screen (the
+  // rule: no animation while off-window or backgrounded); an in-flight envelope resumes on `resume`.
+  private var isPaused = false
+
   /// Drives one transform/opacity envelope on the fx-owned container.
   ///
   /// All entry points run on the main thread because UIKit, Core Animation model-layer
@@ -46,6 +51,15 @@ internal final class FxAnimationDriver {
       stopDisplayLink()
       targetView.layer.removeAllAnimations()
       apply(target)
+      completion()
+      return
+    }
+
+    // Paused off-window or backgrounded: seat the final value with no frame loop (rule: keep the
+    // loop paused off-window or backgrounded). The discrete target is honored, so foregrounding
+    // shows the settled state rather than playing an envelope the user could not see.
+    if isPaused {
+      snap(to: target)
       completion()
       return
     }
@@ -84,10 +98,12 @@ internal final class FxAnimationDriver {
   }
 
   internal func pause() {
+    isPaused = true
     stopDisplayLink()
   }
 
   internal func resume() {
+    isPaused = false
     guard displayLinkTarget != nil else {
       return
     }
