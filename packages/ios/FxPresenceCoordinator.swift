@@ -209,7 +209,7 @@ internal final class FxPresenceCoordinator {
   }
 
   /// A fixed delta passes through; a measured token resolves its signed magnitude from the
-  /// laid-out frame via `FxLayoutObserver` (the architecture's "reads `FxLayoutObserver`" edge).
+  /// laid-out frame via `FxLayoutObserver`.
   private func resolveTravel(_ travel: FxTravelSpec) -> CGFloat {
     if let value = travel.value {
       return CGFloat(value)

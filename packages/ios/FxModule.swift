@@ -5,7 +5,6 @@ import ExpoModulesCore
 /// The first view is Expo's default view and resolves through the bare module
 /// name. Additional substrate views resolve through their concrete view names.
 public class FxModule: Module {
-  /// Defines the module name, view registrations, props, events, and ref functions.
   public func definition() -> ModuleDefinition {
     Name("ReactNativeFx")
 
