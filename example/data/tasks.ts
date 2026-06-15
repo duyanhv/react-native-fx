@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -114,5 +114,13 @@ export const TASKS: DeviceTask[] = [
 		what: "gradient fill both platforms; iOS glass over content",
 		status: "verified",
 		screen: "fill-material",
+	},
+	{
+		id: "DEF-020",
+		title: "Controlled write path",
+		platform: "iOS · Android",
+		what: "setUniform/setHighlight via ref on controlled surface · survives host re-render",
+		status: "in-progress",
+		screen: "controlled-write",
 	},
 ];
