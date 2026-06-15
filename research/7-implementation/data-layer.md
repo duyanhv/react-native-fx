@@ -286,7 +286,7 @@ const manifest: CapabilityManifest = {
         ],
         android: [
           { via: 'shader', asset: 'agsl', applyVia: 'RenderEffect', clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'expo-view' }, status: 'planned',
+            requires: { os: 33, substrate: 'expo-view' },
             note: 'RenderEffect is draw-time → touch survives; Android-only capability' },
         ],
       },
@@ -925,10 +925,10 @@ rule #2).
 **Resolution**: `symbol` is terminal in the EffectStack builder. The TypeScript type enforces it — `EffectStep.node` excludes 'symbol' from multi-step stacks. A stack containing `symbol` can only hold that one render-target (filters may still apply).
 **Source**: [research: 55 §EffectStep]
 
-### I5: `content-distort` all-rungs-out-of-scope
+### I5: `content-distort` per-platform asymmetry
 
-**Resolution**: Selector skips `out-of-scope` rungs and continues the ladder. If ALL rungs on a platform are `out-of-scope`, returns `{ via: 'none' }`. This is correct — verified by the worked example in `02`.
-**Source**: [research: 02 §content-distort worked example lines 243-253]
+**Resolution**: Selector skips `out-of-scope` rungs and continues the ladder. iOS lowers to a single `out-of-scope` rung → `{ via: 'none' }` (hosting RN content to sample it severs touch). Android resolves to the live `via: 'shader'` rung (draw-time `RenderEffect`, os 33+) — the `ripple` demonstrator shipped + device-verified under DEF-009 (FX-008). This is correct — verified by the worked example in `02`.
+**Source**: [research: 02 §content-distort worked example]
 
 ### I6: `shape-morph` empty iOS ladder
 

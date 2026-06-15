@@ -94,9 +94,13 @@ filter step** and the render-target still draws — graceful, never an error.
 
 ## Open questions
 
-- **Whether to ever expose a content-filter wrapper on Android** (where it's
-  touch-safe) — ties to `content-distort` being Android-planned (`02`).
 - **Shadow as `filter` vs a layout concern** — `.shadow` straddles; decide its home.
+
+**Resolved** — *whether to ever expose a content-filter wrapper on Android* (where
+it's touch-safe): yes. The `content-distort` `ripple` demonstrator ships (Android-only,
+draw-time `RenderEffect` → touch survives; mechanical `contentDistortion='ripple'`,
+high-level sugar deferred). See `02 §content-distort`; shipped + device-verified under
+DEF-009 (closes FX-008).
 
 ## Sources
 

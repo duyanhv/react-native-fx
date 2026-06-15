@@ -413,17 +413,28 @@ nothing is reparented into a host; the children stay a plain RN view tree).
 - **Touch survives.** `setRenderEffect` is a RenderNode/draw-time concern; `dispatchTouchEvent`
   and `TouchTargetHelper`'s walk are unaffected, so a child inside the distorted content stays
   tappable. This is the load-bearing device proof — visible distortion *and* live child touch.
-- **Clock.** A `Choreographer` frame loop advances `time` and refreshes the effect each frame
-  (update the `RuntimeShader` uniform, then re-set the `RenderEffect` so the change takes —
-  verify the exact refresh idiom on device), paused off-window through `FxSurfaceView`'s
-  existing `pausePresentationLoop`/`resumePresentationLoop` (rule #1, no per-frame JS). Strength
-  rides the existing `intensity` (0–1). Uniform writes are guarded by the same
-  source-declaration scan the `§shader` path uses — never a `setFloatUniform` probe (the API-33
-  absent-uniform CheckJNI abort).
-- **V1 scope — one curated demonstrator.** A single `ripple` sampler, authored inline as an
-  AGSL constant (not a manifest `ShaderId` — it is not a generative catalog entry). A broader
-  distortion catalog and a BYO-distortion contract are deferred to real demand (SPINE-001); the
-  task proves the runtime fact, not the final ergonomics.
+- **Clock.** A `Choreographer` frame loop advances `time` and refreshes the effect each frame:
+  update the `RuntimeShader` uniform, then **re-set** the `RenderEffect` so the change takes —
+  the conservative per-frame `setRenderEffect(createRuntimeShaderEffect(…))` re-call ran ~60 fps
+  on one surface (POCO F1 / Adreno 630, DEF-009), so it stays; no `invalidate()`-alone motivation.
+  The loop is paused off-window through `FxSurfaceView`'s existing
+  `pausePresentationLoop`/`resumePresentationLoop` (rule #1, no per-frame JS). Strength rides the
+  existing `intensity` (0–1). Uniform writes are guarded by the same source-declaration scan the
+  `§shader` path uses — never a `setFloatUniform` probe (the API-33 absent-uniform CheckJNI abort).
+- **Loop start — the container's own attach, not the parent's.** The loop must start off the
+  **content container's** `View.OnAttachStateChangeListener` (`onViewAttachedToWindow → start`,
+  `onViewDetachedFromWindow → stop`), never off the parent `FxSurfaceView`'s `onAttachedToWindow`.
+  A `ViewGroup` dispatches its *own* `onAttachedToWindow` **before** its children attach, so a
+  start driven off the parent signal sees the container still detached and bails with no retry —
+  the ripple then never animates on first mount or after navigate-back (device-found, DEF-009).
+  `isLooping`/`stop` keep the listener idempotent with `update`/`resume`. Mirrors how the sibling
+  `FxSurfaceShaderView` (itself a `View`) self-manages its own attach.
+- **V1 scope — one curated demonstrator.** A single `ripple` sampler, a private bundled AGSL
+  asset (`assets/shaders/content_ripple.agsl`) loaded via `AssetManager` alongside the curated
+  generative catalog — not a manifest `ShaderId` (it is not a generative catalog entry). A
+  missing or malformed asset clears the effect rather than crashing. A broader distortion catalog
+  and a BYO-distortion contract are deferred to real demand (SPINE-001); the task proves the
+  runtime fact, not the final ergonomics.
 - **Surface (deliberately minimal).** A mechanical native/runtime prop `contentDistortion` on
   `FxSurfaceView` — `'ripple'` is the only recognized value; absent or unrecognized = no effect.
   Named mechanically, **never `effect`**, so it cannot be confused with the generative `shader`

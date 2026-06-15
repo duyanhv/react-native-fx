@@ -262,7 +262,8 @@ material: {
 ### `content-distort` — the asymmetry, encoded
 
 This is the effect-over-live-RN-content case. The manifest records *why* it is out
-on iOS and merely planned on Android, so the landmine lives in data, not folklore.
+on iOS and realized on Android — a curated `ripple` draw-time demonstrator now ships
+(DEF-009), so the landmine lives in data, not folklore.
 
 ```ts
 'content-distort': {
