@@ -18,10 +18,12 @@ internal final class FxAnimationDriver {
   private var renderServerTarget = FxAnimationVector.identity
   private var renderServerStartTime: CFTimeInterval?
 
-  // True while the host has paused the driver (off-window or backgrounded). A new envelope started
-  // while paused seats its final value with no frame loop rather than animating off-screen (the
-  // rule: no animation while off-window or backgrounded); an in-flight envelope resumes on `resume`.
-  private var isPaused = false
+  // True while the host has paused the driver (off-window or backgrounded). Starts paused so a
+  // newly created, not-yet-attached view never animates off-window; the host resumes it on attach
+  // while foregrounded. A new envelope started while paused seats its final value with no frame loop
+  // rather than animating off-screen (the rule: no animation while off-window or backgrounded); an
+  // in-flight envelope resumes on `resume`.
+  private var isPaused = true
 
   /// Drives one transform/opacity envelope on the fx-owned container.
   ///
