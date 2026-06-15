@@ -90,9 +90,14 @@ references for the future lanes and fallback boundary.
    owners, `Fx`-prefixed), so the boundary can change later without reshaping the runtime.
 4. **React Native Runtimes is not a core dependency** — kept only as the "stable logical
    owner" naming inspiration.
-5. **The regime-C lane is the one exception** (`4-runtime/34`): continuous, JS-side
-   gesture-sourced motion, if ever pursued without Reanimated, takes a narrow JSI /
-   worklets carve-out — it does not change this default.
+5. **The regime-C lane resolves via the caller's Reanimated, not an fx carve-out**
+   (`4-runtime/34`, DEF-006): continuous, JS-side gesture-sourced motion is delivered by the
+   **app's own Reanimated shared value driving an fx-exposed UI-thread-animatable prop** — depth 1,
+   the Expo Modules prop path, no per-frame JS and **no fx worklet/JSI** (Reanimated is the caller's
+   transport, not fx's runtime). fx **authoring or depending on** a worklet / JSI / host-object to
+   drive frames is the depth-4 carve-out — **rejected by default**, revisited only under the
+   `33`/`35` triggers. This is the same ownership line the capability-boundary classifier draws
+   (depth 1 allowed vs depth 4 rejected).
 
 ## Open questions
 

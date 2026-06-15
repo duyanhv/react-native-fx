@@ -62,7 +62,8 @@ children into the invisible container and letting `hitTest` pass their touches s
 |---|---|---|
 | **discrete target** | JS sets a semantic target; native runs the envelope (`visible`, `preset`, effect id) | yes — the default |
 | **native continuous source** | a native signal drives the value continuously (scroll position, gesture, sensor, audio, time), with the clock still native | yes — no per-frame JS crosses |
-| **authored continuous mapping** | a user-authored worklet / shared value maps a source on the UI thread | gated — regime C (depth 4), only when no native preset expresses the mapping (see escalation regimes) |
+| **external UI-thread prop drive** | the app's own Reanimated shared value updates an fx-exposed UI-thread-animatable prop/uniform; fx owns no worklet/JSI (Reanimated is the caller's transport) | yes — depth 1, the Expo Modules prop path; no per-frame JS crosses (DEF-006) |
+| **fx-authored continuous mapping** | fx authors or depends on a worklet / JSI / host-object to map a source per frame | **no** by default — depth 4, breaks rule #7; gated regime C only if it must drive fx-owned state no preset can express (see escalation regimes) |
 | **per-frame bridge values** | JS computes and sends a value across the bridge every frame | **no** — violates rules #1/#8 |
 
 Axis 2 is orthogonal to Axis 1. A scroll-linked header is Boundary A driven by a *native
@@ -75,10 +76,10 @@ from being mis-filed as boundary moves.
 
 | depth | binding mechanism | rule cost |
 |---|---|---|
-| **1 — Expo Modules view** | the current Swift/Kotlin Expo Modules path: props in, events out, async functions | none — the default |
+| **1 — Expo Modules view** | the current Swift/Kotlin Expo Modules path: props in, events out, async functions — including a **UI-thread-animatable prop the app's Reanimated drives off the JS thread** (DEF-006) | none — the default |
 | **2 — component-view shim** | ObjC++/Kotlin against RN internals (e.g. a Fabric `updateLayoutMetrics` override) | a substrate escalation beyond the Expo Modules Swift/Kotlin path; does **not** move a boundary |
 | **3 — custom Fabric component** | a real `ShadowNode` + `ComponentDescriptor` with a Yoga measure function (C++) | breaks rule #7 (C++); the **only** path that can write layout (Boundary L) |
-| **4 — JSI / worklets** | synchronous JS↔native calls, UI-thread worklets / shared values | breaks rule #7 (JSI); the **only** path for authored per-frame mapping |
+| **4 — JSI / worklets** | **fx-authored or fx-depended** synchronous JS↔native calls, worklets, or host-objects driving frames | breaks rule #7 (JSI); rejected by default. The app's own Reanimated updating an fx-exposed UI-thread-animatable **prop** is **depth 1**, not depth 4 — fx owns no worklet/JSI (DEF-006). The discriminator is **ownership**: who authors the worklet. |
 
 Depth is independent of boundary. A capability can escalate substrate depth without moving a
 boundary: a Fabric-pushed layout read (depth 2) stays a Boundary-A *read* — it does not write
@@ -193,6 +194,13 @@ boundary (the flow draft's `<FxPresence><Animated.View /></FxPresence>` rule). A
 merely re-drives content visuals would be rebuilding Reanimated, which `0-spine/05` explicitly
 forbids. So the gate is doubly narrow: authored mapping, of fx-owned state, that no preset can
 express.
+
+**Not Lane 2: the external UI-thread prop drive (DEF-006).** When the *app's own* Reanimated drives
+an fx-exposed UI-thread-animatable prop/uniform, fx authors no worklet and takes no JSI — Reanimated
+is the caller's transport, not fx's runtime. That is **depth 1** (the Expo Modules prop path),
+allowed by default, and does **not** pass through the Lane 2 / regime-C gate. Lane 2 is only fx
+*authoring or depending on* a worklet/JSI integration (the `<FxMotion map={worklet}>` shape above).
+The discriminator is **ownership**: who authors the worklet.
 
 ### The falsifying test (the regime-C gate)
 
