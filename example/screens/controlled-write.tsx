@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { FxSurfaceView, type FxSurfaceViewRef } from "react-native-fx";
+import { FxSurfaceView, type FxSurfaceViewRef, type InteractionMode } from "react-native-fx";
 import { useTheme } from "../components/theme";
 
 /**
@@ -20,6 +20,7 @@ export function ControlledWriteScreen() {
 	const [commitCount, setCommitCount] = useState(0);
 	const [log, setLog] = useState<string[]>([]);
 	const [passThroughCount, setPassThroughCount] = useState(0);
+	const [interactionMode, setInteractionMode] = useState<InteractionMode>("controlled");
 
 	const append = useCallback((text: string) => {
 		setLog((lines) => [text, ...lines].slice(0, 20));
@@ -28,39 +29,51 @@ export function ControlledWriteScreen() {
 	const setIntensity = useCallback(
 		(value: number) => () => {
 			surfaceRef.current?.setUniform("intensity", value);
-			append(`setUniform intensity=${value}`);
+			const modeSuffix = interactionMode === "none" ? " (mode: none — write no-op)" : "";
+			append(`setUniform intensity=${value}${modeSuffix}`);
 		},
-		[append],
+		[append, interactionMode],
 	);
 
 	const setPressDepth = useCallback(
 		(value: number) => () => {
 			surfaceRef.current?.setUniform("pressDepth", value);
-			append(`setUniform pressDepth=${value}`);
+			const modeSuffix = interactionMode === "none" ? " (mode: none — write no-op)" : "";
+			append(`setUniform pressDepth=${value}${modeSuffix}`);
 		},
-		[append],
+		[append, interactionMode],
 	);
 
 	const setHighlight = useCallback(
 		(x: number, y: number) => () => {
 			surfaceRef.current?.setHighlight(x, y);
-			append(`setHighlight (${x},${y})`);
+			const modeSuffix = interactionMode === "none" ? " (mode: none — write no-op)" : "";
+			append(`setHighlight (${x},${y})${modeSuffix}`);
 		},
-		[append],
+		[append, interactionMode],
 	);
 
 	const clearUniform = useCallback(
 		(name: string) => () => {
 			surfaceRef.current?.setUniform(name, null);
-			append(`setUniform ${name}=null (restore prop)`);
+			const modeSuffix = interactionMode === "none" ? " (mode: none — write no-op)" : "";
+			append(`setUniform ${name}=null (restore prop)${modeSuffix}`);
 		},
-		[append],
+		[append, interactionMode],
 	);
 
 	const forceReRender = useCallback(() => {
 		setCommitCount((c) => c + 1);
 		append(`host re-render #${commitCount + 1}`);
 	}, [commitCount, append]);
+
+	const toggleMode = useCallback(() => {
+		setInteractionMode((prev) => {
+			const next: InteractionMode = prev === "controlled" ? "none" : "controlled";
+			append(`interactionMode → ${next}`);
+			return next;
+		});
+	}, [append]);
 
 	return (
 		<View style={[styles.root, { backgroundColor: palette.background }]}>
@@ -87,9 +100,23 @@ export function ControlledWriteScreen() {
 					ref={surfaceRef}
 					shader="aurora"
 					intensity={0.4}
-					interactionMode="controlled"
+					interactionMode={interactionMode}
 					style={styles.surface}
 				/>
+			</View>
+
+			<View style={styles.modeSection}>
+				<Button
+					palette={palette}
+					onPress={toggleMode}
+					label={`interactionMode: ${interactionMode}`}
+					wide
+				/>
+				<Text style={[styles.caption, { color: palette.textFaint }]}>
+					M2 restore test: set intensity to 1.0 (controlled) → toggle to none →
+					the shader should snap back to the 0.4 prop value (prop reclaims control).
+					Toggle back to controlled and the prop value stays until the next write.
+				</Text>
 			</View>
 
 			<ScrollView style={styles.controls} contentContainerStyle={styles.controlsContent}>
@@ -207,6 +234,7 @@ const styles = StyleSheet.create({
 	controlsContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
 	section: { fontSize: 13, fontWeight: "600", marginTop: 8 },
 	row: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+	modeSection: { paddingHorizontal: 16, marginBottom: 8 },
 	button: {
 		paddingHorizontal: 12,
 		paddingVertical: 8,
