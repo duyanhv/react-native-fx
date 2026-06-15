@@ -30,7 +30,7 @@ attaches a recognizer, and who claims/emits semantics.
 | **`none`** | nothing | touches pass straight through | never |
 | **`passive`** | cooperative recognizer | observes the pointer → feeds a pointer uniform (`glowX`/`glowY`); no `onPress*` | never |
 | **`active`** | the same recognizer, owning the press | full press lifecycle → `pressDepth`/`glowX`/`glowY` + `onPressIn/Out/Press/LongPress`; yields to scrollers on movement | press only |
-| **`controlled`** *(defined, deferred — DEF-020)* | nothing (zero arbitration) | the developer's own pipeline writes the uniforms — **discrete writes** via `setUniform`/`setHighlight`, or a future **UI-thread channel** (a Reanimated shared value bound off the JS thread, `40`); **never** per-frame `setUniform` from the JS thread | never |
+| **`controlled`** *(shipped — DEF-020; discrete writes)* | nothing (zero arbitration) | the developer's own pipeline writes the uniforms — **discrete writes** via `setUniform`/`setHighlight`, or a future **UI-thread channel** (a Reanimated shared value bound off the JS thread, `40`); **never** per-frame `setUniform` from the JS thread | never |
 
 ## The cooperative principle
 
@@ -107,13 +107,18 @@ The model to **borrow** (concepts, not the package — no RNGH V1 dep):
    shader above its content container and its recognizer claims the touch), so the
    outer is the single interactive unit — shader-in-shader is not a V1 composition
    pattern; use layered composition (device-confirmed, U8-002, API 33).
-7. **V1 public `interactionMode` is `none | passive | active` (DEF-015).** `controlled`
-   stays in the contract but is **deferred to DEF-020** — its `setUniform`/`setHighlight`
-   write path needs the imperative JS-held handle (the `SharedObject` layer) that V1 does
-   not expose, so no consumer can select it. The prop name and the `passive`/`active`
-   vocabulary are frozen as-is: agnostic (no rule-#2 leak) and free of the collisions the
-   intent-word substitutes carry (`pressable` is `FxPressable`; `reactive` reads as
-   Reanimated).
+7. **`interactionMode` is `none | passive | active | controlled`.** The V1 *public* set was
+   `none | passive | active` (DEF-015); `controlled` **ships in V2 (DEF-020, device-verified
+   2026-06-15, both platforms)** as the view-ref discrete write path — `setUniform`/`setHighlight`
+   as Expo `AsyncFunction`s on the surface ref, **no `SharedObject` needed** (the true `Fx*`
+   SharedObject / detached handle is DEF-021). Discrete writes only: an imperative write wins over
+   the prop value (the clobber rule) and is cleared when the mode leaves `controlled`; continuous
+   gesture-sourced motion stays the UI-thread channel (DEF-006); **never** per-frame `setUniform`
+   from the JS thread. The known write set is the scalar pair `intensity`/`pressDepth`
+   (`setHighlight` writes `touch`/`pressDepth`), symmetric across both platforms — a feature grows
+   it by adding its scalars to both. The prop name and the `none`/`passive`/`active` vocabulary stay
+   frozen (DEF-015): agnostic (no rule-#2 leak) and free of the collisions the intent-word
+   substitutes carry (`pressable` is `FxPressable`; `reactive` reads as Reanimated).
 
 ## Open questions
 
