@@ -1,7 +1,8 @@
-# Session handoff — 2026-06-15 (DEF-009 + review-fix arc closed; V2 critical path = DEF-020)
+# Session handoff — 2026-06-15 (DEF-020 merged; redirect to native-owned drag/tilt — DEF-011 next)
 
 Paste the block below into a fresh session to continue. Supersedes all earlier handoffs
-(2026-06-12 / -14 deleted) and the earlier 2026-06-15 revision (DEF-009 asset re-gate — now closed).
+(2026-06-12 / -14 deleted) and the earlier 2026-06-15 revisions (DEF-009 asset re-gate; the
+DEF-020-as-keystone framing) — both now superseded by the ownership-split redirect below.
 
 ---
 
@@ -41,41 +42,59 @@ READ, IN ORDER (binding):
    not-git-checkout; commit-before-device-gate; gate-agents-leave-dep-bumps).
 
 CURRENT STATE (2026-06-15): V1 cut CLOSED. Driving V2. Publishing gated on V2 (DEF-016 at
-pre-publish). Tree clean, local == origin/integration/0.1.x. MERGED THIS V2 ARC (do NOT redo):
-DEF-014 (iOS-hosted `source` rung), DEF-003 (portal = app's job), DEF-004 (`Fx.Stack` rejected),
-DEF-005 (`edge`/`origin` sugar rejected), DEF-007 (BYO envelope by composition), DEF-008
-(registry-sourced runtime shader compilation, FX-007), DEF-015 (naming freeze).
+pre-publish). Tree clean, local == origin/integration/0.1.x. MERGED IN THE V2 ARC BEFORE THIS
+SESSION (do NOT redo): DEF-014 (iOS-hosted `source` rung), DEF-003 (portal = app's job), DEF-004
+(`Fx.Stack` rejected), DEF-005 (`edge`/`origin` sugar rejected), DEF-007 (BYO envelope by
+composition), DEF-008 (registry-sourced runtime shader compilation, FX-007), DEF-015 (naming freeze).
 
-MERGED THIS SESSION (2026-06-15, human-delegated ticks — do NOT redo):
-- DEF-009 (Android content-distort ripple, closes FX-008): `merged`. 7/7 device on the
-  inline build + run-3 R1 on the bundled-asset build (asset-load path device-proven, `content_ripple.agsl`
-  confirmed inside the APK). Docs-closed, ledger FX-008 resolved. Evidence: `tasks/DEF-009/evidence/`.
-- DEF-010 (doc-cleanup, stale RT-001 duplicate retired): `merged`.
-- Review-fix arc (standalone review pass after DEF-009; native commits `5c32983`/`57bc2dc` + comment/style
-  commits): device-confirmed BOTH platforms — Android A-D PASS (build `8a8c4a4`), iOS A-D PASS (fresh
-  build 14:27, HEAD `7218afc`; E long-press code-reasoned, blocked by a harness gap). Record:
-  `reviews/review-fix-arc-2026-06-15.md`. The harness reload control (single-tap 0.6/0.85 delta) and
-  the iOS confirm landed this session (`5673f2d`, `3d9ad70`).
+MERGED / DONE THIS SESSION (2026-06-15, human-delegated ticks — do NOT redo):
+- DEF-009 (Android content-distort ripple, FX-008): `merged`. Evidence: `tasks/DEF-009/evidence/`.
+- DEF-010 (doc-cleanup): `merged`.
+- Review-fix arc: device-confirmed BOTH platforms. Record: `reviews/review-fix-arc-2026-06-15.md`.
+- DEF-020 (`interactionMode="controlled"` — the view-ref DISCRETE write path: `setUniform`/
+  `setHighlight` as Expo `AsyncFunction`s on the surface ref): `merged` (finishing commit `d39a096`;
+  feature chain `d6ba13a`→`e4b1286`). Device spike R1–R5 PASS both platforms
+  (`tasks/DEF-020/evidence/device.md`). The clobber rule (imperative write wins; cleared on
+  exit-`controlled`) is the design crux. SCOPE SPLIT: DEF-020 = the view-ref write path ONLY; the
+  true `Fx*` SharedObject / `FxEffectRenderer` / HybridObject half is now **DEF-021** (trigger-gated).
+  `30` Decision 7 + `50` flipped `controlled` deferred→shipped.
 
-V2 CRITICAL PATH (pick with the human; confirm before speccing):
-- DEF-020 — the `Fx*` SharedObject / imperative JS-held handle + `controlled` write path
-  (`setUniform`/`setHighlight`). 4-runtime, implement + device. THE KEYSTONE: hard-unblocks DEF-011
-  AND is the `05` Nitro-reconsideration trigger (DEF-002) — scope carefully.
-- DEF-011 — drag/tilt (G3) axis-aware claiming. Closes RT-002. HARD-BLOCKED on DEF-020.
-- DEF-006 — Reanimated UI-thread channel (regime C, MOT-007); gates ONLY the continuous-motion
-  subset of DEF-011's drag/tilt, not the discrete drag setup.
+ARCHITECTURE CLARIFIED THIS SESSION — the OWNERSHIP SPLIT (load-bearing; threaded through `40`/`30`/
+`05`/the classifier — read it before touching continuous-motion work):
+- fx-OWNED continuous interaction (drag/tilt) → NATIVE: a native recognizer reads the gesture and
+  writes the uniform natively every frame (route 1, `40`). No per-frame JS, no Reanimated.
+- app-OWNED continuous control → OPTIONAL Reanimated UI-thread prop-drive: the app's own Reanimated
+  drives an fx-exposed UI-thread-animatable prop (Reanimated is the caller's transport, not fx's
+  runtime).
+- fx ships NO Reanimated/RNGH/worklet/JSI in `packages/`. The depth ownership line (DOC-021 NARROW
+  ratification this session, `51e2d83`): external prop-drive = depth-1 ALLOWED; fx-authored
+  worklet/JSI = depth-4 REJECTED. Canonical in `0-spine/05` Decision 5 + the classifier.
 
-Chain: DEF-020 ──hard──▶ DEF-011 ──(continuous gesture motion only)──▶ DEF-006.
+V2 NEXT — DEF-011 is the next spec-able / dispatchable task:
+- DEF-011 — **native-owned** drag/tilt (G3 axis-aware claiming). Closes RT-002. `in-progress`
+  (spec'd, `tasks/DEF-011/`). **No longer blocked by DEF-006.** Scope: a native pan recognizer
+  extending `FxPressHandler`; axis-aware claiming/yielding (claim the drag axis, yield the cross-axis
+  to ancestor scrollers); pointer-derived tilt; native uniform writes (vec2 OK — native, not the JS
+  scalar path) into the DEF-020 buffer; native settle/spring-back. RNGH example-only. **Preflight +
+  spike FIRST** (the axis-split modifies the frozen `FxPressHandler` all-movement yield — real
+  coexistence risk). THREE OPEN FORKS to settle at spec-review: the axis-declaration API (lean:
+  `active` + a `dragAxis` prop), the uniform names/range, the tilt mapping.
+- DEF-006 — Reanimated UI-thread channel (MOT-007): RE-SCOPED to an OPTIONAL, trigger-gated
+  app-owned integration spike (`tasks/DEF-006/`, `blocked`). NOT on the DEF-011 path. Spec only when
+  a real app-owned integration is asked for.
+- DEF-021 — true `Fx*` SharedObject / `FxEffectRenderer` / HybridObject shape (`blocked`,
+  trigger-gated: first detached imperative handle / per-child / the `05` Nitro re-eval).
 
-TRIGGER-GATED / do NOT start unprompted: DEF-001/012/013/016/017/018/019; DEF-002 (fires with
-DEF-020); `research/wip/*` (Lane 1 / classifier / signal-grammar) is PARKED (post-V2).
+TRIGGER-GATED / do NOT start unprompted: DEF-001/002/006/012/013/016/017/018/019/021; `research/wip/*`
+PARKED post-V2. NOTE: the DOC-021 *narrow* depth distinction was ratified this session; the FULL
+DOC-021 classifier/Lane-1 promotion stays `spec'd` / pending a human read.
 
-LEDGER: exactly one genuinely-open non-blocking row — MOT-002 (`tune` vocab, slaved to MOT-001);
-everything else is resolved or trigger-deferred. (Note: `v1-cut-checklist.md:22-24` lists MOT-008 as
-open too — that's a correct historical snapshot; DEF-007 resolved it the next day. Don't rewrite the
-frozen cut record.)
+LEDGER: one genuinely-open non-blocking row — MOT-002 (`tune` vocab, slaved to MOT-001); RT-002
+closes when DEF-011 lands; MOT-007 stays deferred (DEF-006). Everything else resolved or
+trigger-deferred. (`v1-cut-checklist.md:22-24` lists MOT-008 as open — a correct historical snapshot;
+DEF-007 resolved it the next day. Don't rewrite the frozen cut record.)
 
-START BY: reading the binding docs. Then confirm with the human which V2 item is next — the default
-recommendation is the DEF-020 → DEF-011 arc (drag/tilt is the goal); DEF-006 follows for continuous
-motion. Do not start the wip/ post-V2 material,
-DEF-016, or any trigger-gated row unprompted.
+START BY: reading the binding docs. Then EITHER settle DEF-011's three open forks (axis API / uniform
+shape / tilt mapping) with the human, OR hand the human the DEF-011 executor prompt (preflight +
+spike first, both platforms). Drag/tilt is NATIVE-owned — do NOT route it through Reanimated. Do not
+start DEF-006, the `wip/` post-V2 material, DEF-016, or any trigger-gated row unprompted.
