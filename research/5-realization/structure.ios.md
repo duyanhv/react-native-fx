@@ -109,6 +109,16 @@ layout/hit-testing to a `UIHostingController`.
   container in the set the override never returns `nil` in `none`/outside-shape, and the
   touch dies in the empty container instead of passing through to content composited behind.
   Full mechanics in `30`.
+- **`controlled` mode (DEF-020):** attaches **no recognizer** (identical to `none` for the
+  gesture system), but enables an imperative write path via `setUniform(name, value)` and
+  `setHighlight(x, y)` as Expo `AsyncFunction(view, …)` ref methods. The write lands in the
+  same `FxUniforms` buffer the `CADisplayLink` loop already reads (`30` § two input sources,
+  one buffer). `setUniform` is guarded by known-uniform name (`intensity`, `pressDepth` —
+  unknown names are a no-op). `setHighlight` is sugar over the `touch`/`pressDepth` uniforms
+  in `[0,1]` y-up UV (RT-005). The **clobber rule** is the design crux: an imperative override
+  is tracked in `imperativeOverrides`; `applyResolvedConfig()` skips reapplying the prop-derived
+  value for any overridden uniform. `setUniform(name, nil)` clears the override, letting the
+  prop value win again on the next batch. Discrete writes only — no per-frame JS loop.
 - **Severing rule:** applying `.layerEffect` to live RN content requires hosting that
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.

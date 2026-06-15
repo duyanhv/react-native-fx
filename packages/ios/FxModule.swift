@@ -73,6 +73,14 @@ public class FxModule: Module {
         return view.snapshot()
       }
 
+      AsyncFunction("setUniform") { (view: FxSurfaceView, name: String, value: Double?) in
+        view.setUniform(name: name, value: value)
+      }
+
+      AsyncFunction("setHighlight") { (view: FxSurfaceView, x: Double, y: Double) in
+        view.setHighlight(x: x, y: y)
+      }
+
       OnViewDidUpdateProps { (view: FxSurfaceView) in
         view.applyResolvedConfig()
       }

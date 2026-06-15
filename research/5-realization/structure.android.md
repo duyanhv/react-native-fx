@@ -127,6 +127,18 @@ component.
   RN Android needs an explicit interface where UIKit infers untargetability from the view tree
   (REAL-005). **Build coupling (shipped):** the lever is compiled against
   `compileOnly("com.facebook.react:react-android")` on the library module — the
+- **`controlled` mode (DEF-020):** attaches **no recognizer** (identical to `none` for the
+  gesture system), but enables an imperative write path via `setUniform(name, value)` and
+  `setHighlight(x, y)` as Expo `AsyncFunction(view, …)` ref methods. The write lands in the
+  same `RuntimeShader` uniform buffer the `Choreographer` loop already reads (`30` § two input
+  sources, one buffer). `setUniform` is guarded by the source-declaration scan
+  (`declaredUniforms` — the `extractUniformNames` regex over the AGSL source); unknown names
+  are a no-op. `setHighlight` is sugar over the `touch`/`pressDepth` uniforms in `[0,1]`
+  y-up UV (RT-005). The **clobber rule** is the design crux: an imperative override is tracked
+  in `imperativeOverrides` on `FxSurfaceView`; `updateEffectSurfaceVisibility()` skips
+  `setIntensity()` for any overridden uniform. `setUniform(name, null)` clears the override,
+  letting the prop value win again on the next batch. Discrete writes only — no per-frame JS
+  loop.
   `expo-module-gradle-plugin` classpath does not carry `react-android` transitively
   (`expo-modules-core` exposes its React dependency non-transitively), and `compileOnly` is the
   standard RN-view-library shape (compile against it; the host app provides it at runtime, never

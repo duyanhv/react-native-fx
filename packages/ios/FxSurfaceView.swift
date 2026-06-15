@@ -105,6 +105,11 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   private var pressHandler: FxPressHandler!
 
+  // Tracks which uniforms have been imperatively overridden via `setUniform` so that
+  // `applyResolvedConfig` does not clobber them on a later prop batch. The key is the uniform
+  // name; clearing a value removes the key, letting the prop-derived value win again.
+  private var imperativeOverrides = Set<String>()
+
   /// A Fabric-invisible container that holds RN children so Fabric cannot clobber
   /// the animator's transform/opacity. The animator targets this container, not the
   /// outer `FxSurfaceView` that Fabric tracks.
@@ -369,7 +374,9 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   internal override func applyResolvedConfig() {
     super.applyResolvedConfig()
-    uniforms.intensity = min(max(pendingIntensity, 0), 1)
+    if !imperativeOverrides.contains("intensity") {
+      uniforms.intensity = min(max(pendingIntensity, 0), 1)
+    }
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
     updateInteraction(mode: pendingMode)
@@ -482,6 +489,44 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   private func updateInteraction(mode: String) {
     pressHandler.update(mode: mode)
+  }
+
+  // MARK: - Imperative uniform write path (controlled mode)
+
+  /// Writes a scalar uniform value into the live buffer, or clears the override when `value` is nil.
+  ///
+  /// Only `controlled` mode enables this path; the write is observed on the next frame and
+  /// survives host re-renders because `applyResolvedConfig` skips uniforms that are overridden.
+  /// Unknown uniform names are silently ignored (no new error channel).
+  internal func setUniform(name: String, value: Double?) {
+    guard pendingMode == "controlled" else { return }
+    let key = name
+    if let value = value {
+      let floatValue = Float(value)
+      switch key {
+      case "intensity":
+        uniforms.intensity = floatValue
+        imperativeOverrides.insert(key)
+      case "pressDepth":
+        targetPressDepth = floatValue
+        imperativeOverrides.insert(key)
+      default:
+        // Unknown uniform — no-op
+        break
+      }
+    } else {
+      imperativeOverrides.remove(key)
+    }
+  }
+
+  /// Sets the highlight position in `[0, 1]` y-up UV space and raises the press depth.
+  ///
+  /// This is convenience sugar over the `touch` and `pressDepth` uniforms. The write is
+  /// observed on the next frame. Only `controlled` mode enables this path.
+  internal func setHighlight(x: Double, y: Double) {
+    guard pendingMode == "controlled" else { return }
+    uniforms.touch = SIMD2<Float>(Float(x), Float(y))
+    targetPressDepth = 1
   }
 
   internal func updatePressUniforms(point: CGPoint?, depth: Float) {

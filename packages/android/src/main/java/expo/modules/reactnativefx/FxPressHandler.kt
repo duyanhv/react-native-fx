@@ -9,6 +9,7 @@ private enum class FxPressInteractionMode {
   NONE,
   PASSIVE,
   ACTIVE,
+  CONTROLLED,
 }
 
 internal class FxPressHandler(private val surface: FxSurfaceView) {
@@ -33,18 +34,23 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
   }
 
   fun update(rawMode: String) {
-    mode = when (rawMode) {
+    val nextMode = when (rawMode) {
       "passive" -> FxPressInteractionMode.PASSIVE
       "active" -> FxPressInteractionMode.ACTIVE
+      "controlled" -> FxPressInteractionMode.CONTROLLED
       else -> FxPressInteractionMode.NONE
     }
-    if (mode == FxPressInteractionMode.NONE) {
+    if (nextMode == mode) {
+      return
+    }
+    mode = nextMode
+    if (mode == FxPressInteractionMode.NONE || mode == FxPressInteractionMode.CONTROLLED) {
       cancel()
     }
   }
 
   fun handle(event: MotionEvent): Boolean {
-    if (mode == FxPressInteractionMode.NONE) {
+    if (mode == FxPressInteractionMode.NONE || mode == FxPressInteractionMode.CONTROLLED) {
       return false
     }
     return when (event.actionMasked) {

@@ -21,16 +21,19 @@ build a SharedObject before a consumer holds one).
 ## Scope — the split
 
 **IN (this task):**
-- `setUniform(name, value)` and `setHighlight({ x, y })` as **imperative methods on the surface
+- `setUniform(name, value)` and `setHighlight(x, y)` as **imperative methods on the surface
   ref**, implemented as Expo `AsyncFunction(view, …)` (`51` § the thin async boundary — the
   sanctioned discrete-imperative channel). No `SharedObject`, no returned handle object.
+  `setUniform` is **number-only** for this cut; `null` clears the imperative override and lets
+  the prop-derived value win again.
 - `interactionMode="controlled"` selectable: attaches no recognizer (identical to `none` for the
   gesture system), but enables the write path.
 - Writes land in the **same uniform buffer the native render loop already reads** (`30` § two
   input sources, one buffer — the renderer is decoupled from which source is active). `setHighlight`
-  is convenience sugar over the highlight uniforms (`glowX`/`glowY`/`pressDepth`); `setUniform` is
+  is convenience sugar over the highlight uniforms (`touch`/`pressDepth`); `setUniform` is
   the general escape hatch over any declared uniform, guarded by the existing `declaresUniform`
-  check (the DEF-008 guarded-write precedent).
+  check (the DEF-008 guarded-write precedent). Unknown/undeclared uniform names are a **no-op**
+  on both platforms (no new error channel).
 - Coordinate space pinned to **RT-005**: `[0,1]` y-up UV for `setHighlight`/`setUniform` writes
   (the shipped touch-uniform convention); JS-facing events stay in view points.
 
@@ -111,10 +114,10 @@ in `notes.md` and adjust scope. The result finalizes the mechanic section in `st
 ## Lifecycle checklist
 
 - [x] spec'd (this file)
-- [ ] rules-gated (#1 discrete-only, #7 Expo-Modules-only, #8 no per-frame JS)
-- [ ] implemented (spike → then the full write path)
-- [ ] commented (iceberg — the guarded-write rule, the UV space, why discrete-only)
-- [ ] headless-done
+- [x] rules-gated (#1 discrete-only, #7 Expo-Modules-only, #8 no per-frame JS)
+- [x] implemented (spike → then the full write path)
+- [x] commented (iceberg — the guarded-write rule, the UV space, why discrete-only)
+- [x] headless-done
 - [ ] device-verified (the 4 device scenarios above — human's gate)
 - [ ] reviewed
 - [ ] docs-closed (`30` + `structure.*` + `DEF-015` note)

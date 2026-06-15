@@ -4,6 +4,7 @@ internal enum FxPressInteractionMode {
   case none
   case passive
   case active
+  case controlled
 
   internal init(rawValue: String) {
     switch rawValue {
@@ -11,6 +12,8 @@ internal enum FxPressInteractionMode {
       self = .passive
     case "active":
       self = .active
+    case "controlled":
+      self = .controlled
     default:
       self = .none
     }
@@ -34,20 +37,24 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
   }
 
   internal func update(mode rawMode: String) {
-    mode = FxPressInteractionMode(rawValue: rawMode)
-    if mode == .none {
-      detach()
-    } else {
+    let nextMode = FxPressInteractionMode(rawValue: rawMode)
+    guard nextMode != mode else { return }
+    mode = nextMode
+    if mode == .passive || mode == .active {
       attach()
+    } else {
+      detach(skipUniformReset: mode == .controlled)
     }
   }
 
-  internal func detach() {
+  internal func detach(skipUniformReset: Bool = false) {
     longPressTimer?.invalidate()
     longPressTimer = nil
     didBeginActivePress = false
     didFireLongPress = false
-    surface?.updatePressUniforms(point: nil, depth: 0)
+    if !skipUniformReset {
+      surface?.updatePressUniforms(point: nil, depth: 0)
+    }
     guard let recognizer else { return }
     surface?.removeGestureRecognizer(recognizer)
     self.recognizer = nil

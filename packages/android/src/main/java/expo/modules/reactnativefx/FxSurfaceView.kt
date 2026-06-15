@@ -85,6 +85,11 @@ class FxSurfaceView(
   private var effectSurfaceView: FxSurfaceShaderView? = null
   private val pressHandler = FxPressHandler(this)
 
+  // Tracks which uniforms have been imperatively overridden via `setUniform` so that
+  // `applyResolvedConfig` does not clobber them on a later prop batch. The key is the uniform
+  // name; clearing a value removes the key, letting the prop-derived value win again.
+  internal val imperativeOverrides = mutableSetOf<String>()
+
   /**
    * A Fabric-invisible container that holds RN children so Fabric cannot clobber
    * the animator's transform/opacity. The animator targets this container, not the
@@ -271,6 +276,36 @@ class FxSurfaceView(
     effectSurfaceView?.setPressUniforms(touchX, touchY, depth)
   }
 
+  /**
+   * Writes a scalar uniform value into the live shader, or clears the override when `value` is null.
+   *
+   * Only `controlled` mode enables this path; the write is observed on the next frame and
+   * survives host re-renders because `applyResolvedConfig` skips uniforms that are overridden.
+   * Unknown uniform names are silently ignored (no new error channel).
+   */
+  fun setUniform(name: String, value: Double?) {
+    if (pendingInteractionMode != "controlled") {
+      return
+    }
+    if (value != null) {
+      imperativeOverrides.add(name)
+    } else {
+      imperativeOverrides.remove(name)
+    }
+    effectSurfaceView?.setUniform(name, value)
+  }
+
+  /**
+   * Sets the highlight position in `[0, 1]` y-up UV space and activates the press depth.
+   * Convenience sugar over the `touch` and `pressDepth` uniforms.
+   */
+  fun setHighlight(x: Double, y: Double) {
+    if (pendingInteractionMode != "controlled") {
+      return
+    }
+    effectSurfaceView?.setHighlight(x, y)
+  }
+
   // Touch coordinates arrive in physical pixels; the JS event payload reports view points (dp) to
   // match the RN locationX/Y convention and iOS. The internal shape/uniform math stays in pixels.
   private fun toPoints(value: Float): Double {
@@ -439,7 +474,9 @@ class FxSurfaceView(
     val hasShaderProp = pendingShader.isNotBlank()
     val view = if (hasShaderProp) ensureEffectSurfaceView() else effectSurfaceView ?: return
     view.setShaderId(if (hasShaderProp) pendingShader else "")
-    view.setIntensity(pendingIntensity)
+    if (!imperativeOverrides.contains("intensity")) {
+      view.setIntensity(pendingIntensity)
+    }
   }
 
   private fun ensureEffectSurfaceView(): FxSurfaceShaderView {
