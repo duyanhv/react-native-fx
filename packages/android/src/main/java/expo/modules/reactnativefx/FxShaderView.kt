@@ -55,10 +55,15 @@ internal class FxShaderView(
 
   init {
     setWillNotDraw(false)
+    // A curated asset is build-time bundled, but guard the read and parse so a missing or malformed
+    // shader degrades to a transparent {via:'none'} draw rather than crashing the hosted mount.
     shader = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      val assetPath = agslAssetPathFor(shaderId)
-      val source = context.assets.open(assetPath).bufferedReader().use { it.readText() }
-      RuntimeShader(source)
+      try {
+        val source = context.assets.open(agslAssetPathFor(shaderId)).bufferedReader().use { it.readText() }
+        RuntimeShader(source)
+      } catch (error: Exception) {
+        null
+      }
     } else {
       null
     }
@@ -84,14 +89,14 @@ internal class FxShaderView(
   }
 
   override fun onDraw(canvas: Canvas) {
-    val s = shader ?: return
+    val currentShader = shader ?: return
     if (width == 0 || height == 0) {
       return
     }
-    s.setFloatUniform("time", currentTime)
-    s.setFloatUniform("resolution", width.toFloat(), height.toFloat())
-    s.setFloatUniform("intensity", pendingIntensity)
-    paint.shader = s
+    currentShader.setFloatUniform("time", currentTime)
+    currentShader.setFloatUniform("resolution", width.toFloat(), height.toFloat())
+    currentShader.setFloatUniform("intensity", pendingIntensity)
+    paint.shader = currentShader
     canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
   }
 
@@ -101,7 +106,7 @@ internal class FxShaderView(
   }
 
   private fun startLoop() {
-    if (isCallbackScheduled) {
+    if (isCallbackScheduled || shader == null) {
       return
     }
     isActive = true
@@ -112,40 +117,33 @@ internal class FxShaderView(
 
   private fun stopLoop() {
     isActive = false
+    isCallbackScheduled = false
+    Choreographer.getInstance().removeFrameCallback(frameCallback)
   }
 }
 
 /**
- * The curated, build-time shader ids, kept in lockstep with the JS `CURATED_SHADER_IDS` catalog
- * and [agslAssetPathFor]. A curated id reads its bundled asset; any other resolved id is a
- * registered bring-your-own runtime shader.
+ * The curated, build-time shader ids mapped to their bundled .agsl asset, kept in lockstep with
+ * the JS `CURATED_SHADER_IDS` catalog. A curated id reads its bundled asset; any other resolved id
+ * is a registered bring-your-own runtime shader.
  */
-internal val CURATED_SHADER_IDS = setOf(
-  "fractal-clouds",
-  "ink-smoke",
-  "liquid-chrome",
-  "loop",
-  "dots",
-  "aurora",
-  "noise-field",
-  "plasma",
-  "caustics",
-  "edge-glow"
+private val CURATED_SHADER_ASSETS = mapOf(
+  "fractal-clouds" to "shaders/fractal_clouds.agsl",
+  "ink-smoke"      to "shaders/ink_smoke.agsl",
+  "liquid-chrome"  to "shaders/liquid_chrome.agsl",
+  "loop"           to "shaders/loop.agsl",
+  "dots"           to "shaders/dots.agsl",
+  "aurora"         to "shaders/aurora.agsl",
+  "noise-field"    to "shaders/noise_field.agsl",
+  "plasma"         to "shaders/plasma.agsl",
+  "caustics"       to "shaders/caustics.agsl",
+  "edge-glow"      to "shaders/edge_glow.agsl"
 )
 
-/** Maps the public agnostic shader id to its bundled .agsl asset path. */
-internal fun agslAssetPathFor(id: String): String {
-  return when (id) {
-    "fractal-clouds" -> "shaders/fractal_clouds.agsl"
-    "ink-smoke"      -> "shaders/ink_smoke.agsl"
-    "liquid-chrome"  -> "shaders/liquid_chrome.agsl"
-    "loop"           -> "shaders/loop.agsl"
-    "dots"           -> "shaders/dots.agsl"
-    "aurora"         -> "shaders/aurora.agsl"
-    "noise-field"    -> "shaders/noise_field.agsl"
-    "plasma"         -> "shaders/plasma.agsl"
-    "caustics"       -> "shaders/caustics.agsl"
-    "edge-glow"      -> "shaders/edge_glow.agsl"
-    else             -> "shaders/fractal_clouds.agsl"
-  }
-}
+// Derived from the asset map's keys so the id set and the paths cannot drift apart.
+internal val CURATED_SHADER_IDS: Set<String> = CURATED_SHADER_ASSETS.keys
+
+// Callers resolve only ids already in CURATED_SHADER_IDS, so a miss is a build-time wiring drift —
+// fail closed rather than silently rendering a wrong shader.
+internal fun agslAssetPathFor(id: String): String =
+  CURATED_SHADER_ASSETS[id] ?: error("no bundled asset for curated shader id: $id")

@@ -172,7 +172,13 @@ internal class FxSurfaceShaderView(
       return null
     }
     if (CURATED_SHADER_IDS.contains(id)) {
-      return context.assets.open(agslAssetPathFor(id)).bufferedReader().use { it.readText() }
+      // The bundled asset read can fail (missing/unreadable). Degrade to no draw rather than
+      // throwing out of the prop setter — the surface reports the load/error event separately.
+      return try {
+        context.assets.open(agslAssetPathFor(id)).bufferedReader().use { it.readText() }
+      } catch (error: Exception) {
+        null
+      }
     }
     return FxShaderRegistry.source(id)
   }
