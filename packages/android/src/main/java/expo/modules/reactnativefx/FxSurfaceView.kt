@@ -168,51 +168,39 @@ class FxSurfaceView(
   internal val hasResolvedContentSize: Boolean
     get() = layoutObserver.readFrameInParent().height() > 0 || height > 0
 
-  /**
-   * Stashes the shader target until Expo finishes the prop batch.
-   */
+  // The prop setters stash their target; `applyResolvedConfig` reconciles the whole batch once Expo
+  // finishes it (the two-phase Expo prop pattern). Only constraints the signature can't carry are
+  // commented.
   fun setShader(value: String) {
     pendingShader = value
   }
 
-  /**
-   * Stashes the intensity target until Expo finishes the prop batch.
-   */
   fun setIntensity(value: Double) {
     pendingIntensity = value
   }
 
-  /**
-   * Stashes the interaction target until Expo finishes the prop batch.
-   */
   fun setInteractionMode(value: String) {
     pendingInteractionMode = value
   }
 
-  /**
-   * Stashes the content-distort target until Expo finishes the prop batch. `'ripple'` is the only
-   * recognized value; absent or unrecognized leaves the content undistorted.
-   */
+  // `'ripple'` is the only recognized value; absent or unrecognized leaves the content undistorted.
   fun setContentDistortion(value: String) {
     pendingContentDistortion = value
   }
 
-  /** Stashes the presence visibility target until Expo finishes the prop batch. */
   fun setVisible(value: Boolean) {
     pendingVisible = value
   }
 
-  /** Stashes the presence preset until Expo finishes the prop batch. */
   fun setPreset(value: String) {
     pendingPreset = value
   }
 
-  /** Stashes the explicit presence motion override until Expo finishes the prop batch. */
   fun setPresenceMotion(value: FxPresenceMotion?) {
     pendingPresenceMotion = value
   }
 
-  /** Stashes whether the initial visible mount plays the enter envelope. */
+  // Whether the initial visible mount plays the enter envelope.
   fun setAppear(value: Boolean) {
     pendingAppear = value
   }
@@ -428,9 +416,8 @@ class FxSurfaceView(
   // MARK: - Effect surface visibility
 
   /**
-   * Hides the GPU surface when no effect is active so it never obscures the
-   * content-motion container. When the Android shader renderer is implemented,
-   * this controls the visibility of the effect surface view.
+   * Pushes the active shader id and intensity onto the effect surface view, creating it on first
+   * use, and hides it when no effect is active so it never obscures the content-motion container.
    */
   private fun updateEffectSurfaceVisibility() {
     val hasActiveEffect = pendingShader.isNotBlank()

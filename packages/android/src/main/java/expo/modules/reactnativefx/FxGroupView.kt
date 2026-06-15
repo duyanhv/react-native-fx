@@ -4,10 +4,10 @@ import android.content.Context
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 
-// TODO: Hosts the glass morph compound surface once grouped material rendering
-// is built.
 /**
  * Registers the grouped substrate shell for platform-native compound effects.
+ *
+ * TODO: hosts the glass morph compound surface once grouped material rendering is built.
  */
 class FxGroupView(
   context: Context,

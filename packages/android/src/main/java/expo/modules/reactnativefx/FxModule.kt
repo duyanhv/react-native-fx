@@ -10,9 +10,6 @@ import expo.modules.kotlin.modules.ModuleDefinition
  * name. Additional substrate views resolve through their concrete view names.
  */
 class FxModule : Module() {
-  /**
-   * Defines the module name, view registrations, props, events, and ref functions.
-   */
   override fun definition() = ModuleDefinition {
     Name("ReactNativeFx")
 

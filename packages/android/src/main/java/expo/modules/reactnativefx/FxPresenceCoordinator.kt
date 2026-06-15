@@ -208,7 +208,7 @@ internal class FxPresenceCoordinator(private val surface: FxSurfaceView) {
 
   /**
    * A fixed delta passes through; a measured token resolves its signed magnitude from the
-   * laid-out frame via `FxLayoutObserver` (the architecture's "reads `FxLayoutObserver`" edge).
+   * laid-out frame via `FxLayoutObserver`.
    */
   private fun resolveTravel(travel: FxTravelSpec): Float {
     travel.value?.let { return it.toFloat() }
