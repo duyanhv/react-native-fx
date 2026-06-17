@@ -150,7 +150,7 @@ Checklist:
 
 ## DEF-011 — native-owned drag/tilt (G3 axis-aware claiming)
 
-Type: `implement` · State: `in-progress` (Phase 1 headless-done; forks settled; awaiting device spike) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/)
+Type: `implement` · State: `in-progress` (Phase 1 + arbitration spike done; Phase 2 next) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/)
 
 Re-scoped 2026-06-15 to **native-owned**: drag/tilt is fx-owned interaction, so a native recognizer
 reads the gesture and writes the uniform natively every frame — no per-frame JS, no Reanimated.
@@ -167,10 +167,26 @@ axis-masked; `tilt` = `(touchUV − 0.5)*2`, full-2D); the iOS dual-path ABI cos
 axis-aware `shouldFail` refinement (cross-axis-dominance yield) on both `FxPressHandler`s + a spike
 example screen. Preflight diffed the actual RNGH Pan FSM. Gates re-run independently green — Biome,
 tsc (packages + example), `bun run test` 78/78, swift:lint, Android `compileDebugKotlin`, iOS
-`xcodebuild` (ReactNativeFx). No uniforms/settle yet (Phase 2). **Next: device spike** — does a
-`dragAxis` shader claim its axis while a cross-axis scroller still scrolls, both platforms; a negative
-result re-opens the axis fork. Phase 2 (drag/tilt uniform writes + axis-masking + native settle +
-coexistence matrix) is gated on the spike passing.
+`xcodebuild` (ReactNativeFx). No uniforms/settle yet (Phase 2).
+
+**Arbitration spike (simulator/emulator, 2026-06-17 — `tasks/DEF-011/evidence/device.md`):** the
+design is **not falsified — proceed to Phase 2**, but it is **Android-decisive, not S1–S5-both-platforms**
+(the pasted "all pass" headline overstated it). Proven (planner-verified against the screenshots):
+Android S1 (claim horizontal + yield vertical) and S3 (`both` blocks the parent scroller) — the two
+decisive corners. NOT proven: Android S2/S4/S5 (surfaces off-screen / inner-scroll position unreadable
+via a11y) and **all iOS behavior** (XCTest can't observe recognizer state; Phase 1 has no visible
+uniform, so "claiming" is invisible on iOS). The gaps are tooling/visibility limits, not failures —
+Phase 2's visible uniform + real hardware close them. **Spike finding (rule #6):** iOS claims by
+keeping its recognizer alive while the scroller always scrolls (simultaneous recognition); Android
+claims by blocking the parent (`requestDisallowInterceptTouchEvent`). `horizontal`/`vertical`
+converge; `both`-inside-a-scroller diverges (Android suppresses parent scroll, iOS does not) — settle
+in Phase 2 (lean: document `both` as standalone-only). This is a **sim spike, NOT the closing
+`device-verified` gate.**
+
+**Phase 2 (next):** drag/tilt uniform writes + axis-masking + native settle/spring-back +
+coexistence matrix. Its closing device gate (real hardware, with the visible uniform) must carry:
+iOS axis-tracking S1–S5, Android S2/S4/S5, W-F2 (press when finger leaves the shape along the claimed
+axis), W-F3 (scroll-start feel), and the `both` iOS/Android parity decision.
 
 Checklist:
 - [x] spec'd ([README](./tasks/DEF-011/README.md))

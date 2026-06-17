@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-17T14:33:54.811Z",
+  "events": [
+    {
+      "kind": "swipe",
+      "tMs": 15884.047119140625,
+      "x": 200,
+      "y": 329,
+      "x2": 320,
+      "y2": 329,
+      "referenceWidth": 440,
+      "referenceHeight": 956,
+      "durationMs": 795
+    },
+    {
+      "kind": "swipe",
+      "tMs": 29969.39111328125,
+      "x": 200,
+      "y": 329,
+      "x2": 200,
+      "y2": 429,
+      "referenceWidth": 440,
+      "referenceHeight": 956,
+      "durationMs": 793
+    },
+    {
+      "kind": "swipe",
+      "tMs": 48878.5888671875,
+      "x": 200,
+      "y": 329,
+      "x2": 200,
+      "y2": 479,
+      "referenceWidth": 440,
+      "referenceHeight": 956,
+      "durationMs": 878
+    },
+    {
+      "kind": "swipe",
+      "tMs": 57882.446044921875,
+      "x": 200,
+      "y": 500,
+      "x2": 200,
+      "y2": 650,
+      "referenceWidth": 440,
+      "referenceHeight": 956,
+      "durationMs": 834
+    }
+  ]
+}
