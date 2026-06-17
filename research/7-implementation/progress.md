@@ -150,13 +150,27 @@ Checklist:
 
 ## DEF-011 — native-owned drag/tilt (G3 axis-aware claiming)
 
-Type: `implement` · State: `in-progress` (spec'd) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/)
+Type: `implement` · State: `in-progress` (Phase 1 headless-done; forks settled; awaiting device spike) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/)
 
 Re-scoped 2026-06-15 to **native-owned**: drag/tilt is fx-owned interaction, so a native recognizer
 reads the gesture and writes the uniform natively every frame — no per-frame JS, no Reanimated.
 DEF-006 (the app-owned Reanimated prop-drive) is no longer a blocker; it is an optional, trigger-gated
-integration. Full scope, the axis-declaration fork, the preflight/spike, authority links, and proof
+integration. Full scope, the settled forks, the preflight/spike, authority links, and proof
 in the task README.
+
+The three design forks are **settled** (ratified planner + maintainer, 2026-06-17 — see the README):
+`active` + `dragAxis?: 'horizontal'|'vertical'|'both'` (no new `interactionMode` value, per the DEF-015
+freeze); `drag`/`tilt` vec2 signed `[-1,1]` in the shipped touch-UV space (`drag` = `touchUV − originUV`,
+axis-masked; `tilt` = `(touchUV − 0.5)*2`, full-2D); the iOS dual-path ABI cost priced.
+
+**Phase 1 (headless) is done and reviewed clean (planner, 2026-06-17):** the `dragAxis` prop + the
+axis-aware `shouldFail` refinement (cross-axis-dominance yield) on both `FxPressHandler`s + a spike
+example screen. Preflight diffed the actual RNGH Pan FSM. Gates re-run independently green — Biome,
+tsc (packages + example), `bun run test` 78/78, swift:lint, Android `compileDebugKotlin`, iOS
+`xcodebuild` (ReactNativeFx). No uniforms/settle yet (Phase 2). **Next: device spike** — does a
+`dragAxis` shader claim its axis while a cross-axis scroller still scrolls, both platforms; a negative
+result re-opens the axis fork. Phase 2 (drag/tilt uniform writes + axis-masking + native settle +
+coexistence matrix) is gated on the spike passing.
 
 Checklist:
 - [x] spec'd ([README](./tasks/DEF-011/README.md))

@@ -61,6 +61,7 @@ class FxSurfaceView(
   private var pendingShader = ""
   private var pendingIntensity = 0.8
   private var pendingInteractionMode = "none"
+  private var pendingDragAxis: String? = null
   private var pendingContentDistortion = ""
 
   // The hit-target verdict TouchTargetHelper reads when it walks the view tree. BOX_NONE keeps the
@@ -195,6 +196,10 @@ class FxSurfaceView(
     pendingInteractionMode = value
   }
 
+  fun setDragAxis(value: String) {
+    pendingDragAxis = value.ifBlank { null }
+  }
+
   // `'ripple'` is the only recognized value; absent or unrecognized leaves the content undistorted.
   fun setContentDistortion(value: String) {
     pendingContentDistortion = value
@@ -230,7 +235,7 @@ class FxSurfaceView(
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
     contentDistortion.update(pendingContentDistortion, pendingIntensity)
-    pressHandler.update(pendingInteractionMode)
+    pressHandler.update(pendingInteractionMode, pendingDragAxis)
     if (currentInteractionMode == "controlled" && pendingInteractionMode != "controlled") {
       imperativeOverrides.clear()
       effectSurfaceView?.clearCustomUniforms()

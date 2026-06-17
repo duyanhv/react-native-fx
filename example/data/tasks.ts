@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -115,12 +115,20 @@ export const TASKS: DeviceTask[] = [
 		status: "verified",
 		screen: "fill-material",
 	},
-	{
-		id: "DEF-020",
-		title: "Controlled write path",
-		platform: "iOS · Android",
-		what: "setUniform/setHighlight via ref on controlled surface · survives host re-render",
-		status: "in-progress",
-		screen: "controlled-write",
-	},
+  {
+    id: "DEF-020",
+    title: "Controlled write path",
+    platform: "iOS \u00b7 Android",
+    what: "setUniform/setHighlight via ref on controlled surface \u00b7 survives host re-render",
+    status: "in-progress",
+    screen: "controlled-write",
+  },
+  {
+    id: "DEF-011",
+    title: "Drag axis spike",
+    platform: "iOS \u00b7 Android",
+    what: "dragAxis claims configured axis inside cross-axis scroller \u00b7 horizontal/vertical/both \u00b7 inert without active",
+    status: "in-progress",
+    screen: "drag-axis-spike",
+  },
 ];

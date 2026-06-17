@@ -48,16 +48,49 @@ Closes RT-002.
 - **No new JS-facing `setUniform` scalars** for drag/tilt — the recognizer writes them natively;
   the `controlled` JS write set stays `intensity`/`pressDepth` (DEF-020).
 
-## Open design forks (resolve in the spike / with review)
+## Settled design forks (ratified planner + maintainer at spec-review, 2026-06-17)
 
-1. **The axis-declaration API.** How does a shader declare which axis it wants (and that it wants
-   drag at all)? Candidates: a new `interactionMode` value (e.g. `"drag"`), or `active` + a
-   `dragAxis="horizontal" | "vertical" | "both"` prop. Recommendation: lean on `active` + an axis
-   prop (smallest surface; `active` already owns the press recognizer). Confirm at spec-review.
-2. **The uniform shape/names.** `drag` (vec2, normalized `[0,1]` or `[-1,1]` offset) + `tilt` (vec2)
-   — pick the range and names, chosen so a future app-owned DEF-006 binding could reuse them.
-3. **Tilt mapping.** Pointer-derived tilt = a function of the touch point relative to centre. Pin
-   the mapping (linear toward finger? clamped?) — pointer-only.
+The three forks below are decided; the spike falsifies **axis arbitration only** (see below), not
+the public API or the uniform ABI.
+
+1. **The axis-declaration API.** Keep `interactionMode="active"` (it already owns the press
+   recognizer) and add `dragAxis?: 'horizontal' | 'vertical' | 'both'`. A new `interactionMode`
+   value was **rejected** — `interactionMode` is the frozen `none|passive|active|controlled`
+   vocabulary (DEF-015, `30` Decision 7), and an orthogonal opt-in prop is a refinement of an
+   existing mode, not a reopening of a frozen surface. `dragAxis` is **inert unless
+   `interactionMode==='active'`** (documented + ignored otherwise); unset = today's behaviour
+   (fail on any movement past slop), unchanged.
+2. **The uniform shape/names.** `drag` (vec2) + `tilt` (vec2), both signed, both clamped `[-1,1]`,
+   y-up — in the **same UV coordinate space as `touch` / `setHighlight`** (RT-005 `[0,1]` y-up UV),
+   not a generic normalized basis.
+   - `touch` = current pointer UV, `[0,1]`, y-up (the shipped convention).
+   - `drag` = signed UV **displacement** from the gesture origin: `currentTouchUv - originTouchUv`
+     (components naturally `[-1,1]`; clamp defensively). **Axis-masked by `dragAxis`:**
+     `horizontal → (dx, 0)`, `vertical → (0, dy)`, `both → (dx, dy)`.
+   - The distinction is load-bearing: `tilt` = where the finger **is** (absolute, relative to
+     centre); `drag` = how far it **moved** (relative to gesture start). Both settle to `(0,0)`
+     natively on release via the press-depth spring precedent.
+3. **Tilt mapping.** Pointer-derived, no sensors: `tilt = clamp((currentTouchUv - 0.5) * 2, -1, 1)`,
+   same y-up orientation. Centre → `(0,0)`; right edge → `x=+1`; top edge → `y=+1`. Full 2D
+   (not axis-masked).
+
+### ABI note (priced at spec-review)
+
+iOS carries a **dual** uniform path: the packed `FxUniforms` struct (raster path,
+`setFragmentBytes`) **and** per-signature args mirrored on all ten `[[stitchable]]` functions.
+Adding `drag`/`tilt` extends the Swift struct + the MSL struct (append at end to keep offsets
+stable) **and** adds two args to every stitchable signature + the Swift call site — the "field
+order MUST match" invariant is a silent-corruption footgun. Android is additive only (per-shader
+named uniforms gated on `name in declaredUniforms`).
+
+### The spike falsifies axis arbitration only
+
+The risky change is both `shouldFail` predicates moving from *fail on any movement past slop* to
+*fail on cross-axis movement past slop; keep the claimed axis*. The spike proves a
+`dragAxis="horizontal"` shader claims horizontal drag while an ancestor vertical scroller still
+scrolls (and the cross-axis case), on both platforms' real recognizers. A negative result re-opens
+fork 1. The `drag`/`tilt` uniform writes + settle are downstream and mechanical once arbitration
+holds (Phase 2).
 
 ## Spike / preflight first (unbuilt mechanic — protocol step 5)
 

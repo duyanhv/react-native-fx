@@ -89,6 +89,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var pendingShader = ""
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
+  private var pendingDragAxis: String?
 
   // Presence targets, stashed by prop setters and forwarded to the coordinator once per batch.
   private var pendingVisible = false
@@ -359,6 +360,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// normally. Android realizes this draw-time, where touch survives.
   internal func setContentDistortion(_ value: String) {}
 
+  internal func setDragAxis(_ value: String) {
+    pendingDragAxis = value.isEmpty ? nil : value
+  }
+
   internal func setVisible(_ value: Bool) {
     pendingVisible = value
   }
@@ -492,7 +497,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   // MARK: - Interaction
 
   private func updateInteraction(mode: String) {
-    pressHandler.update(mode: mode)
+    pressHandler.update(mode: mode, dragAxis: pendingDragAxis)
     if currentInteractionMode == "controlled" && mode != "controlled" {
       imperativeOverrides.removeAll()
       uniforms.intensity = min(max(pendingIntensity, 0), 1)

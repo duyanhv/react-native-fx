@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { CURATED_SHADER_IDS } from '../effects/catalog';
 import { manifest } from '../manifest';
+import type { NativeFxSurfaceProps } from '../runtime/FxSurfaceView.types';
 
 // The curated catalog (`CURATED_SHADER_IDS`) is the agnostic naming authority; every
 // platform dispatch must cover it, or selecting an id silently renders the wrong shader.
@@ -108,5 +109,61 @@ describe('manifest source node', () => {
     // Scroll is the clock — no perpetual loop, so no cadence.
     expect(rung.clock).toBe('none');
     expect('cadence' in rung).toBe(false);
+  });
+});
+
+describe('dragAxis prop plumbing (DEF-011 Phase 1)', () => {
+  it('has dragAxis in NativeFxSurfaceProps as an optional union', () => {
+    const props: Partial<NativeFxSurfaceProps> = {};
+    props.dragAxis = 'horizontal';
+    expect(props.dragAxis).toBe('horizontal');
+    props.dragAxis = 'vertical';
+    expect(props.dragAxis).toBe('vertical');
+    props.dragAxis = 'both';
+    expect(props.dragAxis).toBe('both');
+    props.dragAxis = undefined;
+    expect(props.dragAxis).toBeUndefined();
+  });
+
+  it('registers dragAxis as a native prop in FxModule.swift', () => {
+    const swift = read('ios', 'FxModule.swift');
+    expect(swift).toContain('"dragAxis"');
+  });
+
+  it('registers dragAxis as a native prop in FxModule.kt', () => {
+    const kotlin = read(
+      'android',
+      'src',
+      'main',
+      'java',
+      'expo',
+      'modules',
+      'reactnativefx',
+      'FxModule.kt'
+    );
+    expect(kotlin).toContain('"dragAxis"');
+  });
+
+  it('has axis-aware shouldFail predicate in FxPressHandler.swift', () => {
+    const swift = read('ios', 'FxPressHandler.swift');
+    expect(swift).toContain('"horizontal"');
+    expect(swift).toContain('"vertical"');
+    expect(swift).toContain('"both"');
+  });
+
+  it('has axis-aware shouldFail predicate in FxPressHandler.kt', () => {
+    const kotlin = read(
+      'android',
+      'src',
+      'main',
+      'java',
+      'expo',
+      'modules',
+      'reactnativefx',
+      'FxPressHandler.kt'
+    );
+    expect(kotlin).toContain('"horizontal"');
+    expect(kotlin).toContain('"vertical"');
+    expect(kotlin).toContain('"both"');
   });
 });

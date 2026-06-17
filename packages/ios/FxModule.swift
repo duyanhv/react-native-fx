@@ -56,6 +56,9 @@ public class FxModule: Module {
       Prop("contentDistortion") { (view: FxSurfaceView, value: String) in
         view.setContentDistortion(value)
       }
+      Prop("dragAxis") { (view: FxSurfaceView, value: String) in
+        view.setDragAxis(value)
+      }
       Prop("visible") { (view: FxSurfaceView, value: Bool) in
         view.setVisible(value)
       }

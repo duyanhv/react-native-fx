@@ -31,15 +31,17 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
 
   private let allowableMovement: CGFloat = 10
   private let longPressDuration: TimeInterval = 0.5
+  private var dragAxis: String?
 
   internal init(surface: FxSurfaceView) {
     self.surface = surface
   }
 
-  internal func update(mode rawMode: String) {
+  internal func update(mode rawMode: String, dragAxis: String?) {
     let nextMode = FxPressInteractionMode(rawValue: rawMode)
-    guard nextMode != mode else { return }
+    guard nextMode != mode || self.dragAxis != dragAxis else { return }
     mode = nextMode
+    self.dragAxis = dragAxis
     if mode == .passive || mode == .active {
       attach()
     } else {
@@ -154,6 +156,34 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
 
   private func shouldFail(at location: CGPoint) -> Bool {
     guard let surface else { return true }
+
+    // Axis-aware claiming when dragAxis is set under active mode.
+    // The shader claims its configured axis; cross-axis movement past slop
+    // that dominates the claimed axis yields the gesture to an ancestor scroller.
+    if mode == .active, let axis = dragAxis {
+      let deltaX = location.x - origin.x
+      let deltaY = location.y - origin.y
+      let absDeltaX = abs(deltaX)
+      let absDeltaY = abs(deltaY)
+      switch axis {
+      case "horizontal":
+        if absDeltaY > allowableMovement && absDeltaY > absDeltaX {
+          return true
+        }
+        return false
+      case "vertical":
+        if absDeltaX > allowableMovement && absDeltaX > absDeltaY {
+          return true
+        }
+        return false
+      case "both":
+        return false
+      default:
+        break
+      }
+    }
+
+    // Default: fail on any movement past slop (today's behavior).
     let deltaX = location.x - origin.x
     let deltaY = location.y - origin.y
     let distanceSquared = deltaX * deltaX + deltaY * deltaY

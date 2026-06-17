@@ -41,6 +41,7 @@ export type NativeFxSurfaceProps = {
   // Android-only (API 33+) — iOS accepts and ignores it. A deliberately minimal native prop,
   // not the long-term public surface.
   contentDistortion?: 'ripple';
+  dragAxis?: 'horizontal' | 'vertical' | 'both';
   visible?: boolean;
   preset?: string;
   presenceMotion?: PresenceMotionWire;

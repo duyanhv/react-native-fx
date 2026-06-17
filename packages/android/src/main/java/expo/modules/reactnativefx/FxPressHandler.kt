@@ -18,6 +18,7 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
   private val longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
 
   private var mode = FxPressInteractionMode.NONE
+  private var dragAxis: String? = null
   private var originX = 0f
   private var originY = 0f
   private var lastX = 0f
@@ -33,17 +34,18 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     }
   }
 
-  fun update(rawMode: String) {
+  fun update(rawMode: String, dragAxis: String?) {
     val nextMode = when (rawMode) {
       "passive" -> FxPressInteractionMode.PASSIVE
       "active" -> FxPressInteractionMode.ACTIVE
       "controlled" -> FxPressInteractionMode.CONTROLLED
       else -> FxPressInteractionMode.NONE
     }
-    if (nextMode == mode) {
+    if (nextMode == mode && this.dragAxis == dragAxis) {
       return
     }
     mode = nextMode
+    this.dragAxis = dragAxis
     if (mode == FxPressInteractionMode.NONE || mode == FxPressInteractionMode.CONTROLLED) {
       cancel()
     }
@@ -132,6 +134,34 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
   }
 
   private fun shouldFail(x: Float, y: Float): Boolean {
+    // Axis-aware claiming when dragAxis is set under active mode.
+    // The shader claims its configured axis; cross-axis movement past slop
+    // that dominates the claimed axis yields the gesture to an ancestor scroller.
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      val deltaX = x - originX
+      val deltaY = y - originY
+      val absDeltaX = Math.abs(deltaX)
+      val absDeltaY = Math.abs(deltaY)
+      when (dragAxis) {
+        "horizontal" -> {
+          if (absDeltaY > touchSlop && absDeltaY > absDeltaX) {
+            return true
+          }
+          return false
+        }
+        "vertical" -> {
+          if (absDeltaX > touchSlop && absDeltaX > absDeltaY) {
+            return true
+          }
+          return false
+        }
+        "both" -> {
+          return false
+        }
+      }
+    }
+
+    // Default: fail on any movement past slop (today's behavior).
     val deltaX = x - originX
     val deltaY = y - originY
     return deltaX * deltaX + deltaY * deltaY > touchSlop * touchSlop || !surface.containsInteractiveShape(x, y)
