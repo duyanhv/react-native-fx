@@ -8,6 +8,8 @@ struct FxUniforms {
   float intensity;
   float pressDepth;
   float2 touch;  // normalized touch point, 0..1, y up; (0.5, 0.5) when idle
+  float2 drag;   // signed UV displacement from gesture origin, [-1,1], axis-masked
+  float2 tilt;   // signed pointer position relative to center, [-1,1], y up
 };
 
 struct VSOut {
@@ -175,6 +177,12 @@ fragment half4 fx_dots(VSOut in [[stage_in]], constant FxUniforms &u [[buffer(0)
   uv.x *= aspect;
   float t = u.time;
 
+  // Demo wiring: the dot field follows the drag and the color leans toward the
+  // finger position. Both terms are zero at rest so the output matches the
+  // original `dots` when no drag/tilt is active.
+  uv += u.drag * 0.25;
+  float3 tiltBias = float3(u.tilt.x, u.tilt.y, 0.0) * 0.35;
+
   // finger bulge: dots near the touch rise and brighten (stronger while pressed)
   float2 tp = float2(u.touch.x * aspect, u.touch.y);
   float distTouch = distance(uv, tp);
@@ -198,6 +206,7 @@ fragment half4 fx_dots(VSOut in [[stage_in]], constant FxUniforms &u [[buffer(0)
   col = mix(col, base * (0.3 + 0.7 * diff), mask);
   col += float3(1.0) * pow(diff, 16.0) * mask * 0.6;        // specular highlight
   col += float3(0.45, 0.75, 1.0) * bulge * mask * 0.9;      // glow under the finger
+  col += tiltBias * mask;
   return out4(col, u);
 }
 
@@ -218,7 +227,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Fractal Clouds — organic noise, slow drift. Soft sky → white billows.
 [[stitchable]] half4 fx_stitchable_fractal_clouds(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   uv.x *= resolution.x / max(resolution.y, 1.0);
@@ -236,7 +245,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Ink Smoke — diffused, layered, soft. Ink blooming in water on warm paper.
 [[stitchable]] half4 fx_stitchable_ink_smoke(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   uv.x *= resolution.x / max(resolution.y, 1.0);
@@ -256,7 +265,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Liquid Chrome — reflective, animated. Steel surface with moving specular streaks.
 [[stitchable]] half4 fx_stitchable_liquid_chrome(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   uv.x *= resolution.x / max(resolution.y, 1.0);
@@ -279,7 +288,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Loop — diagonal iridescent light streaks glowing at the edges, dark center.
 [[stitchable]] half4 fx_stitchable_loop(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   float aspect = resolution.x / max(resolution.y, 1.0);
@@ -307,12 +316,18 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Dots — wavy, animated, 3D. INTERACTIVE: dots swell and glow under your finger.
 [[stitchable]] half4 fx_stitchable_dots(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float aspect = resolution.x / max(resolution.y, 1.0);
   float2 uv = position / resolution;
   uv.x *= aspect;
   float t = time;
+
+  // Demo wiring: the dot field follows the drag and the color leans toward the
+  // finger position. Both terms are zero at rest so the output matches the
+  // original `dots` when no drag/tilt is active.
+  uv += drag * 0.25;
+  float3 tiltBias = float3(tilt.x, tilt.y, 0.0) * 0.35;
 
   float2 tp = float2(touch.x * aspect, touch.y);
   float distTouch = distance(uv, tp);
@@ -336,13 +351,14 @@ static inline half4 out4_s(float3 col, float intensity) {
   col = mix(col, base * (0.3 + 0.7 * diff), mask);
   col += float3(1.0) * pow(diff, 16.0) * mask * 0.6;
   col += float3(0.45, 0.75, 1.0) * bulge * mask * 0.9;
+  col += tiltBias * mask;
   return out4_s(col, intensity);
 }
 
 /// Aurora — flowing ribbon curtains of green/purple light drifting across the sky.
 [[stitchable]] half4 fx_stitchable_aurora(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   float aspect = resolution.x / max(resolution.y, 1.0);
@@ -376,7 +392,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Noise Field — layered value noise shifting through an iridescent palette.
 [[stitchable]] half4 fx_stitchable_noise_field(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   float aspect = resolution.x / max(resolution.y, 1.0);
@@ -400,7 +416,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Plasma — classic sinusoidal plasma with morphing color centers.
 [[stitchable]] half4 fx_stitchable_plasma(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   float aspect = resolution.x / max(resolution.y, 1.0);
@@ -434,7 +450,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Caustics — underwater light refraction with moving cellular brilliance.
 [[stitchable]] half4 fx_stitchable_caustics(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   float aspect = resolution.x / max(resolution.y, 1.0);
@@ -464,7 +480,7 @@ static inline half4 out4_s(float3 col, float intensity) {
 /// Edge Glow — dark interior with animated rim-light color along the edges.
 [[stitchable]] half4 fx_stitchable_edge_glow(
   float2 position, half4 color,
-  float time, float2 resolution, float intensity, float pressDepth, float2 touch
+  float time, float2 resolution, float intensity, float pressDepth, float2 touch, float2 drag, float2 tilt
 ) {
   float2 uv = position / resolution;
   float aspect = resolution.x / max(resolution.y, 1.0);

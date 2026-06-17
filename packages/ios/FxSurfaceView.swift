@@ -13,6 +13,8 @@ internal struct FxUniforms {
   var intensity: Float = 0.8
   var pressDepth: Float = 0
   var touch = SIMD2<Float>(0.5, 0.5)
+  var drag = SIMD2<Float>.zero
+  var tilt = SIMD2<Float>.zero
 }
 
 /// Renders the expo-view substrate through a Metal-backed `MTKView`.
@@ -67,7 +69,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private static let runtimePreamble = """
     #include <metal_stdlib>
     using namespace metal;
-    struct FxUniforms { float time; float2 resolution; float intensity; float pressDepth; float2 touch; };
+    struct FxUniforms { float time; float2 resolution; float intensity; float pressDepth; float2 touch; float2 drag; float2 tilt; };
     struct VSOut { float4 position [[position]]; float2 uv; };
     """
 
@@ -80,6 +82,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   private var uniforms = FxUniforms()
   private var targetPressDepth: Float = 0
+  private var targetDrag = SIMD2<Float>.zero
+  private var targetTilt = SIMD2<Float>.zero
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
@@ -560,6 +564,43 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     }
   }
 
+  /// Writes the axis-masked drag offset and pointer-derived tilt into the uniform target.
+  ///
+  /// Both values live in `[0,1]` y-up UV space (the same basis as `touch`). Passing `nil`
+  /// for `current` begins the native settle back to `(0,0)` using the same spring/smoothing
+  /// the press depth uses. The render loop applies the eased step each frame.
+  internal func updateDragTiltUniforms(origin: CGPoint?, current: CGPoint?, dragAxis: String?) {
+    guard let current else {
+      targetDrag = .zero
+      targetTilt = .zero
+      return
+    }
+    let currentUV = normalizeTouch(current)
+    targetTilt = clamp((currentUV - 0.5) * 2, lower: -1, upper: 1)
+    guard let origin else {
+      targetDrag = .zero
+      return
+    }
+    let originUV = normalizeTouch(origin)
+    let delta = clamp(currentUV - originUV, lower: -1, upper: 1)
+    targetDrag = mask(delta: delta, axis: dragAxis)
+  }
+
+  private func mask(delta: SIMD2<Float>, axis: String?) -> SIMD2<Float> {
+    switch axis {
+    case "horizontal":
+      return SIMD2<Float>(delta.x, 0)
+    case "vertical":
+      return SIMD2<Float>(0, delta.y)
+    default:
+      return delta
+    }
+  }
+
+  private func clamp(_ value: SIMD2<Float>, lower: Float, upper: Float) -> SIMD2<Float> {
+    return value.clamped(lowerBound: SIMD2<Float>(repeating: lower), upperBound: SIMD2<Float>(repeating: upper))
+  }
+
   internal func dispatchShaderPressIn(point: CGPoint) {
     onShaderPressIn(pressPayload(point: point))
   }
@@ -625,6 +666,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     uniforms.time = Float(CACurrentMediaTime() - startTime)
     uniforms.resolution = SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height))
     uniforms.pressDepth += (targetPressDepth - uniforms.pressDepth) * 0.35
+    uniforms.drag += (targetDrag - uniforms.drag) * 0.35
+    uniforms.tilt += (targetTilt - uniforms.tilt) * 0.35
 
     encoder.setRenderPipelineState(state)
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<FxUniforms>.stride, index: 0)

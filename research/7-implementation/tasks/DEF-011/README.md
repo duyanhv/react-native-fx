@@ -92,6 +92,30 @@ scrolls (and the cross-axis case), on both platforms' real recognizers. A negati
 fork 1. The `drag`/`tilt` uniform writes + settle are downstream and mechanical once arbitration
 holds (Phase 2).
 
+**Spike outcome (2026-06-17, sim/emulator — `evidence/device.md`):** Android-decisive, design not
+falsified → proceed to Phase 2. Android S1 (claim + cross-axis yield) and S3 (`both` blocks the
+parent) verified; iOS behavior + Android S2/S4/S5 under-verified by tooling (no visible uniform in
+Phase 1), deferred to the Phase 2 hardware gate.
+
+### Platform divergence for `dragAxis="both"` (ratified 2026-06-17 — from the spike finding)
+
+The claim *mechanisms* differ: Android claims by blocking the parent
+(`requestDisallowInterceptTouchEvent`); iOS claims by keeping its recognizer alive while the scroller
+always scrolls (simultaneous recognition, `cancelsTouchesInView = false`). `horizontal`/`vertical`
+**converge** (shader tracks the claimed axis; the cross-axis scroller scrolls on both). They diverge
+only for `dragAxis="both"` inside a scroller (Android suppresses the parent scroll; iOS does not).
+
+**Decision:** document the divergence; do **not** change iOS to suppress the parent scroll for `both`.
+
+- `horizontal` / `vertical` are the convergent, scroller-safe modes.
+- `both` is for standalone shader surfaces (or containers where the app expects no ancestor
+  pan/scroll arbitration) — positioned as **standalone-only** in public docs for parity.
+- iOS `both` keeps `cancelsTouchesInView = false` + simultaneous recognition; it must **never**
+  suppress the parent by severing RN touch (rule #4). iOS parent-scroll blocking for `both` is
+  **explicitly out of scope, not a bug.**
+- Android `both` claiming the stream locally (without violating RN child touch semantics) is
+  acceptable platform-native divergence.
+
 ## Spike / preflight first (unbuilt mechanic — protocol step 5)
 
 The **axis-split claiming** modifies the *frozen* `FxPressHandler` yield behaviour (today it

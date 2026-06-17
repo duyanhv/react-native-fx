@@ -1,171 +1,177 @@
-# DEF-011 Phase 1 — headless-done notes
+# DEF-011 Phase 2 — headless-done notes
 
 **Date:** 2026-06-17
-**State:** headless-done (recognizer change + prop + spike screen)
-**Next:** Human runs the device spike to verify axis claim coexists with cross-axis scroller
+**State:** headless-done (native drag/tilt uniform writes + axis masking + native settle + visible dots wiring + example coexistence)
+**Next:** Human runs the hardware device gate to verify axis claim, smooth tracking, settle, and coexistence
 
 ## What changed
 
-### Public API (TypeScript)
+### Native uniform ABI
 
-- **`NativeFxSurfaceProps`** (`packages/src/runtime/FxSurfaceView.types.ts:47`): Added optional
-  `dragAxis?: 'horizontal' | 'vertical' | 'both'`. The prop is inert unless
-  `interactionMode === 'active'` — unset preserves today's behavior.
+- **iOS `FxUniforms` struct** (`packages/ios/FxSurfaceView.swift:16-17`): appended
+  `var drag = SIMD2<Float>.zero` and `var tilt = SIMD2<Float>.zero` after `touch`.
+- **MSL `FxUniforms` struct** (`packages/ios/Shaders/FxShaders.metal:11-12`): appended
+  `float2 drag;` and `float2 tilt;` after `touch`.
+- **MSL BYO runtime preamble** (`packages/ios/FxSurfaceView.swift:71`): updated the
+  inline `FxUniforms` definition to include `float2 drag; float2 tilt;`.
+- **All ten `[[stitchable]]` signatures** (`packages/ios/Shaders/FxShaders.metal`):
+  added `float2 drag, float2 tilt` to every signature.
+- **Hosted SwiftUI call site** (`packages/ios/FxShaderView.swift:66-67`): passes idle
+  defaults `.float2(0, 0)` for both.
+- **Android per-shader named uniforms** (`packages/android/.../FxSurfaceShaderView.kt`):
+  added `supportsDragUniform`/`supportsTiltUniform` (declared-uniform membership) and
+  gated `setFloatUniform("drag", x, y)` / `("tilt", x, y)` writes in `onDraw`.
 
-### Native prop registration
+### Native write + settle
 
-- **iOS** (`packages/ios/FxModule.swift`): Registered `Prop("dragAxis")` on `FxSurfaceView`,
-  wired to `setDragAxis(_:)`.
-- **Android** (`packages/android/.../FxModule.kt`): Registered `Prop("dragAxis")` on
-  `FxSurfaceView`, wired to `setDragAxis(value)`.
+- **iOS** (`packages/ios/FxSurfaceView.swift:572-602`): `updateDragTiltUniforms(origin:current:dragAxis:)`
+  converts points to `[0,1]` y-up UV, computes axis-masked `drag` and full-2D `tilt`,
+  clamps to `[-1,1]`, and writes them into `targetDrag`/`targetTilt`. The `draw(in:)`
+  loop eases both toward their targets with the same `0.35` factor used for
+  `pressDepth`.
+- **iOS press handler** (`packages/ios/FxPressHandler.swift:96-156`): captures the
+  gesture origin at `.began`, writes drag/tilt on `.changed`, and settles both to
+  zero on `.ended`/`.cancelled`/`.failed` and on `detach`.
+- **Android** (`packages/android/.../FxSurfaceView.kt:302-333`):
+  `updateDragTiltUniforms(originX, originY, x, y, dragAxis)` converts view points to
+  y-up UV, computes masked drag and tilt, and forwards targets to the effect view.
+- **Android press handler** (`packages/android/.../FxPressHandler.kt:70-148`): captures
+  origin on `ACTION_DOWN`, writes drag/tilt on `ACTION_MOVE`, and settles to zero on
+  `ACTION_UP`/`ACTION_CANCEL`.
+- **Android effect view** (`packages/android/.../FxSurfaceShaderView.kt:119-126`,
+  `204-236`): `setDragTiltUniforms` stores targets; `onDraw` eases pending values with
+  `0.35` and writes them when the shader declares the uniforms.
 
-### Prop plumbing
+### Coordinate-space contract
 
-- **iOS** (`packages/ios/FxSurfaceView.swift`): `pendingDragAxis` stashes the prop value;
-  `setDragAxis(_:)` normalizes empty strings to nil. `updateInteraction(mode:)` forwards
-  `pendingDragAxis` to the press handler.
-- **Android** (`packages/android/.../FxSurfaceView.kt`): `pendingDragAxis` stashes the prop;
-  `setDragAxis(value)` normalizes blank strings to null. `applyResolvedConfig()` forwards
-  `pendingDragAxis` to the press handler.
+Both platforms reuse the existing press-path point→UV conversion:
 
-### Recognizer change (THE SPIKE TARGET)
+- `touch` = current pointer UV, `[0,1]`, y-up.
+- `drag` = `clamp(currentTouchUV − originTouchUV, -1, 1)`, axis-masked by `dragAxis`.
+- `tilt` = `clamp((currentTouchUV − 0.5) * 2, -1, 1)`, full 2D, pointer-derived, not
+  axis-masked.
 
-Both platform `FxPressHandler` `shouldFail` predicates changed from "any Euclidean movement
-past slop fails" to "cross-axis movement past slop that dominates the claimed axis fails":
+### Visible dots wiring (demo-only, not a catalog contract)
 
-- **iOS** (`packages/ios/FxPressHandler.swift:155-182`): When `mode == .active` and `dragAxis`
-  is set, the new axis-aware path runs:
-  - `"horizontal"` (claims X): fails when `|dy| > allowableMovement && |dy| > |dx|`
-  - `"vertical"` (claims Y): fails when `|dx| > allowableMovement && |dx| > |dy|`
-  - `"both"` (claims both): never fails through slop
-  - Unset `dragAxis`: falls through to default Euclidean check (today's behavior, unchanged)
-- **Android** (`packages/android/.../FxPressHandler.kt:129-157`): Identical logic with
-  `touchSlop` instead of `allowableMovement`. When `dragAxis` is set and the movement stays
-  along the claimed axis, `shouldFail` returns false → `handleMove` keeps
-  `requestDisallowInterceptTouchEvent(true)` and continues. When cross-axis dominates,
-  `shouldFail` returns true → releases disallow + cancels, yielding to the ancestor scroller.
+To make claiming observable for the hardware gate, the `dots` shader now reads
+`drag` and `tilt` on both platforms:
 
-The `update(mode:dragAxis:)` signature on both platforms compares both values before
-short-circuiting, so a `dragAxis` change alone re-applies the handler config without
-requiring a mode change.
+- **MSL** (`packages/ios/Shaders/FxShaders.metal:178-185`):
+  - `uv += u.drag * 0.25;`
+  - `float3 tiltBias = float3(u.tilt.x, u.tilt.y, 0.0) * 0.35;`
+  - `col += tiltBias * mask;`
+- **AGSL** (`packages/android/.../assets/shaders/dots.agsl:16-22`):
+  - `uv += vec2(drag.x, -drag.y) * 0.25;` (y-down UV needs the y flip)
+  - `vec3 tiltBias = vec3(tilt.x, tilt.y, 0.0) * 0.35;`
+  - `col += tiltBias * mask;`
 
-### Spike example screen
+When `drag == (0,0)` and `tilt == (0,0)` the added terms are zero, so the output is
+byte-for-byte the original `dots`. This wiring is intentionally kept out of the
+`CapabilityManifest`, the manifest-conformance catalog tests, and the curated docs — it
+is a reviewable implementation detail for the hardware gate, pending a planner
+decision on whether to promote drag/tilt-reading as a guaranteed `dots` capability.
 
-- **`example/screens/drag-axis-spike.tsx`**: Five sections inside a vertical `ScrollView`:
-  1. `dragAxis="horizontal"` inside vertical scroller (spike target)
-  2. `dragAxis="vertical"` inside horizontal scroller (cross-axis case)
-  3. `dragAxis="both"` (claims both axes, never yields)
-  4. No `dragAxis` (today's default — yields all movement)
-  5. `dragAxis="horizontal"` with `interactionMode="passive"` (proves inertness)
-- Registered in `example/data/tasks.ts` as task DEF-011 and in `example/app/(tasks)/[taskId].tsx`.
+### Example spike screen
 
-### Tier-1 test
+- **Extended** `example/screens/drag-axis-spike.tsx`:
+  - The existing five sections now visibly track the drag/tilt through the `dots`
+    wiring above.
+  - Added a **@gorhom/bottom-sheet coexistence** section with a
+    `dragAxis="horizontal"` `dots` shader inside a bottom-sheet. The deps were
+    already in `example/package.json`; no new deps were added.
 
-- **`packages/src/__tests__/manifest-conformance.test.ts`**: Added `dragAxis prop plumbing
-  (DEF-011 Phase 1)` describe block with 5 tests:
-  1. Type union assertion on `NativeFxSurfaceProps`
-  2. `FxModule.swift` prop registration
-  3. `FxModule.kt` prop registration
-  4. `FxPressHandler.swift` axis-aware shouldFail (confirms "horizontal"/"vertical"/"both"
-     strings in source)
-  5. `FxPressHandler.kt` axis-aware shouldFail (same check)
+### Research docs
+
+- **structure.ios.md § Touch contract**: added the axis-aware drag/tilt mechanic
+  (claim/yield, UV basis, uniform writes, settle, standalone-only `both`).
+- **structure.android.md § Touch contract**: added the same mechanic localized to
+  Android's `requestDisallowInterceptTouchEvent` + `declaredUniforms` gating.
+
+### Tier-1 tests
+
+- Added `drag/tilt uniform ABI (DEF-011 Phase 2)` describe block in
+  `packages/src/__tests__/manifest-conformance.test.ts` with 5 tests:
+  1. Swift `FxUniforms` contains `drag`/`tilt`.
+  2. MSL `FxUniforms` contains `float2 drag`/`float2 tilt`.
+  3. Every `[[stitchable]]` signature contains `float2 drag, float2 tilt`.
+  4. Hosted call site passes idle `float2(0, 0)` defaults.
+  5. AGSL `dots` declares `uniform vec2 drag;` and `uniform vec2 tilt;`.
+- Added `drag/tilt masking math (DEF-011 Phase 2)` describe block with 6 pure-JS
+  mirror tests for tilt, horizontal/vertical/both masking, clamping, and zero drag.
 
 ## Why (a log, not narrative)
 
-- **The change is in `shouldFail` only.** No new state, no new state machine paths, no new
-  gesture recognizer. The existing press/pressIn/pressOut/longPress event path is untouched
-  when `dragAxis` is unset.
-- **iOS `shouldRecognizeSimultaneouslyWith` stays `true`.** The yield is done by
-  self-failing the recognizer (the shipped mechanism), not by denying simultaneity.
-- **Android keeps `requestDisallowInterceptTouchEvent(true)` on DOWN and releases only on
-  cross-axis-dominated MOVE.** The flow matches the spec exactly — no additional
-  interceptions, no mid-frame parent calls.
-- **`dragAxis='both'` never fails through slop.** This means the shader captures all drag
-  input indefinitely — the ancestor scroller never gets it. This is intentional for a
-  stand-alone interactive shader (not inside a scroller), and it's the caller's choice.
-- **Axis-aware path only activates under `interactionMode === 'active'`.** In `passive`
-  mode, the handler still runs but `didBeginActivePress` is false, so no press events fire
-  anyway — but the `shouldFail` default path (Euclidean) runs regardless, yielding on any
-  slop-exceeding movement. This matches "inert unless active."
+- **Native owns the loop.** Every drag/tilt write and the settle easing happen in the
+  native render loop (`CADisplayLink` on iOS, `Choreographer` on Android). No JS frame
+  loop, no Reanimated, no worklets.
+- **The scalar-only `setUniform` path stays scalar.** `drag`/`tilt` are vec2 and are
+  written natively; `controlled` mode continues to expose only `intensity` and
+  `pressDepth` through `setUniform`.
+- **iOS `both` does not suppress the parent scroller.** It relies on simultaneous
+  recognition + `cancelsTouchesInView = false`, exactly as settled in Phase 1. The
+  docs now explicitly call `both` standalone-only on iOS.
+- **AGSL y-down UV requires a sign flip for drag.y.** The uniform itself stays y-up
+  (same as `touch`); only the local `uv` coordinate flip is shader-local.
+- **Settle shares the press-depth easing constant.** Using `0.35` on both platforms
+  keeps the spring-back feel consistent with the existing press highlight.
 
 ## Headless gates (all green)
 
 | Gate | Result |
 |---|---|
-| `bun run lint` (Biome) | PASS — 37 files, no fixes |
+| `bun run lint` (Biome, packages) | PASS — 37 files, no fixes |
 | `bun run tsc` (packages) | PASS — no errors |
-| `bun run tsc` (example) | PASS — no errors |
-| `bun run test` (packages) | PASS — 78/78 (all green; the gate script runs via `internal/module_scripts/test.js`) |
+| `bun run build` (packages) | PASS |
+| `bun run test` (packages) | PASS — 89/89 |
 | `bun run swift:lint` | PASS — clean |
-| `compileDebugKotlin` (example Android) | BUILD SUCCESSFUL |
-| `pod install` (iOS) | PASS |
-| `xcodebuild -scheme ReactNativeFx` (iOS) | BUILD SUCCEEDED |
+| `bun run tsc` (example) | PASS — no errors |
+| `:react-native-fx:compileDebugKotlin` | BUILD SUCCESSFUL |
+| `pod install` (example iOS) | PASS |
+| `xcodebuild -scheme reactnativefxexample` (iOS 18.5 sim) | BUILD SUCCEEDED |
 
-## Unverified claims (awaiting device spike)
+## Chosen dots mapping for review
 
-1. **Axis claim coexists with cross-axis scroller (iOS):** A `dragAxis="horizontal"` shader
-   inside a vertical `ScrollView` should claim horizontal drags while the scroller scrolls on
-   vertical drags. The inverse for `dragAxis="vertical"` inside a horizontal scroller.
+The visible proof harness in `dots` translates the dot grid by `drag * 0.25` and adds
+a color bias of `tilt * 0.35` to the lit dots. At rest both contributions are zero,
+so there is no at-rest regression. This is flagged here as a demo wiring, not a
+promoted capability.
 
+## Unverified claims (awaiting hardware device gate)
+
+1. **Axis claim coexists with cross-axis scroller (iOS):** A `dragAxis="horizontal"`
+   shader inside a vertical `ScrollView` claims horizontal drags while the scroller
+   scrolls on vertical drags; inverse for `dragAxis="vertical"` inside a horizontal
+   scroller.
 2. **Axis claim coexists with cross-axis scroller (Android):** Same test — the shader
    captures its claimed axis; the scroller scrolls the cross-axis.
-
-3. **`dragAxis="both"` prevents scroller scrolling:** The shader claims all drag input; the
-   ancestor scroller should not scroll when dragging begins on the shader surface.
-
-4. **No regression on unset `dragAxis`:** Existing behavior (any movement past slop yields
-   to scroller) is unchanged when `dragAxis` is not set.
-
-5. **`dragAxis` is inert without `active` mode:** Setting `dragAxis="horizontal"` with
-    `interactionMode="passive"` should behave identically to unset `dragAxis` (yields on any
-    slop-exceeding movement).
-
-6. **Press/longPress behavior when finger leaves the shape along the claimed axis (F2):**
-    The axis-aware `shouldFail` branch drops the `containsInteractiveShape` check that the
-    default path has. This is correct for drag (the offset keeps growing beyond the shape),
-    but it means a press riding the same recognizer no longer cancels when the finger leaves
-    the shape along the claimed axis. The device spike should confirm press and longPress
-    still behave sanely with `dragAxis` set — a press that starts inside and drifts along
-    the claimed axis should still deliver.
-
-7. **Android cross-axis scroll catch on DOWN (F3):** Android claims via
-    `requestDisallowInterceptTouchEvent(true)` on `ACTION_DOWN` and releases only on
-    cross-axis-dominated `ACTION_MOVE`. The first few pixels of a cross-axis scroll are
-    therefore captured by the shader then released to the scroller — a possible perceptible
-    hitch at scroll start. The device spike should judge whether cross-axis scroll start
-    feels natural, or whether the brief catch is noticeable.
-
-## Spike-harness fix (F1, post-review)
-
-Section 2 (horizontal scroller) now has a horizontal row with the `FxSurfaceView` cell
-(300px) flanked by two spacer cells (300px each), giving the scroller 900px of content in a
-~viewport-wide container — sufficient scroll travel to demonstrate the horizontal scroller
-scrolling on horizontal drag while the shader claims vertical.
-
-## Next: human runs the device spike
-
-The spike screen at `example/screens/drag-axis-spike.tsx` is wired as task DEF-011 in the
-example app. Navigate to it on both platforms and verify the claims above.
-
-If the device spike falsifies axis arbitration (the cross-axis scroller doesn't scroll, or
-the claimed axis yields too eagerly), re-open the axis-declaration fork documented in the
-task README. Do not proceed to Phase 2 (uniforms/settle/spring-back) until the spike
-confirms coexistence.
+3. **Drag offset + pointer-tilt track the finger smoothly with no per-frame JS:** The
+   `dots` field should follow the finger; verify under JS-thread load.
+4. **Native settle/spring-back on release:** On `.ended`/`.cancelled` both `drag` and
+   `tilt` ease back to `(0,0)` using the press-depth smoothing.
+5. **`dragAxis="both"` behavior:** Android suppresses the parent scroll; iOS keeps
+   simultaneous recognition and does not suppress the parent (standalone-only).
+6. **W-F2 press when finger leaves the shape along the claimed axis:** The press event
+   path still behaves sanely when the drag carries the finger outside the surface.
+7. **W-F3 Android cross-axis scroll catch at start:** The brief `requestDisallowIntercept`
+   on `ACTION_DOWN` may create a perceptible hitch at scroll start; judge naturalness.
+8. **U8-002 coexistence cases:** The drag-axis shader inside the bottom-sheet/RNGH
+   scroller should not double-handle or sever RN touch.
+9. **Loop pauses off-window (rule #1):** The shader loop stops when the surface leaves
+   the window or the app backgrounds.
 
 ## Files changed (inventory)
 
 ```
-packages/src/runtime/FxSurfaceView.types.ts   — added dragAxis type
-packages/ios/FxModule.swift                   — registered Prop("dragAxis")
-packages/ios/FxSurfaceView.swift              — pendingDragAxis, setDragAxis, plumb to handler
-packages/ios/FxPressHandler.swift             — dragAxis field, update sig, axis-aware shouldFail
-packages/android/src/main/java/expo/modules/reactnativefx/FxModule.kt        — registered Prop("dragAxis")
-packages/android/src/main/java/expo/modules/reactnativefx/FxSurfaceView.kt   — pendingDragAxis, setDragAxis, plumb
-packages/android/src/main/java/expo/modules/reactnativefx/FxPressHandler.kt  — dragAxis field, update sig, axis-aware shouldFail
-packages/src/__tests__/manifest-conformance.test.ts   — Tier-1 tests (5)
-example/screens/drag-axis-spike.tsx           — spike example screen
-example/data/tasks.ts                         — DEF-011 task entry
-example/app/(tasks)/[taskId].tsx              — drag-axis-spike case
-research/7-implementation/tasks/DEF-011/preflight.md  — preflight findings
-research/7-implementation/tasks/DEF-011/notes.md       — this file
+packages/ios/FxSurfaceView.swift                              — FxUniforms drag/tilt, runtime preamble, updateDragTiltUniforms, draw-loop easing
+packages/ios/FxPressHandler.swift                            — drag/tilt write + settle
+packages/ios/FxShaderView.swift                              — stitchable call site idle defaults
+packages/ios/Shaders/FxShaders.metal                         — FxUniforms drag/tilt, all stitchable sigs, dots demo wiring
+packages/android/src/main/java/expo/modules/reactnativefx/FxSurfaceView.kt       — updateDragTiltUniforms
+packages/android/src/main/java/expo/modules/reactnativefx/FxPressHandler.kt      — drag/tilt write + settle
+packages/android/src/main/java/expo/modules/reactnativefx/FxSurfaceShaderView.kt — drag/tilt uniform support + easing
+packages/android/src/main/assets/shaders/dots.agsl           — drag/tilt declarations + demo wiring
+packages/src/__tests__/manifest-conformance.test.ts          — Tier-1 tests (11 new)
+example/screens/drag-axis-spike.tsx                          — visible tracking + bottom-sheet coexistence section
+research/5-realization/structure.ios.md                      — drag/tilt mechanic pinned
+research/7-implementation/tasks/DEF-011/notes.md             — this file
 ```

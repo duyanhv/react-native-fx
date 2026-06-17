@@ -1,5 +1,7 @@
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { useMemo, useRef } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { FxSurfaceView } from "react-native-fx";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../components/theme";
 
@@ -99,7 +101,59 @@ export function DragAxisSpikeScreen() {
           style={[styles.surface, { backgroundColor: palette.surface }]}
         />
       </View>
+
+      <Text style={[styles.heading, { color: palette.text }]}>
+        dragAxis inside @gorhom/bottom-sheet
+      </Text>
+      <Text style={[styles.label, { color: palette.textMuted }]}>
+        A dragAxis=&quot;horizontal&quot; shader lives inside a bottom-sheet. Tap
+        content → press. Drag on the shader horizontally → dots track the drag.
+        Drag vertically on the sheet handle → sheet expands/collapses.
+      </Text>
+      <BottomSheetCoexistence />
+
+      <View style={styles.sheetSpacer} />
     </ScrollView>
+  );
+}
+
+function BottomSheetCoexistence() {
+  const { palette } = useTheme();
+  const sheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ["14%", "55%"], []);
+
+  return (
+    <>
+      <Pressable
+        onPress={() => sheetRef.current?.snapToIndex(1)}
+        style={[styles.openSheetButton, { backgroundColor: palette.surface }]}
+      >
+        <Text style={[styles.openSheetLabel, { color: palette.text }]}>
+          Open bottom sheet with dragAxis shader
+        </Text>
+      </Pressable>
+      <BottomSheet
+        ref={sheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enableDynamicSizing={false}
+        backgroundStyle={{ backgroundColor: palette.surface }}
+        handleIndicatorStyle={{ backgroundColor: palette.textMuted }}
+      >
+        <BottomSheetView style={styles.sheetContent}>
+          <Text style={[styles.sheetLabel, { color: palette.textMuted }]}>
+            Drag horizontally on the shader · drag vertically on the handle
+          </Text>
+          <FxSurfaceView
+            shader="dots"
+            interactionMode="active"
+            dragAxis="horizontal"
+            intensity={0.9}
+            style={[styles.surface, { backgroundColor: palette.background }]}
+          />
+        </BottomSheetView>
+      </BottomSheet>
+    </>
   );
 }
 
@@ -146,5 +200,26 @@ const styles = StyleSheet.create({
     width: 300,
     height: 200,
     borderRadius: 16,
+  },
+  sheetSpacer: {
+    height: 140,
+  },
+  openSheetButton: {
+    height: 48,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  openSheetLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  sheetContent: {
+    padding: 16,
+    gap: 10,
+  },
+  sheetLabel: {
+    fontSize: 12,
   },
 });

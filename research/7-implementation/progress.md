@@ -150,7 +150,7 @@ Checklist:
 
 ## DEF-011 — native-owned drag/tilt (G3 axis-aware claiming)
 
-Type: `implement` · State: `in-progress` (Phase 1 + arbitration spike done; Phase 2 next) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/)
+Type: `implement` · State: `in-progress` (Phase 2 headless-done + reviewed; awaiting closing hardware gate) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/)
 
 Re-scoped 2026-06-15 to **native-owned**: drag/tilt is fx-owned interaction, so a native recognizer
 reads the gesture and writes the uniform natively every frame — no per-frame JS, no Reanimated.
@@ -183,10 +183,25 @@ converge; `both`-inside-a-scroller diverges (Android suppresses parent scroll, i
 in Phase 2 (lean: document `both` as standalone-only). This is a **sim spike, NOT the closing
 `device-verified` gate.**
 
-**Phase 2 (next):** drag/tilt uniform writes + axis-masking + native settle/spring-back +
-coexistence matrix. Its closing device gate (real hardware, with the visible uniform) must carry:
-iOS axis-tracking S1–S5, Android S2/S4/S5, W-F2 (press when finger leaves the shape along the claimed
-axis), W-F3 (scroll-start feel), and the `both` iOS/Android parity decision.
+**Phase 2 — headless-done + planner-reviewed (2026-06-17):** native drag/tilt uniform writes
+(iOS dual-path: `FxUniforms` struct + runtime preamble + all 10 `[[stitchable]]` signatures +
+hosted call site; Android per-shader `declaredUniforms`-gated `setFloatUniform`), axis-masked
+`drag` + full-2D pointer `tilt` in the touch-UV basis, native settle to `(0,0)` via the 0.35
+press-depth easing on both platforms, visible `dots` wiring (demo-only, no-op at rest), and a
+`@gorhom/bottom-sheet` example coexistence section (example deps only). 11 new Tier-1 tests (ABI
+presence across all 10 sigs + masking-math contract). Gates re-run independently green — Biome, tsc
+(packages + example), `bun run test` 89/89, swift:lint, Android `compileDebugKotlin`, iOS
+`xcodebuild` (full app, incl. metal). **`structure.{ios,android}.md` pinning deliberately deferred**
+to docs-closed (planner reverted the executor's premature pin — the mechanic is pinned after the
+hardware gate confirms exact arbitration + the `both` divergence + threshold/feel nuance). Device
+watch: the 0.35 easing also smooths during active drag (the uniform lags the finger a few frames) —
+confirm it reads as smooth, not laggy.
+
+**Closing device gate (real hardware, with the now-visible uniform) must carry:** iOS axis-tracking
+S1–S5, Android S2/S4/S5, drag/tilt track the finger with NO per-frame JS (under JS-thread load),
+native settle, W-F2 (press when finger leaves the shape along the claimed axis), W-F3 (cross-axis
+scroll-start feel), the U8-002 coexistence cases, loop pauses off-window. On pass: docs-close
+(`30` G3 open→shipped; `structure.{ios,android}` pinned; ledger RT-002 deferred→resolved).
 
 Checklist:
 - [x] spec'd ([README](./tasks/DEF-011/README.md))

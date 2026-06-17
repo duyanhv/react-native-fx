@@ -56,6 +56,7 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     didFireLongPress = false
     if !skipUniformReset {
       surface?.updatePressUniforms(point: nil, depth: 0)
+      surface?.updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
     }
     guard let recognizer else { return }
     surface?.removeGestureRecognizer(recognizer)
@@ -101,6 +102,9 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
       return
     }
     surface.updatePressUniforms(point: location, depth: mode == .active ? 1 : 0)
+    if mode == .active, dragAxis != nil {
+      surface.updateDragTiltUniforms(origin: location, current: location, dragAxis: dragAxis)
+    }
     guard mode == .active else { return }
     didBeginActivePress = true
     surface.dispatchShaderPressIn(point: location)
@@ -110,6 +114,9 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
   private func handleChanged(at location: CGPoint) {
     guard let surface else { return }
     surface.updatePressUniforms(point: location, depth: didBeginActivePress ? 1 : 0)
+    if mode == .active, dragAxis != nil {
+      surface.updateDragTiltUniforms(origin: origin, current: location, dragAxis: dragAxis)
+    }
     if shouldFail(at: location) {
       failRecognizer()
     }
@@ -120,6 +127,7 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     longPressTimer?.invalidate()
     longPressTimer = nil
     surface.updatePressUniforms(point: location, depth: 0)
+    settleDragTilt()
     guard didBeginActivePress else { return }
     didBeginActivePress = false
     surface.dispatchShaderPressOut(point: location)
@@ -132,6 +140,7 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     longPressTimer?.invalidate()
     longPressTimer = nil
     surface.updatePressUniforms(point: nil, depth: 0)
+    settleDragTilt()
     guard didBeginActivePress else { return }
     didBeginActivePress = false
     surface.dispatchShaderPressOut(point: origin)
@@ -139,6 +148,11 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
 
   private func handleFailed() {
     handleCancelled()
+  }
+
+  private func settleDragTilt() {
+    guard mode == .active, dragAxis != nil else { return }
+    surface?.updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
   }
 
   private func scheduleLongPress() {

@@ -24,11 +24,21 @@ internal class FxSurfaceShaderView(
   private var targetPressDepth: Float = 0f
   private var pendingTouchX: Float = 0.5f
   private var pendingTouchY: Float = 0.5f
+  private var pendingDragX: Float = 0f
+  private var pendingDragY: Float = 0f
+  private var targetDragX: Float = 0f
+  private var targetDragY: Float = 0f
+  private var pendingTiltX: Float = 0f
+  private var pendingTiltY: Float = 0f
+  private var targetTiltX: Float = 0f
+  private var targetTiltY: Float = 0f
   private var supportsTimeUniform: Boolean = false
   private var supportsResolutionUniform: Boolean = false
   private var supportsIntensityUniform: Boolean = false
   private var supportsPressDepthUniform: Boolean = false
   private var supportsTouchUniform: Boolean = false
+  private var supportsDragUniform: Boolean = false
+  private var supportsTiltUniform: Boolean = false
   private var declaredUniforms: Set<String> = emptySet()
   private val customUniforms = mutableMapOf<String, Float>()
   private var isActive: Boolean = false
@@ -103,6 +113,15 @@ internal class FxSurfaceShaderView(
     pendingTouchX = touchX.coerceIn(0f, 1f)
     pendingTouchY = touchY.coerceIn(0f, 1f)
     targetPressDepth = pressDepth.coerceIn(0f, 1f)
+    invalidate()
+  }
+
+  /** Writes the target drag and tilt values; the next frame eases toward them natively. */
+  fun setDragTiltUniforms(dragX: Float, dragY: Float, tiltX: Float, tiltY: Float) {
+    targetDragX = dragX.coerceIn(-1f, 1f)
+    targetDragY = dragY.coerceIn(-1f, 1f)
+    targetTiltX = tiltX.coerceIn(-1f, 1f)
+    targetTiltY = tiltY.coerceIn(-1f, 1f)
     invalidate()
   }
 
@@ -205,6 +224,16 @@ internal class FxSurfaceShaderView(
     if (supportsTouchUniform) {
       currentShader.setFloatUniform("touch", pendingTouchX, pendingTouchY)
     }
+    pendingDragX += (targetDragX - pendingDragX) * 0.35f
+    pendingDragY += (targetDragY - pendingDragY) * 0.35f
+    if (supportsDragUniform) {
+      currentShader.setFloatUniform("drag", pendingDragX, pendingDragY)
+    }
+    pendingTiltX += (targetTiltX - pendingTiltX) * 0.35f
+    pendingTiltY += (targetTiltY - pendingTiltY) * 0.35f
+    if (supportsTiltUniform) {
+      currentShader.setFloatUniform("tilt", pendingTiltX, pendingTiltY)
+    }
     paint.shader = currentShader
     canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
   }
@@ -257,6 +286,8 @@ internal class FxSurfaceShaderView(
     supportsIntensityUniform = "intensity" in declaredUniforms
     supportsPressDepthUniform = "pressDepth" in declaredUniforms
     supportsTouchUniform = "touch" in declaredUniforms
+    supportsDragUniform = "drag" in declaredUniforms
+    supportsTiltUniform = "tilt" in declaredUniforms
   }
 
   // Extracts every declared uniform name from the AGSL source. Curated shaders declare and use

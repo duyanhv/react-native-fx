@@ -3,6 +3,8 @@ uniform vec2 resolution;
 uniform float intensity;
 uniform float pressDepth;
 uniform vec2 touch;
+uniform vec2 drag;
+uniform vec2 tilt;
 
 vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
     return a + b * cos(6.28318 * (c * t + d));
@@ -13,6 +15,13 @@ half4 main(float2 fragCoord) {
     vec2 uv = fragCoord / resolution;
     uv.x *= aspect;
     float t = time;
+
+    // Demo wiring: the dot field follows the drag and the color leans toward the
+    // finger position. Both terms are zero at rest so the output matches the
+    // original `dots` when no drag/tilt is active.
+    uv += vec2(drag.x, -drag.y) * 0.25;
+    vec3 tiltBias = vec3(tilt.x, tilt.y, 0.0) * 0.35;
+
     vec2 touchPoint = vec2(touch.x * aspect, 1.0 - touch.y);
     float touchDistance = length(uv - touchPoint);
     float bulge = exp(-touchDistance * touchDistance * 7.0) * pressDepth;
@@ -34,6 +43,7 @@ half4 main(float2 fragCoord) {
     col = mix(col, base * (0.3 + 0.7 * diff), mask);
     col += vec3(1.0) * pow(diff, 16.0) * mask * 0.6;
     col += vec3(0.45, 0.75, 1.0) * bulge * mask * 0.9;
+    col += tiltBias * mask;
     col *= intensity;
     return half4(clamp(col, 0.0, 1.0), 1.0);
 }

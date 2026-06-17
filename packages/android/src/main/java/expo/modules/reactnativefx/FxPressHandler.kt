@@ -78,6 +78,9 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     }
     surface.parent?.requestDisallowInterceptTouchEvent(true)
     surface.updatePressUniforms(event.x, event.y, if (mode == FxPressInteractionMode.ACTIVE) 1f else 0f)
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      surface.updateDragTiltUniforms(event.x, event.y, event.x, event.y, dragAxis)
+    }
     if (mode == FxPressInteractionMode.ACTIVE) {
       didBeginActivePress = true
       didFireLongPress = false
@@ -94,6 +97,9 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     lastX = event.x
     lastY = event.y
     surface.updatePressUniforms(event.x, event.y, if (didBeginActivePress) 1f else 0f)
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      surface.updateDragTiltUniforms(originX, originY, event.x, event.y, dragAxis)
+    }
     if (shouldFail(event.x, event.y)) {
       surface.parent?.requestDisallowInterceptTouchEvent(false)
       cancel()
@@ -109,6 +115,7 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     handler.removeCallbacks(longPressRunnable)
     surface.parent?.requestDisallowInterceptTouchEvent(false)
     surface.updatePressUniforms(event.x, event.y, 0f)
+    settleDragTilt()
     val shouldEmitPress = didBeginActivePress
     didBeginActivePress = false
     hasActivePointer = false
@@ -125,12 +132,19 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     handler.removeCallbacks(longPressRunnable)
     surface.parent?.requestDisallowInterceptTouchEvent(false)
     surface.updatePressUniforms(null, null, 0f)
+    settleDragTilt()
     if (didBeginActivePress) {
       surface.dispatchShaderPressOut(lastX, lastY)
     }
     didBeginActivePress = false
     didFireLongPress = false
     hasActivePointer = false
+  }
+
+  private fun settleDragTilt() {
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      surface.updateDragTiltUniforms(null, null, null, null, null)
+    }
   }
 
   private fun shouldFail(x: Float, y: Float): Boolean {
