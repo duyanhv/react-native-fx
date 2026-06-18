@@ -1,15 +1,17 @@
-# DEF-017 · simulator smoke lane in CI
+# DEF-017 · simulator smoke lane (CI lane removed; local harness retained)
 
-6-ship · type: `implement` · state: `in-progress` (spec'd) · device: no
-Consumes: — · Closes: — (critique-routed F16, no ledger row) · Blocked by: — (trigger "post-V1" fired)
+6-ship · type: `implement` · state: `resolved` (CI lane removed; harness kept local) · device: no
+Consumes: — · Closes: — (critique-routed F16, no ledger row) · Blocked by: —
 
-> **Next action (resume here):** add one CI job that boots an iOS simulator on the
-> Apple-silicon runner, builds + installs the `example` app, mounts every
-> `CURATED_SHADER_ID` through the catalog screen by **switching** the picker, screenshots
-> each, and asserts the surface is **non-blank**. The assertion is "the surface rendered
-> something," NOT golden-image equality — animated GPU shaders never match pixel-for-pixel.
-> The lane exists to catch the U3-006 blank-on-switch regression class headlessly; device
-> stays the gate for feel/touch/springs.
+> **Disposition change (2026-06-18) — the CI lane was removed; the harness lives on locally.**
+> The `ios-smoke` job shipped (`78176af`) and was reviewed, but its first hosted runs exposed
+> the real cost: a ~15-minute `macos-26` job (billed at ~10× the Linux rate) running on every
+> PR/push to `main` to guard 10 V1-frozen, rarely-changing curated shaders. The maintainer
+> judged the recurring spend not worth it for a regression class that changes only when the
+> catalog does. **The CI job was deleted; `example/scripts/smoke-shader-catalog.ts` + the
+> `smoke:ios` script are kept** as an on-demand local check — run `cd example && bun run
+> smoke:ios` before touching the curated shaders. Device stays the gate for feel/touch/springs.
+> The original CI-lane spec below is retained as the historical record of what was built.
 
 ## Start here (cold-start)
 
@@ -144,8 +146,8 @@ Proof:
 - [x] headless-done (green on the full catalog + red-on-regression proven; see § Executor run)
 - [x] device-verified (N/A — headless CI lane)
 - [x] reviewed (planner, 2026-06-18 — gates re-run independently green; tree clean, RED stub + testID wrapper confirmed reverted/behavior-neutral; harness + ci.yml read line-by-line; two minor notes fixed. Residual: the first GitHub-hosted run is the remaining proof the hosted-VM sim GPU-renders Metal.)
-- [x] docs-closed (F16 disposition marked done in `critique-2026-06-10.md`; progress.md row updated)
-- [ ] merged (human's; commits are on integration/0.1.x — the CI lane only triggers on `main`, so its first real run lands when this reaches a main PR)
+- [x] docs-closed (F16 disposition reconciled in `critique-2026-06-10.md`; progress.md row updated)
+- [x] resolved (2026-06-18 — the CI lane was removed before it ever ran green on a hosted runner; the local harness is retained. The two hosted-CI bring-up fixes, `da2672b` prebuild + `10bf282` boot-timeout, were committed during diagnosis: the prebuild step went away with the job; the harness boot-timeout change stays and is harmless for the fast local boot. The earlier "first hosted run GPU-renders Metal" residual is now moot — no hosted run will fire.)
 
 ## Executor run (2026-06-18)
 
