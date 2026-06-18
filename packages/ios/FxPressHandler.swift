@@ -69,6 +69,7 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     let recognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleRecognizer(_:)))
     recognizer.minimumPressDuration = 0
     recognizer.cancelsTouchesInView = false
+    recognizer.allowableMovement = .greatestFiniteMagnitude
     recognizer.delegate = self
     surface.addGestureRecognizer(recognizer)
     self.recognizer = recognizer
