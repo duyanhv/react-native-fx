@@ -91,9 +91,9 @@ boundary.
 ## Open questions
 
 - **`FxView` state vocabulary** — ratified as `idle` · `selected` for `lift` (DOC-005).
-  The per-platform `MotionSpec` map defaults are device-pending, owned by MOT-001.
+  The per-platform `MotionSpec` map defaults are device-pending — they ride the as-yet-unbuilt `FxView` state catalog (MOT-001 shipped only the `transient` presence catalog and closed at U7-003).
 - **`FxPressable` `feedback` values** — ratified as `native` (DOC-005). Per-platform
-  default catalog is device-pending, owned by MOT-001.
+  default catalog is device-pending — it rides the as-yet-unbuilt `FxPressable` (MOT-001 closed at U7-003 without it).
 - **`FxGroup` morph scope** — **resolved (DOC-006, 2026-06-10).** Glass-only in V1; system-owned merge contract. See Decision 6 above.
 - Native mechanics (the managed wrapper, state handshake) are `open` in `33`/`34`/`35`.
 

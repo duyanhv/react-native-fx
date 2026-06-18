@@ -50,6 +50,10 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | DOC-019 | 1-surface | ratify | merged | no | — | — | — | critique F8: `tune` deferred from the V1 surface — V1 ships the `preset`/`motion`/`transition` triad. Recorded in `41` (Decision 13 + table marker); propagated to `50`/`42`/`54`/`56`/`1-surface README` (surface marks + examples stripped of `tune`); `data-layer §4` + `architecture` + ledger MOT-002 carry the deferral; design retained for MOT-001 resurrection; no ledger row; [task](./tasks/DOC-019/) · [review](./reviews/doc-batch-2026-06-11.md) — approved + **merged 2026-06-11 (maintainer)** |
 | DOC-020 | 1-surface | ratify | merged | no | — | — | — | critique F18: native↔public event-name mapping pinned as the one canonical table in `40` §Native ↔ public event-name mapping (grounded in shipped `FxModule`/view `Events`: press `onShader*`, lifecycle/load `onFx*`; `onStateChange`/`onLongPress` marked unwired); `architecture.md`'s vague note + `50`'s event list now point at it; no rename (code change, out of scope); no ledger row; [task](./tasks/DOC-020/) · [review](./reviews/doc-batch-2026-06-11.md) — approved + **merged 2026-06-11 (maintainer)** |
 | DOC-022 | 7-impl | ratify + doc-cleanup | merged | no | — | RT-012, RT-003 | — | **V1-cut closeout sweep — merged 2026-06-13 (maintainer, this commit).** **RT-012 resolved** (`35` §Resolved: V1 stays presence-specific; generalization → DEF-012 V2). **RT-003 resolved by citation** (`31` §Resolved: device-shared singleton U4-003/EX-002, fresh-drawable-on-resume U3-008, continuous-while-active cheap RT-006/U8-001; maintainer-ratified citation-close). Struck `35`'s stale `05`-falsification question (SPINE-009 closed via U9-002). Re-pointed DEF-012 (closes — , trigger-gated). Wrote `v1-cut-checklist.md` (linked from `progress.md` + `HOW-TO-CONTINUE.md`); ticked the stale merge batch + waived U3-007 A1-2. [task](./tasks/DOC-022/) |
+| DOC-023 | 7-impl / cross | doc-cleanup | merged | no | — | — | — | mechanical stale sweep — reconciles 07 + canonical-plane text to ratified source/shipped code (audit-2026-06-18 §F). **Reviewed + committed 2026-06-18.** WIP deletions deliberately held. Full scope in [detail](#doc-023--mechanical-stale-sweep) |
+| DOC-024 | 7-impl | doc-cleanup | todo | no | — | — | DOC-023 | as-built V2 addendum (audit-2026-06-18 §A1) — new "Phase A: As-built V2 addenda" in `blueprint.md` + `architecture.md` entries for shipped-but-untracked mechanics: `source`/`Fx.Scroll`/`fx.source.*` (DEF-014), `controlled` ref writes (DEF-020), `dragAxis`/drag-tilt (DEF-011), runtime shader registration/compile (DEF-008). Each row: shipped-by, code location, owning source doc, future work it enables. Closes the Phase-S-class gap for merged mechanics |
+| DOC-025 | 7-impl | ratify | todo | no | — | — | DOC-024 | A2 triage (audit-2026-06-18 §A2) — build / defer / record-as-built table. Track-deferred: `clock` driver, SDF shaped hit-test, app-state/measured coordinator, `getUniform`. Needs surface decision (maintainer): `src/presets` palettes/themes, typed-config material/fill/filter uniforms, `fx.effect.*` fill/symbol stack steps. Record as-built: `fx.motion.*` builders, reduce-motion driver gating, teardown order |
+| DOC-026 | 0-spine | ratify | todo | no | — | — | DOC-025 | promote `wip/capability-boundary-classifier.md` (A/B/L boundary taxonomy + substrate-depth axis) into canon `04`/`05` (audit-2026-06-18 §E) — `05 §Decision 5` already cites it as canonical while it is non-authoritative WIP; ratify, then retire/historical the WIP |
 
 ### V1 build — Units 1–3 + ship
 
@@ -318,6 +322,40 @@ Proof:
   symbol.
 - device: N/A — public-surface narrowing, nothing renders.
 - docs: none — critique-routed, no ledger row, no source-doc decision.
+
+## DOC-023 — mechanical stale sweep
+
+Reconciles stale text in the 07 structural docs and the canonical research planes to
+already-ratified source docs and shipped code (surfaced by the audit-2026-06-18 alignment pass; the
+F-list). No design change — pointers and status only. **Reviewed + committed 2026-06-18. WIP deletions deliberately held** (the
+`interactive-glass-touch-delivery.md` retirement and any other wip moves wait until after this
+bookkeeping is reviewed — DOC-026 territory).
+
+**`architecture.md`**
+- §7 platform table reconciled to `structure.{ios,android}`: content-distort `PLANNED` → ships
+  (`ripple` demonstrator, DEF-009, device-proven); iOS glass `.glassEffect` → UIKit
+  `UIVisualEffectView`+`UIGlassEffect`; Android decorative clock `withFrameNanos` → `Choreographer`
+  on a plain `View` (Compose deferred); symbols → planned/deferred (iOS-only V1); shape-morph → M3
+  `feature:'m3-expressive'` gate, Compose rung only.
+- §4 / §4.1 reconciled to match §7 (Android decorative clock `Choreographer` + plain `View` +
+  `Paint.onDraw`; Compose deferred) — closes the same-doc contradiction.
+- §2.3 event payloads → `40 §Event payloads`: `onTransitionEnd({ owner, phase?, finished,
+  interrupted })`, `onStateChange({ from, to })`.
+- §3 object model → `36`: **five** named objects (not six); `FxPressHandler` reframed as a native
+  input source; `FxEffectRenderer` tagged V1-inline / V2-discrete (DEF-021); `material`
+  `interaction:'self'` press carve-out (`21`).
+
+**`blueprint.md`** — Unit 2 "manually maintain TS types" → derived `ConfigFor<NodeId>` (U2-003);
+Unit 9 `Fx*` SharedObjects → deferred to DEF-021.
+
+**MOT-001 closure repoint** (MOT-001 closed with the V1 `transient` catalog at U7-003) across
+`41`/`42`/`50`/`54`/`56`/`57`/`34`/`35` + `data-layer`/`decision-ledger`: `sheet`/`modal` →
+DEF-018; `tune` → MOT-002 (incl. the `*(deferred — V1.x / MOT-001)*` table markers); `transient`
+magnitudes → device-verified; the open `lift`/`native` halves re-attributed to the unbuilt
+`FxView`/`FxPressable`. `35` identity-proof status → device-proven (SPINE-009, U9-002).
+
+**Deliberately excluded:** `tasks/*` artifacts and `progress.md` proof-log entries (frozen audit
+trail — not rewritten); `Phase: v2` header tags (phase labels, not status).
 
 ## DOC-014 — runtime-binding ref cleanup
 

@@ -434,10 +434,11 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme, snackbar/bottom-sheet/dialog]**
 
-> **The per-platform shape, timing, and spring values in this table are device-pending and
-> owned by [MOT-001](../decision-ledger.md#motion).** They are provisioned values, not
-> ratified decisions. DOC-005 ratifies the adjacent vocabulary names (§5) only; the spring
-> magnitudes and geometries will be validated on device and propagated to `41`/`42` by MOT-001.
+> **The per-platform values in this table:** the `transient` presence rows are
+> **device-verified** ([MOT-001](../decision-ledger.md#motion) closed, U7-003) and propagated to
+> `41`/`42`; the `lift` (state) and `native` (feedback) rows stay **device-pending** — they ride
+> the as-yet-unbuilt `FxView` / `FxPressable`. They are provisioned values, not ratified
+> decisions; DOC-005 ratifies the adjacent vocabulary names (§5) only.
 
 ### Presence presets (FxPresence)
 
@@ -512,9 +513,10 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[research: 41 §The preset / motion / tune / transition split]**
 > `tune = { speed, emphasis, distance }` adjusts intent inside the platform family, never raw curves.
 >
-> **`tune` is deferred from the V1 surface (DOC-019).** These formulas are MOT-001/MOT-002
-> territory — provisional, device-pending, and not shipped in V1. They resurrect with the
-> device-tuned catalog; V1 exposes `preset`/`motion`/`transition` only.
+> **`tune` is deferred from the V1 surface (DOC-019).** These formulas are the open `MOT-002`
+> territory — provisional, device-pending, and not shipped in V1 (MOT-001 closed with the V1
+> `transient` catalog at U7-003). They resurrect with `MOT-002`'s device-tuned vocabulary;
+> V1 exposes `preset`/`motion`/`transition` only.
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme]**
 

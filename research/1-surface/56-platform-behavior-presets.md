@@ -32,13 +32,13 @@ snackbar on Android* if that is what each platform does.
 ## preset / motion / tune / transition (the shape-native engine)
 
 A preset is the *default*; other props refine it (`41`). **V1 ships the
-`preset`/`motion`/`transition` triad; `tune` is deferred to MOT-001 (DOC-019).**
+`preset`/`motion`/`transition` triad; `tune` is deferred to MOT-002 (DOC-019).**
 
 - **`preset`** — the platform-idiomatic bundle; fx picks shape + timing per platform.
 - **`motion`** — an explicit `MotionSpec` map that **overrides the shape** and **fixes it
   cross-platform** (opt-in uniformity — the only sanctioned way off the platform default).
 - **`transition`** — expert timing override only.
-- **`tune`** *(deferred — V1.x / MOT-001)* — `{speed, emphasis, distance}` intent adjustment
+- **`tune`** *(deferred — V1.x / MOT-002)* — `{speed, emphasis, distance}` intent adjustment
   *inside* the platform family; absent from the V1 surface.
 
 ```tsx
@@ -53,7 +53,7 @@ clear domain split, not one prop (`50`).
 
 | Bundle | Prop on | What it bundles | Behavior-named values |
 |---|---|---|---|
-| **preset** (presence) | `FxPresence` | enter/exit shape + timing | `transient` (V1); `sheet`/`modal` deferred to MOT-001 (`42`) |
+| **preset** (presence) | `FxPresence` | enter/exit shape + timing | `transient` (V1); `sheet`/`modal` deferred to `DEF-018` (`42`) |
 | **preset** (state) | `FxView` | state→transform shape + timing | `lift` · … |
 | **feedback** | `FxPressable` | press response shape + timing | `native` · … |
 | **effect** | `<Fx>` | a visual effect stack | `edge-glow` · `mesh-gradient` · `glass` · … (`55`, `20`–`24`) |
@@ -91,11 +91,9 @@ Optional thin sugar over `<Fx effect="…">`; the `effect=` preset is the canoni
    would be the first rung but is deferred from the V1 surface, DOC-019).
 5. **V1 vocabulary ratified (DOC-005), presence set narrowed (DOC-018).** The behavior-preset
    values that ship in V1 are: `transient` (presence); `lift` (state). The feedback value is
-   `native`. `sheet`/`modal` (presence) are **deferred to MOT-001** — designed but held back
+   `native`. `sheet`/`modal` (presence) are **deferred to `DEF-018`** (re-homed from MOT-001 at its closure, U7-003) — designed but held back
    because they name screen-scale presentations that collide with presence's scope ceiling
-   (`42`, DOC-018). The per-platform shape and timing defaults behind every preset are
-   **device-pending** and owned by MOT-001; they will be validated on device and propagated to
-   `41`/`42`.
+   (`42`, DOC-018). The `transient` per-platform defaults are **device-verified** (MOT-001 closed, U7-003); the `lift` (state) and `native` (feedback) defaults stay **device-pending** — they ride the as-yet-unbuilt `FxView` / `FxPressable`.
 6. **V1 effect-component set ratified (DOC-004).** `EdgeGlow` ships as a component.
    `MeshGradient` does not. These are sugar over effects already in the curated catalog
    (DOC-003, SPINE-001) — not new surface. They export from the core package, not

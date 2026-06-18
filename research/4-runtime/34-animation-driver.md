@@ -1,5 +1,5 @@
 # Runtime: the animation driver
-Status: researched (design) · source-audit pass · retarget contract device-verified (U6-001, RT-007) · hard-retarget matrix device-verified (U6-002, RT-016) · catalog feel device-pending (U6-003/MOT-001)
+Status: researched (design) · source-audit pass · retarget contract device-verified (U6-001, RT-007) · hard-retarget matrix device-verified (U6-002, RT-016) · `transient` catalog feel device-verified (U6-003; MOT-001 closed, U7-003)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 41-motion-vocabulary.md, structure.{ios,android}
 

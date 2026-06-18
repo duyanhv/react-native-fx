@@ -43,7 +43,7 @@ only, and the `preset`/`motion`/`tune`/`transition` split is the law's shape-nat
 |---|---|---|
 | `preset` | behavior id (`transient`, `lift`, …) | **platform-idiomatic behavior bundle** — fx resolves the *whole shape + timing per platform*. Behavior-named, never UI-named. |
 | `motion` | **typed `MotionSpec` map** | **explicit shape override** — fixes the shape cross-platform. *Different map per component* (phases vs states), never one universal map. **The sole shape-override channel — no partial top-level shape props (`edge`/`origin`); MOT-004/DEF-005.** |
-| `tune` *(deferred — V1.x / MOT-001)* | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`). Not on the V1 surface (DOC-019). |
+| `tune` *(deferred — V1.x / MOT-002)* | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`). Not on the V1 surface (DOC-019). |
 | `transition` | `{ duration?, delay?, easing?, spring? }` | **expert timing override only** — never a shape |
 | `effect` | **`EffectStack`** or effect id | the visual effect bundle/layer(s). **Two meanings by owner:** on `<Fx>` it *is* the fx-owned drawn surface; on `FxView` it is decoration *attached to your content*. |
 | `feedback` | press-behavior id (`native`) | press feedback bundle (`FxPressable`) |
@@ -139,7 +139,7 @@ by the runtime.
    `preset`/`motion`/`tune`/`transition` split is the law's shape-native engine: `preset`
    resolves the whole behavior per platform, `motion` is the explicit cross-platform shape
    override, `tune` adjusts intent, `transition` is expert timing. **V1 ships the
-   `preset`/`motion`/`transition` triad; `tune` is deferred to MOT-001 (DOC-019).** Props are scoped to their
+   `preset`/`motion`/`transition` triad; `tune` is deferred to MOT-002 (DOC-019).** Props are scoped to their
    owning component (`visible`→`FxPresence`, `state`→`FxView`, `feedback`→`FxPressable`,
    `interactionMode`→`<Fx>`), not a flat pool.
 3. **Builder namespaces map one-to-one to data types** — `fx.effect`→`EffectStack`,
@@ -154,7 +154,7 @@ by the runtime.
 
 ## Decisions
 
-7. **V1 vocabulary ratified (DOC-005), presence set narrowed (DOC-018).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). `sheet`/`modal` (presence) are **deferred to MOT-001** — they name screen-scale presentations that collide with presence's scope ceiling (`42`, DOC-018). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+7. **V1 vocabulary ratified (DOC-005), presence set narrowed (DOC-018).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). `sheet`/`modal` (presence) are **deferred to `DEF-018`** (re-homed from MOT-001 at its closure, U7-003) — they name screen-scale presentations that collide with presence's scope ceiling (`42`, DOC-018). The `transient` per-platform defaults are **device-verified** (MOT-001 closed, U7-003); the `lift` (state) and `native` (feedback) defaults stay **device-pending** — they ride the as-yet-unbuilt `FxView` / `FxPressable`.
 8. **Surface-freeze naming pass ratified (DEF-015, 2026-06-13).** The public surface is frozen with four calls:
    - **`<Fx effect={fx.effect.*}>` stays as-is.** The repetition of the `fx`/`effect` token appears only at the layer-3 builder call site (the power-user escape hatch); the front door is the string form `<Fx effect="plasma" />` and the presets, which do not repeat. The `fx.effect.* → EffectStack` / `fx.motion.* → MotionSpec` symmetry (Decision 3) is a deliberate mnemonic and is not broken to de-stutter a rare site. Lead public docs with the string form; treat `fx.effect.*` as the escape hatch. **No bare `effect` export ships in V1** (`55`).
    - **`interactionMode` and its `none | passive | active` vocabulary stay.** The names are platform-agnostic (no rule-#2 leak), and the obvious intent-word substitutes collide inside fx's own vocabulary (`pressable` is `FxPressable`; `reactive` reads as Reanimated). The V1 *public* value set was `none | passive | active`; `controlled` was deferred to DEF-020 and **ships in V2 (device-verified 2026-06-15)** as the view-ref discrete `setUniform`/`setHighlight` write path (continuous motion stays DEF-006; the detached `SharedObject` handle is DEF-021) — `30`.

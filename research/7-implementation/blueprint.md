@@ -29,7 +29,7 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 ### Unit 2: The Manifest + `select()`
 *   **Contract:** `02`, `03`, `50`
 *   **Precedent (battle-tested):** (pure, no direct precedent; declarative IRs)
-*   **Decision + flip-trigger:** **mimic** (own TS logic). **Manually maintain** the TypeScript types alongside the Manifest.
+*   **Decision + flip-trigger:** **mimic** (own TS logic). The per-effect typed config is **derived** from the manifest at the type level (`ConfigFor<NodeId>`, no codegen — `02` Decision 15, U2-003), not authored separately.
 *   **Shape · phase:** `src/manifest` · **V1**
 *   **Depends on:** — (root; feeds all other units)
 
@@ -91,7 +91,7 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 *   **Precedent (battle-tested):** Nitro `HybridObject` shape (`jsi::NativeState`, equals/dispose).
 *   **Decision + flip-trigger:** **mimic** the shape by using **Expo's native `SharedObject` API** — only for objects JS holds a reference to. The internal driver, coordinator, and observer (`FxAnimationDriver`, `FxPresenceCoordinator`, `FxLayoutObserver`) are plain native classes; they don't cross the JS boundary and don't need `SharedObject`.
 *   **Explicit Reject:** Nitro-the-dependency (upfront).
-*   **Shape · phase:** `Fx*` SharedObjects (JS-facing) + plain native objects (internal) · **V2**
+*   **Shape · phase:** plain native objects (internal) · **V2**. *(The `Fx*` `SharedObject` layer + the discrete `FxEffectRenderer` object split out to DEF-021, blocked — V1/V2 expose no JS-held handle, so they have no consumer; `36 §V1 realization`.)*
 *   **Depends on:** Unit 6, Unit 7
 
 ---

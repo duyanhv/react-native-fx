@@ -220,9 +220,9 @@ const FxGroupView   = requireNativeView('ReactNativeFx', 'FxGroupView');    // m
 > [ref: expo/ios/Core/Functions/AsyncFunctionDefinition.swift]
 
 **Events → JS** (discrete only, never per-frame):
-- `onTransitionEnd({ phase })` — presence lifecycle [research: 35]
-- `onStateChange({ state })` — FxView state transitions [research: 40]
-- `onPressIn/onPressOut/onPress` — interaction events (active mode) [research: 30]
+- `onTransitionEnd({ owner, phase?, finished, interrupted })` — presence/view/effect completion; `owner` discriminates which surface fired [research: 40 §Event payloads]
+- `onStateChange({ from, to })` — FxView state transitions [research: 40 §Event payloads]
+- `onPressIn/onPressOut/onPress` — interaction events (active mode); interactive shader/effect surfaces only — `material` is `interaction:'self'` and surfaces no `onPress*` (the system view owns its press) [research: 30, 21]
 - `onLoad/onError` — BYO shader compilation result [research: 22]
 
 Native registered event names are **prefixed** to dodge React Native's reserved event props —
@@ -239,7 +239,7 @@ not restate it.
 
 ## 3. Runtime Object Model
 
-From `research: 36`, the orchestrator owns or delegates to six stable native objects. Only objects JS holds a reference to use Expo `SharedObject`; internal objects are plain native classes.
+From `research: 36`, the orchestrator owns or delegates to **five** named runtime objects, plus the press recognizer (`FxPressHandler`) as a native **input source** — not a sixth object (`36 §The objects`). Only objects JS holds a reference to use Expo `SharedObject`; internal objects are plain native classes.
 
 > **[finding] `SharedObject` is for native objects that need a JS counterpart — bidirectional native↔JS mapping, GC-aware lifecycle (weak JS refs, `sharedObjectWillRelease` hooks), `emit(event:payload:)`. Internal objects (driver, coordinator, observer, recognizer) are plain Swift/Kotlin classes. They don't cross the JS boundary, so no `SharedObject` overhead.**
 > [ref: expo/ios/Core/SharedObjects/SharedObject.swift]
@@ -247,11 +247,11 @@ From `research: 36`, the orchestrator owns or delegates to six stable native obj
 | Object | Owns | Reads | Emits | JS-Facing? |
 |--------|------|-------|-------|------------|
 | **`FxNativeView`** | Expo Modules boundary, diff-based props, shared lifecycle and ref surface | resolved props from `updateProps` | — (concrete views declare `EventDispatcher`) | View (Fabric identity) |
-| **`FxEffectRenderer`** | effect layers, GPU surface (interactive); hosted SwiftUI/Compose or expo-view MTKView/RenderEffect | effect config, pointer uniforms (interactive) | `onLoad`, `onError`, `onPress*` | No (internal; events through view) |
-| **`FxPresenceCoordinator`** | lifecycle FSM (`absent · entering · present · exiting`, the `35` naming — built U7-001), deferred-unmount handshake | `visible` target | `onTransitionEnd({ phase, finished, interrupted })` via EventDispatcher | No (internal) |
+| **`FxEffectRenderer`** | effect layers, GPU surface (interactive); hosted SwiftUI/Compose or expo-view MTKView/RenderEffect. **V1: not a discrete object — rendering is inline in the view classes; the discrete object is V2 (DEF-021, `36 §V1 realization`)** | effect config, pointer uniforms (interactive) | `onLoad`, `onError`, `onPress*` (interactive surfaces; not `material`, `interaction:'self'` `21`) | No (internal; events through view) |
+| **`FxPresenceCoordinator`** | lifecycle FSM (`absent · entering · present · exiting`, the `35` naming — built U7-001), deferred-unmount handshake | `visible` target | `onTransitionEnd({ owner:'presence', phase, finished, interrupted })` via EventDispatcher | No (internal) |
 | **`FxAnimationDriver`** | interruptible native animation (spring/timing); content family (CASpringAnimation/SpringAnimation) and effect family (SwiftUI .animation/Compose animate*AsState) | targets, measurements from `FxLayoutObserver` | `onTransitionEnd` (completion) via coordinator | No (internal) |
 | **`FxLayoutObserver`** | post-layout reads of wrapper (size, origin, travel, insets) | Yoga/Fabric frame from `layoutMetrics` | — (passive, read on demand by driver) | No (internal) |
-| **`FxPressHandler`** | 6-state FSM (press recognizer), cooperative slop-yield, coalescing keys | touch location → `pressDepth`/`pointerX`/`pointerY` | `onPress*` via EventDispatcher | No (internal) |
+| **`FxPressHandler`** *(input source, not one of the five — `36`)* | 6-state FSM (press recognizer), cooperative slop-yield, coalescing keys | touch location → `pressDepth`/`pointerX`/`pointerY` | `onPress*` via EventDispatcher | No (internal) |
 
 ### 3.1 Wiring Rules (one-way, per `04`)
 
@@ -282,7 +282,7 @@ ios/FxHostedView.swift (extends FxNativeView) — decorative; or FxSurfaceView f
        │
        ├── hosted path (decorative):
        │   • SwiftUI host + .colorEffect + TimelineView
-       │   • clock: TimelineView(.animation) / withFrameNanos
+       │   • clock: TimelineView(.animation) (iOS) / Choreographer on a plain View (Android V1; Compose withFrameNanos deferred)
        │   • uniforms: FxUniforms { time, resolution, intensity }
        │   [research: structure.ios §shader] [research: structure.android §shader]
        │
@@ -303,7 +303,7 @@ Data flow: props → native; uniforms written per frame by native; zero JS in fr
 
 | Condition | Substrate | Renderer |
 |-----------|-----------|----------|
-| `interactionMode='none'`, decorative | `hosted` | SwiftUI/Compose `.colorEffect` / `TimelineView` |
+| `interactionMode='none'`, decorative | `hosted` | SwiftUI `.colorEffect`/`TimelineView` (iOS) · plain `View` + `Paint.onDraw` + `Choreographer` (Android V1; Compose deferred) |
 | `interactionMode='active'|'passive'` | `expo-view` | `MTKView` + `CADisplayLink` / `RenderEffect` + `Choreographer` |
 | `interactionMode='controlled'` | `expo-view` | same GPU surface; `setUniform` writes from JS |
 
@@ -504,16 +504,16 @@ Serves both `FxPressable` (content) and `<Fx interactionMode>` (interactive effe
 | Mechanic | iOS | Android |
 |----------|-----|---------|
 | **Shader language** | `.metal` | `.agsl` |
-| **Decorative clock** | `TimelineView(.animation)` | `withFrameNanos` / `rememberInfiniteTransition` |
+| **Decorative clock** | `TimelineView(.animation)` | `Choreographer.FrameCallback` on a plain `View` (V1); Compose `withFrameNanos` / `rememberInfiniteTransition` deferred with the Compose rung |
 | **Interactive clock** | `CADisplayLink` | `Choreographer` frame callback |
 | **Content motion** | `CASpringAnimation` on `CALayer` | `SpringAnimation` (standard `SpringForce`); M3 Expressive behind `feature:'m3-expressive'` gate [REAL-001] |
 | **Effect motion** | `.animation` / `phaseAnimator` / `keyframeAnimator` | `animate*AsState` / `updateTransition`; M3 Expressive progressive enhancement |
-| **Glass / material** | `.glassEffect` (iOS 26) / `UIBlurEffect` | `RenderEffect.createBlurEffect` + overlay / Haze [research: 21] |
-| **Symbols** | `.symbolEffect` | AVD / Lottie [research: 24] |
+| **Glass / material** | UIKit `UIVisualEffectView`+`UIGlassEffect` (iOS 26) | `RenderEffect.createBlurEffect` + overlay / Haze [research: 21] |
+| **Symbols** | `.symbolEffect` | AVD / Lottie — planned, deferred (iOS-only in V1) [research: 24] |
 | **Touch (content)** | hit-tests MODEL layer (target pos mid-flight) [finding] | hit-tests VISUAL layer (actual pos mid-flight) [finding] |
 | **Touch (effect)** | `displayLink`-driven `MTKView` | draw-time `RenderEffect` — touch-safe |
-| **Content-distort** | OUT OF SCOPE (severs RN touch) [research: 01] | PLANNED (AGSL + RenderEffect, draw-time) [research: structure.android] |
-| **Shape morph** | NONE | M3 Expressive (native) [research: structure.android §shape-morph] |
+| **Content-distort** | OUT OF SCOPE (severs RN touch) [research: 01] | ships — `ripple` demonstrator (AGSL + RenderEffect, draw-time; DEF-009, device-proven) [research: structure.android §content-distort] |
+| **Shape morph** | NONE | M3 Expressive (native), `feature:'m3-expressive'` gate — Compose rung only; the V1 plain-`View` path exposes no rung [REAL-001] [research: structure.android §shape-morph] |
 
 ---
 
