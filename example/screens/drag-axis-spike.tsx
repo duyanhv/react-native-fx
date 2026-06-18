@@ -54,11 +54,14 @@ export function DragAxisSpikeScreen() {
       </ScrollView>
 
       <Text style={[styles.heading, { color: palette.text }]}>
-        Both axes (no scroller yield)
+        Both axes (standalone-only)
       </Text>
       <Text style={[styles.label, { color: palette.textMuted }]}>
-        dragAxis=&quot;both&quot; claims both axes. The shader captures all
-        drag input; no scroller scrolling while dragging inside.
+        dragAxis=&quot;both&quot; tracks both axes. Android blocks the parent
+        scroll. iOS documented divergence: both tracks, the ancestor scroll
+        stays active — the scrolling axis is owned by the scroller, so inside a
+        scroller only the cross-scroll (here horizontal) axis tracks. Full 2D
+        needs a standalone surface.
       </Text>
       <View style={styles.surfaceRow}>
         <FxSurfaceView
