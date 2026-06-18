@@ -35,9 +35,15 @@ via DEF-007). Every other non-resolved row is `deferred` with a named trigger.
 - **U8-002 per-platform-redundant rows.** The Android pager + raw RNGH-`Pan` hand-rows and the
   iOS hard-case rows are not re-run — the same recognizer mechanism is already device-proven on
   the other platform (RT-001 closed with these waivers documented; maintainer's close-bar call).
-- **iOS shaders need a physical iPhone for visual proof.** The curated `[[stitchable]]` shaders
-  do not render on the iOS simulator — the sim verifies wiring/touch/lifecycle, not pixels. iOS
-  shader *visual* ratification runs on hardware only.
+- **iOS shaders — the sim renders them (waiver premise corrected 2026-06-18).** The original
+  waiver claimed the curated `[[stitchable]]` shaders do not render on the iOS simulator; that is
+  false. The hosted-path catalog renders non-blank on the Apple-silicon sim — confirmed twice:
+  DEF-014 (maintainer hosted-screen sim run, 2026-06-14 — aurora/plasma/caustics/liquid-chrome/
+  noise-field/fractal-clouds/ink-smoke + gradient fill all draw) and DEF-017 (smoke harness, all
+  10 `CURATED_SHADER_IDS`, variance ~680–5860 vs a 120 blank floor). The sim is a valid lane for
+  non-blank / wiring / lifecycle checks; what stays hardware-only is real-device (A15) GPU render
+  fidelity and scroll/thermal performance. Narrower caveat: the *interactive* `expo-view` shader
+  path was observed blank on the sim in U8-002 (path-specific, not the hosted catalog).
 - **U3-008 accessibility residuals.** Interactive-glass VoiceOver reachability and the literal
   TalkBack screen-reader demo are noted residuals (need AX-/TalkBack-equipped devices); merged
   with the residual on record.
