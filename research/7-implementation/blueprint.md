@@ -139,3 +139,37 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 *   **Explicit Reject:** a generic `Material` / `GlassContainer` component (`21` Decision 3); morphing arbitrary effects in V1.
 *   **Shape · phase:** `src/surface/FxGroup.tsx` (+ `FxItem`) over `FxGroupView` · **Surface**
 *   **Depends on:** Unit 1, Unit 3 (merged)
+
+---
+
+## Phase A: As-built V2 addenda
+
+*Four mechanics shipped and merged as deferred-ledger (`DEF-0xx`) work, each driven by a maintainer-accepted trigger rather than a forward Unit — so the build map above never carried them. This section is the **as-built record**, not a schedule: all four are merged and device-ratified. It grounds each shipped mechanic in its code, its owning source doc, and the future work it unlocks, so the runtime engine and its front door stay fully tracked — the same gap that produced Phase S, applied to the post-Unit-9 mechanics. Architecture object/file mapping: `architecture.md §11`.*
+
+### Addendum A1: `source` driver — scroll-linked presentation
+*   **Shipped by:** DEF-014 (merged + device-ratified 2026-06-14) — "the V2 opener," the category's demand center.
+*   **Scope:** the **iOS-hosted render-server rung only** — an fx-owned SwiftUI `ScrollView` with per-item `.scrollTransition`, `requires {os:17, substrate:hosted}`, `target:'effect'`, driving fx's own content (rule #4). The scroll *is* the clock; at rest nothing advances. The ambient-RN-scroll best-effort tier and the Android rung are deferred (each its own later rung).
+*   **Code:** manifest `source` node (`src/manifest/manifest.ts`); JS `src/source/` (`fx.source.scroll`), `src/surface/FxScroll.tsx` (the `Fx` namespace object + `FxScroll`), `src/runtime/FxScrollView.{tsx,android.tsx,web.tsx}` (binding + Android/web static fallbacks); iOS `ios/FxScrollView.swift` (persistent `UIHostingController`) + `ios/FxScrollRootView.swift`.
+*   **Source doc:** `02 §Decision 14` (node), `40 §Decision 7` (Escaping-regime-C route 1), `50 §Decision 9` (surface), `structure.ios.md §source`.
+*   **Enables:** the ambient-RN-scroll best-effort tier and the Android `source` rung (later rungs); the `clock` driver sibling (`02 §Decision 14`, still unbuilt — DOC-025).
+
+### Addendum A2: `controlled` mode — view-ref imperative uniform writes
+*   **Shipped by:** DEF-020 (merged + device-spiked 2026-06-15).
+*   **Scope:** the **view-ref write path only** — `setUniform` / `setHighlight` as Expo `AsyncFunction`s on the surface ref, **discrete writes only**, into the existing uniform buffer (RT-005 `[0,1]` y-up UV). The clobber rule: imperative overrides survive a host re-render and clear on exit-`controlled`. **No `SharedObject`, no `FxEffectRenderer` extraction, no Nitro** (that half is DEF-021, blocked).
+*   **Code:** iOS `ios/FxSurfaceView.swift` + `ios/FxModule.swift`; Android `android/…/FxSurfaceView.kt` + `FxSurfaceShaderView.kt` + `FxModule.kt`; JS ref surface `src/runtime/FxSurfaceView.types.ts`.
+*   **Source doc:** `30 §Decision 7` (controlled shipped), `50 §Decision 8`, `structure.{ios,android}` §controlled (the `imperativeOverrides` clobber rule).
+*   **Enables:** unblocked DEF-011 (drag/tilt); the detached-handle `Fx*` `SharedObject` + discrete `FxEffectRenderer` object stay DEF-021 (only a JS-held handle needs them).
+
+### Addendum A3: `dragAxis` — native-owned drag / tilt
+*   **Shipped by:** DEF-011 (merged + device-verified 2026-06-18). Closes RT-002.
+*   **Scope:** a native gesture recognizer extending the shipped `FxPressHandler` with **axis-aware claiming/yielding** (claim the shader's drag axis, yield the cross-axis to an ancestor scroller), **pointer-derived tilt only**, **native uniform writes** into the same buffer DEF-020 uses (drag/tilt scalars added to the iOS `FxUniforms` struct + the Android known set), and **native settle/spring-back** — no per-frame JS, no Reanimated. The ratified rule-#6 divergence: `dragAxis="both"` is standalone-only on iOS but blocks the parent on Android.
+*   **Code:** iOS `ios/FxPressHandler.swift` + `ios/FxSurfaceView.swift`; Android `android/…/FxPressHandler.kt` + `FxSurfaceView.kt`; JS prop `src/runtime/FxSurfaceView.types.ts` (`dragAxis`).
+*   **Source doc:** `30 §Resolved` (drag/tilt G3), `structure.{ios,android}` §drag/tilt.
+*   **Enables:** DEF-006 (the optional app-owned Reanimated integration) is no longer a blocker — it is now purely additive.
+
+### Addendum A4: runtime shader registration / compile
+*   **Shipped by:** DEF-008 (merged + device-verified 2026-06-14). Closes FX-007; lifts the `22` Decision 6 V1 BYO-placement constraint.
+*   **Scope:** JS `registerShader({ id, uniforms, source: { ios, android } })` compiles a BYO `.metal`/`.agsl` pair at runtime; `<Fx effect="id" />` stays the only consumption surface (no `<Fx source>` prop). Curated ids win on collision (native-enforced); missing platform → `{via:'none'}`; compile failure → `onFxError`. Platform divergence: runtime-source shaders lower through the **iOS expo-view Metal path even for decorative use** (no public `ShaderLibrary` over `MTLLibrary`, iOS 26.5; cache by source string, process-wide pipeline cache) and compile **per-view on Android** (a `RuntimeShader` is mutable, holds per-view uniform state, cannot be shared).
+*   **Code:** JS `src/effects/registry.ts` (`registerShader`) + `src/index.ts` export; iOS `ios/FxShaderRegistry.swift` + `FxModule.registerShader` + `FxSurfaceView` (`makeLibrary(source:)`); Android `android/…/FxShaderRegistry.kt` + `FxModule.registerShader` + `FxSurfaceShaderView`/`FxSurfaceView`.
+*   **Source doc:** `22 §Decision 7` (FX-007), `structure.{ios,android}` §shader (the runtime-compile + cache divergence).
+*   **Enables:** the DEF-001 single-source compiler stays the explicitly-rejected V2 alternative (dual MSL+AGSL still required).

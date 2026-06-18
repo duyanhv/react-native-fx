@@ -22,6 +22,8 @@ Every architectural decision in this doc traces to one of these sources.
 
 ## 1. Target Folder Structure
 
+> *This is the **target** tree (pre-Unit-9). Some entries are Phase-S targets not yet built; some shipped post-Unit-9 mechanics are not yet folded in. The as-built additions and the drift are catalogued in §11.*
+
 ```
 packages/
 ├── src/                          ← JS SURFACE (mirror of research planes)
@@ -595,3 +597,20 @@ Every architectural decision in this doc traces to exactly one of:
 | Hybrid Views do NOT host RN children (HybridViewProps empty) | Nitro `HybridView` | `[ref: nitro/.../cpp/views/HybridView.hpp]` |
 | Nitro is NOT a fallback for content-wrapping; Expo Modules is the boundary | Cross-referencing: Nitro constraint + Expo child mounting | `[finding] §3.1` |
 | FSM-based handler (not registered recognizer) serves both FxPressable and <Fx> | Gesture Handler borrow + fx architecture | `[finding] §6` |
+
+---
+
+## 11. As-Built V2 Mechanics (post-Unit-9 addendum)
+
+Four mechanics shipped after Unit 9 as deferred-ledger (`DEF-0xx`) work, each on a maintainer-accepted trigger rather than a forward Unit — so §1's *target* tree (written pre-Unit-9) does not carry them. This is the as-built object/file ground truth; the build-ordered companion is `blueprint.md` Phase A. All four are merged and device-ratified.
+
+| Mechanic | Ledger | Native | JS | Source doc | Enables |
+|----------|--------|--------|----|-----------|---------|
+| **`source` driver** — scroll-linked presentation (iOS-hosted render-server rung) | DEF-014 (2026-06-14) | `ios/FxScrollView.swift` (persistent `UIHostingController`), `ios/FxScrollRootView.swift` (`ScrollView` / `.scrollTransition`); Android deferred | `src/source/` (`fx.source.scroll`), `src/surface/FxScroll.tsx` (`Fx` namespace + `FxScroll`), `src/runtime/FxScrollView.{tsx,android.tsx,web.tsx}` | `02 §Decision 14`, `40 §Decision 7`, `50 §Decision 9`, `structure.ios.md §source` | ambient-RN-scroll tier + Android `source` rung (later rungs); `clock` driver sibling (unbuilt — DOC-025) |
+| **`controlled` mode** — view-ref imperative uniform writes | DEF-020 (2026-06-15) | `ios/FxSurfaceView.swift` + `ios/FxModule.swift` (`setUniform` / `setHighlight` `AsyncFunction`s); `android/…/FxSurfaceView.kt` + `FxSurfaceShaderView.kt` + `FxModule.kt` | `src/runtime/FxSurfaceView.types.ts` (ref surface) | `30 §Decision 7`, `50 §Decision 8`, `structure.{ios,android}` §controlled | DEF-011 (unblocked); the `SharedObject` / discrete `FxEffectRenderer` / HybridObject half is DEF-021 (blocked) |
+| **`dragAxis` / drag-tilt** — native-owned interaction | DEF-011 (2026-06-18) | `ios/FxPressHandler.swift` + `ios/FxSurfaceView.swift`; `android/…/FxPressHandler.kt` + `FxSurfaceView.kt` (drag/tilt scalars in the shared uniform buffer) | `src/runtime/FxSurfaceView.types.ts` (`dragAxis`) | `30 §Resolved` (G3), `structure.{ios,android}` §drag/tilt | DEF-006 optional app-owned Reanimated integration (no longer a blocker) |
+| **Runtime shader registration/compile** — BYO `.metal`/`.agsl` from JS | DEF-008 (2026-06-14) | `ios/FxShaderRegistry.swift` + `FxModule.registerShader` + `FxSurfaceView` (`makeLibrary(source:)`, cache by source string); `android/…/FxShaderRegistry.kt` + `FxModule.registerShader` + `FxSurfaceShaderView`/`FxSurfaceView` (per-view `RuntimeShader`) | `src/effects/registry.ts` (`registerShader`), `src/index.ts` export | `22 §Decision 7` (FX-007), `structure.{ios,android}` §shader | lifts the `22` D6 BYO-placement constraint; DEF-001 single-source compiler stays the rejected V2 alternative |
+
+**Platform divergences pinned in the source docs (not re-decided here):** the `source` rung is iOS-only in V1 (Android best-effort deferred); runtime-source shaders lower through the iOS expo-view Metal path even for decorative use (no public `ShaderLibrary` over `MTLLibrary`, iOS 26.5) and compile per-view on Android (mutable `RuntimeShader`); `dragAxis="both"` is standalone-only on iOS but blocks the parent on Android (the ratified rule-#6 divergence).
+
+**§1 target-tree drift (broader than this addendum — tracked under DOC-025 / Phase S, not fixed here):** §1 omits the shipped `src/source/`, `src/surface/FxScroll.tsx`, `src/effects/registry.ts`, `src/runtime/FxScrollView.*`, and `src/fx.ts`; and it lists Phase-S *target* files not yet built (`surface/FxView.tsx`, `FxPressable.tsx`, `Fx.tsx`, `FxItem.tsx`; `presets/{defaults,palettes,themes}.ts`).
