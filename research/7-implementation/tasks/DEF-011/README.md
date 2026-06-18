@@ -157,11 +157,20 @@ build. A negative result re-opens the axis-declaration fork.
 ## Lifecycle checklist
 
 - [x] spec'd (this file)
-- [ ] rules-gated (#1 / #6 / #7 no Reanimated-RNGH in packages / #9)
-- [ ] implemented (preflight + spike → axis-claim → native uniform write → settle)
-- [ ] commented
-- [ ] headless-done
-- [ ] device-verified (axis claim + smooth track + coexistence — human's gate)
-- [ ] reviewed
-- [ ] docs-closed (`30` G3 + `structure.*` + ledger RT-002)
-- [ ] merged
+- [x] rules-gated (#1 / #6 / #7 no Reanimated-RNGH in packages / #9)
+- [x] implemented (preflight + spike → axis-claim → native uniform write → settle)
+- [x] commented
+- [x] headless-done
+- [x] device-verified (axis claim + smooth track + coexistence — human gate, 2026-06-18; `evidence/device-hardware.md`)
+- [x] reviewed
+- [x] docs-closed (`30` G3 + `structure.*` + ledger RT-002)
+- [x] merged (on integration/0.1.x; human-delegated tick, 2026-06-18)
+
+### Type-A bug found + fixed at the hardware gate (2026-06-18)
+
+iOS dots vanished mid-drag: `UILongPressGestureRecognizer`'s built-in `allowableMovement` (10 pt
+default) auto-failed the recognizer before the axis-aware `shouldFail` could arbitrate. Fixed by
+setting `allowableMovement = .greatestFiniteMagnitude` in `attach()` so `shouldFail` is the sole
+arbiter (commit `0b4f9de`). The S3 demo was relabeled standalone-only (`49e89f6`). Gate verdict:
+all scenarios pass except the ratified iOS `both`-inside-a-scroller divergence (parent scroll stays
+active — standalone-only on iOS, not a bug).

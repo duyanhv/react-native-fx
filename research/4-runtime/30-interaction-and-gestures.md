@@ -124,15 +124,25 @@ The model to **borrow** (concepts, not the package — no RNGH V1 dep):
 
 ## Open questions
 
-- **Drag/tilt (G3)** — **native-owned** axis-aware claiming (DEF-011): an fx-owned native
-  recognizer claims the shader's drag axis and yields the cross-axis to an ancestor scroller,
-  writing the drag/tilt uniform **natively** into the same buffer (no JS, no Reanimated — route 1,
-  `40`). Tilt is pointer-derived. RNGH/Reanimated stay coexistence / app-owned-integration concerns
-  (example-only) unless a later task proves a `packages/` coupling is required. (Supersedes the
-  earlier "resolved via `controlled` + RNGH relations" framing — `controlled` is the discrete
-  escape hatch, not the drag transport.)
+- *(none open — drag/tilt (G3) shipped; see Resolved.)*
 
 ## Resolved
+
+- **Drag/tilt (G3) — native-owned axis-aware claiming (DEF-011, device-verified 2026-06-18,
+  both platforms).** An fx-owned native recognizer (the extended `FxPressHandler`) claims the
+  shader's configured `dragAxis` and yields the cross-axis to an ancestor scroller, writing
+  `drag`/`tilt` (vec2, signed `[-1,1]`, the shipped `[0,1]` y-up touch-UV basis — RT-005)
+  **natively** into the same uniform buffer the press path uses (no JS, no Reanimated — route 1,
+  `40`); `tilt` is pointer-derived; release settles both to `(0,0)` natively. The axis split is a
+  `shouldFail` refinement: yield only when cross-axis movement past slop dominates the claimed axis.
+  **Platform divergence (ratified):** `horizontal`/`vertical` converge (the shader tracks the
+  claimed axis, the cross-axis scroller scrolls on both); `both` diverges — Android blocks the
+  parent (`requestDisallowInterceptTouchEvent`), iOS keeps simultaneous recognition and lets the
+  parent scroll (the scrolling axis is owned by the scroller), so `both` is **standalone-only on
+  iOS** — out of scope, not a bug (rule #4, never sever RN touch). RNGH/Reanimated stay coexistence
+  / app-owned concerns (example-only). Mechanic pinned in `structure.{ios,android}` § Touch
+  contract; closes RT-002. (Supersedes the earlier "resolved via `controlled` + RNGH relations"
+  framing — `controlled` is the discrete escape hatch, not the drag transport.)
 
 - **The cancel path + the full coexistence matrix (RT-001 — U8-002, device 2026-06-13).**
   The cooperative recognizer is cancelled the instant an ancestor claims — device-proven

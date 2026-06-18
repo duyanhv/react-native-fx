@@ -119,6 +119,20 @@ layout/hit-testing to a `UIHostingController`.
   is tracked in `imperativeOverrides`; `applyResolvedConfig()` skips reapplying the prop-derived
   value for any overridden uniform. `setUniform(name, nil)` clears the override, letting the
   prop value win again on the next batch. Discrete writes only — no per-frame JS loop.
+- **Axis-aware drag/tilt (`active` + `dragAxis`, DEF-011, device-verified 2026-06-18):** with
+  `dragAxis` set under `active`, `shouldFail` refines from fail-on-any-movement to *yield only when
+  cross-axis movement past slop dominates the claimed axis* — the shader keeps its axis while an
+  ancestor scroller scrolls the cross-axis. The stock recognizer's built-in `allowableMovement` is
+  set to `.greatestFiniteMagnitude` so UIKit never auto-fails on movement and `shouldFail` is the
+  sole arbiter (the handler's own slop constant still governs the default, no-`dragAxis` yield) —
+  without this, the 10 pt built-in cap fails the recognizer mid-drag before `shouldFail` runs and
+  the press/drag uniforms spring back. Each callback writes `drag` (axis-masked
+  `currentTouchUV − originTouchUV`) and `tilt` (full-2D `clamp((currentTouchUV − 0.5)·2, −1, 1)`) as
+  vec2 uniforms, signed `[-1,1]`, in the `[0,1]` y-up touch-UV basis (RT-005), into the same
+  `FxUniforms` buffer; release eases both to `(0,0)` on the `0.35` press-depth spring.
+  `dragAxis="both"` keeps `cancelsTouchesInView = false` + simultaneous recognition and does **not**
+  suppress the parent — inside a scroller the scrolling axis belongs to the scroll, so `both` is
+  **standalone-only** on iOS (out of scope, not a bug; rule #4).
 - **Severing rule:** applying `.layerEffect` to live RN content requires hosting that
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.
