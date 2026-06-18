@@ -6,5 +6,6 @@
       "react-native-fx": ["../packages/src/index"],
       "react-native-fx/*": ["../packages/src/*"]
     }
-  }
+  },
+  "exclude": ["scripts"]
 }

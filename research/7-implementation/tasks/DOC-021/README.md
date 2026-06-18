@@ -3,6 +3,16 @@
 0-spine + 3-motion + 4-runtime · type: `ratify` · state: `spec'd` · device: no
 Consumes: — · Refines: MOT-006 · Gates: MOT-007 · Opens: new rows (ids at execution) · Blocked by: human final read of the three promoted WIP docs
 
+**Partial ratification (2026-06-15, maintainer) — the depth ownership distinction, ahead of the full
+task, to unblock DEF-006.** The classifier's substrate-depth axis now draws the line by **ownership**:
+the depth-4 row scopes to **fx-authored / fx-depended** worklets/JSI/host-objects (rejected by
+default), while **the app's own Reanimated driving an fx-exposed UI-thread-animatable prop is depth 1**
+(allowed; Reanimated is the caller's transport, not fx's runtime — DEF-006). Mirrored canonically in
+`0-spine/05` Decision 5. This lets DEF-006 inherit a clean rule-#7 boundary instead of a local
+exception. **The rest of DOC-021** (the full classifier promotion into `02`/`04`/`05` + the Lane 1
+contract + the ledger rows) **stays `spec'd` / pending the human read** — this note ratified only the
+one distinction.
+
 > Promotes the **scoped-medium** slice of the post-V2 "expand the lib" exploration into the
 > canonical docs + ledger: the **capability-boundary classifier** (vocabulary + guardrail) and
 > the **Lane 1 contract** (the native-source interaction path), while explicitly leaving the

@@ -1,4 +1,4 @@
-# Review-fix arc — Android device confirm (2026-06-15)
+# Review-fix arc — device confirm (Android + iOS, 2026-06-15)
 
 Covers the native review-pass commits that landed after DEF-009:
 `5c32983` (Android shader render lifecycle + error paths), `57bc2dc` (Android rule-#1 focus gap,
@@ -55,9 +55,7 @@ committed iOS review fixes) with the working-tree JS served over Metro (the harn
 | D | BYO same-id reload, single tap | **PASS** | tap → `load: app-pulse` + pattern flips (intensity 0.60↔0.85); validates the harness reload fix (0.6/0.85 delta) on device. |
 | E | long-press during scroll | code-reasoned (see below) | no scroll+interactive harness screen. |
 
-### The rejected first pass (kept as the lesson)
-
-## iOS — first pass REJECTED (stale build)
+### iOS first pass — REJECTED (stale build); superseded by the confirmed pass above
 
 The iOS half of the review-fix arc (rule-#1 background Metal + content-driver pause, shader
 load/error dedup, `.common` long-press timer, fail-closed shader resolution; commits `4c9f076`,
@@ -66,7 +64,7 @@ reconciled with `bun install` + `pod update` (the `ExpoModulesWorklets`/`ExpoFil
 version mismatch cleared), then `xcodebuild ... -sdk iphonesimulator build` → **BUILD SUCCEEDED**.
 The pod reconcile touched only the gitignored `example/ios` generated folder — no tracked change.
 
-**Device-pending — on a FRESH build.** A first iOS device pass (2026-06-15) was **rejected**: the
+**The lesson (now resolved by the fresh-build pass above).** The first iOS device pass (2026-06-15) was **rejected**: the
 agent installed a stale `example/ios/build` `.app` (Jun 12) that predates every iOS review-fix
 commit, so it tested pre-fix code. The re-test must `expo run:ios` (build current source) and
 verify the running app's build date is today before trusting any row. Targets: iOS rule-#1

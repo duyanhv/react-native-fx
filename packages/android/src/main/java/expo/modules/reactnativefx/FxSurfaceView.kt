@@ -61,6 +61,7 @@ class FxSurfaceView(
   private var pendingShader = ""
   private var pendingIntensity = 0.8
   private var pendingInteractionMode = "none"
+  private var pendingDragAxis: String? = null
   private var pendingContentDistortion = ""
 
   // The hit-target verdict TouchTargetHelper reads when it walks the view tree. BOX_NONE keeps the
@@ -84,6 +85,15 @@ class FxSurfaceView(
   private var lastDispatchedSource: String? = null
   private var effectSurfaceView: FxSurfaceShaderView? = null
   private val pressHandler = FxPressHandler(this)
+
+  // Tracks which uniforms have been imperatively overridden via `setUniform` so that
+  // `applyResolvedConfig` does not clobber them on a later prop batch. The key is the uniform
+  // name; clearing a value removes the key, letting the prop-derived value win again.
+  internal val imperativeOverrides = mutableSetOf<String>()
+
+  // Tracks the current interaction mode so leaving `controlled` can clear the imperative
+  // overrides and restore prop-derived values.
+  private var currentInteractionMode = "none"
 
   /**
    * A Fabric-invisible container that holds RN children so Fabric cannot clobber
@@ -186,6 +196,10 @@ class FxSurfaceView(
     pendingInteractionMode = value
   }
 
+  fun setDragAxis(value: String) {
+    pendingDragAxis = value.ifBlank { null }
+  }
+
   // `'ripple'` is the only recognized value; absent or unrecognized leaves the content undistorted.
   fun setContentDistortion(value: String) {
     pendingContentDistortion = value
@@ -221,7 +235,13 @@ class FxSurfaceView(
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
     contentDistortion.update(pendingContentDistortion, pendingIntensity)
-    pressHandler.update(pendingInteractionMode)
+    pressHandler.update(pendingInteractionMode, pendingDragAxis)
+    if (currentInteractionMode == "controlled" && pendingInteractionMode != "controlled") {
+      imperativeOverrides.clear()
+      effectSurfaceView?.clearCustomUniforms()
+      effectSurfaceView?.setIntensity(pendingIntensity)
+    }
+    currentInteractionMode = pendingInteractionMode
     presenceCoordinator.update(pendingVisible, pendingAppear, pendingPreset, pendingPresenceMotion)
 
     // A config batch can land while the window is unfocused (app backgrounded, behind a dialog) but
@@ -269,6 +289,77 @@ class FxSurfaceView(
     val touchX = (x ?: (width * 0.5f)) / width
     val touchY = 1f - ((y ?: (height * 0.5f)) / height)
     effectSurfaceView?.setPressUniforms(touchX, touchY, depth)
+  }
+
+  /**
+   * Writes the axis-masked drag offset and pointer-derived tilt into the shader target.
+   *
+   * All coordinates arrive in view points and are converted to `[0,1]` y-up UV space (the
+   * same basis as `touch`). Passing `null` for `current` begins the native settle back to
+   * `(0,0)` using the same easing the press depth uses. The render loop applies the eased
+   * step each frame.
+   */
+  internal fun updateDragTiltUniforms(
+    originX: Float?,
+    originY: Float?,
+    x: Float?,
+    y: Float?,
+    dragAxis: String?
+  ) {
+    val width = width.coerceAtLeast(1).toFloat()
+    val height = height.coerceAtLeast(1).toFloat()
+    if (x == null || y == null) {
+      effectSurfaceView?.setDragTiltUniforms(0f, 0f, 0f, 0f)
+      return
+    }
+    val currentUVX = x / width
+    val currentUVY = 1f - (y / height)
+    val tiltX = ((currentUVX - 0.5f) * 2f).coerceIn(-1f, 1f)
+    val tiltY = ((currentUVY - 0.5f) * 2f).coerceIn(-1f, 1f)
+    val (dragX, dragY) = if (originX != null && originY != null) {
+      val originUVX = originX / width
+      val originUVY = 1f - (originY / height)
+      val deltaX = (currentUVX - originUVX).coerceIn(-1f, 1f)
+      val deltaY = (currentUVY - originUVY).coerceIn(-1f, 1f)
+      when (dragAxis) {
+        "horizontal" -> deltaX to 0f
+        "vertical" -> 0f to deltaY
+        else -> deltaX to deltaY
+      }
+    } else {
+      0f to 0f
+    }
+    effectSurfaceView?.setDragTiltUniforms(dragX, dragY, tiltX, tiltY)
+  }
+
+  /**
+   * Writes a scalar uniform value into the live shader, or clears the override when `value` is null.
+   *
+   * Only `controlled` mode enables this path; the write is observed on the next frame and
+   * survives host re-renders because `applyResolvedConfig` skips uniforms that are overridden.
+   * Unknown uniform names are silently ignored (no new error channel).
+   */
+  fun setUniform(name: String, value: Double?) {
+    if (pendingInteractionMode != "controlled") {
+      return
+    }
+    if (value != null) {
+      imperativeOverrides.add(name)
+    } else {
+      imperativeOverrides.remove(name)
+    }
+    effectSurfaceView?.setUniform(name, value)
+  }
+
+  /**
+   * Sets the highlight position in `[0, 1]` y-up UV space and activates the press depth.
+   * Convenience sugar over the `touch` and `pressDepth` uniforms.
+   */
+  fun setHighlight(x: Double, y: Double) {
+    if (pendingInteractionMode != "controlled") {
+      return
+    }
+    effectSurfaceView?.setHighlight(x, y)
   }
 
   // Touch coordinates arrive in physical pixels; the JS event payload reports view points (dp) to
@@ -439,7 +530,9 @@ class FxSurfaceView(
     val hasShaderProp = pendingShader.isNotBlank()
     val view = if (hasShaderProp) ensureEffectSurfaceView() else effectSurfaceView ?: return
     view.setShaderId(if (hasShaderProp) pendingShader else "")
-    view.setIntensity(pendingIntensity)
+    if (!imperativeOverrides.contains("intensity")) {
+      view.setIntensity(pendingIntensity)
+    }
   }
 
   private fun ensureEffectSurfaceView(): FxSurfaceShaderView {

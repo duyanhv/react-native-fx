@@ -13,6 +13,8 @@ internal struct FxUniforms {
   var intensity: Float = 0.8
   var pressDepth: Float = 0
   var touch = SIMD2<Float>(0.5, 0.5)
+  var drag = SIMD2<Float>.zero
+  var tilt = SIMD2<Float>.zero
 }
 
 /// Renders the expo-view substrate through a Metal-backed `MTKView`.
@@ -67,7 +69,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private static let runtimePreamble = """
     #include <metal_stdlib>
     using namespace metal;
-    struct FxUniforms { float time; float2 resolution; float intensity; float pressDepth; float2 touch; };
+    struct FxUniforms { float time; float2 resolution; float intensity; float pressDepth; float2 touch; float2 drag; float2 tilt; };
     struct VSOut { float4 position [[position]]; float2 uv; };
     """
 
@@ -80,6 +82,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   private var uniforms = FxUniforms()
   private var targetPressDepth: Float = 0
+  private var targetDrag = SIMD2<Float>.zero
+  private var targetTilt = SIMD2<Float>.zero
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
@@ -89,6 +93,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var pendingShader = ""
   private var pendingIntensity: Float = 0.8
   private var pendingMode = "none"
+  private var pendingDragAxis: String?
 
   // Presence targets, stashed by prop setters and forwarded to the coordinator once per batch.
   private var pendingVisible = false
@@ -104,6 +109,15 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var lastDispatchedSource: String?
 
   private var pressHandler: FxPressHandler!
+
+  // Tracks which uniforms have been imperatively overridden via `setUniform` so that
+  // `applyResolvedConfig` does not clobber them on a later prop batch. The key is the uniform
+  // name; clearing a value removes the key, letting the prop-derived value win again.
+  private var imperativeOverrides = Set<String>()
+
+  // Tracks the current interaction mode so leaving `controlled` can clear the imperative
+  // overrides and restore prop-derived values.
+  private var currentInteractionMode = "none"
 
   /// A Fabric-invisible container that holds RN children so Fabric cannot clobber
   /// the animator's transform/opacity. The animator targets this container, not the
@@ -350,6 +364,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   /// normally. Android realizes this draw-time, where touch survives.
   internal func setContentDistortion(_ value: String) {}
 
+  internal func setDragAxis(_ value: String) {
+    pendingDragAxis = value.isEmpty ? nil : value
+  }
+
   internal func setVisible(_ value: Bool) {
     pendingVisible = value
   }
@@ -369,7 +387,9 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
 
   internal override func applyResolvedConfig() {
     super.applyResolvedConfig()
-    uniforms.intensity = min(max(pendingIntensity, 0), 1)
+    if !imperativeOverrides.contains("intensity") {
+      uniforms.intensity = min(max(pendingIntensity, 0), 1)
+    }
     updateEffectSurfaceVisibility()
     dispatchShaderLoadState()
     updateInteraction(mode: pendingMode)
@@ -481,7 +501,60 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   // MARK: - Interaction
 
   private func updateInteraction(mode: String) {
-    pressHandler.update(mode: mode)
+    pressHandler.update(mode: mode, dragAxis: pendingDragAxis)
+    if currentInteractionMode == "controlled" && mode != "controlled" {
+      imperativeOverrides.removeAll()
+      uniforms.intensity = min(max(pendingIntensity, 0), 1)
+      targetPressDepth = 0
+    }
+    currentInteractionMode = mode
+  }
+
+  // MARK: - Imperative uniform write path (controlled mode)
+
+  /// Writes a scalar uniform value into the live buffer, or clears the override when `value` is nil.
+  ///
+  /// Only `controlled` mode enables this path; the write is observed on the next frame and
+  /// survives host re-renders because `applyResolvedConfig` skips uniforms that are overridden.
+  /// Unknown uniform names are silently ignored (no new error channel).
+  internal func setUniform(name: String, value: Double?) {
+    guard pendingMode == "controlled" else { return }
+    let key = name
+    if let value = value {
+      let floatValue = Float(value)
+      switch key {
+      case "intensity":
+        uniforms.intensity = floatValue
+        imperativeOverrides.insert(key)
+      case "pressDepth":
+        targetPressDepth = floatValue
+        imperativeOverrides.insert(key)
+      default:
+        // Unknown uniform — no-op
+        break
+      }
+    } else {
+      imperativeOverrides.remove(key)
+      // Restore the prop-derived value immediately so clearing behaves the same on both platforms.
+      switch key {
+      case "intensity":
+        uniforms.intensity = min(max(pendingIntensity, 0), 1)
+      case "pressDepth":
+        targetPressDepth = 0
+      default:
+        break
+      }
+    }
+  }
+
+  /// Sets the highlight position in `[0, 1]` y-up UV space and raises the press depth.
+  ///
+  /// This is convenience sugar over the `touch` and `pressDepth` uniforms. The write is
+  /// observed on the next frame. Only `controlled` mode enables this path.
+  internal func setHighlight(x: Double, y: Double) {
+    guard pendingMode == "controlled" else { return }
+    uniforms.touch = SIMD2<Float>(Float(x), Float(y))
+    targetPressDepth = 1
   }
 
   internal func updatePressUniforms(point: CGPoint?, depth: Float) {
@@ -489,6 +562,43 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     if let point {
       uniforms.touch = normalizeTouch(point)
     }
+  }
+
+  /// Writes the axis-masked drag offset and pointer-derived tilt into the uniform target.
+  ///
+  /// Both values live in `[0,1]` y-up UV space (the same basis as `touch`). Passing `nil`
+  /// for `current` begins the native settle back to `(0,0)` using the same spring/smoothing
+  /// the press depth uses. The render loop applies the eased step each frame.
+  internal func updateDragTiltUniforms(origin: CGPoint?, current: CGPoint?, dragAxis: String?) {
+    guard let current else {
+      targetDrag = .zero
+      targetTilt = .zero
+      return
+    }
+    let currentUV = normalizeTouch(current)
+    targetTilt = clamp((currentUV - 0.5) * 2, lower: -1, upper: 1)
+    guard let origin else {
+      targetDrag = .zero
+      return
+    }
+    let originUV = normalizeTouch(origin)
+    let delta = clamp(currentUV - originUV, lower: -1, upper: 1)
+    targetDrag = mask(delta: delta, axis: dragAxis)
+  }
+
+  private func mask(delta: SIMD2<Float>, axis: String?) -> SIMD2<Float> {
+    switch axis {
+    case "horizontal":
+      return SIMD2<Float>(delta.x, 0)
+    case "vertical":
+      return SIMD2<Float>(0, delta.y)
+    default:
+      return delta
+    }
+  }
+
+  private func clamp(_ value: SIMD2<Float>, lower: Float, upper: Float) -> SIMD2<Float> {
+    return value.clamped(lowerBound: SIMD2<Float>(repeating: lower), upperBound: SIMD2<Float>(repeating: upper))
   }
 
   internal func dispatchShaderPressIn(point: CGPoint) {
@@ -556,6 +666,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     uniforms.time = Float(CACurrentMediaTime() - startTime)
     uniforms.resolution = SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height))
     uniforms.pressDepth += (targetPressDepth - uniforms.pressDepth) * 0.35
+    uniforms.drag += (targetDrag - uniforms.drag) * 0.35
+    uniforms.tilt += (targetTilt - uniforms.tilt) * 0.35
 
     encoder.setRenderPipelineState(state)
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<FxUniforms>.stride, index: 0)

@@ -109,10 +109,10 @@ component.
   `ACTION_CANCEL` → cancelled). Defend briefly with
   `requestDisallowInterceptTouchEvent(true)` on `ACTION_DOWN`, release past
   `scaledTouchSlop`; spring back on `ACTION_CANCEL` (the analogue of iOS `.cancelled`).
-  **Watch item (U8-001 preflight, 2026-06-12):** RNGH's lone press handler never calls
-  the disallow — it relies on plain parent interception; if the device gate shows
-  scroll-start lag from the brief disallow, drop it entirely (the RNGH-aligned shape)
-  rather than tune the release. Full mechanics in `30`.
+  **Resolved (DEF-011 hardware gate, 2026-06-18):** the W-F3 watch — RNGH's lone press handler
+  never calls the disallow, so the brief `ACTION_DOWN` disallow could in principle lag scroll-start
+  — was checked on device and showed **no perceptible scroll-start lag**, so the disallow is
+  **retained** (not dropped for the RNGH-aligned shape). Full mechanics in `30`.
 - **`none`-mode pass-through.** RN Android delivers JS touches geometrically from the root via
   `TouchTargetHelper`, which targets the topmost react-tagged view (the fx surface) over content
   composited behind it — so a native `dispatchTouchEvent` return cannot route a `none`-mode touch
@@ -127,6 +127,18 @@ component.
   RN Android needs an explicit interface where UIKit infers untargetability from the view tree
   (REAL-005). **Build coupling (shipped):** the lever is compiled against
   `compileOnly("com.facebook.react:react-android")` on the library module — the
+- **`controlled` mode (DEF-020):** attaches **no recognizer** (identical to `none` for the
+  gesture system), but enables an imperative write path via `setUniform(name, value)` and
+  `setHighlight(x, y)` as Expo `AsyncFunction(view, …)` ref methods. The write lands in the
+  same `RuntimeShader` uniform buffer the `Choreographer` loop already reads (`30` § two input
+  sources, one buffer). `setUniform` is guarded by the source-declaration scan
+  (`declaredUniforms` — the `extractUniformNames` regex over the AGSL source); unknown names
+  are a no-op. `setHighlight` is sugar over the `touch`/`pressDepth` uniforms in `[0,1]`
+  y-up UV (RT-005). The **clobber rule** is the design crux: an imperative override is tracked
+  in `imperativeOverrides` on `FxSurfaceView`; `updateEffectSurfaceVisibility()` skips
+  `setIntensity()` for any overridden uniform. `setUniform(name, null)` clears the override,
+  letting the prop value win again on the next batch. Discrete writes only — no per-frame JS
+  loop.
   `expo-module-gradle-plugin` classpath does not carry `react-android` transitively
   (`expo-modules-core` exposes its React dependency non-transitively), and `compileOnly` is the
   standard RN-view-library shape (compile against it; the host app provides it at runtime, never
@@ -135,6 +147,17 @@ component.
   JS↔native boundary rule #7 governs (events still cross via the Expo `EventDispatcher`; props via
   Expo setters). The interface and the unversioned `compileOnly` coupling are compile-proven
   (`:react-native-fx:compileDebugKotlin` resolves the interface).
+- **Axis-aware drag/tilt (`active` + `dragAxis`, DEF-011, device-verified 2026-06-18):** with
+  `dragAxis` set under `active`, the slop yield refines from fail-on-any-movement to *yield only
+  when cross-axis movement past `scaledTouchSlop` dominates the claimed axis*: the `ACTION_DOWN`
+  `requestDisallowInterceptTouchEvent(true)` is **retained** while the claimed axis dominates (the
+  parent scroller stays blocked) and **released** on cross-axis dominance (the scroller scrolls).
+  `ACTION_MOVE` writes `drag` (axis-masked `currentUV − originUV`) and `tilt` (full-2D
+  `clamp((currentUV − 0.5)·2, −1, 1)`) — both signed `[-1,1]` in the `[0,1]` y-up touch-UV basis
+  (RT-005); the uniform stays y-up while a shader-local `uv` flip handles AGSL's y-down sampling —
+  gated on per-shader `declaredUniforms` membership; release eases both to `(0,0)` on the `0.35`
+  spring. `dragAxis="both"` releases the disallow for neither axis, so Android **does** block the
+  parent for `both` — the ratified divergence from iOS (where `both` is standalone-only, rule #4).
 - **The surface lever alone is insufficient — the decorative/wrapper children must also be
   marked (round 5).** Source-confirmed against the running RN 0.85.3 `TouchTargetHelper.kt`
   (`example/node_modules`): `getPointerEvents()` *is* consulted on any `view is

@@ -68,11 +68,17 @@ export function ShaderCatalogScreen() {
 				{shaderId} · intensity {intensity.toFixed(2)}
 			</Text>
 
-			<FxHostedView
-				effect={shaderId}
-				intensity={intensity}
+			<View
+				testID="shader-surface"
 				style={styles.box}
-			/>
+				collapsable={false}
+			>
+				<FxHostedView
+					effect={shaderId}
+					intensity={intensity}
+					style={StyleSheet.absoluteFill}
+				/>
+			</View>
 
 			<NativeSlider value={intensity} min={0} max={1} onChange={setIntensity} />
 		</ScrollView>

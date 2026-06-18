@@ -172,22 +172,28 @@ discrete events out).
 
 ## Escaping Regime C (when an effect genuinely needs it)
 
-Two clean routes, never per-frame `setUniform` from the **JS thread**:
+Two clean routes, **split by ownership**, never per-frame `setUniform` from the **JS thread** —
+fx-owned continuous interaction stays native (route 1); only an *app-owned* continuous source uses
+the optional Reanimated channel (route 2):
 
-1. **Make the source native** — if the driver is a native scroller/pager, read its
-   offset natively and write the uniform natively (onboarding morph, scroll-reactive
-   backgrounds; no JS, no Reanimated). The sleeper win. **Ratified as the `source`
+1. **Make the source native — the default for any fx-owned source.** If fx owns the source —
+   a native scroller/pager, **or a native gesture recognizer fx runs itself** — read it natively
+   and write the uniform natively (onboarding morph, scroll-reactive backgrounds; **fx-owned
+   drag/tilt**, DEF-011; no JS, no Reanimated). The sleeper win. **Ratified as the `source`
    driver (decision 7)** — phase V2, substrate-tiered: the guarantee is zero per-frame
    **JS** everywhere; render-server-fidelity mapping only on iOS `hosted` (SwiftUI
    `visualEffect`/`scrollTransition`); a main-thread/UI-thread reader elsewhere.
    **The iOS-hosted render-server tier is shipped (DEF-014):** an fx-owned hosted
    SwiftUI `ScrollView` drives its own effect tiles via `.scrollTransition`, zero
    per-frame JS *and* zero per-frame main-thread work. The ambient-RN-scroll best-effort
-   tier and the Android rung remain deferred.
-2. **UI-thread channel** — Reanimated shared values / animated props (gesture writes a
-   shared value off the JS thread, bound to a uniform). The silky bring-your-own-gesture
-   path; **post-V1**, additive over the same uniform names — the deferred UI-thread tier
-   of the same `source` driver (MOT-007).
+   tier and the Android rung remain deferred. **fx-owned interaction (drag/tilt) is a native
+   recognizer writing the uniform natively — this route, never route 2.**
+2. **UI-thread channel — app-owned only, optional.** For an **app-owned** continuous source, the
+   app's *own* Reanimated shared value drives an fx-exposed UI-thread-animatable prop off the JS
+   thread (Reanimated is the caller's transport; fx owns no worklet/JSI — depth-1, `0-spine/05`
+   Decision 5). The silky bring-your-own-gesture path; **optional, trigger-gated** — the deferred
+   UI-thread tier of the same `source` driver (MOT-007 / DEF-006), additive over the same uniform
+   names. **Not the path for any interaction fx can own natively** — that goes through route 1.
 
 **On `setUniform` itself.** The imperative `setUniform`/`setHighlight` (`4-runtime/30`/`51`)
 are not banned — they are a **low-frequency / debug / `controlled`-mode escape hatch**, not a

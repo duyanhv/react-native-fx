@@ -8,7 +8,7 @@ import SwiftUI
 /// that bundle using the same search list `FxSurfaceView` uses, never
 /// `ShaderLibrary.default`. `TimelineView(.animation)` injects the native
 /// clock; the absolute date is wrapped to a 100 s window so Float32 retains
-/// per-frame precision. pressDepth and touch stay idle defaults on the
+/// per-frame precision. pressDepth, touch, drag, and tilt stay idle defaults on the
 /// decorative path.
 internal struct FxShaderView: View {
   let shaderId: String
@@ -62,7 +62,9 @@ internal struct FxShaderView: View {
         Float(resolution.height)),
       .float(Float(intensity)),
       .float(0),
-      .float2(0.5, 0.5))
+      .float2(0.5, 0.5),
+      .float2(0, 0),
+      .float2(0, 0))
   }
 }
 

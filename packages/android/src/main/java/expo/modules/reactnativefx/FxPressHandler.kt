@@ -9,6 +9,7 @@ private enum class FxPressInteractionMode {
   NONE,
   PASSIVE,
   ACTIVE,
+  CONTROLLED,
 }
 
 internal class FxPressHandler(private val surface: FxSurfaceView) {
@@ -17,6 +18,7 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
   private val longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
 
   private var mode = FxPressInteractionMode.NONE
+  private var dragAxis: String? = null
   private var originX = 0f
   private var originY = 0f
   private var lastX = 0f
@@ -32,19 +34,25 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     }
   }
 
-  fun update(rawMode: String) {
-    mode = when (rawMode) {
+  fun update(rawMode: String, dragAxis: String?) {
+    val nextMode = when (rawMode) {
       "passive" -> FxPressInteractionMode.PASSIVE
       "active" -> FxPressInteractionMode.ACTIVE
+      "controlled" -> FxPressInteractionMode.CONTROLLED
       else -> FxPressInteractionMode.NONE
     }
-    if (mode == FxPressInteractionMode.NONE) {
+    if (nextMode == mode && this.dragAxis == dragAxis) {
+      return
+    }
+    mode = nextMode
+    this.dragAxis = dragAxis
+    if (mode == FxPressInteractionMode.NONE || mode == FxPressInteractionMode.CONTROLLED) {
       cancel()
     }
   }
 
   fun handle(event: MotionEvent): Boolean {
-    if (mode == FxPressInteractionMode.NONE) {
+    if (mode == FxPressInteractionMode.NONE || mode == FxPressInteractionMode.CONTROLLED) {
       return false
     }
     return when (event.actionMasked) {
@@ -70,6 +78,9 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     }
     surface.parent?.requestDisallowInterceptTouchEvent(true)
     surface.updatePressUniforms(event.x, event.y, if (mode == FxPressInteractionMode.ACTIVE) 1f else 0f)
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      surface.updateDragTiltUniforms(event.x, event.y, event.x, event.y, dragAxis)
+    }
     if (mode == FxPressInteractionMode.ACTIVE) {
       didBeginActivePress = true
       didFireLongPress = false
@@ -86,6 +97,9 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     lastX = event.x
     lastY = event.y
     surface.updatePressUniforms(event.x, event.y, if (didBeginActivePress) 1f else 0f)
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      surface.updateDragTiltUniforms(originX, originY, event.x, event.y, dragAxis)
+    }
     if (shouldFail(event.x, event.y)) {
       surface.parent?.requestDisallowInterceptTouchEvent(false)
       cancel()
@@ -101,6 +115,7 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     handler.removeCallbacks(longPressRunnable)
     surface.parent?.requestDisallowInterceptTouchEvent(false)
     surface.updatePressUniforms(event.x, event.y, 0f)
+    settleDragTilt()
     val shouldEmitPress = didBeginActivePress
     didBeginActivePress = false
     hasActivePointer = false
@@ -117,6 +132,7 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     handler.removeCallbacks(longPressRunnable)
     surface.parent?.requestDisallowInterceptTouchEvent(false)
     surface.updatePressUniforms(null, null, 0f)
+    settleDragTilt()
     if (didBeginActivePress) {
       surface.dispatchShaderPressOut(lastX, lastY)
     }
@@ -125,7 +141,41 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     hasActivePointer = false
   }
 
+  private fun settleDragTilt() {
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      surface.updateDragTiltUniforms(null, null, null, null, null)
+    }
+  }
+
   private fun shouldFail(x: Float, y: Float): Boolean {
+    // Axis-aware claiming when dragAxis is set under active mode.
+    // The shader claims its configured axis; cross-axis movement past slop
+    // that dominates the claimed axis yields the gesture to an ancestor scroller.
+    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
+      val deltaX = x - originX
+      val deltaY = y - originY
+      val absDeltaX = Math.abs(deltaX)
+      val absDeltaY = Math.abs(deltaY)
+      when (dragAxis) {
+        "horizontal" -> {
+          if (absDeltaY > touchSlop && absDeltaY > absDeltaX) {
+            return true
+          }
+          return false
+        }
+        "vertical" -> {
+          if (absDeltaX > touchSlop && absDeltaX > absDeltaY) {
+            return true
+          }
+          return false
+        }
+        "both" -> {
+          return false
+        }
+      }
+    }
+
+    // Default: fail on any movement past slop (today's behavior).
     val deltaX = x - originX
     val deltaY = y - originY
     return deltaX * deltaX + deltaY * deltaY > touchSlop * touchSlop || !surface.containsInteractiveShape(x, y)

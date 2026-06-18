@@ -56,6 +56,9 @@ public class FxModule: Module {
       Prop("contentDistortion") { (view: FxSurfaceView, value: String) in
         view.setContentDistortion(value)
       }
+      Prop("dragAxis") { (view: FxSurfaceView, value: String) in
+        view.setDragAxis(value)
+      }
       Prop("visible") { (view: FxSurfaceView, value: Bool) in
         view.setVisible(value)
       }
@@ -71,6 +74,14 @@ public class FxModule: Module {
 
       AsyncFunction("snapshot") { (view: FxSurfaceView) in
         return view.snapshot()
+      }
+
+      AsyncFunction("setUniform") { (view: FxSurfaceView, name: String, value: Double?) in
+        view.setUniform(name: name, value: value)
+      }
+
+      AsyncFunction("setHighlight") { (view: FxSurfaceView, x: Double, y: Double) in
+        view.setHighlight(x: x, y: y)
       }
 
       OnViewDidUpdateProps { (view: FxSurfaceView) in

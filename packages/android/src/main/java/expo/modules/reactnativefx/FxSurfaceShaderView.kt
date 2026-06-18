@@ -24,11 +24,23 @@ internal class FxSurfaceShaderView(
   private var targetPressDepth: Float = 0f
   private var pendingTouchX: Float = 0.5f
   private var pendingTouchY: Float = 0.5f
+  private var pendingDragX: Float = 0f
+  private var pendingDragY: Float = 0f
+  private var targetDragX: Float = 0f
+  private var targetDragY: Float = 0f
+  private var pendingTiltX: Float = 0f
+  private var pendingTiltY: Float = 0f
+  private var targetTiltX: Float = 0f
+  private var targetTiltY: Float = 0f
   private var supportsTimeUniform: Boolean = false
   private var supportsResolutionUniform: Boolean = false
   private var supportsIntensityUniform: Boolean = false
   private var supportsPressDepthUniform: Boolean = false
   private var supportsTouchUniform: Boolean = false
+  private var supportsDragUniform: Boolean = false
+  private var supportsTiltUniform: Boolean = false
+  private var declaredUniforms: Set<String> = emptySet()
+  private val customUniforms = mutableMapOf<String, Float>()
   private var isActive: Boolean = false
   private var isCallbackScheduled: Boolean = false
   private var baseTimeNanos: Long = 0L
@@ -104,6 +116,64 @@ internal class FxSurfaceShaderView(
     invalidate()
   }
 
+  /** Writes the target drag and tilt values; the next frame eases toward them natively. */
+  fun setDragTiltUniforms(dragX: Float, dragY: Float, tiltX: Float, tiltY: Float) {
+    targetDragX = dragX.coerceIn(-1f, 1f)
+    targetDragY = dragY.coerceIn(-1f, 1f)
+    targetTiltX = tiltX.coerceIn(-1f, 1f)
+    targetTiltY = tiltY.coerceIn(-1f, 1f)
+    invalidate()
+  }
+
+  /**
+   * Writes a scalar uniform value into the live shader, or clears it when `value` is null.
+   *
+   * Only the known scalar uniforms `intensity` and `pressDepth` are supported in this cut.
+   * The write is guarded by the source-declaration scan: an unknown or non-scalar uniform name
+   * is a no-op. Only `controlled` mode is expected to call this path.
+   */
+  fun setUniform(name: String, value: Double?) {
+    // Only known scalar uniforms are supported; `resolution` and `touch` are vec2 and cannot
+    // be written through this scalar path.
+    if (name != "intensity" && name != "pressDepth") {
+      return
+    }
+    if (name !in declaredUniforms) {
+      return
+    }
+    if (value != null) {
+      customUniforms[name] = value.toFloat()
+    } else {
+      customUniforms.remove(name)
+      if (name == "pressDepth") {
+        targetPressDepth = 0f
+      }
+    }
+    invalidate()
+  }
+
+  /**
+   * Sets the highlight position in `[0, 1]` y-up UV space and activates the press depth.
+   * Convenience sugar over the `touch` and `pressDepth` uniforms.
+   */
+  fun setHighlight(x: Double, y: Double) {
+    pendingTouchX = x.toFloat().coerceIn(0f, 1f)
+    pendingTouchY = y.toFloat().coerceIn(0f, 1f)
+    targetPressDepth = 1f
+    invalidate()
+  }
+
+  /**
+   * Clears every imperatively-set custom uniform so the onDraw frame path falls back to
+   * prop-derived values. Called when the interaction mode leaves `controlled`, handing
+   * control back to the declarative props.
+   */
+  fun clearCustomUniforms() {
+    customUniforms.clear()
+    targetPressDepth = 0f
+    invalidate()
+  }
+
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     startLoop()
@@ -142,15 +212,27 @@ internal class FxSurfaceShaderView(
     if (supportsResolutionUniform) {
       currentShader.setFloatUniform("resolution", width.toFloat(), height.toFloat())
     }
+    val intensity = customUniforms["intensity"] ?: pendingIntensity
     if (supportsIntensityUniform) {
-      currentShader.setFloatUniform("intensity", pendingIntensity)
+      currentShader.setFloatUniform("intensity", intensity)
     }
     pendingPressDepth += (targetPressDepth - pendingPressDepth) * 0.35f
+    val pressDepth = customUniforms["pressDepth"] ?: pendingPressDepth
     if (supportsPressDepthUniform) {
-      currentShader.setFloatUniform("pressDepth", pendingPressDepth)
+      currentShader.setFloatUniform("pressDepth", pressDepth)
     }
     if (supportsTouchUniform) {
       currentShader.setFloatUniform("touch", pendingTouchX, pendingTouchY)
+    }
+    pendingDragX += (targetDragX - pendingDragX) * 0.35f
+    pendingDragY += (targetDragY - pendingDragY) * 0.35f
+    if (supportsDragUniform) {
+      currentShader.setFloatUniform("drag", pendingDragX, pendingDragY)
+    }
+    pendingTiltX += (targetTiltX - pendingTiltX) * 0.35f
+    pendingTiltY += (targetTiltY - pendingTiltY) * 0.35f
+    if (supportsTiltUniform) {
+      currentShader.setFloatUniform("tilt", pendingTiltX, pendingTiltY)
     }
     paint.shader = currentShader
     canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
@@ -198,17 +280,19 @@ internal class FxSurfaceShaderView(
   // declared uniform is always safe to write — AGSL strips only UNUSED uniforms. Curated shaders
   // declare and use all of these; a bring-your-own shader may omit any, so every write is guarded.
   private fun scanUniforms(source: String?) {
-    supportsTimeUniform = source != null && declaresUniform(source, "time")
-    supportsResolutionUniform = source != null && declaresUniform(source, "resolution")
-    supportsIntensityUniform = source != null && declaresUniform(source, "intensity")
-    supportsPressDepthUniform = source != null && declaresUniform(source, "pressDepth")
-    supportsTouchUniform = source != null && declaresUniform(source, "touch")
+    declaredUniforms = source?.let { extractUniformNames(it) } ?: emptySet()
+    supportsTimeUniform = "time" in declaredUniforms
+    supportsResolutionUniform = "resolution" in declaredUniforms
+    supportsIntensityUniform = "intensity" in declaredUniforms
+    supportsPressDepthUniform = "pressDepth" in declaredUniforms
+    supportsTouchUniform = "touch" in declaredUniforms
+    supportsDragUniform = "drag" in declaredUniforms
+    supportsTiltUniform = "tilt" in declaredUniforms
   }
 
-  // Matches a `uniform <type> <name>;` declaration, not a comment or in-body use of the name:
-  // the `uniform` keyword and a word boundary on the name guard the false positive (the local
-  // `touchPoint` must not satisfy a `touch` scan).
-  private fun declaresUniform(source: String, name: String): Boolean {
-    return Regex("""\buniform\s+\w+\s+${Regex.escape(name)}\b""").containsMatchIn(source)
+  // Extracts every declared uniform name from the AGSL source. Curated shaders declare and use
+  // all known uniforms; a bring-your-own shader may omit any, so every write is guarded.
+  private fun extractUniformNames(source: String): Set<String> {
+    return Regex("""\buniform\s+\w+\s+(\w+)\b""").findAll(source).map { it.groupValues[1] }.toSet()
   }
 }
