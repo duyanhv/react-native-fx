@@ -121,10 +121,10 @@ uniform table (`22`); it flows through the identical preset/primitive/adapter pa
 The V1 `ShaderId` catalog is `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`,
 `dots`, `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`.
 
-`fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, and `dots` are the implemented
-starter shaders. `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow` are V1
-catalog entries that need native MSL+AGSL implementations before package types/runtime
-expose them.
+All ten ship in the package today — each with a native MSL (iOS) + AGSL (Android)
+implementation on the hosted substrate, device-verified on iOS 17+ and Android API 33+
+(U3-006). They are reachable from JS only once the `<Fx effect>` surface lands (Unit 10);
+until then the curated catalog renders through the low-level substrate views.
 
 Public shader uniforms stay shared and minimal in V1. `intensity` is the stable semantic
 override. `time`, `resolution`, `pressDepth`, and `touch` are native-owned values injected

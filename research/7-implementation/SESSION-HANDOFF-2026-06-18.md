@@ -1,8 +1,9 @@
-# Session handoff — 2026-06-18 (DEF-017 CI lane REMOVED for cost / harness kept local; DEF-014 waiver corrected; DEF-021 confirmed blocked; next = human-chosen trigger-gated row)
+# Session handoff — 2026-06-18 (SURFACE-LAYER REALIGNMENT: the JS public front door was never decomposed into build work; now tracked as blueprint Phase S / progress Units 10–14, all todo — next = spec Unit 10)
 
-Paste the block below into a fresh session to continue. Supersedes the earlier 2026-06-18
-handoff (DEF-017 "ready-to-merge / watch the first hosted run"), now overtaken by events:
-the hosted runs fired, exposed cost, and the lane was removed.
+Paste the block below into a fresh session to continue. Supersedes the earlier 2026-06-18 handoff
+(DEF-017 CI-lane removal), now overtaken by a planning-layer finding: the runtime engine (Units 1–9)
+is built and device-proven, but the JS public surface the product is *defined by* was never built or
+tracked. This handoff captures that realignment.
 
 ---
 
@@ -18,99 +19,91 @@ YOUR ROLE — honor it exactly:
   bookkeeping IS your lane — you may edit research/docs directly.)
 - Cross-check EVERY returned step independently — read the diff, RE-RUN the gates yourself, read
   the evidence (open screenshots, don't trust captions), and CHECK THE TREE STATE. Never trust a
-  summary.
+  summary. (This session's finding came from exactly that discipline: the tracker said "V2 done,"
+  the SOURCE said otherwise.)
 - Device gates + the `device-verified` / `merged` ticks are the human's; never tick them unless
   explicitly delegated. Commits: the human directs them; on `integration/0.1.x`; NO AI
   co-author trailer; Conventional Commits.
-- Open-ended DESIGN → drive with PROSE + recommendation + pushback, NOT AskUserQuestion. Pure
-  task-selection among blocked rows IS a fair AskUserQuestion.
+- Open-ended DESIGN → drive with PROSE + recommendation + pushback, NOT AskUserQuestion.
 - Banked lessons, honored: COMMIT reviewed headless work BEFORE dispatching a device-gate agent;
-  the device prompt must forbid `git checkout`/`stash`/`reset`/`clean` on a dirty tree and end
-  the tree byte-identical except new files under `tasks/<id>/evidence/`. Gate/maintainer agents
-  leave STRAY changes — REVERT strays with Edit (never `git checkout`). A device gate proves the
-  BINARY THAT WAS BUILT, not the current tree — native changed ⇒ REBUILD. LOCALLY-GREEN ≠
-  CI-GREEN (DEF-017 proved this twice — a managed-Expo `ios/` is prebuild-generated/gitignored;
-  cold CI sim boot exceeds a 60s timeout).
+  the device prompt must forbid `git checkout`/`stash`/`reset`/`clean` on a dirty tree and end the
+  tree byte-identical except new files under `tasks/<id>/evidence/`. Gate/maintainer agents leave
+  STRAY changes — REVERT strays with Edit (never `git checkout`). A device gate proves the BINARY
+  THAT WAS BUILT — native changed ⇒ REBUILD. LOCALLY-GREEN ≠ CI-GREEN.
 
 READ, IN ORDER (binding):
-1. CLAUDE.md (the 9 non-negotiable rules + the law + operating rules).
-2. agents/session-protocol.md (start/during/end) + research/7-implementation/subtask-protocol.md
-   (lifecycle, the cardinal closure rule, task types, the authority stack).
-3. research/7-implementation/progress.md (the tracker) + decision-ledger.md + v1-cut-checklist.md.
-4. The auto-memory index named in CLAUDE.md (prose-not-multiple-choice; no-AI-coauthor;
-   agent-driven device tests; example-consumes-by-package-name; revert-instrumentation-with-Edit;
-   commit-before-device-gate; gate-agents-leave-strays; cite-RN-internals-from-node_modules).
+1. CLAUDE.md (the 9 non-negotiable rules + the law + operating rules). Note rule #5: the front door
+   is `preset`/`feedback`/`effect` props on your content — that is the surface layer below.
+2. agents/session-protocol.md + research/7-implementation/subtask-protocol.md.
+3. research/7-implementation/blueprint.md (NOW the complete roadmap — Phase V1 + V2 + the new
+   **Phase S**), progress.md (the tracker — now with the **Surface build — Units 10–14** section),
+   v1-cut-checklist.md (the cut is ENGINE-scoped — see its corrected scope note), decision-ledger.md.
+4. The auto-memory index named in CLAUDE.md.
 
-CURRENT STATE (2026-06-18): V1 cut CLOSED. Driving V2. Publishing gated on V2 (DEF-016 at
-pre-publish). Branch `integration/0.1.x`. This session's commits (all on the branch; the human
-still needs to PUSH to update PR #7 → integration/0.1.x → main):
-- `da2672b` fix(ci) — DEF-017: prebuild `example/ios` before pod install (managed-Expo `ios/` is
-  CNG/gitignored; absent on a fresh runner). [Superseded by the removal below, but kept in history.]
-- `10bf282` fix(ci) — DEF-017: raise the smoke-harness sim boot timeout to 240s (cold CI boot
-  exceeds 60s). [Harness change; survives the lane removal, harmless for the fast local boot.]
-- `6a37f39` chore(ci) — DEF-017: REMOVE the `ios-smoke` lane; keep the harness for local use.
-- `0fa34f2` docs(impl) — DEF-014 follow-up: correct the v1-cut-checklist shader-on-sim waiver premise.
-- `bbdd434` docs(runtime) — repoint the stale `SharedObject`-layer deferral DEF-020 → DEF-021 (`36` + `architecture.md`).
-- (+ `7e1fbc3` docs — the human's anchored-reveal WIP, parked post-v2.)
+THE CENTRAL FINDING (2026-06-18) — read this before picking up work:
+The planning system had TWO source-of-truth layers but only decomposed ONE into a build plan.
+`blueprint.md` line 3 scoped itself to "the native runtime and JS↔native boundary" and delegated
+"the JS surface layer (components, builders)" to `1-surface/` — which is DESIGN docs, not a tracked
+build plan. The decision-ledger tracks *decisions*, and closing a surface decision (e.g. DEF-004
+"the `fx.effect.*` builder *is* the stack API") never spawned an implementation task. Result: the
+runtime engine (Units 1–9) was built and device-proven, while the public surface the product is
+defined by went UNTRACKED and mostly UNBUILT.
 
-DEF-017 (critique F16 — iOS simulator smoke lane) — RESOLVED: CI LANE REMOVED FOR COST; LOCAL
-HARNESS RETAINED. The `ios-smoke` job shipped (`78176af`) and was reviewed, but its first hosted
-`macos-26` runs exposed the real cost — a ~15-min macOS job (≈10× the Linux rate) on every
-PR/push to `main`, guarding 10 V1-frozen, rarely-changing curated shaders. The first hosted run
-also surfaced two bring-up bugs (NOT the feared GPU-blank residual): a missing `expo prebuild`
-step (fixed `da2672b`) and a 60s sim-boot timeout too short for a cold runner (fixed `10bf282`).
-The maintainer judged the recurring spend not worth it → the job was deleted (`6a37f39`). KEPT:
-`example/scripts/smoke-shader-catalog.ts` + the `smoke:ios` script, as an on-demand local check
-(`cd example && bun run smoke:ios` before touching curated shaders). The "first hosted run
-GPU-renders Metal" residual is now MOOT (no hosted run will fire). Disposition recorded in
-`tasks/DEF-017/README.md`, `progress.md`, and the critique F16 row. Device stays the feel/touch gate.
+`6-ship/52 §Public exports` names the V1 stability contract as 8 symbols:
+`fx, FxPresence, FxView, FxPressable, Fx, FxGroup, FxItem, EdgeGlow`. Reconciled against code:
+- SHIPPED: `fx.motion.*`, `fx.source.*`/`Fx.Scroll` (DEF-014), `FxPresence` (U7-001),
+  `interactionMode none|passive|active|controlled` (U8/DEF-020), the 10 curated shaders (U3-006,
+  reachable only via the low-level substrate views).
+- MISSING (unbuilt, was untracked): `<Fx effect>` (the canonical front door — `Fx` is only
+  `{ Scroll }` today), `fx.effect.*` + `EffectStack`/`EffectStep`, `FxView`, `FxPressable` (JS
+  component; native `FxPressHandler` shipped), `FxGroup`/`FxItem`, `EdgeGlow`.
+Five of eight contract symbols + the `fx.effect.*` builder do not exist.
 
-DEF-014 follow-up (shaders-render-on-sim vs the v1-cut-checklist waiver) — DONE (`0fa34f2`). The
-waiver's blanket claim "the curated `[[stitchable]]` shaders do not render on the iOS simulator"
-was FALSE: the hosted-path catalog renders non-blank on the Apple-silicon sim (DEF-014 maintainer
-sim run + DEF-017 harness, 10/10 ids, variance ~680–5860). Corrected in `v1-cut-checklist.md` (the
-live record) + flagged in the DOC-022 work order. What stays hardware-only: real-device (A15) GPU
-render fidelity + scroll/thermal perf. Narrower caveat preserved: the INTERACTIVE `expo-view`
-shader path was observed blank on the sim in U8-002 (path-specific, not the hosted catalog).
+WHAT THIS SESSION DID (all on `integration/0.1.x`, UNCOMMITTED — the human must review + commit):
+- Fanned out 7 read-only Explore agents (one per canonical research folder 0-spine…6-ship) to build
+  a source-of-truth inventory; reconciled it against code + the tracker. That surfaced the finding.
+- `blueprint.md`: added **Phase S** (Units 10–14) decomposing the surface, with an honest intro on
+  why the gap existed.
+- `progress.md`: added the **Surface build — Units 10–14** section (U10-001…U14-001, all `todo`,
+  `device:yes`, NOT YET SPEC'D).
+- `v1-cut-checklist.md`: added the "Scope of this cut" correction (engine-scoped, not the surface)
+  + refreshed "What comes next" to the surface build.
+- `HOW-TO-CONTINUE.md`: refreshed the stale 2026-06-07 snapshot to the current state.
+- Research-folder staleness fixed (caught by the fan-out): `1-surface/50` (all 10 shaders ship, not
+  5); `4-runtime/README` table + prose (33/34/35/36 device-proven, not "pending/unbuilt");
+  `4-runtime/33` (identity falsification device-proven, U9-002); `5-realization/structure.android`
+  (content-distort ships via DEF-009, not "planned").
 
-DEF-021 (true `Fx*` `SharedObject` layer + `FxEffectRenderer` object + HybridObject *shape*) —
-CONFIRMED BLOCKED (planner + maintainer, 2026-06-18). The HybridObject SHAPE is approved (`05`
-Decision #3); a JS-held `SharedObject` LAYER is NOT — `36` §V1 realization + progress.md preserve
-the consumer gate (no JS-held handle ⇒ no SharedObject). Building it now is speculative
-architecture and trips the rule-#7 Nitro boundary. The three defensible moves on record:
-  1. If a real DETACHED imperative-handle API is wanted (a post-v2 impulse API:
-     `const h = fx.createEffect(...); h.setUniform(...); h.impulse({x,y}); h.dispose()`) — first
-     RATIFY the handle surface (what object, who creates it, its lifetime, why a view ref is
-     insufficient), THEN implement DEF-021 as an Expo Modules `SharedObject` task (rule-clean, no
-     Nitro; DEF-020 kept `setUniform`/`setHighlight` a clean subset so the swap is mechanical).
-  2. If PER-CHILD control fired (staggered children, child-anchored `menu`/`tooltip`, DEF-002) —
-     DEF-021 is NOT first; run the SPINE-010 `05` boundary re-evaluation (Nitro vs raw Fabric vs
-     Expo Modules) as a `ratify` task FIRST.
-  3. Otherwise leave DEF-021 blocked.
-NOTE: the anchored-reveal WIP does NOT by itself trigger DEF-021 — `FxAnchor`/`FxReveal` can start
-as mounted native views + a registry/rect read; no detached handle unless an API stores an
-anchor/effect object outside the view tree.
+THE SURFACE UNITS (blueprint Phase S; all unblocked — every runtime dep is merged):
+- **Unit 10 / U10-001** — `<Fx effect="id">` string-form surface + `EdgeGlow`. The canonical front
+  door (rule #5); `select()` over the manifest, mounts `FxHostedView`/`FxSurfaceView`, wires
+  effect/intensity/composition/interactionMode/uniform props + load/error/press events. THE
+  unblocker for Units 11/12. Deps: Units 1/2/3/8 (merged).
+- **Unit 11 / U11-001** — `fx.effect.*` builder + `EffectStack`/`EffectStep` + `<Fx effect={stack}>`
+  composition (realizes what DEF-004/SURF-008 ratified). Deps: U10-001.
+- **Unit 12 / U12-001** — `FxView` (state-driven content; `lift` preset, `idle`/`selected`; wires the
+  unbuilt `onFxStateChange` dispatcher). Deps: U10-001 + Units 4/6 (merged).
+- **Unit 13 / U13-001** — `FxPressable` over the shipped `FxPressHandler` (`feedback="native"`).
+  Deps: Unit 8 (merged).
+- **Unit 14 / U14-001** — `FxGroup`/`FxItem` glass-morph compound (DOC-006; `spacing` deferred V2).
+  Deps: Units 1/3 (merged).
 
-NEXT — nothing is in a ready/spec'd state; EVERY remaining DEF row is `merged` or `blocked`
-behind a trigger, and DEF-021 is confirmed blocked. Do NOT start a trigger-gated row unprompted —
-ask the human which trigger fired. Trigger-gated candidates (none objectively fired):
-- DEF-016 — mechanical rename `react-native-fx` → `react-native-fxkit` + docs/skills. Trigger:
-  pre-publish (publish only after V2 is done).
-- DEF-021 — see the three moves above. Speculative until a detached handle / per-child control.
-- DEF-006 — OPTIONAL app-owned Reanimated UI-thread channel (MOT-007). Not on any active path.
-- DEF-001/002/012/013/018/019 — each waits on a concrete demand.
-POST-V2 EXPLORATION (parked in `research/wip/`, NOT tasks — promoting one is a human DESIGN call):
-anchored-reveal-and-library-shape (the freshest; `FxAnchor`/`FxReveal` geometry orchestration,
-Boundary A, post-v2; has a 6-step promotion path), capability-boundary-classifier,
-lane1-declarative-surface, lane1-signal-grammar, native-animation-api-extraction,
-native-slot-layout-transitions, interactive-content-distort, interactive-glass-touch-delivery.
+NEXT — spec **Unit 10** (the front door + unblocker). It is the highest-value, lowest-risk surface
+unit (the substrate views already render every effect; this is the JS surface over them). Write the
+executor spec to `tasks/U10-001/` per subtask-protocol; hand the prompt to the human. Then Units 11
+and 12 in parallel, 13 and 14 anytime. Publishing (DEF-016) stays correctly blocked: V2/publish is
+NOT done while the front door is unbuilt.
 
-LEDGER: RT-002 resolved (DEF-011, prior session). Remaining genuinely-open, non-blocking: MOT-002
-(`tune` vocab, slaved to MOT-001) and MOT-008 (BYO intro/outro envelope, V2 via DEF-007). SPINE-010
-(per-child-control Nitro re-eval) is `deferred` — the gate for DEF-021 move #2. Everything else
-resolved or trigger-deferred.
+ALSO STILL TRUE FROM THE PRIOR HANDOFF:
+- Branch `integration/0.1.x`. Before this session's docs work, the branch was ahead 6 unpushed
+  (the DEF-017 lane-removal cluster + the prior handoff). The human still needs to PUSH to update
+  PR #7 (integration/0.1.x → main). This session's doc edits add to the uncommitted/unpushed delta.
+- DEF-017 RESOLVED (CI lane removed for cost; local smoke harness `smoke:ios` kept). DEF-014 waiver
+  premise corrected (shaders render on the sim). DEF-021 CONFIRMED BLOCKED (no JS-held SharedObject
+  consumer; speculative + trips rule #7 — needs a detached handle or per-child control to unblock).
+- LEDGER non-blocking opens: MOT-002 (`tune` vocab, slaved to MOT-001), MOT-008 resolved by
+  composition (DEF-007). Presence/feedback default-catalog *magnitudes* ride MOT-001 device work;
+  the Surface units build the component MECHANISM, not the catalog feel.
 
-START BY: reading the binding docs. Then, if the human PUSHED and PR #7 is green, the session's
-work is integrated — pick up a HUMAN-CHOSEN trigger-gated row (ask which trigger fired — do not
-assume) OR a human-chosen WIP-promotion design call. Do not start DEF-006, the `wip/` material,
-or any trigger-gated row unprompted.
+START BY: reading the binding docs (esp. the corrected blueprint Phase S + progress Surface build).
+Then, if the human directs it, SPEC Unit 10. Do not start a trigger-gated DEF row unprompted.

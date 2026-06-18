@@ -34,8 +34,9 @@ component.
    both.
 2. **Effects are draw-time and touch-safe.** `RenderEffect`/AGSL apply on the view's
    `RenderNode`, independent of input dispatch. So shading *over live content* does
-   **not** sever touch — the inverse of iOS. This is why `content-distort` is
-   `planned` on Android while out-of-scope on iOS.
+   **not** sever touch — the inverse of iOS. This is why `content-distort` ships on
+   Android (the curated `ripple` demonstrator, DEF-009, device-proven) while it is
+   out-of-scope on iOS.
 3. **Three capability gaps.** No native `MeshGradient` (use AGSL), no Liquid Glass
    (blur + overlay, or the Haze/Cloudy libs), no SF Symbols (Animated Vector
    Drawables or Lottie). One reverse-freebie: native **shape morph** via M3

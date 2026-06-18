@@ -27,14 +27,19 @@ chain and lifecycle rules live in [`subtask-protocol.md`](./subtask-protocol.md)
 ## Where the project is
 
 Read [`progress.md`](./progress.md) for the authoritative state — the snapshot below rots. As of
-2026-06-07:
+2026-06-18:
 
-- **U1-001 (package scaffolding)** is reviewed and sits at `docs-pending`. Identity, layout, the
-  Android skeleton, and the layered `src/` are in place; the build is green headless. `SHIP-001` is
-  closed; `IMPL-001` is carried until the work below lands.
-- **Next up is U1-002** — the `FxNativeView` base plus registering the substrate view trio (closes
-  `RT-010`). Closing `RT-010` and the device proof `REAL-002` are what finish `IMPL-001` / U1-001.
-- Nothing is committed yet — the working tree holds the scaffolding diff for review.
+- **The native runtime + boundary (Units 1–9) are built, device-proven, and merged** on
+  `integration/0.1.x` — effects, materials, shaders, motion, presence, interaction, drag/tilt, the
+  hosted scroll `source` (DEF-014), runtime-source BYO (DEF-008), Android content-distort (DEF-009).
+- **The JS public surface (Units 10–14) is the remaining work, and it is unbuilt** — `<Fx effect>`,
+  `fx.effect.*`, `FxView`, `FxPressable`, `FxGroup`/`FxItem`, `EdgeGlow`. The original `blueprint.md`
+  scoped the surface out and delegated it to `1-surface/`; nothing tracked it, so the engine shipped
+  while this front door went untracked (five of the eight `52 §Public exports` contract symbols + the
+  `fx.effect.*` builder are absent in code). It is now decomposed in `blueprint.md` Phase S and tracked
+  in `progress.md` Surface build (all `todo`). **Start with Unit 10.**
+- **Publishing waits on V2 + the surface build** — DEF-016 (the `react-native-fxkit` rename) fires
+  pre-publish, after the surface lands.
 
 Each active task keeps a `tasks/<id>/notes.md` with what changed, any unverified claims, and a
 one-line "Next:". Start there to see what the last session did.

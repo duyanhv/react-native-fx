@@ -93,3 +93,49 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 *   **Explicit Reject:** Nitro-the-dependency (upfront).
 *   **Shape · phase:** `Fx*` SharedObjects (JS-facing) + plain native objects (internal) · **V2**
 *   **Depends on:** Unit 6, Unit 7
+
+---
+
+## Phase S: The Public Surface (Components & Builders)
+
+*This phase delivers the JS-facing surface layer — the components and builders `1-surface/` specifies and `6-ship/52 §Public exports` names as the V1 stability contract (`fx, FxPresence, FxView, FxPressable, Fx, FxGroup, FxItem, EdgeGlow`). The original blueprint above deliberately scoped these out ("The JS surface layer (components, builders) that sits atop these units is documented in `1-surface/`") and no unit ever decomposed them, so the runtime engine (Units 1–9) was built and device-proven while the front door it feeds went untracked — five of the eight contract symbols (`<Fx effect>`, `FxView`, `FxPressable`, `FxGroup`/`FxItem`, `EdgeGlow`) and the `fx.effect.*` builder do not exist. These units close that gap. Each sits atop already-merged runtime units, so all are unblocked. The presentation magnitudes/feel they surface (preset/feedback default catalogs) ride the existing MOT-001 device work; these units build the component mechanism and prop wiring.*
+
+### Unit 10: `<Fx effect>` — the effect surface + `EdgeGlow`
+*   **Contract:** `50`, `55`, `56`, `02`, `40`
+*   **Precedent (battle-tested):** the shipped `Fx.Scroll` / `FxPresence` components over the substrate views; `select()` over the manifest (U2-001).
+*   **Decision + flip-trigger:** **fx-original design.** Ship the canonical front door `<Fx effect="id">` (string form) — a component that runs `select()` over the manifest and mounts the right substrate view (`FxHostedView` decorative / `FxSurfaceView` interactive), wiring `effect` / `intensity` / `composition` / `interactionMode` / uniform props + `onLoad` / `onError` / `onPress*`. `EdgeGlow` ships as thin sugar over `<Fx effect="edge-glow">` (the one named effect component, DOC-004). → *Flip-trigger: none expected — the substrate views already render every effect; this is the JS surface over them.*
+*   **Explicit Reject:** exposing `FxSurfaceView` / `FxHostedView` as the public effect API (they are the low-level hosts, `52`); a bare `effect` export (`55` Decision 7).
+*   **Shape · phase:** `src/surface/Fx.tsx` (+ `EdgeGlow`) · **Surface**
+*   **Depends on:** Unit 1, Unit 2, Unit 3, Unit 8 (all merged)
+
+### Unit 11: `fx.effect.*` builder + `EffectStack` composition
+*   **Contract:** `55`, `50`, `02`
+*   **Precedent (battle-tested):** the shipped `fx.motion.*` / `fx.source.*` builder namespaces (one-to-one builder → type).
+*   **Decision + flip-trigger:** **fx-original design.** Add the third builder namespace `fx.effect.*` (`.mesh` / `.glass` / `.glow` / `.blur` / `.animate` / `.defaults`) producing an immutable `EffectStack` (`EffectStep[]` + per-step / stack `Transition`), consumed by `<Fx effect={stack}>` — one component, one bridge crossing, layers as config not children (`55` Decisions 1/2/6/8). → *Flip-trigger: a real multi-layer use case the value-semantics stack cannot express → revisit the `Fx.Stack` JSX compound (SURF-008).*
+*   **Explicit Reject:** `Fx.Stack` / `Fx.Layer` JSX compound (DEF-004 / SURF-008); `motion` as an `EffectStep.node` (visual-only, `55` Decision 2).
+*   **Shape · phase:** `src/fx.ts` (`effect` namespace) + `src/effects/stack.ts` · **Surface**
+*   **Depends on:** Unit 10
+
+### Unit 12: `FxView` — state-driven content presentation
+*   **Contract:** `57`, `50`, `54`, `41`
+*   **Precedent (battle-tested):** `FxPresence` (the sibling content coordinator, U7-001); the content-motion driver (U6) + wrapper mechanic (U4).
+*   **Decision + flip-trigger:** **mimic** the `FxPresence` shape. `FxView` wraps content in one managed wrapper and animates transform/opacity between mounted `state`s via the content driver; props `state` / `preset` / `motion` / `effect` / `transition`; V1 `lift` state preset, `idle` / `selected` vocab (DOC-005). Wires the `onFxStateChange` native dispatcher (`40` flags it unwired). → *Flip-trigger: none.*
+*   **Explicit Reject:** per-child motion (`57` Decision 5); animating flow layout (`04` Decision 2).
+*   **Shape · phase:** `src/surface/FxView.tsx` + native `onStateChange` dispatch · **Surface**
+*   **Depends on:** Unit 4, Unit 6, Unit 10
+
+### Unit 13: `FxPressable` — native press feedback
+*   **Contract:** `57`, `30`, `40`
+*   **Precedent (battle-tested):** the shipped native `FxPressHandler` recognizer (U8-001).
+*   **Decision + flip-trigger:** **mimic** — a JS component over the existing `FxPressHandler`: a `feedback="native"` press-feedback bundle + `onPress*` events on *your* content (distinct from `<Fx interactionMode>`, which is the effect surface). → *Flip-trigger: none.*
+*   **Explicit Reject:** an RNGH dependency (`30` Decision 5); a second recognizer (reuse `FxPressHandler`).
+*   **Shape · phase:** `src/surface/FxPressable.tsx` · **Surface**
+*   **Depends on:** Unit 8 (merged)
+
+### Unit 14: `FxGroup` / `FxItem` — the morphing compound
+*   **Contract:** `57`, `21`
+*   **Precedent (battle-tested):** the `FxGroupView` substrate binding (exists); iOS `GlassEffectContainer` / Android glass stack (U3-002 / U3-003).
+*   **Decision + flip-trigger:** **adapt** the platform glass-container idiom. `FxGroup` / `FxItem` — the one honest compound (each item a real native morphing view); V1 morph scope is glass-only (DOC-006); explicit `spacing` deferred to V2. → *Flip-trigger: morph beyond glass (a new ledger row).*
+*   **Explicit Reject:** a generic `Material` / `GlassContainer` component (`21` Decision 3); morphing arbitrary effects in V1.
+*   **Shape · phase:** `src/surface/FxGroup.tsx` (+ `FxItem`) over `FxGroupView` · **Surface**
+*   **Depends on:** Unit 1, Unit 3 (merged)

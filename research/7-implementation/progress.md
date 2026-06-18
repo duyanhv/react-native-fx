@@ -94,6 +94,25 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U9-001 | Unit 9 | ratify | merged | no | — | RT-008 | U6-001, U7-001 | **merged 2026-06-13 (maintainer — V1-cut closeout): `835d546`.** **ratified (planner, 2026-06-13).** Scope reframed from "build `Fx*` SharedObjects" to a V1 ratification: V1 exposes no JS-held handle, so a `SharedObject` has no consumer — the object graph stays three plain `internal` native classes (`FxAnimationDriver`/`FxPresenceCoordinator`/`FxLayoutObserver`) + the recognizer, rendering inline in the views. **RT-008 closed** in `36` §Resolved questions (one driver/two families; per-view clocks; `FxEffectRenderer` object + the SharedObject layer deferred to **DEF-020**). No code, no device gate. Awaiting maintainer's `merged` tick |
 | U9-002 | Unit 9 | ratify | merged | no | — | SPINE-009 | U4-001, U5-001, U7-001 | **merged 2026-06-13 (maintainer — V1-cut closeout): `835d546`.** **ratified (planner, 2026-06-13).** Reframed from a new device gate to a **device-proven-by-citation** close: **SPINE-009 closed** — the no-Nitro bet's falsification test passes on hardware across the maintainer-ratified U5–U8 gates (native layout read U5-001; identity-stable driver/coordinator/recognizer U6/U7/U8). `05` falsification open question flipped to device-proven; `SPINE-010` not triggered. No separate gate needed. Awaiting maintainer's `merged` tick |
 
+### Surface build — Units 10–14 (the JS public surface)
+
+The components and builders `1-surface/` specifies and `6-ship/52 §Public exports` names as the V1
+stability contract (`fx, FxPresence, FxView, FxPressable, Fx, FxGroup, FxItem, EdgeGlow`). The original
+`blueprint.md` scoped the surface layer out and delegated it to `1-surface/` design docs; no unit ever
+decomposed it, so the runtime engine (Units 1–9) shipped and was device-proven while the front door it
+feeds went untracked. Five of the eight contract symbols and the `fx.effect.*` builder do not exist in
+code. `blueprint.md` Phase S now decomposes them; all depend only on already-merged runtime units, so
+all are unblocked. Decision rows these consume (SURF-008/DEF-004, etc.) are already resolved — these are
+the build tasks that realize the ratified surface, and close no new ledger row.
+
+| id | unit | type | state | device | consumes | closes | blocked by | proof |
+|----|------|------|-------|--------|----------|--------|------------|-------|
+| U10-001 | Unit 10 | implement | todo | yes | — | — | — (Units 1/2/3/8 merged) | `<Fx effect="id">` string-form effect surface + `EdgeGlow` sugar — the canonical front door (rule #5); `select()` over the manifest, mounts `FxHostedView`/`FxSurfaceView`, wires `effect`/`intensity`/`composition`/`interactionMode`/uniform props + load/error/press events. NOT YET SPEC'D. |
+| U11-001 | Unit 11 | implement | todo | yes | — | — | U10-001 | `fx.effect.*` builder namespace (`.mesh`/`.glass`/`.glow`/`.blur`/`.animate`/`.defaults`) + immutable `EffectStack`/`EffectStep` + `<Fx effect={stack}>` composition. Realizes the surface DEF-004/SURF-008 ratified (builder-is-the-stack-API). NOT YET SPEC'D. |
+| U12-001 | Unit 12 | implement | todo | yes | — | — | U10-001 (+ Units 4/6 merged) | `FxView` — state-driven content presentation (`state`/`preset`/`motion`/`effect`/`transition`); `lift` preset, `idle`/`selected` vocab; wires the unbuilt `onFxStateChange` native dispatcher. NOT YET SPEC'D. |
+| U13-001 | Unit 13 | implement | todo | yes | — | — | — (Unit 8 merged) | `FxPressable` — JS component over the shipped native `FxPressHandler`; `feedback="native"` + `onPress*` on your content. NOT YET SPEC'D. |
+| U14-001 | Unit 14 | implement | todo | yes | — | — | — (Units 1/3 merged) | `FxGroup`/`FxItem` — the morphing compound over `FxGroupView`; glass-only morph in V1 (DOC-006), `spacing` deferred V2. NOT YET SPEC'D. |
+
 ### Deferred — V2 / trigger-gated, not actionable now
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
@@ -150,7 +169,7 @@ Checklist:
 
 ## DEF-011 — native-owned drag/tilt (G3 axis-aware claiming)
 
-Type: `implement` · State: `merged` (on integration/0.1.x; hardware gate PASS + human-delegated tick 2026-06-18) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/)
+Type: `implement` · State: `merged` (on integration/0.1.x; hardware gate PASS + human-delegated tick 2026-06-18) · Device: yes · Consumes: — · Closes: RT-002 · [task](./tasks/DEF-011/) · [review](./reviews/DEF-011.md)
 
 Re-scoped 2026-06-15 to **native-owned**: drag/tilt is fx-owned interaction, so a native recognizer
 reads the gesture and writes the uniform natively every frame — no per-frame JS, no Reanimated.

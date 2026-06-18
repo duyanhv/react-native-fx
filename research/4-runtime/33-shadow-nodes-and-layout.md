@@ -1,5 +1,5 @@
 # Runtime: shadow nodes & layout
-Status: researched (design) · source-audit pass · layout read device-proven (U5-001, 2026-06-11) · identity/hit-test proof pending
+Status: researched (design) · source-audit pass · device-proven (layout read U5-001, 2026-06-11; wrapper identity / `05` falsification U9-002, 2026-06-13)
 Phase: v2 (the owned content-motion runtime lives on the `expo-view` substrate)
 Feeds: 34-animation-driver.md, 35-view-state.md, 42-presence-and-lifecycle.md, structure.{ios,android}
 
@@ -76,7 +76,7 @@ fx-legal analogue is to animate fx's *own* `expo-view` where fx is the sole writ
 transform/opacity, so there is no Fabric prop to clobber — reserved as the alternative if the
 container model breaks down, not the V1/V2 default.
 
-### The falsification test — source-audit verdict: PASS (device proof pending)
+### The falsification test — verdict: PASS (device-proven, U9-002, 2026-06-13)
 
 Verified against Expo/RN source — a **source-audit** pass, not a device proof: **stable
 wrapper identity holds** (Expo
@@ -118,8 +118,8 @@ default holds.
   **read post-layout frames natively**. If either cannot be done cleanly through Expo Modules,
   that is a concrete trigger to reconsider Nitro/JSI. Until one fails on device, the default
   holds. **The layout-read half passed on device (U5-001, 2026-06-11)** — Expo Modules reads
-  post-layout frames natively with no C++/JSI; the identity half stays open (the `05` test,
-  U9-002).
+  post-layout frames natively with no C++/JSI; the identity half is **device-proven** (the `05`
+  falsification test — SPINE-009 closed, U9-002, 2026-06-13).
 - ~~Whether any of this is reachable on the `hosted` substrate, or strictly `expo-view`.~~
   **Resolved (RT-013 / U5-001, device-verified 2026-06-11): strictly `expo-view`.** The read
   rides `FxSurfaceView` with no hosted-substrate involvement; content motion and its layout

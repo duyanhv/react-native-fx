@@ -1,7 +1,7 @@
 # DEF-011 — native-owned drag/tilt (G3 axis-aware claiming)
 
-Type: `implement` · State: `in-progress` (spec'd) · Device: `yes` · Closes: RT-002 ·
-Blocked by: — (DEF-020 merged) · Reanimated: not used
+Type: `implement` · State: `merged` (hardware gate PASS + human-delegated tick 2026-06-18) ·
+Device: `yes` · Closes: RT-002 · Blocked by: — (DEF-020 merged) · Reanimated: not used
 
 ## Why this task exists
 

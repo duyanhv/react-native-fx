@@ -6,10 +6,19 @@ limitation taken honestly. Produced by the closeout sweep (DOC-022, 2026-06-13).
 
 ## Cut status
 
-Units 1–9 are built and merged; the surface is frozen (DEF-015) and named (`react-native-fxkit`,
-the mechanical rename pending under DEF-016). After the closeout sweep, **no V1-scoped ledger
-row is left `open`** — every remaining row is either `resolved` or V2-deferred behind a named
-trigger.
+Units 1–9 (the native runtime + boundary) are built and merged; the surface API is **design-frozen
+and named** (DEF-015; `react-native-fxkit`, the mechanical rename pending under DEF-016). After the
+closeout sweep, **no V1-scoped ledger row is left `open`** — every remaining row is either `resolved`
+or V2-deferred behind a named trigger.
+
+> **Scope of this cut (corrected 2026-06-18).** This checklist measures the **runtime engine** (Units
+> 1–9), not the JS public surface. The components and builders `1-surface/` + `6-ship/52 §Public exports`
+> name as the V1 contract — `<Fx effect>`, `fx.effect.*`, `FxView`, `FxPressable`, `FxGroup`/`FxItem`,
+> `EdgeGlow` — were design-frozen but never built (five of the eight contract symbols + the `fx.effect.*`
+> builder are absent in code). The original `blueprint.md` scoped the surface out and delegated it to
+> `1-surface/`; no unit decomposed it, so the engine shipped while the front door went untracked. The
+> surface is now decomposed as **Phase S / Units 10–14** in `blueprint.md` and tracked in `progress.md`
+> (all `todo`). The cut is an **engine milestone**; the product front door is separate, tracked, and unbuilt.
 
 ## Ledger dispositions (closeout)
 
@@ -74,8 +83,10 @@ V1; it fires at the pre-publish moment, which is now after V2.
 
 ## What comes next (post-V1 cut)
 
-- **V2 work** — the deferred units / DEF-* triggers that V2 turns on (publishing rides on V2
-  completion).
-- **DEF-014** — the iOS-hosted `source` rung, slated as the first V1.x task (not a V1 blocker).
-- **DEF-016** — deferred to the pre-publish moment (after V2): the rename to `react-native-fxkit`
-  + the parity story in `skills/`.
+- **The surface build (Units 10–14)** — the JS public front door, the real remaining work before
+  publish (`blueprint.md` Phase S; `progress.md` Surface build). Start with Unit 10 (`<Fx effect>` +
+  `EdgeGlow`), the unblocker for Units 11/12. None is spec'd yet.
+- **DEF-016** — the pre-publish rename to `react-native-fxkit` + the `skills/` coexistence/parity
+  story; fires after the surface is built and V2 is done.
+- Remaining V2 / DEF-* triggers turn on as their named triggers fire. (DEF-014, the iOS-hosted
+  `source` rung that opened V2, is merged.)

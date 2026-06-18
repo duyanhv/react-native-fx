@@ -49,10 +49,10 @@ This is where the hard rules are easiest to break:
 | 30 | interaction-and-gestures | the interaction contract | researched |
 | 31 | lifecycle-and-teardown | the owned-loop lifecycle contract | researched |
 | 32 | host-safe-hittest-and-sdf | the hit-testing / SDF model | researched |
-| 33 | shadow-nodes-and-layout | Yoga/Fabric layout ownership | researched (design) · source-audit pass · device proof pending |
-| 34 | animation-driver | the from-scratch native animation engine | researched (design) · source-audit pass · device proof pending |
-| 35 | view-state | mount/unmount coordination, the presence handshake + the lifecycle FSM | researched (design) · source-audit pass · device proof pending |
-| 36 | runtime-architecture | the object model — who owns what, how they collaborate | researched (design) · source-audit pass · device proof pending |
+| 33 | shadow-nodes-and-layout | Yoga/Fabric layout ownership | researched · device-proven (layout read U5-001; wrapper identity U9-002) |
+| 34 | animation-driver | the from-scratch native animation engine | researched · device-proven (retarget U6-001/U6-002) |
+| 35 | view-state | mount/unmount coordination, the presence handshake + the lifecycle FSM | researched · device-proven (handshake + FSM U7-001/U7-002) |
+| 36 | runtime-architecture | the object model — who owns what, how they collaborate | researched · device-proven (object model U9, 2026-06-13) |
 | 51 | expo-modules-view | the native-view authoring base (the boundary) | researched |
 
 ## Feeds
@@ -64,11 +64,10 @@ This is where the hard rules are easiest to break:
 
 ## Open research targets
 
-The interactive runtime (`30`–`32`) is `researched` but v2-unbuilt; the **owned
-content-motion runtime (`33`/`34`/`35`) now has its design researched** (wrapper-transform,
-the hit-testing caveat, the deferred-unmount handshake) and a **source-audit pass** (verified
-against Expo/RN/Nitro source, `references/`); it is **device-proof pending** — the remaining
-work is on-device proof, not paper design:
+The interactive runtime (`30`–`32`) and the owned content-motion runtime (`33`/`34`/`35`) are
+both **built and device-proven** (U5–U9, 2026-06-11 → 06-13) — the designs below are realized in
+`packages/` and verified on hardware. They stay the source of truth for *why* each mechanic is
+shaped the way it is:
 
 - **`33`** — how fx keeps a stable handle to the **managed wrapper it creates** (no child
   ref needed, #27846); reading the post-layout frame natively; proving transform animation
@@ -78,4 +77,4 @@ work is on-device proof, not paper design:
   effect driver split; the frame loop's lifecycle.
 - **`35`** — the deferred-unmount JS↔native protocol; `onTransitionEnd` ordering under
   rapid toggles; source-of-truth on interrupt; teardown that doesn't leak.
-- Everything here needs **device verification** — stays `open` until confirmed.
+- All of the above is **device-verified** (U5–U9); the JS surface that sits on this runtime is tracked separately in `7-implementation` (`blueprint.md` Phase S / Units 10–14).
