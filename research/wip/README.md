@@ -16,6 +16,12 @@ ledger process; when it's abandoned, delete it.
   two directions: platform-first surfaces with a universal layer above them, or a combined fx
   vocabulary first. The provisional answer is hybrid: combined defaults, platform-specific expert
   timing blocks, and raw native framework APIs private to the resolver.
+- [`anchored-reveal-and-library-shape.md`](./anchored-reveal-and-library-shape.md) — post-v2
+  exploration for a camera-style anchored reveal: read an RN/Yoga anchor rect, animate an fx-owned
+  shell and chrome into a target panel, and keep the feature Boundary A unless outside siblings
+  must reflow. Also frames the library shape as value builders (`fx.effect.*`, `fx.motion.*`,
+  `transition`), native wrappers (`Fx`, `FxPresence`, `FxView`), and geometry orchestration
+  (`FxAnchor`, `FxReveal`, future `FxFlow`).
 - [`interactive-content-distort.md`](./interactive-content-distort.md) — a named **feature**
   exploration (water-ripple): make DEF-009's stateless Android content-distort *interactive* — a
   ripple that follows touch, and an `(x,y)` impulse like a rock dropped in water. Classified
