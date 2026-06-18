@@ -97,9 +97,12 @@ not `SharedObject`s and not yet HybridObject-shaped — correctly so: V1 exposes
 handle, so no object crosses the JS boundary.** `FxEffectRenderer` is **not** a discrete
 object in V1; effect rendering lives inline in the view classes (`FxShaderView`,
 `FxSurfaceShaderView`, `FxFillView`). The HybridObject *shape* (`equals`/`dispose`/identity)
-and the `Fx*` `SharedObject` layer are V2 groundwork, deferred to **DEF-020** (trigger: the
-first imperative JS-held handle — controlled-mode `setUniform`/`setHighlight` or a runtime
-controller — or per-child control, the `05` Nitro-reconsideration trigger).
+and the `Fx*` `SharedObject` layer are V2 groundwork, deferred to **DEF-021** (the
+SharedObject / renderer-object half split out of DEF-020 on 2026-06-15). DEF-020 shipped the
+view-ref `controlled` write path — `setUniform`/`setHighlight` as discrete `AsyncFunction`s on
+the surface ref — **without** a `SharedObject`; the SharedObject layer's trigger is narrower: a
+**detached** JS-held handle (a post-v2 impulse API) or per-child control (the `05`
+Nitro-reconsideration trigger).
 
 ## Resolved questions (RT-008, SPINE-009 — 2026-06-13)
 
@@ -107,7 +110,7 @@ controller — or per-child control, the `05` Nitro-reconsideration trigger).
   content family (U6, shipped) and the effect family (V2); never two objects. Confirmed by the
   built code.
 - **`FxEffectRenderer` split (RT-008): deferred** — no discrete renderer object in V1; rendering
-  is in the view classes. The decorative-vs-interactive renderer object is V2 (DEF-020).
+  is in the view classes. The decorative-vs-interactive renderer object is V2 (DEF-021).
 - **Scheduling (RT-008): per-view native clocks** — each surface runs its own
   `CADisplayLink`/`Choreographer`, paused off-window/backgrounded (`31`); there is no global
   shared scheduler. As built.

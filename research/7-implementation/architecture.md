@@ -560,7 +560,8 @@ ios/FxNativeView.swift  /  android/FxNativeView.kt  ──  (the abstract base, 
 > views are **not planned** — they ship as `src/surface/` components over the existing binding. The
 > runtime-object granularity behind this (driver family-split, scheduling) is **resolved** (RT-008,
 > U9 ratify 2026-06-13, `36` §Resolved questions): one `FxAnimationDriver` with two families, per-view
-> clocks; the discrete `FxEffectRenderer` object + the `SharedObject` layer are V2 (DEF-020).
+> clocks; the discrete `FxEffectRenderer` object + the `SharedObject` layer are V2 (DEF-021, split
+> out of DEF-020 on 2026-06-15 — DEF-020 shipped only the view-ref `controlled` write path).
 
 ---
 
