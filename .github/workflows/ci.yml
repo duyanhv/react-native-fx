@@ -116,6 +116,12 @@ jobs:
         # shaders. Harmless where the toolchain is already present.
         run: xcodebuild -downloadComponent MetalToolchain
         continue-on-error: true
+      - name: Generate the native iOS project
+        # example/ is a managed Expo app — ios/ is prebuild-generated (CNG), not committed.
+        # --no-install skips the package + pod install prebuild would otherwise run; deps are
+        # already installed above and Pods install in the dedicated step below.
+        run: bunx expo prebuild --platform ios --no-install
+        working-directory: example
       - name: Install Pods
         run: pod install
         working-directory: example/ios
