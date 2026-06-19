@@ -47,10 +47,13 @@ export function EffectSurfaceScreen() {
 				<Fx effect="aurora" style={styles.fill} />
 			</View>
 
-			<Text style={labelStyle}>2 · interactive shader (aurora, active) — tap it</Text>
+			<Text style={labelStyle}>2 · interactive shader (dots, active) — tap it</Text>
 			<View style={boxStyle}>
+				{/* `dots` is one of the curated shaders the iOS interactive raster path implements;
+				    most shaders render only on the hosted path, so an interactive surface for them
+				    reports onError (no renderer) — `dots` proves the load + press path on both platforms. */}
 				<Fx
-					effect="aurora"
+					effect="dots"
 					interactionMode="active"
 					style={styles.fill}
 					onLoad={(e) => append(`load: ${e.nativeEvent.shader}`)}

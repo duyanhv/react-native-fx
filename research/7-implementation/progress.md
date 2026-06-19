@@ -108,14 +108,15 @@ The components and builders `1-surface/` specifies and `6-ship/52 §Public expor
 stability contract (`fx, FxPresence, FxView, FxPressable, Fx, FxGroup, FxItem, EdgeGlow`). The original
 `blueprint.md` scoped the surface layer out and delegated it to `1-surface/` design docs; no unit ever
 decomposed it, so the runtime engine (Units 1–9) shipped and was device-proven while the front door it
-feeds went untracked. Five of the eight contract symbols and the `fx.effect.*` builder do not exist in
-code. `blueprint.md` Phase S now decomposes them; all depend only on already-merged runtime units, so
-all are unblocked. Decision rows these consume (SURF-008/DEF-004, etc.) are already resolved — these are
-the build tasks that realize the ratified surface, and close no new ledger row.
+feeds went untracked. `blueprint.md` Phase S decomposes them; all depend only on already-merged runtime
+units. **`Fx` (`<Fx effect>`) + `EdgeGlow` shipped + device-verified (U10-001, 2026-06-19)** — the
+canonical front door is live. Still unbuilt: `FxView`, `FxPressable`, `FxGroup`/`FxItem`, and the
+`fx.effect.*` builder. Decision rows these consume (SURF-008/DEF-004, etc.) are already resolved — these
+are the build tasks that realize the ratified surface, and close no new ledger row.
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U10-001 | Unit 10 | implement | headless-done | yes | — | — | — (Units 1/2/3/8 + U3-009 merged) | **HEADLESS-DONE + REVIEWED (planner, 2026-06-19); awaiting commit + the device-gate harness.** `src/effects/effects.ts` resolver + `src/surface/Fx.tsx` (callable + EdgeGlow + Fx.Scroll) shipped; gates re-run by reviewer (tsc/build/lint/114 tests/example tsc green). **Two review folds:** High — `symbol` removed from `EffectId` (rendered nothing without `SymbolConfig.name`; → U10-002); Medium — web crash guard (`select()` on non-native platform). **Device gate blocked: no example screen exercises `<Fx>`/`EdgeGlow` yet.** [task](./tasks/U10-001/) · [detail](#u10-001--fx-effectid-the-effect-surface-front-door--edgeglow) |
+| U10-001 | Unit 10 | implement | merged | yes | — | — | — (Units 1/2/3/8 + U3-009 merged) | **MERGED on integration/0.1.x (device-verified + reviewed + docs-closed 2026-06-19; maintainer-delegated ticks).** The canonical `<Fx effect="id">` front door + `EdgeGlow` + the `Fx` callable. `src/effects/effects.ts` resolver (single id→node source, conformance-tested) + `src/surface/Fx.tsx`. **6/6 PASS on iOS 18 sim + POCO F1.** Review folds: `symbol` removed (→U10-002); web crash guard; interactive-shader harness re-pointed `aurora`→`dots` after the reviewer caught aurora is hosted-only on iOS (interactive raster is a 5-shader subset — now documented in `50`). Code `c461a0d`; harness `dec8c4e`. Deferred follow-up: model per-shader interactive capability in the manifest (select-time vs runtime degradation). [task](./tasks/U10-001/) · [detail](#u10-001--fx-effectid-the-effect-surface-front-door--edgeglow) |
 | U10-002 | Unit 10 | implement | todo | yes | — | — | U10-001 | **SPAWNED from U10-001 review (2026-06-19).** The symbol string-form public surface, deferred from U10. Decide + build: the zero-config `symbol-*` ids (`24-symbols §58`: `<Fx effect="symbol-bounce" />`) + the default symbol / name-resolution rule (a symbol needs `SymbolConfig.name` — what does a zero-config `symbol-*` render?), OR route the explicit `{name, animation}` config through the Unit 11 `fx.effect.*` builder form. Grounded in `24-symbols` + the iOS `FxSymbolView` / `setSymbolConfig` path (Android symbol is deferred, AVD/Lottie planned). Design-then-build; NOT YET SPEC'D. |
 | U11-001 | Unit 11 | implement | todo | yes | — | — | U10-001 | `fx.effect.*` builder namespace (`.mesh`/`.glass`/`.glow`/`.blur`/`.animate`/`.defaults`) + immutable `EffectStack`/`EffectStep` + `<Fx effect={stack}>` composition. Realizes the surface DEF-004/SURF-008 ratified (builder-is-the-stack-API). NOT YET SPEC'D. |
 | U12-001 | Unit 12 | implement | todo | yes | — | — | U10-001 (+ Units 4/6 merged) | `FxView` — state-driven content presentation (`state`/`preset`/`motion`/`effect`/`transition`); `lift` preset, `idle`/`selected` vocab; wires the unbuilt `onFxStateChange` native dispatcher. NOT YET SPEC'D. |
@@ -1127,15 +1128,17 @@ Checklist:
 - [x] implemented (`src/effects/effects.ts` resolver + `src/surface/Fx.tsx` callable + `EdgeGlow`; `Fx.Scroll` preserved)
 - [x] commented (iceberg — adapter-degradation discriminable from native load failure; ref absent/inert on hosted path)
 - [x] headless-done (packages tsc/build/lint green; 114 tests pass incl. resolver suite; example tsc green; gates re-run by reviewer after the symbol/web folds)
-- [ ] device-verified (iOS+Android matrix: hosted shader / interactive shader / glass / mesh-gradient / EdgeGlow / composition — **harness added `example/screens/effect-surface.tsx` (`dec8c4e`); gate ready to run.** JS-only change → Metro/JS reload, no native rebuild)
-- [ ] reviewed (planner headless review done + folds applied/committed `c461a0d`; the formal reviewed gate is post-device)
-- [ ] docs-closed (56/50 status flipped to shipped; `src/index.ts` exports confirmed; resolver is the single id→node source)
-- [ ] merged
+- [x] device-verified (2026-06-19, maintainer-delegated) — **6/6 PASS on iOS 18 sim + POCO F1 (Android 15/API 35)**: decorative hosted shader, interactive shader (press + `load:`), glass, mesh-gradient, EdgeGlow, `composition="background"`. Harness `example/screens/effect-surface.tsx`; evidence in [`evidence/device.md`](./tasks/U10-001/evidence/device.md) + 7 screenshots. **Reviewer finding:** the interactive-shader Row 2 first used `aurora` (hosted-only on iOS → `onFxError`, NOT sim-only — `FxSurfaceView.swift:334-343` implements an interactive raster subset: fractal-clouds/ink-smoke/liquid-chrome/loop/dots); harness re-pointed to `dots` and re-checked on the iOS sim (`load: dots` + grid renders). U10 behaves correctly (load XOR error; native reason discriminable from adapter `unsupported`).
+- [x] reviewed (planner, 2026-06-19) — gates re-run independently; symbol/web folds + the harness-shader fix verified; the iOS interactive-raster subset documented in `50`
+- [x] docs-closed — `50 §V1 shader catalog` flipped to "shipped + device-verified (U10-001)" and records the iOS interactive subset; Phase-S section intro updated (Fx/EdgeGlow shipped); `src/index.ts` exports confirmed; resolver is the single id→node source. `56`/`52` already consistent (no unbuilt marker)
+- [x] merged — on integration/0.1.x (this commit)
 
 Proof:
-- headless: packages tsc/build/lint + resolver-conformance + `<Fx>` resolution tests + example tsc — all green (re-run by reviewer at the symbol/web folds).
-- device: YES — human gate (the both-platform render/press/degradation matrix in the task README); blocked until an example screen exercises `<Fx>`/`EdgeGlow`.
-- docs: 56/50 surface status; `src/index.ts` exports; 52 §Public exports tick.
+- headless: packages tsc/build/lint + resolver-conformance + `<Fx>` resolution tests + example tsc — all green (re-run by reviewer).
+- device: 6/6 PASS both platforms (iOS 18 sim + POCO F1); [`evidence/device.md`](./tasks/U10-001/evidence/device.md).
+- docs: `50` surface status + iOS interactive subset; Phase-S intro; `src/index.ts` exports.
+
+**Spawned follow-up (deferred, not a U10 blocker):** the manifest does not model per-shader interactive capability — `<Fx effect="<hosted-only id>" interactionMode="active">` passes `select()` then `onError`s at mount (honest runtime degradation, the U3-009 over-promise class at shader×interactive granularity). A stricter design would degrade at select-time; documented in `50` for now.
 
 ## Maintenance
 

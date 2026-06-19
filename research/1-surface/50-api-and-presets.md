@@ -132,8 +132,12 @@ The V1 `ShaderId` catalog is `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `lo
 
 All ten ship in the package today — each with a native MSL (iOS) + AGSL (Android)
 implementation on the hosted substrate, device-verified on iOS 17+ and Android API 33+
-(U3-006). They are reachable from JS only once the `<Fx effect>` surface lands (Unit 10);
-until then the curated catalog renders through the low-level substrate views.
+(U3-006). They are reachable from JS through the canonical `<Fx effect="id">` surface
+(shipped + device-verified, U10-001) — `<Fx effect="aurora" />` decorative, or
+`interactionMode="active"` for the interactive path. The iOS interactive raster path renders a
+subset of the catalog (`fractal-clouds` / `ink-smoke` / `liquid-chrome` / `loop` / `dots`); the
+rest are hosted-only on iOS and report `onError` if mounted interactive, while Android's AGSL
+path renders all ten interactively.
 
 Public shader uniforms stay shared and minimal in V1. `intensity` is the stable semantic
 override. `time`, `resolution`, `pressDepth`, and `touch` are native-owned values injected
