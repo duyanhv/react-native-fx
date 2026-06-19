@@ -6,9 +6,10 @@ Feeds: `0-spine/05-native-boundary-decision.md`, `4-runtime/33-shadow-nodes-and-
 Scope: explore whether react-native-fx can use platform-native transition APIs for layout-continuity use cases without copying Reanimated's full Fabric mutation proxy or becoming a second layout engine.
 
 > **Reconciliation note (supersedes earlier naming in this draft).** The identity question is
-> resolved and the boundary/escalation vocabulary now lives in
-> [`capability-boundary-classifier.md`](./capability-boundary-classifier.md), the source of truth
-> for this WIP thread. Read the draft below through these corrections:
+> resolved and the boundary/escalation vocabulary now lives in canon —
+> `0-spine/04 §The presentation boundaries (A / B / L)` and `0-spine/05 §Capability mechanism`
+> (the historical [`capability-boundary-classifier.md`](./capability-boundary-classifier.md)
+> derived it). Read the draft below through these corrections:
 >
 > - **`FxPresence`** owns a single subtree's lifecycle. The `Fx.Transition` name used below is
 >   **dropped** — a single-slot transition *is* `FxPresence` (and `FxTransition` is already a

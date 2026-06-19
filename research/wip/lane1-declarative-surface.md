@@ -2,7 +2,7 @@
 
 Status: open — WIP, non-authoritative
 Phase: additive (depth-1 Boundary A/B; no rule-break)
-Feeds: `lane1-signal-grammar.md`, `capability-boundary-classifier.md`, `0-spine/02-capability-ir-and-lowering.md`, `5-realization/structure.{ios,android}.md`
+Feeds: `lane1-signal-grammar.md`, `0-spine/04`/`05` (capability-boundary taxonomy; `capability-boundary-classifier.md` historical), `0-spine/02-capability-ir-and-lowering.md`, `5-realization/structure.{ios,android}.md`
 Scope: decide the JS surface a developer authors for a Lane 1 interaction — how much of the `source → mapping → settle → target` graph is exposed before the API stops feeling declarative and starts feeling like worklet programming without worklets.
 
 ## The question
@@ -284,8 +284,9 @@ defaults, with override reserved for tuning, not for plumbing.
 
 - `lane1-signal-grammar.md` — the native pieces this surface lowers to (track/settle phases,
   conditioning, transforms, bounds policy, settle operators, the `onFxSignalEvent` contract).
-- `capability-boundary-classifier.md` — Lane 1 vs Lane 2; the rule that authored per-frame math is
-  Lane 2, which is what the override policy enforces at the surface.
+- `0-spine/05` — canonical: Lane 1 vs Lane 2; the rule that authored per-frame math is
+  Lane 2, which is what the override policy enforces at the surface. (`capability-boundary-classifier.md`
+  is the historical derivation.)
 - `packages/src/surface/FxPresence.tsx` — the shipped `preset` / `motion` / `transition` three-layer
   idiom this surface mirrors, and the host for lifecycle-committing interactions.
 - `0-spine/02-capability-ir-and-lowering.md` — the manifest spine: agnostic surface lowering to a

@@ -1,7 +1,7 @@
 # Anchored reveal and library shape
 Status: open -- WIP, non-authoritative
 Phase: post-v2 exploration
-Feeds: `capability-boundary-classifier.md`, `native-animation-api-extraction.md`, `lane1-declarative-surface.md`, `4-runtime/33-shadow-nodes-and-layout.md`, `5-realization/structure.{ios,android}.md`
+Feeds: `0-spine/04`/`05` (capability-boundary taxonomy; `capability-boundary-classifier.md` historical), `native-animation-api-extraction.md`, `lane1-declarative-surface.md`, `4-runtime/33-shadow-nodes-and-layout.md`, `5-realization/structure.{ios,android}.md`
 Scope: explore geometry-aware presentation from an RN-laid-out anchor rect to an fx-owned target rect, and place that feature in the public library model without turning fx into a generic layout animation API.
 
 ## Why this matters

@@ -1,11 +1,17 @@
 # Interactive glass touch delivery — spike (sweep A2-4)
 
-Status: ratified (2026-06-10) — the findings and fix direction (option 1, the UIKit rung) are promoted into `structure.ios.md` §material and `01-substrates-and-hosting.md` by the U3-002 glass-rung rework
+Status: retired — historical (DOC-030); ratified 2026-06-10, findings folded into canon
 Scope: find *why* the system-owned interactive glass press response does not fire on the
 `hosted` substrate, with device evidence; answer the scroller-coexistence question. Findings +
 recommended direction only — **no production fix landed here.** The diagnostic instrumentation
 was reverted (Swift files restored to their exact pre-spike shasums; `xcodebuild` BUILD
 SUCCEEDED and `swift:lint` clean on the reverted tree).
+
+> **Retired (DOC-030, 2026-06-19).** The findings and fix direction (the UIKit
+> `UIVisualEffectView` + `UIGlassEffect` rung) are folded into `5-realization/structure.ios.md`
+> §material and `0-spine/01` (decision 6) by the U3-002 glass-rung rework. Retained as the
+> device-spike **evidence record** — those canon docs cite it as provenance. Non-authoritative;
+> cite `structure.ios.md` / `01`.
 
 > Reproduced and then root-caused on device (iOS 26.5 sim, iPhone 17 Pro): on the
 > hosting-parity glass stage with `Press response: interactive`, the clear-fill glass produces
