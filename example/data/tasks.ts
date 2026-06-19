@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "U10-001",
+		title: "<Fx effect> front door",
+		platform: "iOS · Android",
+		what: "string-form <Fx effect> resolves id→substrate · decorative + interactive shader · glass · mesh-gradient · EdgeGlow · composition · adapter degradation",
+		status: "in-progress",
+		screen: "effect-surface",
+	},
 	{
 		id: "DEF-009",
 		title: "Android content-distort ripple",
