@@ -115,7 +115,8 @@ the build tasks that realize the ratified surface, and close no new ledger row.
 
 | id | unit | type | state | device | consumes | closes | blocked by | proof |
 |----|------|------|-------|--------|----------|--------|------------|-------|
-| U10-001 | Unit 10 | implement | todo | yes | — | — | — (Units 1/2/3/8 + U3-009 merged) | **SPEC'D 2026-06-19 — [`tasks/U10-001/README.md`](./tasks/U10-001/README.md); dispatchable (append `Task: U10-001.`). Design pre-aligned with the maintainer.** `<Fx effect="id">` string-form front door (rule #5) + `EdgeGlow` sugar + the `Fx` callable upgrade (absorbs `Fx.Scroll`). New `src/effects/effects.ts` resolver (public id → node + native effect string, conformance-tested) → `select()` → mounts `FxHostedView` (hosted) / `FxSurfaceView` (expo-view). Events split: native press + shader load/error on the FxSurfaceView path only; `select()→{via:'none'}` = adapter-degradation `onError` (named distinct from native load failure); NO synthesized hosted `onLoad`. `composition`→JS style (default `surface`). `controlled` ref forwarded (expo-view only). Scope: string-form only — NO `fx.effect.*`/stack (Unit 11), no fill config beyond intensity (U3-009), no hosted native lifecycle events. Symbol: iOS render / Android no-op. `device:yes` |
+| U10-001 | Unit 10 | implement | headless-done | yes | — | — | — (Units 1/2/3/8 + U3-009 merged) | **HEADLESS-DONE + REVIEWED (planner, 2026-06-19); awaiting commit + the device-gate harness.** `src/effects/effects.ts` resolver + `src/surface/Fx.tsx` (callable + EdgeGlow + Fx.Scroll) shipped; gates re-run by reviewer (tsc/build/lint/114 tests/example tsc green). **Two review folds:** High — `symbol` removed from `EffectId` (rendered nothing without `SymbolConfig.name`; → U10-002); Medium — web crash guard (`select()` on non-native platform). **Device gate blocked: no example screen exercises `<Fx>`/`EdgeGlow` yet.** [task](./tasks/U10-001/) · [detail](#u10-001--fx-effectid-the-effect-surface-front-door--edgeglow) |
+| U10-002 | Unit 10 | implement | todo | yes | — | — | U10-001 | **SPAWNED from U10-001 review (2026-06-19).** The symbol string-form public surface, deferred from U10. Decide + build: the zero-config `symbol-*` ids (`24-symbols §58`: `<Fx effect="symbol-bounce" />`) + the default symbol / name-resolution rule (a symbol needs `SymbolConfig.name` — what does a zero-config `symbol-*` render?), OR route the explicit `{name, animation}` config through the Unit 11 `fx.effect.*` builder form. Grounded in `24-symbols` + the iOS `FxSymbolView` / `setSymbolConfig` path (Android symbol is deferred, AVD/Lottie planned). Design-then-build; NOT YET SPEC'D. |
 | U11-001 | Unit 11 | implement | todo | yes | — | — | U10-001 | `fx.effect.*` builder namespace (`.mesh`/`.glass`/`.glow`/`.blur`/`.animate`/`.defaults`) + immutable `EffectStack`/`EffectStep` + `<Fx effect={stack}>` composition. Realizes the surface DEF-004/SURF-008 ratified (builder-is-the-stack-API). NOT YET SPEC'D. |
 | U12-001 | Unit 12 | implement | todo | yes | — | — | U10-001 (+ Units 4/6 merged) | `FxView` — state-driven content presentation (`state`/`preset`/`motion`/`effect`/`transition`); `lift` preset, `idle`/`selected` vocab; wires the unbuilt `onFxStateChange` native dispatcher. NOT YET SPEC'D. |
 | U13-001 | Unit 13 | implement | todo | yes | — | — | — (Unit 8 merged) | `FxPressable` — JS component over the shipped native `FxPressHandler`; `feedback="native"` + `onPress*` on your content. NOT YET SPEC'D. |
@@ -1107,6 +1108,34 @@ Proof:
 - headless: `bunx tsc --noEmit`, `bun run build`, `bun run lint`, `bun run swift:lint`, `bun run test` from `packages/` all green. `xcodebuild` native compile: BUILD SUCCEEDED. `structure.ios.md` diff = zero changes.
 - device: scenario written in `tasks/U3-007/evidence/headless.md`. Requires iOS 17+ device/simulator to verify `.symbolEffect` rendering and symbol→symbol transition. Android degradation confirmed by `select()` test.
 - docs: `structure.ios.md` §symbol already pinned — consumed, not re-derived. `24-symbols.md` already ratified. No new ledger row to close (FX-009 resolved by DOC-008).
+
+## U10-001 — `<Fx effect="id">` the effect-surface front door + EdgeGlow
+
+Type: `implement` · State: `headless-done` · Device: yes · Consumes: — · Closes: — · [task](./tasks/U10-001/)
+
+New files: `src/effects/effects.ts` (resolver + `compositionStyle`) and `src/surface/Fx.tsx` (callable `<Fx>` + `EdgeGlow`).
+Modifications: `FxScroll.tsx` (removed provisional `Fx` namespace), `surface/index.ts`, `src/index.ts` (added `EdgeGlow`/`FxProps`/`EffectId` exports).
+Test: `src/__tests__/effects-resolver.test.ts` — resolver conformance, substrate selection, wantInteractive, composition→style, and adapter degradation.
+
+**Review folds (planner, 2026-06-19) — two defects found + fixed in-tree:**
+- **High — `symbol` removed from U10 (Option 1, maintainer).** `effect="symbol"` resolved to a valid iOS rung but rendered nothing (`FxHostedRootView` → `FxEmptyView` without `symbolConfig`) and fired no degradation. A string id must resolve with no extra required config; `SymbolConfig.name` is required, so symbol is a node/config surface → deferred to **U10-002**. Dropped `'symbol'` from `EffectId` / `resolveEffect` / `HOSTED_NATIVE_EFFECT_STRINGS` / `PublicNodeId` and `symbolConfig` from `FxProps`; tests re-pointed.
+- **Medium — web crash guard.** `Fx.tsx` cast `Platform.OS` to `ios|android` and called `select()`; on web `node.lower.web` is undefined → throw. Now guards non-native platforms → `{via:'none'}` adapter degradation (the web no-op bindings).
+
+Checklist:
+- [x] spec'd ([README](./tasks/U10-001/README.md))
+- [x] rules-gated (#1 no per-frame JS / #2 agnostic ids + platform-native realization / #3 select() picks substrate / #4 no RN content hosting / #5 effect prop front door / #7 Expo Modules only / #9 reads layout never writes)
+- [x] implemented (`src/effects/effects.ts` resolver + `src/surface/Fx.tsx` callable + `EdgeGlow`; `Fx.Scroll` preserved)
+- [x] commented (iceberg — adapter-degradation discriminable from native load failure; ref absent/inert on hosted path)
+- [x] headless-done (packages tsc/build/lint green; 114 tests pass incl. resolver suite; example tsc green; gates re-run by reviewer after the symbol/web folds)
+- [ ] device-verified (iOS+Android matrix: hosted shader / interactive shader / glass / mesh-gradient / EdgeGlow / adapter-degradation — **needs an example screen exercising `<Fx>`, not yet added**)
+- [ ] reviewed (planner review done; folds applied — awaiting commit + the harness screen)
+- [ ] docs-closed (56/50 status flipped to shipped; `src/index.ts` exports confirmed; resolver is the single id→node source)
+- [ ] merged
+
+Proof:
+- headless: packages tsc/build/lint + resolver-conformance + `<Fx>` resolution tests + example tsc — all green (re-run by reviewer at the symbol/web folds).
+- device: YES — human gate (the both-platform render/press/degradation matrix in the task README); blocked until an example screen exercises `<Fx>`/`EdgeGlow`.
+- docs: 56/50 surface status; `src/index.ts` exports; 52 §Public exports tick.
 
 ## Maintenance
 

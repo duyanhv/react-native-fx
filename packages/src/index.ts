@@ -9,6 +9,7 @@ export type {
   SymbolAnimation,
   SymbolConfig,
 } from './effects/catalog';
+export type { EffectId } from './effects/effects';
 export {
   isRegisteredShader,
   type RegisterShaderSpec,
@@ -29,9 +30,11 @@ export type {
 } from './runtime/FxSurfaceView.types';
 export type { ScrollAxis, ScrollSourceSpec, SourceSpec } from './source/types';
 export {
+  EdgeGlow,
   Fx,
   FxPresence,
   type FxPresenceProps,
+  type FxProps,
   type FxScrollProps,
   type FxScrollTile,
   type FxTransition,

@@ -1,3 +1,4 @@
+export { EdgeGlow, Fx, type FxProps } from './Fx';
 export {
   FxPresence,
   type FxPresenceProps,
@@ -5,4 +6,4 @@ export {
   type FxTransitionEnd,
   type PresencePreset,
 } from './FxPresence';
-export { Fx, FxScroll, type FxScrollProps, type FxScrollTile } from './FxScroll';
+export { FxScroll, type FxScrollProps, type FxScrollTile } from './FxScroll';

@@ -26,14 +26,15 @@ type EffectResolution = {
 // 'aurora' … 'edge-glow' (the 10 CURATED_SHADER_IDS) → { node:'shader',   hostedEffect:<id> }
 // 'mesh-gradient'                                     → { node:'fill',     hostedEffect:'fill' }
 // 'glass'                                             → { node:'material', hostedEffect:'material' }
-// 'symbol'                                            → { node:'symbol',   hostedEffect:'symbol' }  // see §note
-export type EffectId = …;            // the union of all public ids
+export type EffectId = …;            // the union of all public ids (12: 10 shaders + 2)
 export function resolveEffect(id: EffectId): EffectResolution;
 ```
 
+`symbol` is **not** a public string id in U10 — a symbol needs `SymbolConfig.name`, so it is a node/config surface, not a complete effect id (deferred to **U10-002**; see the scope guard).
+
 The native dispatch contract (do not invent strings — confirmed in code): `FxHostedView` dispatches on `"fill"` / `"material"` / the ten shader ids (`packages/ios/FxHostedView.swift`, `packages/android/…/FxHostedView.kt:90`). So the resolver maps the *public* id (`mesh-gradient`, `glass`) onto those native strings.
 
-**Conformance test** (mirrors `manifest-conformance.test.ts`): every `CURATED_SHADER_ID` resolves to `node:'shader'`; `mesh-gradient`/`glass`/`symbol` resolve to their nodes; every resolved `node` exists in `manifest.nodes`; every resolved `hostedEffect` is one the native dispatch accepts. This is what keeps `<Fx>` honest against the manifest.
+**Conformance test** (mirrors `manifest-conformance.test.ts`): every `CURATED_SHADER_ID` resolves to `node:'shader'`; `mesh-gradient`/`glass` resolve to their nodes; every resolved `node` exists in `manifest.nodes`; every resolved `hostedEffect` is one the native dispatch accepts. This is what keeps `<Fx>` honest against the manifest.
 
 ### 2. Resolution + mount (the `<Fx>` component)
 
@@ -42,12 +43,12 @@ effect id → resolveEffect() → node
 wantInteractive = interactionMode ∈ {passive, active, controlled} AND node supports fx interaction
 rung = select(manifest.nodes[node], Platform.OS, { deviceOS, wantInteractive })
   rung.requires.substrate === 'expo-view' → mount <FxSurfaceView shader=… interactionMode=… ref=… …/>
-  rung.requires.substrate === 'hosted'    → mount <FxHostedView effect=hostedEffect intensity=… materialConfig=… symbolConfig=… …/>
+  rung.requires.substrate === 'hosted'    → mount <FxHostedView effect=hostedEffect intensity=… materialConfig=… …/>
   { via:'none' }                          → render nothing; fire onError as ADAPTER DEGRADATION (§3)
 ```
 
 Prop mapping per path:
-- **Hosted (`FxHostedView`):** `effect`=`hostedEffect`, `intensity`, `materialConfig` (glass), `symbolConfig` (symbol), `style` (composition-resolved, §4). No native events exist on this binding.
+- **Hosted (`FxHostedView`):** `effect`=`hostedEffect`, `intensity`, `materialConfig` (glass), `style` (composition-resolved, §4). No native events exist on this binding.
 - **Interactive (`FxSurfaceView`):** `shader`=the shader id, `intensity`, `interactionMode`, the forwarded `ref` (§5), press + load/error events (§3), `style`.
 
 ### 3. Events — split explicitly (maintainer-refined)
@@ -87,7 +88,6 @@ type FxProps = {
   composition?: 'background' | 'overlay' | 'surface'; // default 'surface'
   interactionMode?: InteractionMode;                  // default 'none'
   materialConfig?: MaterialConfig;                    // glass
-  symbolConfig?: SymbolConfig;                        // symbol
   onLoad?: (e) => void;  onError?: (e) => void;       // FxSurfaceView path + adapter degradation
   onPress?, onPressIn?, onPressOut?, onLongPress?;    // FxSurfaceView path only
   style?: StyleProp<ViewStyle>;
@@ -102,7 +102,7 @@ type FxProps = {
 - **No fill config beyond `intensity`** (U3-009 narrowed it).
 - **No hosted native lifecycle events** (synthesize nothing; §3).
 - **No `FxView` / `FxPressable` / `FxGroup` / `FxItem`** → Units 12/13/14.
-- **Symbol, first cut:** support the id with **iOS render / Android no-op** — Android's hosted dispatch has no symbol case (`else → return`), and/or `select('symbol', android, …)` degrades to `{via:'none'}`; that is the natural degradation, not a defect. Verify the public symbol id/config shape against `24-symbols` + `FxSymbolView` / `setSymbolConfig` before finalizing the resolver's `symbol` entry (the one corner the bindings underspecify); recommend `<Fx effect="symbol" symbolConfig={{…}}>`.
+- **Symbol — out of U10 (Option 1, maintainer 2026-06-19) → U10-002.** A string id must resolve to something native draws with **no extra required config**, but a symbol needs `SymbolConfig.name`; so `symbol` is a node/config surface, not a complete effect id. Shipping `effect="symbol"` would render nothing (iOS `FxHostedRootView` falls to `FxEmptyView` without `symbolConfig`) and emit no degradation. `EffectId` is the 10 shaders + `mesh-gradient` + `glass` only — no `symbolConfig` prop. The symbol string surface (`symbol-*` zero-config ids + a name-resolution rule, or an explicit-config form via the Unit 11 builder) is the **U10-002** follow-up.
 
 ## Proof
 
@@ -115,12 +115,12 @@ Proof:
 - device:   YES — on iOS + Android, via the example harness: (a) a decorative hosted shader
             (`aurora`) renders; (b) an interactive shader (`interactionMode="active"`) renders and
             fires onPress*/onLoad; (c) `glass` + `mesh-gradient` render hosted; (d) `EdgeGlow`
-            renders; (e) a symbol renders on iOS / no-ops on Android; (f) an unsupported effect
-            degrades to adapter-error with no crash. Curated shaders do not render on the iOS sim —
+            renders; (e) an unsupported effect (e.g. a shader on iOS < 17) degrades to adapter-error
+            with no crash (symbol is out of U10 — see scope guard). Curated shaders do not render on the iOS sim —
             use a physical iPhone (or accept the Android-device + iOS-UIKit-paths split per the
             Device Verification Guide).
 - docs:     56 / 50 surface status (the canonical `<Fx effect>` API now exists, not "planned");
-            src/index.ts exports (+ EdgeGlow); 52 §Public exports tick if it tracks per-symbol status.
+            src/index.ts exports (+ EdgeGlow); 52 §Public exports tick.
 ```
 
 ## Authority links
@@ -148,7 +148,7 @@ Subtask: <Fx effect> the effect surface + EdgeGlow (blueprint Phase S, Unit 10)
                      #4 (never host RN content to distort — `<Fx>` draws the whole, wraps nothing),
                      #5 (the front door is `effect` props, not exported widgets),
                      #7 (Expo Modules only — no JSI), #9 (reads layout, never writes).
-- Device-verify:     the hosted/interactive/glass/fill/symbol/EdgeGlow render + the press + the
+- Device-verify:     the hosted/interactive/glass/mesh-gradient/EdgeGlow render + the press + the
                      adapter-degradation path, both platforms (the matrix in Proof).
 - Done when:         <Fx effect="id"> renders every public id through the right substrate, wires
                      intensity/composition/interactionMode/uniform-ref + onPress*/onLoad/onError,
