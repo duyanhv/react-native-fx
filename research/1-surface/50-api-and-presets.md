@@ -101,9 +101,18 @@ config-children, no `asChild`.
   source of truth; tweak it once, the default behavior changes everywhere.
 - **Override** = a `Partial<>` shallow-merged over the defaults in JS; override wins.
 - **Palettes/themes** = named color sets applied across effects — pure config, shareable.
+  **Deferred — no V1 consumer (DOC-025 / DOC-029):** fx exposes platform-native presentation
+  presets, not a color-token / theme layer, until a real consumer forces it. `presets/{palettes,themes}.ts`
+  are not built.
 - `time`/`resolution` are **never** in the resolved record (native-injected).
 
 The resolved value crosses as one flat record; native runs no preset branching.
+
+**V1 resolution status (DOC-025):** the section above describes the *designed* surface. In shipped
+V1 the `preset` bundle resolves **natively** — `FxPresence` passes `preset` raw to the native
+coordinator, where the platform catalog lives (the shape-native law, `41`). The JS resolver /
+defaults-merge (`src/presets/`) is **deferred** — no consumer until `<Fx effect>` (Unit 10/11)
+needs JS default-merge.
 
 ## Adapter dispatch (the JS consumer of the manifest)
 
@@ -148,7 +157,10 @@ by the runtime.
    three preset-like bundles on different owned surfaces (an honest domain split).
 4. **Props by default; compound only for real native layers** (`FxGroup`/`FxItem`).
 5. **Presets resolve in JS**; palettes/themes are pure config; `time`/`resolution` never in
-   the record. V1 shader uniforms are shared and minimal.
+   the record. V1 shader uniforms are shared and minimal. **V1 narrowing (DOC-025/DOC-029):**
+   in shipped V1 the `preset` bundle resolves **natively** (`FxPresence` passes it raw; the JS
+   resolver is deferred, no consumer); palettes/themes are **deferred — no V1 consumer** (not a
+   design-token layer).
 6. **The component layer is the adapter** — `select()` over the manifest; degrades, never
    throws. **BYO reuses the `shader` node**, no separate API.
 

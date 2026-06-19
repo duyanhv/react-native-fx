@@ -66,6 +66,17 @@ interface EffectStack {
 not stack it. It is applied to a step's timing via `transition`, or to a typed `motion` map
 on `FxPresence`/`FxView`. A spring is not a layer in the composite.
 
+**V1 / Unit-11 scope (DOC-025 / DOC-029).** The `node` union above is the *designed* surface;
+Unit 11 exposes only the **backed** steps until each render target plus an example exists:
+- `shader` and `material` (glass) — backed; exposed.
+- `fill` — narrowed to its rendered intensity-driven subset (the native fill renderers ignore
+  per-call `colors`/`angle`/`kind` — U3-009); the full typed config does not ship as a builder step.
+- `filter` — **`status:'planned'`** (no native renderer — U3-009); `select()` never offers it.
+- `symbol` — stays the single-layer mount via `<Fx effect="symbol-…">` (the terminal note below),
+  not a composed `fx.effect.*` builder step.
+So Unit 11's builder ships **no `fill` / `symbol` terminal steps and no `filter`** until the render
+targets land.
+
 Each method (`.mesh`/`.glow`/`.glass`/`.blur`) is a JS preset (`50`) pushing a step. `<Fx>`
 is the adapter: it runs `select()` per step (`02`, `target:'effect'`), mounts the native
 layer stack, and the resolved record crosses the bridge **once**. Native composites in
