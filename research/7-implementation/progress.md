@@ -1127,8 +1127,8 @@ Checklist:
 - [x] implemented (`src/effects/effects.ts` resolver + `src/surface/Fx.tsx` callable + `EdgeGlow`; `Fx.Scroll` preserved)
 - [x] commented (iceberg — adapter-degradation discriminable from native load failure; ref absent/inert on hosted path)
 - [x] headless-done (packages tsc/build/lint green; 114 tests pass incl. resolver suite; example tsc green; gates re-run by reviewer after the symbol/web folds)
-- [ ] device-verified (iOS+Android matrix: hosted shader / interactive shader / glass / mesh-gradient / EdgeGlow / adapter-degradation — **needs an example screen exercising `<Fx>`, not yet added**)
-- [ ] reviewed (planner review done; folds applied — awaiting commit + the harness screen)
+- [ ] device-verified (iOS+Android matrix: hosted shader / interactive shader / glass / mesh-gradient / EdgeGlow / composition — **harness added `example/screens/effect-surface.tsx` (`dec8c4e`); gate ready to run.** JS-only change → Metro/JS reload, no native rebuild)
+- [ ] reviewed (planner headless review done + folds applied/committed `c461a0d`; the formal reviewed gate is post-device)
 - [ ] docs-closed (56/50 status flipped to shipped; `src/index.ts` exports confirmed; resolver is the single id→node source)
 - [ ] merged
 
