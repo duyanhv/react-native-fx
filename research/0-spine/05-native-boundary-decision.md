@@ -61,6 +61,79 @@ frames. That single fact removes the usual reason to reach for JSI.
   contract and no JSI/C++ dependency. (Hosted SwiftUI/Compose and the exact RN-child
   behavior still need validation — `51` / the platform structure docs.)
 
+## Capability mechanism: source channel, substrate depth, and escalation
+
+`04` draws the ownership **boundaries** (A / B / L). This section owns the two **mechanism**
+axes that are independent of the boundary — what *drives* a capability's target, and how deeply
+fx *binds* to native to carry it — plus the escalation gate for the cases that move a boundary.
+
+### Source channel (what drives the target)
+
+| channel | meaning | accepted? |
+|---|---|---|
+| **discrete target** | JS sets a semantic target; native runs the envelope (`visible`, `preset`, effect id) | yes — the default |
+| **native continuous source** | a native signal drives the value continuously (scroll, gesture, sensor, audio, time); the clock stays native | yes — no per-frame JS crosses |
+| **external UI-thread prop drive** | the *app's own* Reanimated shared value updates an fx-exposed UI-thread-animatable prop/uniform; fx owns no worklet/JSI | yes — depth 1, the Expo Modules prop path; no per-frame JS (DEF-006) |
+| **fx-authored continuous mapping** | fx authors or depends on a worklet / JSI to map a source per frame | **no** by default — depth 4, breaks rule #7; gated regime C only (below) |
+| **per-frame bridge values** | JS computes and sends a value across the bridge every frame | **no** — violates rules #1/#8 |
+
+The channel is orthogonal to the boundary: a scroll-linked header is Boundary A driven by a
+*native continuous source* — it writes no layout and crosses no per-frame JS, so it fits the
+contract; it becomes Boundary L only if it must resize into Yoga.
+
+### Substrate depth (how fx binds to native)
+
+| depth | binding mechanism | rule cost |
+|---|---|---|
+| **1 — Expo Modules view** | the current Swift/Kotlin path: props in, events out, async functions — including a UI-thread-animatable prop the app's Reanimated drives (DEF-006) | none — the default |
+| **2 — component-view shim** | ObjC++/Kotlin against RN internals (e.g. a Fabric `updateLayoutMetrics` override) | a substrate escalation; does **not** move a boundary |
+| **3 — custom Fabric component** | a real `ShadowNode` + `ComponentDescriptor` with a Yoga measure function (C++) | breaks rule #7 (C++); the **only** path that can write layout (Boundary L) |
+| **4 — JSI / worklets** | **fx-authored or fx-depended** synchronous JS↔native calls, worklets, or host-objects driving frames | breaks rule #7 (JSI); rejected by default |
+
+Depth is independent of boundary: a Fabric-pushed layout *read* (depth 2) stays a Boundary-A
+read — a robustness optimization, not a rule-#9 move. Writing layout is depth 3 *and* Boundary
+L. JSI/Nitro (depth 4) moves neither boundary by itself and cannot host RN children (the
+falsification finding below), so it is **never** the path to layout participation. The depth-4
+discriminator is **ownership** — who authors the worklet: the app's own Reanimated driving an
+fx-exposed prop is depth 1; fx authoring or depending on a worklet/JSI is depth 4.
+
+### Escalation regimes (crossing a boundary)
+
+For the capabilities that *move* a boundary, the escalation is one of three — each touching a
+different rule with a different trigger. The Decision below is the gate; this names which one:
+
+| escalation | boundary | source | substrate depth | rule touched | trigger |
+|---|---|---|---|---|---|
+| **measured-content flow** | A → L (writes layout) | discrete | 3 — custom Fabric | #9 + #7 | outside siblings must move via Yoga size |
+| **pushed-layout read** | stays A (read) | unchanged | 2 — component-view shim | substrate only | observation lag / robustness — not a product gate |
+| **authored continuous (regime C)** | usually none | native → authored | 4 — JSI / worklets | #7 + #1/#8 | native presets cannot express the mapping *and* it must drive fx-owned state |
+
+The first row is the product gate; the second is an optimization investigation; the third is the
+named regime-C exception Decision 5 reserves.
+
+### Two lanes for continuous interaction, and the falsifying test
+
+Most "live" interactions (gesture → transition progress, scroll → header transform) split into
+two lanes:
+
+- **Lane 1 — native continuous source** (additive, depth 1, no rule-break): a native source
+  drives a native mapping/preset on a native clock. Build here first; Lane 1's design problem is
+  **preset expressiveness** — a native mapping vocabulary rich enough to keep Lane 2 empty.
+- **Lane 2 — authored continuous source** (gated regime C, depth 4): the user authors the
+  mapping (a worklet) and it runs on the UI thread. Doubly narrow — it earns itself only when
+  **native presets cannot express the interaction** *and* the mapping must drive **state only fx
+  owns** (a retained slot's frame, the Fabric-invisible layer). Authored mapping of the
+  *content's own* visuals is already solved by composition (nest Reanimated inside your content),
+  so a Lane 2 that re-drives content would just rebuild Reanimated — which this doc forbids.
+
+Before opening Lane 2 / regime C, the interaction must fail **the falsifying test**:
+
+> Can it be built with discrete targets + native source events + native presets + no per-frame JS?
+
+**Yes** → no regime C; build it in Lane 1 (a missing preset is *vocabulary* work, not a
+rule-break). **No, and the mapping must be user-authored per frame against fx-owned state** →
+regime C is justified, and the break is depth-4 (JSI/worklets), not Nitro for its own sake.
+
 ## Reference repos to fork / inspect
 
 Fork reference projects **by problem**, not as architecture authorities. fx's architecture
@@ -98,8 +171,8 @@ references for the future lanes and fallback boundary.
    depth 1, the Expo Modules prop path, no per-frame JS and **no fx worklet/JSI** (Reanimated is the
    caller's transport, not fx's runtime; optional/trigger-gated — DEF-006). fx **authoring or
    depending on** a worklet / JSI / host-object to drive frames is the depth-4 carve-out —
-   **rejected by default**, revisited only under the `33`/`35` triggers. This is the same ownership
-   line the capability-boundary classifier draws (depth 1 allowed vs depth 4 rejected).
+   **rejected by default**, revisited only under the `33`/`35` triggers. This is the
+   depth-1-allowed / depth-4-rejected line drawn in §Capability mechanism above.
 
 ## Open questions
 

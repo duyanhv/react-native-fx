@@ -71,6 +71,71 @@ The bugs live at the boundaries, so each seam gets one rule:
   *presentation* in between. That is the entire content of "targets in, native owns
   frames, events out" (`40`).
 
+## The presentation boundaries (A / B / L)
+
+The five owners draw *who owns what state*; this refines the fx slice into the three
+**boundaries** a capability can occupy. The boundary answers one question for any proposed
+capability — **can fx add it inside an existing boundary, or does it move one?** "Inside" is
+additive (reuse shipped machinery, no rule change); "moves a boundary" crosses a fence the
+rules draw — most concretely Decision 2 (read layout, never write it) — and needs an explicit
+`05` decision before it ships.
+
+| boundary | fx owns | RN still owns | retention handshake | layout |
+|---|---|---|---|---|
+| **A — content motion** | the wrapper's internal transform/opacity/frame inside an RN-laid-out box | the content and its layout | yes — fx may defer React's unmount | reads only |
+| **B — effect** | generated or native pixels | everything; content is never sampled or hosted to distort (rule #4) | no | reads `cornerRadius` / neither |
+| **L — layout participation** | a size/measurement contributed into Yoga/Fabric | the content | depends | **writes** |
+
+Boundaries are **capabilities a view performs, not a taxonomy of views.** One native view can
+straddle several: `FxSurfaceView` does both A (a Fabric-invisible content container animated
+above layout) and B (a Metal effect over it), kept clean by routing RN children into the
+invisible container and letting `hitTest` pass their touches through.
+
+**Boundary L is empirically absent in the shipped primitives.** Every primitive reads layout
+or neither; none writes it. The Decision-2 / rule-#9 fence is real and measurable, not
+theoretical — so any capability that would write Yoga layout is a boundary *move*, not an
+addition.
+
+**The cross-tree frontier.** Some capabilities sort into none of A/B/L — a shared-element
+transition needs endpoint discovery across the React tree, retention of a view as it
+conceptually moves between tree locations, and possibly mutation coordination. The rule is to
+**refuse to mis-file it as a stretched L**: it is a candidate **new boundary**, gated by its
+own `05` decision.
+
+### The sorting rule
+
+```txt
+Does it retain or move RN content?                 -> Boundary A
+Does it draw native/generated pixels without
+  owning or sampling RN content?                   -> Boundary B
+Does it write Yoga layout / rewrite Fabric
+  mutations?                                        -> Boundary L (moves rule #9; gate at 05)
+Does it need user-authored per-frame mapping
+  of fx-owned state?                               -> gated regime C (substrate depth 4; 05)
+Does it need cross-tree identity + retention?      -> candidate new boundary (05)
+```
+
+The source channel (what *drives* the target) and the substrate depth (how fx *binds* to
+native) are independent of the boundary and are decided separately — both live in
+`05 §Capability mechanism`.
+
+### The nine-question gate
+
+Reviewer machinery: every proposed capability answers these before it earns a build slot.
+
+1. Which boundary — A, B, L, or a candidate new one?
+2. What native resource does fx own?
+3. What does React still own?
+4. Does it retain RN content? (the memory-policy detail is a `05` mechanism question)
+5. Does it write layout?
+6. Does it sample RN pixels? (must be **never** for RN content on iOS)
+7. What crosses JS↔native, on which **source channel**? → answer against `05`
+8. What **memory policy** applies (retention budget, duration cap, cleanup triggers, background behavior)? → `05`
+9. What device proof would falsify the classification?
+
+Question 9 keeps it honest: a classification with no falsifying device scenario is a guess, not
+a decision. The **substrate-depth** a capability needs is likewise a `05` mechanism question.
+
 ## Decisions
 
 1. **Five owners, one slice each; fx owns presentation state only** — above layout, below
@@ -98,6 +163,13 @@ The bugs live at the boundaries, so each seam gets one rule:
    measured frame (on demand). JS may **not** subscribe to per-frame state — the frame
    loop stays native (the contract, `40`). This is the read-side of "fx owns presentation
    state": JS sets the target and hears *outcomes*, not *frames*.
+8. **Three presentation boundaries — A (content motion), B (effect), L (layout
+   participation) — and a capability either adds inside one or moves one.** Boundary L (writing
+   Yoga layout) is the Decision-2 / rule-#9 fence and is empirically absent in shipped
+   primitives; moving it, or opening a cross-tree boundary, needs an explicit `05` decision. The
+   source-channel and substrate-depth axes that classify *how* a capability binds are independent
+   of the boundary and live in `05`. (Promoted from the capability-boundary classifier — DOC-026;
+   DOC-021 §1.)
 
 ## Open questions
 
