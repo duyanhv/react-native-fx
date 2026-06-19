@@ -22,46 +22,61 @@ Every architectural decision in this doc traces to one of these sources.
 
 ## 1. Target Folder Structure
 
-> *This is the **target** tree (pre-Unit-9). Some entries are Phase-S targets not yet built; some shipped post-Unit-9 mechanics are not yet folded in. The as-built additions and the drift are catalogued in §11.*
+> *Status-reconciled against the real `packages/` tree (2026-06-19, DOC-028). Each JS file is tagged **[shipped]** (in code), **[Phase-S]** (a decomposed-but-unbuilt surface unit — `blueprint.md` Phase S), or **[deferred]** (no V1 consumer, parked). The native sub-trees below are **illustrative, not exhaustive** — the runtime + as-built mechanics added files §1 never listed (e.g. `FxScrollView.swift`, `FxShaderRegistry.swift`, the per-effect `Fx*View` renderers); the object/file ground truth for the post-Unit-9 + within-Unit mechanics is §11, and the real directory is the authority.*
 
 ```
 packages/
 ├── src/                          ← JS SURFACE (mirror of research planes)
 │   ├── manifest/                 ← dependency SINK (imports nothing from other src/)
-│   │   ├── index.ts                the manifest barrel [research: G1]
-│   │   ├── select.ts               the adapter dispatch [research: G2]
-│   │   └── types.ts                shared IR types [research: 02]
+│   │   ├── index.ts                [shipped] the manifest barrel [research: G1]
+│   │   ├── manifest.ts             [shipped] the canonical CapabilityManifest data [research: 02]
+│   │   ├── config.ts               [shipped] per-effect typed config, type-derived [research: 02]
+│   │   ├── select.ts               [shipped] the adapter dispatch [research: G2]
+│   │   └── types.ts                [shipped] shared IR types [research: 02]
 │   │
 │   ├── surface/                  ← PUBLIC COMPONENTS
-│   │   ├── FxPresence.tsx          [research: 54]
-│   │   ├── FxView.tsx              [research: 57]
-│   │   ├── FxPressable.tsx         [research: 57]
-│   │   ├── Fx.tsx                  [research: 55] (single-or-stack)
-│   │   ├── FxGroup.tsx             [research: 57]
-│   │   ├── FxItem.tsx              [research: 57]
-│   │   └── types.ts
+│   │   ├── FxPresence.tsx          [shipped] [research: 54]
+│   │   ├── presenceMachine.ts      [shipped] the pure retention FSM behind FxPresence [research: 35]
+│   │   ├── FxScroll.tsx            [shipped] Fx namespace + FxScroll (source driver, DEF-014) [research: 50]
+│   │   ├── index.ts / types.ts     [shipped] barrel + shared surface types
+│   │   ├── Fx.tsx                  [Phase-S] <Fx effect> + EdgeGlow (Unit 10) [research: 55]
+│   │   ├── FxView.tsx              [Phase-S] state-driven presentation (Unit 12) [research: 57]
+│   │   ├── FxPressable.tsx         [Phase-S] native press feedback (Unit 13) [research: 57]
+│   │   ├── FxGroup.tsx             [Phase-S] morph compound (Unit 14) [research: 57]
+│   │   └── FxItem.tsx              [Phase-S] morph item (Unit 14) [research: 57]
 │   │
 │   ├── effects/                  ← EFFECT SEMANTICS + IDs
-│   │   ├── catalog.ts              shader/fill/material/filter/symbol ids [research: 20-24]
-│   │   └── types.ts
+│   │   ├── catalog.ts              [shipped] shader/fill/material/filter/symbol ids [research: 20-24]
+│   │   └── registry.ts             [shipped] registerShader BYO compile (DEF-008) [research: 22]
 │   │
 │   ├── motion/                   ← MOTION VOCABULARY
-│   │   ├── MotionSpec.ts           fx.motion.* builders [research: 41]
-│   │   └── types.ts
+│   │   ├── builders.ts             [shipped] fx.motion.* builders + fallback rule [research: 41]
+│   │   ├── index.ts                [shipped] barrel
+│   │   └── types.ts                [shipped] MotionSpec / Travel [research: 41]
+│   │
+│   ├── source/                   ← SCROLL-LINKED DRIVER (DEF-014)
+│   │   ├── builders.ts             [shipped] fx.source.scroll [research: 50 §Decision 9]
+│   │   ├── index.ts                [shipped] barrel
+│   │   └── types.ts                [shipped] SourceSpec / ScrollSourceSpec
 │   │
 │   ├── presets/                  ← PRESET RESOLUTION
-│   │   ├── defaults.ts             per-platform shape+timing catalog [research: G4/M3]
-│   │   ├── palettes.ts             [research: 50]
-│   │   └── themes.ts               [research: 50]
+│   │   ├── types.ts                [shipped] TODO stub only — no resolver (surface resolves preset natively)
+│   │   ├── defaults.ts             [deferred] per-platform shape+timing catalog [research: G4/M3]
+│   │   ├── palettes.ts             [deferred] no V1 consumer — not a design-token layer (DOC-029) [research: 50]
+│   │   └── themes.ts               [deferred] no V1 consumer (DOC-029) [research: 50]
 │   │
 │   ├── runtime/                  ← JS BINDINGS (thin glue) — one per registered native view
-│   │   ├── FxHostedView.tsx        default requireNativeView wrapper
-│   │   ├── FxSurfaceView.tsx       named requireNativeView wrapper (presence/state/press route here)
-│   │   └── FxGroupView.tsx         named requireNativeView wrapper
+│   │   ├── FxHostedView.tsx        [shipped] default requireNativeView wrapper (+ .web stub)
+│   │   ├── FxSurfaceView.tsx       [shipped] expo-view wrapper — presence/state/press route here (+ .web)
+│   │   ├── FxSurfaceView.types.ts  [shipped] the controlled ref surface: setUniform/setHighlight (DEF-020)
+│   │   ├── FxGroupView.tsx          [shipped] morph compound wrapper (+ .web stub)
+│   │   └── FxScrollView.tsx         [shipped] source binding (+ .android / .web fallbacks, DEF-014)
 │   │
-│   └── index.ts                  ← PUBLIC API (root export) [research: 52 §Public exports]
+│   ├── fx.ts                     ← [shipped] the fx.* builder namespace (motion / source; effect → Unit 11)
+│   └── index.ts                  ← [shipped] PUBLIC API root export [research: 52 §Public exports]
+│       (+ __tests__/ — Jest: manifest, motion builders, presence machine, shader registry)
 │
-├── ios/                          ← iOS NATIVE
+├── ios/                          ← iOS NATIVE (illustrative — see the note above; real dir is authority)
 │   ├── FxModule.swift              Expo Module [finding: multiple views, first=default]
 │   ├── FxNativeView.swift          ABSTRACT BASE (diff-based props, AsyncFunction surface, lifecycle)
 │   ├── FxHostedView.swift          FxEffectRenderer (hosted, decorative)
@@ -71,11 +86,14 @@ packages/
 │   ├── FxAnimationDriver.swift     native spring animator [research: 34]
 │   ├── FxPresenceCoordinator.swift presence FSM [research: 35]
 │   ├── FxPressHandler.swift        press handler (6-state FSM) [finding: gesture-handler borrow]
+│   ├── FxScrollView.swift          source driver — persistent UIHostingController (DEF-014)
+│   ├── FxShaderRegistry.swift      runtime BYO .metal compile (DEF-008)
+│   ├── (FxFillView / FxMaterialView / FxSymbolView / FxShaderView / FxGlassSurfaceView … per-effect renderers)
 │   ├── Shaders/
 │   │   └── FxShaders.metal         curated .metal shaders [research: 22]
 │   └── ReactNativeFx.podspec
 │
-├── android/                      ← ANDROID NATIVE
+├── android/                      ← ANDROID NATIVE (illustrative — see the note above; real dir is authority)
 │   ├── FxModule.kt                 Expo Module [finding: multiple views, first=default]
 │   ├── FxNativeView.kt             ABSTRACT BASE
 │   ├── FxHostedView.kt             FxEffectRenderer (hosted, decorative)
@@ -85,6 +103,8 @@ packages/
 │   ├── FxAnimationDriver.kt        native spring animator
 │   ├── FxPresenceCoordinator.kt    presence FSM
 │   ├── FxPressHandler.kt           press handler (6-state FSM) [finding: gesture-handler borrow]
+│   ├── FxShaderRegistry.kt         runtime BYO .agsl compile (DEF-008)
+│   ├── (FxMaterialView / FxShaderView / FxSurfaceShaderView / FxContentDistortion … per-effect renderers)
 │   └── assets/
 │       └── shaders/
 │           └── *.agsl              curated AGSL shaders [research: 22]
@@ -615,7 +635,7 @@ Four mechanics shipped after Unit 9 as deferred-ledger (`DEF-0xx`) work, each on
 
 **Platform divergences pinned in the source docs (not re-decided here):** the `source` rung is iOS-only in V1 (Android best-effort deferred); runtime-source shaders lower through the iOS expo-view Metal path even for decorative use (no public `ShaderLibrary` over `MTLLibrary`, iOS 26.5) and compile per-view on Android (mutable `RuntimeShader`); `dragAxis="both"` is standalone-only on iOS but blocks the parent on Android (the ratified rule-#6 divergence).
 
-**§1 target-tree drift (broader than this addendum — tracked under DOC-025 / Phase S, not fixed here):** §1 omits the shipped `src/source/`, `src/surface/FxScroll.tsx`, `src/effects/registry.ts`, `src/runtime/FxScrollView.*`, and `src/fx.ts`; and it lists Phase-S *target* files not yet built (`surface/FxView.tsx`, `FxPressable.tsx`, `Fx.tsx`, `FxItem.tsx`; `presets/{defaults,palettes,themes}.ts`).
+**§1 target-tree drift — reconciled 2026-06-19 (DOC-028):** §1's JS `src/` tree now tags every file shipped / Phase-S / deferred and carries the formerly-omitted shipped files (`src/source/`, `src/surface/FxScroll.tsx`, `src/effects/registry.ts`, `src/runtime/FxScrollView.*` + `FxSurfaceView.types.ts`, `src/fx.ts`, `manifest/{manifest,config}.ts`). The native sub-trees there are now marked illustrative (this §11 table + the real directory are the authority for the post-Unit-9 / within-Unit native files).
 
 ### Within-Unit mechanics not recorded at object granularity
 
