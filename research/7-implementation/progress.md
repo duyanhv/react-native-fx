@@ -118,7 +118,7 @@ are the build tasks that realize the ratified surface, and close no new ledger r
 |----|------|------|-------|--------|----------|--------|------------|-------|
 | U10-001 | Unit 10 | implement | merged | yes | — | — | — (Units 1/2/3/8 + U3-009 merged) | **MERGED on integration/0.1.x (device-verified + reviewed + docs-closed 2026-06-19; maintainer-delegated ticks).** The canonical `<Fx effect="id">` front door + `EdgeGlow` + the `Fx` callable. `src/effects/effects.ts` resolver (single id→node source, conformance-tested) + `src/surface/Fx.tsx`. **6/6 PASS on iOS 18 sim + POCO F1.** Review folds: `symbol` removed (→U10-002); web crash guard; interactive-shader harness re-pointed `aurora`→`dots` after the reviewer caught aurora is hosted-only on iOS (interactive raster is a 5-shader subset — now documented in `50`). Code `c461a0d`; harness `dec8c4e`. Deferred follow-up: model per-shader interactive capability in the manifest (select-time vs runtime degradation). [task](./tasks/U10-001/) · [detail](#u10-001--fx-effectid-the-effect-surface-front-door--edgeglow) |
 | U10-002 | Unit 10 | implement | todo | yes | — | — | U10-001 | **SPAWNED from U10-001 review (2026-06-19).** The symbol string-form public surface, deferred from U10. Decide + build: the zero-config `symbol-*` ids (`24-symbols §58`: `<Fx effect="symbol-bounce" />`) + the default symbol / name-resolution rule (a symbol needs `SymbolConfig.name` — what does a zero-config `symbol-*` render?), OR route the explicit `{name, animation}` config through the Unit 11 `fx.effect.*` builder form. Grounded in `24-symbols` + the iOS `FxSymbolView` / `setSymbolConfig` path (Android symbol is deferred, AVD/Lottie planned). Design-then-build; NOT YET SPEC'D. |
-| U11-001 | Unit 11 | implement | todo | yes | — | — | U10-001 (merged) | **SPEC'D 2026-06-19 — [`tasks/U11-001/README.md`](./tasks/U11-001/README.md); dispatchable (append `Task: U11-001.`). Design pre-aligned (Option A + single-render-target guard).** `fx.effect.*` builder (`.glow`/`.glass`/`.mesh` + `.animate`/`.defaults`) → immutable `EffectStack`, consumed by `<Fx effect={stack}>` reusing U10's resolve→select→mount path for the stack's **one** backed render-target. **Honest V1 cut:** no native multi-layer compositor (deferred to its own unit) — a 2nd render-target method dev-warns + no-ops; `.blur`/`filter` omitted entirely (U3-009 planned); no symbol builder; fill intensity-only; `.animate`/`.defaults` recorded but NOT wired (no effect-transition channel). Docs call it "builder form for one effect," not "composition." `src/effects/stack.ts` + `src/fx.ts` effect ns + `FxProps.effect` widened to `EffectId \| EffectStack`. `device:yes` |
+| U11-001 | Unit 11 | implement | headless-done | yes | — | — | U10-001 (merged) | **HEADLESS-DONE + REVIEWED (planner, 2026-06-19); device gate + builder-form harness owed.** `fx.effect.*` builder (`.glow`/`.glass`/`.mesh` + `.animate`/`.defaults`) → immutable `EffectStack`; `<Fx effect={stack}>` widened to `EffectId \| EffectStack`, reusing U10's resolve→select→mount path. Single-render-target guard dev-warns + no-ops. New `src/effects/stack.ts`; `src/fx.ts`/`Fx.tsx`/`index.ts` widened; example tsc green; **138 tests**. **Review folds (gates re-run each round):** readonly fields + `Object.freeze` builder/steps; guard-test `console.warn` suppression; "compositor unit"→"compositor support" (comments-guide); **Fx-level multi-step guard** (hand-built `EffectStack` >1 step → dev-warn + render first, not just builder-origin); **deep clone+freeze** of nested `config`/`transition`/`spring`. `.animate`/`.defaults` recorded, NOT wired (no effect-transition channel). **Device gate outstanding:** add a builder-form section to `example/screens/effect-surface.tsx`. [detail](#u11-001--fxeffect-builder--effectstack) |
 | U12-001 | Unit 12 | implement | todo | yes | — | — | U10-001 (+ Units 4/6 merged) | `FxView` — state-driven content presentation (`state`/`preset`/`motion`/`effect`/`transition`); `lift` preset, `idle`/`selected` vocab; wires the unbuilt `onFxStateChange` native dispatcher. NOT YET SPEC'D. |
 | U13-001 | Unit 13 | implement | todo | yes | — | — | — (Unit 8 merged) | `FxPressable` — JS component over the shipped native `FxPressHandler`; `feedback="native"` + `onPress*` on your content. NOT YET SPEC'D. |
 | U14-001 | Unit 14 | implement | todo | yes | — | — | — (Units 1/3 merged) | `FxGroup`/`FxItem` — the morphing compound over `FxGroupView`; glass-only morph in V1 (DOC-006), `spacing` deferred V2. NOT YET SPEC'D. |
@@ -1139,6 +1139,30 @@ Proof:
 - docs: `50` surface status + iOS interactive subset; Phase-S intro; `src/index.ts` exports.
 
 **Spawned follow-up (deferred, not a U10 blocker):** the manifest does not model per-shader interactive capability — `<Fx effect="<hosted-only id>" interactionMode="active">` passes `select()` then `onError`s at mount (honest runtime degradation, the U3-009 over-promise class at shader×interactive granularity). A stricter design would degrade at select-time; documented in `50` for now.
+
+## U11-001 — `fx.effect.*` builder + `EffectStack`
+
+Type: `implement` · State: `headless-done` · Device: yes · Consumes: — · Closes: — (realizes SURF-008/DEF-004, already resolved) · [task](./tasks/U11-001/)
+
+New file: `src/effects/stack.ts` — `Transition`, `SpringSpec`, `EffectStep`, `EffectStack` types + `EffectBuilder` type + `glow`/`glass`/`mesh` factory functions + `makeBuilder` closure + `addRenderTarget` guard.
+Modifications: `src/fx.ts` (added `effect: { glow, glass, mesh }` namespace); `src/surface/Fx.tsx` (`FxProps.effect` widened to `EffectId | EffectStack`, stack branch added, hooks-order fix for early-return); `src/index.ts` (added `EffectBuilder`/`EffectStack`/`EffectStep`/`EffectStepId`/`SpringSpec`/`Transition` type exports).
+Test: `src/__tests__/effect-builder.test.ts` — 22 tests: factory functions, value semantics, single-render-target guard (warn + no-op + reference identity), animate/defaults, resolution conformance (builder step id == string form via resolveEffect + select).
+
+Checklist:
+- [x] spec'd ([README](./tasks/U11-001/README.md))
+- [x] rules-gated (#1 stack crosses once as a resolved record / #2 only native-backed steps, no .blur/filter, fill intensity-only / #4 self-contained effects / #5 string form canonical, builder is the escape hatch / #7 Expo Modules only)
+- [x] implemented (`src/effects/stack.ts` + `src/fx.ts` + `src/surface/Fx.tsx` + `src/index.ts`)
+- [x] commented (iceberg only — no internal ids; guard posture, transition-recorded-not-wired rationale, empty-stack placeholder)
+- [x] headless-done (packages tsc/build/lint green; 136 tests pass — 22 new; example tsc green)
+- [ ] device-verified — builder forms == string forms on iOS sim + POCO F1; 2-target chain renders first step + dev warning in Metro
+- [ ] reviewed
+- [ ] docs-closed — `55` builder status ("builder form for one effect with timing/defaults", single render-target, NOT "composition"); `50` if it references the builder; `src/index.ts` + `src/fx.ts` namespace confirmed
+- [ ] merged
+
+Proof:
+- headless: packages tsc/build/lint + 22 new builder/guard/resolution tests + example tsc — all green.
+- device: YES — reuses U10-001 `effect-surface.tsx` harness screen; add a builder-form section: `fx.effect.glow()`, `fx.effect.glass()`, `fx.effect.mesh()` each render identically to their string-form equivalents; a 2-target chain renders only the first step + dev warning in Metro.
+- docs: `55` builder status (single render-target, not "composition"); exports; `fx.effect.*` namespace.
 
 ## Maintenance
 

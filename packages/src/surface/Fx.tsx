@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 
 import type { MaterialConfig } from '../effects/catalog';
 import { compositionStyle, type EffectId, resolveEffect } from '../effects/effects';
+import type { EffectStack } from '../effects/stack';
 import { manifest, select } from '../manifest';
 import { FxHostedView } from '../runtime/FxHostedView';
 import { FxSurfaceView } from '../runtime/FxSurfaceView';
@@ -18,8 +19,8 @@ import { FxScroll, type FxScrollProps, type FxScrollTile } from './FxScroll';
 export type { EffectId, FxScrollProps, FxScrollTile };
 
 export type FxProps = {
-  /** The public effect id — the only required prop. */
-  effect: EffectId;
+  /** The public effect id or an `EffectStack` produced by `fx.effect.*`. */
+  effect: EffectId | EffectStack;
   intensity?: number;
   /** Effect-layer position. Default `'surface'` (normal flow). */
   composition?: 'background' | 'overlay' | 'surface';
@@ -62,7 +63,22 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
   },
   ref: Ref<FxSurfaceViewRef>
 ): ReactElement | null {
-  const resolution = resolveEffect(effect);
+  // Resolve the active effect id, intensity, and material config from either the string
+  // form or the stack form. The stack path takes the single backed step and runs the
+  // same resolveEffect→select→mount sequence as the string form.
+  const isStack = typeof effect !== 'string';
+  const step = isStack ? effect.steps[0] : undefined;
+  // A hand-built `EffectStack` bypasses the `fx.effect.*` builder's single-render-target guard,
+  // so enforce it here too: V1 renders the first step only.
+  const stepCount = isStack ? effect.steps.length : 0;
+  // For the empty-stack edge case (not reachable via public API), effectId needs a stable
+  // value for hook deps; 'edge-glow' is a placeholder — the empty-stack null is checked
+  // after all hooks complete.
+  const effectId: EffectId = step?.id ?? (isStack ? 'edge-glow' : (effect as EffectId));
+  const effectIntensity = step ? step.intensity : intensity;
+  const effectConfig = step ? step.config : materialConfig;
+
+  const resolution = resolveEffect(effectId);
   const node = manifest.nodes[resolution.node];
   const wantInteractive =
     (interactionMode === 'passive' ||
@@ -84,10 +100,18 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
 
   useEffect(() => {
     if (rung.via !== 'none') return;
-    onErrorRef.current?.({ nativeEvent: { shader: effect, reason: 'unsupported' } });
-  }, [rung.via, effect]);
+    onErrorRef.current?.({ nativeEvent: { shader: effectId, reason: 'unsupported' } });
+  }, [rung.via, effectId]);
 
-  if (rung.via === 'none') return null;
+  useEffect(() => {
+    if (__DEV__ && stepCount > 1) {
+      console.warn(
+        'fx: <Fx effect={stack}> renders a single render-target in V1; the stack has multiple steps, so only the first is used. Multi-layer composition is not supported yet.'
+      );
+    }
+  }, [stepCount]);
+
+  if ((isStack && !step) || rung.via === 'none') return null;
 
   const mergedStyle = [compositionStyle(composition), style];
 
@@ -96,7 +120,7 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
       <FxSurfaceView
         ref={ref}
         shader={resolution.hostedEffect}
-        intensity={intensity}
+        intensity={effectIntensity}
         interactionMode={interactionMode}
         onShaderPress={onPress}
         onShaderPressIn={onPressIn}
@@ -113,8 +137,8 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
   return (
     <FxHostedView
       effect={resolution.hostedEffect}
-      intensity={intensity}
-      materialConfig={resolution.node === 'material' ? materialConfig : undefined}
+      intensity={effectIntensity}
+      materialConfig={resolution.node === 'material' ? effectConfig : undefined}
       style={mergedStyle}
     />
   );

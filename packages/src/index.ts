@@ -17,6 +17,14 @@ export {
   registerShader,
   type ShaderSource,
 } from './effects/registry';
+export type {
+  EffectBuilder,
+  EffectStack,
+  EffectStep,
+  EffectStepId,
+  SpringSpec,
+  Transition,
+} from './effects/stack';
 export { fx } from './fx';
 export type { Edge, MotionSpec, Origin, PresenceMotion, Travel } from './motion/types';
 export { FxHostedView, type NativeFxHostedProps } from './runtime/FxHostedView';
