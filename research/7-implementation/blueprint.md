@@ -173,3 +173,28 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 *   **Code:** JS `src/effects/registry.ts` (`registerShader`) + `src/index.ts` export; iOS `ios/FxShaderRegistry.swift` + `FxModule.registerShader` + `FxSurfaceView` (`makeLibrary(source:)`); Android `android/…/FxShaderRegistry.kt` + `FxModule.registerShader` + `FxSurfaceShaderView`/`FxSurfaceView`.
 *   **Source doc:** `22 §Decision 7` (FX-007), `structure.{ios,android}` §shader (the runtime-compile + cache divergence).
 *   **Enables:** the DEF-001 single-source compiler stays the explicitly-rejected V2 alternative (dual MSL+AGSL still required).
+
+### Within-Unit mechanics not recorded at object granularity
+
+*Three mechanics shipped **inside** tracked Units (A5 in Unit 7, A6 in Unit 6, A7 across Units 4/6/7) — they have no DEF row and no missing Unit, so they are tracked at the Unit level above. They are recorded here only because the build map names the Unit, not the object, and these three carry cross-platform divergence worth pinning at file granularity (the same record-as-built discipline as A1–A4). Architecture object/file mapping: `architecture.md §11`.*
+
+### Addendum A5: `fx.motion.*` builders — the semantic motion vocabulary
+*   **Shipped by:** U7-001 (merged + device-ratified 2026-06-12).
+*   **Scope:** the four V1 builders `edgeIn` / `edgeOut` / `scale` / `identity`, each returning an **unresolved `MotionSpec`** — a semantic shape, never timing. Edge builders emit a measured `{measure:'edge'}` travel token the native coordinator fills from the laid-out frame; `scale` / `identity` are fixed deltas. **No implicit reverse** — a missing `exit` is not `enter` reversed unless the preset defines it (the one motion-map fallback rule, mirrored native).
+*   **Code:** `src/motion/builders.ts` (the builders + the fallback rule), `src/fx.ts` (`fx.motion` namespace), `src/motion/types.ts` (`MotionSpec` / `Travel`).
+*   **Source doc:** `41 §fx.motion → MotionSpec` (the builder + type), `41 §The motion-map fallback` (the one rule), `42 §The native measurement contract` (the measured edge token), `50 §Decision 9` (surface).
+*   **Enables:** the `fx.effect.*` builder namespace (Unit 11) joins this same object as the third namespace.
+
+### Addendum A6: reduce-motion driver gating — accessibility honored natively
+*   **Shipped by:** U6-001 (merged + device-ratified 2026-06-12); policy ratified DOC-010 (MOT-010).
+*   **Scope:** the V1 policy is **instant degradation** (0-duration jump to target). The driver checks reduce-motion **natively per envelope**: iOS reads `UIAccessibility.isReduceMotionEnabled`; Android gates **manually** — `ValueAnimator.areAnimatorsEnabled()` plus a `Settings.Global` scan of `ANIMATOR_DURATION_SCALE` / `TRANSITION_ANIMATION_SCALE == 0` — **because Android's global animator scale does not stop a `SpringAnimation`** (the divergence worth pinning: iOS gets the gate for free, Android must read it).
+*   **Code:** `ios/FxAnimationDriver.swift` (`shouldReduceMotion`), `android/…/FxAnimationDriver.kt` (`shouldReduceMotion` + `readAnimationScale`).
+*   **Source doc:** `41 §Decisions` (item 9, reduce-motion = instant degradation), `42 §Reduce-motion`, `34 §Findings — reduce-motion`.
+*   **Enables:** nothing downstream — it is a leaf policy; recorded so the Android manual gate is not mistaken for a missing iOS-parity check.
+
+### Addendum A7: idempotent teardown order — leak-free, safe to run twice
+*   **Shipped by:** Units 4/6/7 (the lifecycle contract every native owner obeys; merged + device-ratified across the U4–U8 gates).
+*   **Scope:** teardown runs most-transient → most-owned and is **safe to run twice** (destroy *and* a recycling reset): stop the loop first (pause + drop delegate / invalidate `CADisplayLink`) so no in-flight frame touches a half-freed pipeline → per-frame transients (nothing to free) → pipeline cache + library + uniform storage → queue, then device last (or never, if device-shared). The content-motion runtime obeys the same contract with no GPU loop: releasing the `FxPresenceCoordinator` / driver stops in-flight animations, clears the wrapper handle, and **never leaks the retained-exiting child** (the `35` mid-exit edge). Retain-cycle discipline: weak view delegate, `[weak self]` closures, weak app-state registry refs.
+*   **Code:** `ios/FxSurfaceView.swift`, `ios/FxAnimationDriver.swift`, `ios/FxPresenceCoordinator.swift` (+ Android siblings).
+*   **Source doc:** `31 §Idempotent teardown` (+ `§The content-motion runtime`), `35` (the mid-exit teardown edge).
+*   **Enables:** the verified `shouldBeRecycled() = false` opt-out (`31 §Recycling`) means no per-view reset hook is needed; the order holds if recycling is ever forced on.

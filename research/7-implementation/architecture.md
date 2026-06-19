@@ -600,9 +600,11 @@ Every architectural decision in this doc traces to exactly one of:
 
 ---
 
-## 11. As-Built V2 Mechanics (post-Unit-9 addendum)
+## 11. As-Built Mechanics not in §1 (addendum)
 
-Four mechanics shipped after Unit 9 as deferred-ledger (`DEF-0xx`) work, each on a maintainer-accepted trigger rather than a forward Unit — so §1's *target* tree (written pre-Unit-9) does not carry them. This is the as-built object/file ground truth; the build-ordered companion is `blueprint.md` Phase A. All four are merged and device-ratified.
+This section is the as-built object/file ground truth for mechanics §1's *target* tree (written pre-Unit-9) does not carry; the build-ordered companion is `blueprint.md` Phase A. It holds two classes: **post-Unit-9 DEF work** (the table below) and **within-Unit mechanics** (the sub-table further down). All are merged and device-ratified.
+
+Four mechanics shipped after Unit 9 as deferred-ledger (`DEF-0xx`) work, each on a maintainer-accepted trigger rather than a forward Unit.
 
 | Mechanic | Ledger | Native | JS | Source doc | Enables |
 |----------|--------|--------|----|-----------|---------|
@@ -614,3 +616,13 @@ Four mechanics shipped after Unit 9 as deferred-ledger (`DEF-0xx`) work, each on
 **Platform divergences pinned in the source docs (not re-decided here):** the `source` rung is iOS-only in V1 (Android best-effort deferred); runtime-source shaders lower through the iOS expo-view Metal path even for decorative use (no public `ShaderLibrary` over `MTLLibrary`, iOS 26.5) and compile per-view on Android (mutable `RuntimeShader`); `dragAxis="both"` is standalone-only on iOS but blocks the parent on Android (the ratified rule-#6 divergence).
 
 **§1 target-tree drift (broader than this addendum — tracked under DOC-025 / Phase S, not fixed here):** §1 omits the shipped `src/source/`, `src/surface/FxScroll.tsx`, `src/effects/registry.ts`, `src/runtime/FxScrollView.*`, and `src/fx.ts`; and it lists Phase-S *target* files not yet built (`surface/FxView.tsx`, `FxPressable.tsx`, `Fx.tsx`, `FxItem.tsx`; `presets/{defaults,palettes,themes}.ts`).
+
+### Within-Unit mechanics not recorded at object granularity
+
+Three mechanics shipped *inside* tracked Units (A5 in Unit 7, A6 in Unit 6, A7 across Units 4/6/7) — no DEF row, no missing Unit, so the build map tracks them at the Unit level. They are recorded here at file granularity only because each carries cross-platform divergence worth pinning. The build-ordered companion is `blueprint.md` Phase A (A5–A7).
+
+| Mechanic | Unit | Native | JS | Source doc | Note |
+|----------|------|--------|----|-----------|------|
+| **`fx.motion.*` builders** — semantic motion vocabulary | U7-001 | the native coordinator fills the measured `{measure:'edge'}` token from the laid-out frame | `src/motion/builders.ts` (builders + fallback rule), `src/fx.ts` (`fx.motion`), `src/motion/types.ts` (`MotionSpec`/`Travel`) | `41 §fx.motion → MotionSpec`, `41 §The motion-map fallback`, `42 §The native measurement contract`, `50 §Decision 9` | unresolved specs (semantic, never timing); no implicit reverse; `fx.effect.*` (Unit 11) joins the same object |
+| **reduce-motion driver gating** — accessibility honored natively | U6-001 (policy DOC-010 / MOT-010) | `ios/FxAnimationDriver.swift` (`UIAccessibility.isReduceMotionEnabled`); `android/…/FxAnimationDriver.kt` (`areAnimatorsEnabled()` + `ANIMATOR_DURATION_SCALE`/`TRANSITION_ANIMATION_SCALE == 0`) | — | `41 §Decisions` (item 9), `42 §Reduce-motion`, `34 §Findings — reduce-motion` | V1 = instant degradation (0-duration); **Android gates manually** because the global animator scale does not stop a `SpringAnimation` (iOS gets it free) |
+| **idempotent teardown order** — leak-free, safe to run twice | U4/U6/U7 | `ios/FxSurfaceView.swift`, `ios/FxAnimationDriver.swift`, `ios/FxPresenceCoordinator.swift` (+ Android siblings) | — | `31 §Idempotent teardown` (+ `§The content-motion runtime`), `35` | loop-first → transients → pipeline/library/uniform → queue/device; content-motion runtime obeys the same contract; never leaks the retained-exiting child; `shouldBeRecycled() = false` means no reset hook needed |
