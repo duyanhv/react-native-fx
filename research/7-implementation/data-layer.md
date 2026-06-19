@@ -92,27 +92,18 @@ const manifest: CapabilityManifest = {
     // [research: 02 §fill worked example]
     fill: {
       id: 'fill', kind: 'render-target', interaction: 'none', phase: 'v1',
-      uniforms: {
-        kind:    { type: 'enum',   default: 'gradient', options: ['gradient', 'mesh'] },
-        colors:  { type: 'color[]', default: ['#5B8CFF'] },  // gradient/mesh color stops; array of hex strings
-        stops:   { type: 'number', default: undefined, range: [0, 1] },
-        angle:   { type: 'number', default: 0 },
-        width:   { type: 'number', default: 4,  range: [2, 10] },    // mesh grid width
-        height:  { type: 'number', default: 4,  range: [2, 10] },    // mesh grid height
-        drift:   { type: 'number', default: 0,  range: [0, 1] },     // mesh vertex animation
-      },
+      uniforms: {},   // V1: fixed platform-default gradient; intensity (a surface prop) drives
+                      // opacity. The kind/colors/angle/mesh-grid wire-through is deferred.
       lower: {
         ios: [
-          { via: 'native', primitive: 'MeshGradient', applyVia: '.overlay', clock: 'timeline',
-            requires: { os: 18, substrate: 'hosted' }, note: 'animated mesh vertices + colors' },
+          { via: 'native', primitive: 'MeshGradient', applyVia: '.overlay',
+            requires: { os: 18, substrate: 'hosted' }, note: 'fixed platform-default mesh gradient; intensity → opacity' },
           { via: 'native', primitive: 'LinearGradient', applyVia: '.overlay',
             requires: { os: 13, substrate: 'hosted' }, note: 'pre-18 fallback' },
         ],
         android: [
-          { via: 'shader', asset: 'agsl', applyVia: 'ShaderBrush', clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'hosted' }, note: 'mesh has no native primitive → AGSL' },
-          { via: 'native', primitive: 'Brush.sweepGradient', applyVia: 'background',
-            requires: { os: 21, substrate: 'hosted' }, note: 'pre-33 fallback' },
+          { via: 'native', primitive: 'LinearGradient', applyVia: 'background',
+            requires: { os: 21, substrate: 'hosted' }, note: 'static hosted gradient; intensity → alpha' },
         ],
       },
     },
@@ -489,7 +480,7 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 | Effect ID | Composition | What fx draws |
 |-----------|-------------|---------------|
 | `edge-glow` | `background` / `overlay` | shader: edge-lit glow around view bounds; catalog entry pending native implementation [research: 22] |
-| `mesh-gradient` | `background` | fill: animated mesh gradient with palette, `MeshGradient` (iOS 18) / AGSL (Android 33) |
+| `mesh-gradient` | `background` | fill: fixed platform-default gradient, intensity-driven, `MeshGradient` (iOS 18) / `LinearGradient` (Android 21) |
 | `glass` | `surface` | material: Liquid Glass (iOS 26) / blur+overlay (Android); see §10 |
 | `fractal-clouds` | `background` / `overlay` | shader: organic noise, slow drift, sky-to-cloud [ref: packages/ios/Shaders/FxShaders.metal:91] |
 | `ink-smoke` | `background` / `overlay` | shader: diffused ink on warm paper [ref: packages/ios/Shaders/FxShaders.metal:106] |

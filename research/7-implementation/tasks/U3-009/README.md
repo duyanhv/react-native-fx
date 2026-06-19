@@ -66,19 +66,22 @@ platform-native, **native-backed**) and rule #5 (the front door must be honest).
 - **No device gate.** This removes lying typed config; it changes nothing that draws. The fixed
   gradient already renders; `filter` already renders nothing. `device: no`.
 
-## Open questions for the maintainer (decide at review — do NOT bake into the first pass)
+## Open questions — RESOLVED at review (maintainer, 2026-06-19)
 
-- **Declare `intensity` on the `fill` node?** The renderer's sole input is the surface-level
-  `intensity` prop. `shader` declares `intensity` as a node uniform (`manifest.ts:141`); `fill`
-  does not. **Recommendation:** keep `intensity` the surface prop it already is and document it in
-  `20-fills` — adding it to the node would advertise a uniform the renderer reads from a different
-  path. One-line add if the maintainer prefers cross-node consistency.
-- **Trim the over-promising lowering `note`s too?** The iOS `fill` rung says "animated mesh
-  vertices + colors" and the Android `os:33` rung claims a `via:'shader'` AGSL mesh — both
-  describe motion/inputs the static renderer does not produce. **Recommendation:** trim those
-  notes (and consider dropping the unbacked Android AGSL `fill` rung) in the same pass — same
-  "manifest lies" class, file already open — but it is outside the strict ratified uniforms scope,
-  so it is the maintainer's call whether U3-009 carries it or a follow-up does.
+- **Declare `intensity` on the `fill` node?** → **No.** Keep `intensity` the surface prop it is;
+  documented in `20-fills`. The `fill` node's `uniforms` stay `{}`.
+- **Trim the over-promising lowering `note`s too?** → **Yes, folded in (choice (a)).** iOS `fill`
+  rung lost `clock`/`cadence` + the "animated mesh" note; the unbacked Android AGSL rung was
+  **removed**, the remaining rung corrected to the static `LinearGradient` the renderer draws.
+- **`FillConfig = {}` exactness (maintainer caveat).** Verified it already derives to
+  `Record<string, never>` (the `ConfigFromSpecs` empty-branch), which *does* reject `{colors:[...]}`;
+  pinned with a `FillConfigIsExactlyEmpty` type assertion in `config.ts`.
+- **Canonical-mirror alignment (choice (b), extended).** The same false fill contract lived in
+  five canonical docs; all aligned to the static V1 reality with a one-line deferral each:
+  `02 §Worked examples`, `structure.ios.md §fill`, `structure.android.md §fill`,
+  `data-layer.md` (the node mirror + the `mesh-gradient` catalog row), and `20-fills.md`.
+  **Deliberately left** (deferred-design references, not shipped-state claims): `blueprint.md` Unit-3
+  flip-trigger example ("mesh-as-AGSL on Android") and `22-shaders.md`'s fill-vs-shader parenthetical.
 
 ## Proof
 
@@ -120,14 +123,15 @@ Subtask: narrow fill/filter manifest over-promise (Unit 3 rework; pre-Unit-10)
 ## Lifecycle
 
 ```
-[ ] spec'd        this file
-[ ] rules-gated   #2 / #5 — the IR must advertise only native-backed config
-[ ] implemented   manifest.ts: fill uniforms trimmed; filter ios+android rungs status:'planned'
-[ ] commented     manifest comments are the iceberg only — no internal ids (Code Comments Guide)
-[ ] headless-done tsc / build / lint + manifest-select + manifest-conformance green (new assertions)
-[ ] reviewed
-[ ] docs-closed   20-fills narrowed; 23-filters marked planned; FillConfig/FilterConfig derive correctly
+[x] spec'd        this file
+[x] rules-gated   #2 / #5 — the IR must advertise only native-backed config
+[x] implemented   manifest.ts: fill uniforms trimmed; filter ios+android rungs status:'planned'
+[x] commented     manifest comments are the iceberg only — no internal ids (Code Comments Guide)
+[x] headless-done tsc / build / lint + manifest-select + manifest-conformance green (new assertions)
+[x] reviewed      planner 2026-06-19: gates re-run independently (tsc/lint/build/93 tests); rung trim + FillConfig exactness pin + canonical-mirror alignment folded
+[x] docs-closed   20-fills/23-filters narrowed; 02 + structure.{ios,android} + data-layer fill mirrors aligned to static V1 with deferral notes
 [ ] merged
+
 ```
 
 No `device-verified` box — `device: no`.

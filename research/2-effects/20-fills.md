@@ -8,8 +8,7 @@ Owns: the `fill` IR node (semantics). Mechanics → structure.{ios,android}; low
 
 `fill` is the simplest, highest-bang capability and a big part of the named use
 cases (mesh backgrounds, gradient washes behind onboarding/cards). It is also the
-cleanest **parity** node — native primitives exist on both platforms for plain
-gradients — with one shader fallback (mesh on Android). It sets the pattern every
+cleanest **parity** node — native gradient primitives exist on both platforms. It sets the pattern every
 capability doc follows: own the *semantics* here, defer *mechanics* to the structure
 docs and the *rungs* to the manifest.
 
@@ -22,30 +21,18 @@ docs and the *rungs* to the manifest.
 
 ## Semantic surface
 
-Two families under one node, selected by a `kind` uniform:
-
-```ts
-type FillUniforms =
-  | { kind: 'gradient'; type: 'linear' | 'radial' | 'angular'; colors: string[]; stops?: number[]; angle?: number }
-  | { kind: 'mesh'; width: number; height: number; colors: string[]; /* width*height stops */ drift?: number };
-```
-
-- **gradient** — `colors` (hex, coerced natively) + optional `stops`; `type` picks
-  the geometry. Static by default.
-- **mesh** — a `width × height` control grid with one `color` per vertex; `drift`
-  animates vertex positions for the fluid aurora look (driven by the native clock,
-  not JS). V1 exposes the full grid. It does not expose N-stop auto-placement sugar.
-- Colors resolve in JS (palettes/themes, `50`); `time` is native-injected for `drift`.
+The V1 renderer's only input is the surface-level `intensity` prop (0–1, drives the rendered layer's opacity). The gradient style and palette are platform defaults. The `kind`/`colors`/`angle`/`width`/`height`/`drift` wire-through is a planned follow-up, deferred until native `MeshGradient`/`LinearGradient` inputs have examples and device proof. `intensity` is a surface prop, not a node uniform — the `fill` node's `uniforms` are empty in V1.
 
 ## Lowering (summary — authority is 02 + structure.\*)
 
 | | iOS | Android |
 |---|---|---|
-| gradient | native `LinearGradient`/`RadialGradient`/`AngularGradient` (13) | `Brush.linearGradient`/`radialGradient`/`sweepGradient` (21) |
-| mesh | native `MeshGradient` (18) → gradient fallback below 18 | AGSL mesh shader (33) → `Brush.sweepGradient` fallback |
+| fill | native `MeshGradient` (18) → `LinearGradient` (13) fallback | static `LinearGradient` (21) |
 
-So `fill` is **parity** for gradients and **shader-on-Android** for mesh — the only
-blue rung in this node. Mechanics (how each renders, the AGSL mesh shader) live in
+In V1 both platforms draw a **fixed platform-default gradient** — `intensity` drives the
+rendered layer's opacity (iOS) / alpha (Android); nothing animates and no per-call gradient
+inputs are read. The earlier mesh-vs-gradient split, the AGSL mesh shader, and the per-call
+`colors`/`angle`/grid are the deferred wire-through. Render mechanics live in
 `structure.{ios,android}.md`.
 
 ## Surface consumption
@@ -56,7 +43,7 @@ content.
 
 ```tsx
 <Fx effect="mesh-gradient" composition="background" />
-<FxView effect={fx.effect.mesh({ palette })}><MyScreen /></FxView>
+<FxView effect={fx.effect.mesh()}><MyScreen /></FxView>
 ```
 
 ## Composition & stacking
@@ -68,15 +55,13 @@ content.
 
 ## Runtime behavior
 
-- **static** for plain gradients; **native clock** for `mesh.drift` (vertex animation off
-  `time`, not JS). `drift` is mesh-only in V1; plain gradients do not get implicit
-  animated drift.
-- **state-eased** — palette/points change discretely, eased by `transition`.
+- **static** — the V1 renderers draw a fixed platform-default gradient; only `intensity` varies.
+- **state-eased** when `intensity` changes discretely, eased by `transition`.
 
 ## Degradation
 
-- mesh on iOS <18 → `LinearGradient` fallback; mesh on Android <33 (no AGSL) →
-  `Brush.sweepGradient` fallback. Gradients are parity everywhere (iOS 13 / Android 21).
+- iOS below 18 falls from `MeshGradient` to `LinearGradient` (13); Android draws a static
+  `LinearGradient` (21). Both are decorative fallbacks of the same fixed gradient — never an error.
 
 ## Events
 
@@ -84,20 +69,17 @@ None of consequence — decorative. `onLoad` is trivially available; no interact
 
 ## Decisions
 
-1. **One `fill` node, two families** (`gradient`, `mesh`) under a `kind` uniform —
-   not separate nodes; they share composition and the colors/clock model.
-2. **Colors are semantic and JS-resolved** (palettes/themes); `time` for `drift` is
-   native-injected.
-3. **Mesh lowers to a native primitive on iOS, a generated shader on Android** — the
-   manifest carries the fallback ladder; consumers never see the split.
-4. **V1 mesh exposes the full `width × height` grid** — N-stop auto-placement sugar stays
-   out of V1 until real usage shows the grid is too heavy.
-5. **`drift` is mesh-only** — plain gradients stay static unless a later capability adds
-   explicit animated-gradient semantics.
+1. **One `fill` node, two families** (`gradient`, `mesh`) under a future `kind` control —
+   not separate nodes; they share composition. V1 renders platform defaults for both; per-call
+   `colors`/`angle`/mesh-grid controls are a planned follow-on.
+2. **Mesh lowers to a native primitive on iOS, a generated shader on Android** — the manifest
+   carries the fallback ladder; consumers never see the split.
+3. **`intensity` is the surface prop, not a node uniform** — it drives the rendered layer's
+   opacity; it is not declared in the node's `uniforms`, which are empty in V1.
 
 ## Sources
 
 - `02-capability-ir-and-lowering.md` — the `fill` rungs.
-- `structure.ios.md` / `structure.android.md` — MeshGradient / AGSL mesh mechanics.
+- `structure.ios.md` / `structure.android.md` — MeshGradient / LinearGradient fill mechanics.
 - `_legacy/04-preset-system.md` — the JS uniform-resolution model (now `50`).
 - Apple `MeshGradient`; Android Compose `Brush` (links in the structure docs).

@@ -244,13 +244,12 @@ event-driven, read-only, no JS round-trip.
 Each section expands the Android rungs from `02`.
 
 ### `fill`
-- **Gradient family** — `type: linear|radial|angular` → Compose
-  `Brush.linearGradient`/`Brush.radialGradient`/`Brush.sweepGradient` · `via:native` ·
-  `requires {os:21, hosted}` · `applyVia:background`. The whole gradient family, not one
-  primitive.
-- **AGSL mesh shader** — the `mesh` kind has no native primitive, so it lowers to a generated
-  shader · `lower:shader, asset:agsl` · `requires {os:33, hosted}` · `applyVia:ShaderBrush` ·
-  `clock:frame-nanos`; degrades to a linear `Brush` below 33.
+- **V1: static hosted gradient** — `FxFillView` draws a fixed platform-default `LinearGradient`
+  on a plain `View` (`Canvas.onDraw`) · `via:native` · `requires {os:21, hosted}`. `intensity`
+  drives paint alpha; no per-call colors/angle/kind are read, and there is no AGSL mesh fill rung
+  in shipped V1.
+- **Deferred (fill wire-through)** — the configurable gradient family (Compose `Brush.*`) and an
+  AGSL mesh shader for the `mesh` kind are the planned wire-through; not built until it lands.
 
 ### `material`
 - **Own-content composition + `RenderEffect.createBlurEffect`** — `via:native` ·

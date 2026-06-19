@@ -59,9 +59,10 @@ describe('select()', () => {
   // ── OS guard ───────────────────────────────────────────────────
 
   it('skips rungs whose OS guard exceeds the device', () => {
-    const result = select(manifest.nodes.fill, android, { deviceOS: 30 });
-    expect(result.via).toBe('native');
-    expect(result.primitive).toBe('Brush.sweepGradient');
+    // material android: RenderEffect needs API 31, so on API 30 it is skipped (past the
+    // planned Haze rung) down to the always-available translucent draw rung.
+    const result = select(manifest.nodes.material, android, { deviceOS: 30 });
+    expect(result.via).toBe('draw');
   });
 
   it('returns none when all rungs are OS-guarded out', () => {
@@ -205,6 +206,18 @@ describe('select()', () => {
   it('falls back to the system material for material below iOS 26', () => {
     const result = select(manifest.nodes.material, ios, { deviceOS: 18 });
     expect(result.primitive).toBe('.ultraThinMaterial');
+  });
+
+  // ── filter: planned on both platforms — no V1 renderer ───────────
+
+  it('degrades filter to via: none on iOS (status: planned)', () => {
+    const result = select(manifest.nodes.filter, ios, { deviceOS: 18 });
+    expect(result.via).toBe('none');
+  });
+
+  it('degrades filter to via: none on Android (status: planned)', () => {
+    const result = select(manifest.nodes.filter, android, { deviceOS: 31 });
+    expect(result.via).toBe('none');
   });
 
   // ── symbol: iOS supported, Android planned ─────────────────────

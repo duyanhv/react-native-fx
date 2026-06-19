@@ -205,14 +205,13 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
 **primitive/lower · requires · applyVia · clock · behavior · fallback**.
 
 ### `fill`
-- **Gradient family** — `type: linear|radial|angular` → SwiftUI
-  `LinearGradient`/`RadialGradient`/`AngularGradient` (also `EllipticalGradient`) ·
-  `requires {os:13, hosted}` · `applyVia:.overlay` · static by default. The whole gradient
-  family, not one primitive.
-- **MeshGradient** (the `mesh` kind) — `requires {os:18, substrate:hosted}` ·
-  `applyVia:.overlay` · `clock:timeline` (animate vertex positions/colors off `TimelineView`).
-  Behavior: semantic uniforms = grid points + colors, resolved in JS. Mesh degrades to a
-  linear gradient below 18.
+- **V1: static hosted gradient** — `FxFillView` draws a fixed platform-default `MeshGradient`
+  (`requires {os:18, hosted}`) / `LinearGradient` fallback (`requires {os:13, hosted}`),
+  `applyVia:.overlay`. `intensity` drives the layer's opacity; nothing animates and no per-call
+  vertices/colors are read in shipped V1 (no `clock:timeline`, no JS-resolved grid).
+- **Deferred (fill wire-through)** — configurable colors/angle/kind and animated mesh drift (the
+  full gradient family + `TimelineView`-driven `MeshGradient`) are the planned wire-through; not
+  built until it lands.
 
 ### `material`
 - **UIKit glass surface** (the shipped iOS-26 rung) — `UIVisualEffectView` + `UIGlassEffect` ·

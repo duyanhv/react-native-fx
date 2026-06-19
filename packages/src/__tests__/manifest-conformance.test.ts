@@ -78,6 +78,18 @@ describe('curated shader catalog conformance', () => {
   });
 });
 
+describe('manifest fill node', () => {
+  it('declares the gradient/mesh render-target', () => {
+    const fill = manifest.nodes.fill;
+    expect(fill.kind).toBe('render-target');
+    expect(fill.interaction).toBe('none');
+  });
+
+  it('exposes no uniforms in V1 — intensity is a surface prop, not a node uniform', () => {
+    expect(Object.keys(manifest.nodes.fill.uniforms)).toEqual([]);
+  });
+});
+
 describe('manifest shader node', () => {
   it('declares the fx-managed shader render-target', () => {
     const shader = manifest.nodes.shader;
