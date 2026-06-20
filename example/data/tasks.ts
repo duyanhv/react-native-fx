@@ -16,7 +16,7 @@ export const TASKS: DeviceTask[] = [
 		title: "FxPressable",
 		platform: "iOS · Android",
 		what: "native press feedback over a shared press FSM · semantic event logging · scroll-yield behavior",
-		status: "verified",
+		status: "in-progress",
 		screen: "fx-pressable",
 	},
 	{
@@ -32,7 +32,7 @@ export const TASKS: DeviceTask[] = [
 		title: "fx.effect.* builder form",
 		platform: "iOS · Android",
 		what: "sections 7–8 of effect-surface · fx.effect.glow/glass/mesh render == their string forms · two-render-target chain renders the first step only (+ dev warning in Metro)",
-		status: "in-progress",
+		status: "verified",
 		screen: "effect-surface",
 	},
 	{

@@ -23,3 +23,7 @@ research/**/evidence/**/*.gif
 research/**/evidence/**/*.webp
 research/**/evidence/**/*.mp4
 research/**/evidence/**/*.mov
+
+# subagent-driven-development scratch — process scaffolding, not a tracked artifact
+.superpowers/
+docs/superpowers/plans/task-*-report.md
