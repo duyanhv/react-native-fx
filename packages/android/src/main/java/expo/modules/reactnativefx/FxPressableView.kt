@@ -209,11 +209,7 @@ internal class FxPressableView(
 
   // MARK: - Ripple Setup
 
-  /**
-   * Initializes the RippleDrawable foreground with the material highlight color. The radius
-   * is set in `onSizeChanged` once the view has a real size — computing it here (from `init`,
-   * before layout) would lock it to the 0-dimension fallback.
-   */
+  /** Sets the material-highlight ripple as the container foreground. */
   private fun setUpRipple() {
     val color = try {
       context.obtainStyledAttributes(intArrayOf(android.R.attr.colorControlHighlight))
@@ -233,16 +229,8 @@ internal class FxPressableView(
       mask
     )
 
+    // Leave the radius at the default RADIUS_AUTO so the framework fills the masked bounds; a fixed
+    // radius would inscribe a small circle on a wide control.
     intermediateContainer.foreground = rippleDrawable
-  }
-
-  /**
-   * Sizes the ripple to roughly half the smaller dimension, once the view has a real size.
-   * The ripple radius cannot be computed in `init` because the view has no dimensions yet.
-   */
-  override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
-    super.onSizeChanged(width, height, oldWidth, oldHeight)
-    val radius = (kotlin.math.min(width, height) / 2).coerceAtLeast(1)
-    rippleDrawable?.setRadius(radius)
   }
 }
