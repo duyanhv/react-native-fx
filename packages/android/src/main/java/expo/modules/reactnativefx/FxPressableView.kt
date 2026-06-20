@@ -172,15 +172,24 @@ internal class FxPressableView(
     return x >= 0 && x <= width && y >= 0 && y <= height
   }
 
+  // The FSM consumes touches, so the framework never runs its own pressed-state path. These proxy
+  // the inputs it would normally supply — the touch hotspot and the pressed flag — to the container
+  // that owns the foreground ripple, so the RippleDrawable animates through its usual drawable-state
+  // route rather than a hand-assembled state array.
+
   override fun handlePressBegin(x: Float, y: Float, depth: Int) {
-    rippleDrawable?.state = intArrayOf(android.R.attr.state_pressed)
+    intermediateContainer.drawableHotspotChanged(x, y)
+    intermediateContainer.isPressed = true
     onFxPressIn(FxPressPressEvent())
   }
 
-  override fun handlePressChanged(x: Float, y: Float, depth: Int) {}
+  override fun handlePressChanged(x: Float, y: Float, depth: Int) {
+    // The FSM only reports moves that remain within slop, so the hotspot stays inside bounds.
+    intermediateContainer.drawableHotspotChanged(x, y)
+  }
 
   override fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean) {
-    rippleDrawable?.state = intArrayOf()
+    intermediateContainer.isPressed = false
     onFxPressOut(FxPressPressEvent())
     if (includePressEvent) {
       onFxPress(FxPressPressEvent())
@@ -188,10 +197,11 @@ internal class FxPressableView(
   }
 
   override fun handlePressCancel(x: Float, y: Float) {
-    rippleDrawable?.state = intArrayOf()
+    intermediateContainer.isPressed = false
     onFxPressOut(FxPressPressEvent())
   }
 
+  // Long press keeps the pressed feedback; it clears only on the actual up/cancel.
   override fun handleLongPress(x: Float, y: Float) {
     onFxLongPress(FxPressPressEvent())
   }
