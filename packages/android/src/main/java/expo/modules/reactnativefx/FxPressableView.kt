@@ -172,11 +172,8 @@ internal class FxPressableView(
     return x >= 0 && x <= width && y >= 0 && y <= height
   }
 
-  // The FSM consumes touches, so the framework never runs its own pressed-state path. These proxy
-  // the inputs it would normally supply — the touch hotspot and the pressed flag — to the container
-  // that owns the foreground ripple, so the RippleDrawable animates through its usual drawable-state
-  // route rather than a hand-assembled state array.
-
+  // The FSM consumes the touch, so these feed the container the hotspot and pressed flag the
+  // framework would otherwise supply to drive its foreground ripple.
   override fun handlePressBegin(x: Float, y: Float, depth: Int) {
     intermediateContainer.drawableHotspotChanged(x, y)
     intermediateContainer.isPressed = true
@@ -184,7 +181,6 @@ internal class FxPressableView(
   }
 
   override fun handlePressChanged(x: Float, y: Float, depth: Int) {
-    // The FSM only reports moves that remain within slop, so the hotspot stays inside bounds.
     intermediateContainer.drawableHotspotChanged(x, y)
   }
 
@@ -228,10 +224,8 @@ internal class FxPressableView(
       0x20000000
     }
 
-    // The mask (3rd arg) needs a concrete shape: a default `ShapeDrawable()` has a null shape, an
-    // invalid mask that can let the ripple highlight fill the whole foreground on some devices. A
-    // full-bounds opaque `RectShape` masks the ripple to the view; null content keeps it transparent
-    // at rest.
+    // A concrete full-bounds mask: a default `ShapeDrawable()` has a null shape, which can let the
+    // ripple fill the whole foreground. Null content keeps the foreground transparent at rest.
     val mask = ShapeDrawable(RectShape()).apply { paint.color = Color.WHITE }
     rippleDrawable = RippleDrawable(
       ColorStateList.valueOf(color),
