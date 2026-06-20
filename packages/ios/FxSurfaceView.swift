@@ -21,7 +21,7 @@ internal struct FxUniforms {
 ///
 /// JS configures semantic targets through props. Native owns the render loop,
 /// uniforms, lifecycle pausing, and cooperative press recognizer.
-internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
+internal final class FxSurfaceView: FxNativeView, MTKViewDelegate, FxPressHost {
   // MARK: - Events
 
   /// Reports a completed shader press with a prefixed name that avoids React Native's reserved event.
@@ -84,6 +84,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
   private var targetPressDepth: Float = 0
   private var targetDrag = SIMD2<Float>.zero
   private var targetTilt = SIMD2<Float>.zero
+  private var pressOrigin: CGPoint = .zero
   private let startTime = CACurrentMediaTime()
 
   // Stashed by prop setters, applied once per batch in `applyResolvedConfig()`.
@@ -150,7 +151,7 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     layoutObserver = FxLayoutObserver(observing: self)
     contentAnimationDriver = makeContentAnimationDriver()
     presenceCoordinator = FxPresenceCoordinator(surface: self)
-    pressHandler = FxPressHandler(surface: self)
+    pressHandler = FxPressHandler(host: self)
     onContentAnimationCompletion = { [weak presenceCoordinator] in
       presenceCoordinator?.handleDriverCompletion()
     }
@@ -702,5 +703,58 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate {
     } else {
       contentAnimationDriver.pause()
     }
+  }
+
+  // MARK: - FxPressHost
+
+  func hitTarget(point: CGPoint) -> Bool {
+    return containsInteractiveShape(point: point)
+  }
+
+  func handlePressBegin(point: CGPoint, depth: Int) {
+    pressOrigin = point
+    updatePressUniforms(point: point, depth: Float(depth))
+    if pendingMode == "active", let dragAxis = pendingDragAxis {
+      updateDragTiltUniforms(origin: point, current: point, dragAxis: dragAxis)
+    }
+    dispatchShaderPressIn(point: point)
+  }
+
+  func handlePressChanged(point: CGPoint, depth: Int) {
+    updatePressUniforms(point: point, depth: Float(depth))
+    if pendingMode == "active", let dragAxis = pendingDragAxis {
+      updateDragTiltUniforms(origin: pressOrigin, current: point, dragAxis: dragAxis)
+    }
+  }
+
+  func handlePressEnd(point: CGPoint, includePressEvent: Bool) {
+    updatePressUniforms(point: nil, depth: 0)
+    if pendingMode == "active" {
+      updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
+    }
+    dispatchShaderPressOut(point: point)
+    if includePressEvent {
+      dispatchShaderPress(point: point)
+    }
+  }
+
+  func handlePressCancel(point: CGPoint) {
+    updatePressUniforms(point: nil, depth: 0)
+    if pendingMode == "active" {
+      updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
+    }
+    dispatchShaderPressOut(point: point)
+  }
+
+  func handleLongPress(point: CGPoint) {
+    dispatchShaderLongPress(point: point)
+  }
+
+  func attachRecognizer(_ recognizer: UILongPressGestureRecognizer) {
+    addGestureRecognizer(recognizer)
+  }
+
+  func detachRecognizer(_ recognizer: UILongPressGestureRecognizer) {
+    removeGestureRecognizer(recognizer)
   }
 }
