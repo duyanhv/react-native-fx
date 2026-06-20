@@ -143,7 +143,7 @@ Subtask: FxPressable — native press feedback over a shared press FSM (blueprin
                   comment-density pass; all resolved
 [x] docs-closed   structure.{ios,android}.md feedback mechanic (Option A); 57/56 feedback `native` device-
                   verified; blueprint Unit 13 Shape note corrected; 52/index export confirmed
-[ ] merged        ready — pending the maintainer's merge tick + push of the branch
+[x] merged        on integration/0.1.x (maintainer merge-tick delegated 2026-06-20; pushed to PR #7)
 ```
 
 ## Start here
