@@ -9,6 +9,7 @@ import { ControlledWriteScreen } from "../../screens/controlled-write";
 import { DragAxisSpikeScreen } from "../../screens/drag-axis-spike";
 import { EffectSurfaceScreen } from "../../screens/effect-surface";
 import { FillMaterialScreen } from "../../screens/fill-material";
+import { FxPressableScreen } from "../../screens/fx-pressable";
 import { HostingParityScreen } from "../../screens/hosting-parity";
 import { PresenceScreen } from "../../screens/presence";
 import { RuntimeShaderScreen } from "../../screens/runtime-shader";
@@ -50,6 +51,8 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <DragAxisSpikeScreen />;
 		case "effect-surface":
 			return <EffectSurfaceScreen />;
+		case "fx-pressable":
+			return <FxPressableScreen />;
 		default:
 			return <TaskBlankScreen label={label} />;
 	}
