@@ -4,6 +4,38 @@ This guide defines how you verify visual, motion, and touch behavior on a device
 
 ---
 
+## Launching the app
+
+The dev-harness app (`example/`) runs as **two processes**: Metro (the JS bundler) and the native app binary on the device or simulator. A device gate always starts the same way, run from the repo root:
+
+```sh
+bun run example         # 1. start Metro (the JS bundler) — leave it running
+bun run example:ios     # 2a. build the native binary, install, launch, connect to Metro (iOS)
+bun run example:android # 2b. same for Android
+```
+
+`example:ios` / `example:android` run `expo run:ios` / `expo run:android` — a **full native compile**, install, and launch. The first build is slow; later runs are incremental.
+
+### Rebuild or reload? — the rule that decides every gate
+
+The native binary and the JS bundle ship separately. What you changed decides whether you rebuild:
+
+- **JS / TypeScript only** (anything under `packages/src/*.ts` that stays pure TS, or `example/` JS) — the binary is unchanged. **Do not rebuild.** Reload the JS bundle: press `r` in the Metro terminal, or shake the device → Reload. The gate then proves the new JS on the already-installed binary.
+- **Native change** (any `packages/ios/*.swift`, `packages/android/**`, a changed native module signature, a new native dependency, or app config / `Info.plist` / Gradle) — the binary is stale. **Rebuild** with `bun run example:ios` / `example:android`. A Metro reload will not pick it up.
+
+State which path a gate is on in its `device.md` (`JS bundle: Metro reload (no native rebuild)` vs `Native rebuild`) so the evidence records exactly what binary was proven.
+
+### Selecting the device
+
+- **iOS** — `expo run:ios` boots a default simulator. Target a specific one (or a physical device) with `-d`: `bun --cwd example ios -d "iPhone 17 Pro"`, or pass a UDID. Run the app **warm** for a gate — a cold relaunch of the harness binary has tripped an unrelated `RNGestureHandler` install crash; the app runs normally when the process is already warm.
+- **Android** — `expo run:android` installs to the single connected device or emulator (the POCO F1 over `adb` for the canonical Android gate). Prefer a **physical** Android device: emulator AGSL support varies (see the table below).
+
+### Driving the gate and capturing evidence
+
+Use the **agent-device** skill to drive navigation, taps, screenshots, and log capture on both platforms. The harness exposes each `device: yes` scenario as a card on the Tasks list (`example/data/tasks.ts`); navigate Tasks → the task id to reach its screen. Capture the screenshots and any on-screen semantic-log / Metro-console lines the gate calls for, then write them up per [Evidence format](#evidence-format).
+
+---
+
 ## The device gate
 
 Every task that touches rendering, motion, or touch has a device gate. The agent stops at `headless-done` and prepares a handoff. The human owns the device gate.
