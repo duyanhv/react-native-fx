@@ -326,3 +326,13 @@ Did not complete U10-001 interactive shader press-path verification on either pl
 **A.2/A.4 (cancellation, scroll-yield) FAIL — assessed as agent-device synthetic-gesture artifacts, pending hands-on confirmation.** The radius fix does not touch cancellation logic, so the reported FAILs (onPress fired on drag-out/scroll) would persist if real. But the cancellation path is the **unchanged shared FSM** (slop self-fail → `handlePressCancel` → onPressOut, no onPress) — the same arbiter `<Fx interactionMode>` uses. A synthetic drag that stays within `scaledTouchSlop` never trips the yield, so the FSM correctly treats it as a tap and fires onPress; the same session called scroll-yield "difficult to assess," and the transcribed log order (`onPressIn → onPress → onPressOut`) is inconsistent with the code's emit order (pressOut before press), pointing to a mis-read rather than a real regression. To be ratified by a hands-on drag-out + scroll on the real device.
 
 **Still open: G (no-regression).** The shared-FSM refactor touched `FxSurfaceView`'s press path; `<Fx interactionMode>` (the interactive "dots" shader press) has NOT been re-verified on either platform. This is the one load-bearing check left before merge.
+
+---
+
+## Final verdict (maintainer-confirmed, 2026-06-20)
+
+Hands-on on the real device (post-`RADIUS_AUTO`, HEAD), the maintainer confirmed the two open items:
+- **Cancellation + scroll-yield (A.2 / A.4): PASS** — a real drag-out and a real press-then-scroll emit `onPressOut` only, no `onPress`. The agent-device Re-gate 2 FAILs were synthetic-gesture artifacts (drag below `scaledTouchSlop`), superseded.
+- **No-regression (G): PASS** — `<Fx interactionMode>` (the dots shader press) still works after the shared-FSM refactor, both platforms.
+
+**U13-001 device-verified — full matrix PASS both platforms:** mount, feedback (iOS scale/opacity, Android full-cover ripple), event order, long-press suppression, cancellation/scroll-yield (`onPressOut` only), rapid re-press, and `<Fx interactionMode>` no-regression.

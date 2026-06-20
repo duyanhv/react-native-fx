@@ -93,7 +93,7 @@ Optional thin sugar over `<Fx effect="…">`; the `effect=` preset is the canoni
    values that ship in V1 are: `transient` (presence); `lift` (state). The feedback value is
    `native`. `sheet`/`modal` (presence) are **deferred to `DEF-018`** (re-homed from MOT-001 at its closure, U7-003) — designed but held back
    because they name screen-scale presentations that collide with presence's scope ceiling
-   (`42`, DOC-018). The `transient` per-platform defaults are **device-verified** (MOT-001 closed, U7-003); the `lift` (state) and `native` (feedback) defaults stay **device-pending** — they ride the as-yet-unbuilt `FxView` / `FxPressable`.
+   (`42`, DOC-018). The `transient` per-platform defaults are **device-verified** (MOT-001 closed, U7-003) and the `native` (feedback) defaults are **device-verified** (U13-001, 2026-06-20 — iOS scale/opacity, Android full-cover ripple); the `lift` (state) defaults stay **device-pending** — they ride the as-yet-unbuilt `FxView`.
 6. **V1 effect-component set ratified (DOC-004).** `EdgeGlow` ships as a component.
    `MeshGradient` does not. These are sugar over effects already in the curated catalog
    (DOC-003, SPINE-001) — not new surface. They export from the core package, not

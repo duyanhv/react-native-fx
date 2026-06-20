@@ -129,7 +129,7 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 *   **Precedent (battle-tested):** the shipped native `FxPressHandler` recognizer (U8-001).
 *   **Decision + flip-trigger:** **mimic** — a JS component over the existing `FxPressHandler`: a `feedback="native"` press-feedback bundle + `onPress*` events on *your* content (distinct from `<Fx interactionMode>`, which is the effect surface). → *Flip-trigger: none.*
 *   **Explicit Reject:** an RNGH dependency (`30` Decision 5); a second recognizer (reuse `FxPressHandler`).
-*   **Shape · phase:** `src/surface/FxPressable.tsx` · **Surface**
+*   **Shape · phase:** `src/surface/FxPressable.tsx` (public surface) + a **native unit** as-built — the `FxPressHandler` FSM was refactored behind a host protocol serving both `<Fx interactionMode>` and a new `FxPressableView` (over `FxNativeView`, intermediate-wrapper pattern). The blueprint's "JS component / Surface" framing was the public surface only; "mimic" became "refactor the proven FSM behind a host protocol" (U13-001, device-verified 2026-06-20). · **Surface + native**
 *   **Depends on:** Unit 8 (merged)
 
 ### Unit 14: `FxGroup` / `FxItem` — the morphing compound

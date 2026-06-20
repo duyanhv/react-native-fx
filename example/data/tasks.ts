@@ -16,7 +16,7 @@ export const TASKS: DeviceTask[] = [
 		title: "FxPressable",
 		platform: "iOS · Android",
 		what: "native press feedback over a shared press FSM · semantic event logging · scroll-yield behavior",
-		status: "in-progress",
+		status: "verified",
 		screen: "fx-pressable",
 	},
 	{

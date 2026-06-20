@@ -210,10 +210,11 @@ internal interface FxPressHost {
 
 **FxPressableView host behavior** (new, content-press):
 - Hit-test: full view bounds.
-- Feedback: `RippleDrawable` foreground on the `intermediateContainer` (FrameLayout wrapper, Fabric-invisible). Ripple uses bounded radius ~half smaller dimension, color from `?colorControlHighlight` or fallback `#20000000`.
-- Long-press: emits `onLongPress` event to JS.
-- Press end: emits `onPress` event if `includePressEvent == true`; `onPressIn/Out` on begin/end/cancel.
-- Cancellation (slop yield via `requestDisallowInterceptTouchEvent` release / out-of-bounds): emits `onPressOut` only, no `onPress`.
+- Feedback: a `RippleDrawable` foreground on the `intermediateContainer` (FrameLayout wrapper, Fabric-invisible), color from `?colorControlHighlight` or fallback `#20000000`. Because the FSM consumes the touch, the framework never runs its own pressed-state path, so the host proxies it: `intermediateContainer.drawableHotspotChanged(x, y)` + `isPressed = true` on begin, hotspot update on move, `isPressed = false` on end/cancel. The ripple is bounded by an opaque `RectShape` mask (a default `ShapeDrawable()` has a null shape and can let the highlight fill the foreground) and left at `RADIUS_AUTO` so the framework fills the masked bounds (a fixed `min/2` radius inscribes a small circle on a wide control).
+- Long-press: keeps the pressed feedback until the actual up/cancel; emits the long-press event.
+- Press end: emits the press event if `includePressEvent == true`; press-in/out on begin/end/cancel.
+- Cancellation (slop self-fail / out-of-bounds): clears the pressed state, emits press-out only, no press.
+- Events cross as `onFx`-prefixed names (`onFxPressIn`/`onFxPressOut`/`onFxPress`/`onFxLongPress`) to avoid React Native's reserved `topPress`; the public `onPress*` props map onto them in JS (as the shader surface does with `onShaderPress*`).
 
 ### Lifecycle
 

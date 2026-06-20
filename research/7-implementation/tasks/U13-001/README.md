@@ -128,18 +128,22 @@ Subtask: FxPressable — native press feedback over a shared press FSM (blueprin
 ## Lifecycle
 
 ```
-[ ] spec'd        this file
-[ ] rules-gated   #1/#2/#3/#5/#6/#7/#9 — one shared FSM, native feedback, managed wrapper, no RNGH
-[ ] implemented   FxPressHandler host-protocol refactor (ios + android) + FxPressableView (ios + android)
+[x] spec'd        this file
+[x] rules-gated   #1/#2/#3/#5/#6/#7/#9 — one shared FSM, native feedback, managed wrapper, no RNGH
+[x] implemented   FxPressHandler host-protocol refactor (ios + android) + FxPressableView (ios + android)
                   + src/surface/FxPressable.tsx + src/index.ts export
-[ ] commented     iceberg only — no internal ids; the host-split rationale, the cancellation contract
-[ ] headless-done tsc/build/lint + Swift/Kotlin compile + iOS xcodebuild + Android assembleDebug + the
-                  interactionMode no-regression tests + example tsc green
-[ ] device-verified  feedback + 4 events + honest cancellation on iOS sim + POCO F1; interactionMode unbroken
-[ ] reviewed
-[ ] docs-closed   structure.{ios,android}.md mechanics; 30 contract if changed; 57/56 feedback status;
-                  52/index export; blueprint Unit 13 Shape note corrected
-[ ] merged
+[x] commented     iceberg only — no internal ids; the host-split rationale, the cancellation contract
+[x] headless-done packages lint/build/138 tests/example tsc; iOS xcodebuild (after pod install) +
+                  Android compileDebugKotlin/assembleDebug green; interactionMode tests unbroken
+[x] device-verified  full matrix PASS both platforms (maintainer-confirmed 2026-06-20): feedback (iOS
+                  scale/opacity, Android full-cover ripple), 4 events, honest cancellation/scroll-yield
+                  (onPressOut only), long-press suppression, interactionMode no-regression. evidence/device.md
+[x] reviewed      3 review rounds (reviews/U13-001.md) — unregistered-view/un-activated-recognizer/effect-
+                  surface-regression blockers, event-pipeline (onFx* + Events), ripple mask + RADIUS_AUTO,
+                  comment-density pass; all resolved
+[x] docs-closed   structure.{ios,android}.md feedback mechanic (Option A); 57/56 feedback `native` device-
+                  verified; blueprint Unit 13 Shape note corrected; 52/index export confirmed
+[ ] merged        ready — pending the maintainer's merge tick + push of the branch
 ```
 
 ## Start here
