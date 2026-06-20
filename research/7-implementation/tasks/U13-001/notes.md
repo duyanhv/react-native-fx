@@ -101,7 +101,7 @@ During headless gate, iOS xcodebuild failed with "cannot find type 'FxPressHost'
 
 ### Fix Round 1 (Planner Review Blockers + Quality)
 
-**B1 — View Registration:** Added View blocks to FxModule.swift (iOS) and FxModule.kt (Android) declaring FxPressableView with events (onPressIn, onPressOut, onPress, onLongPress) and feedback prop. This fixes requireNativeView lookup failures that prevented mount.
+**B1 — View Registration:** Added View blocks to FxModule.swift (iOS) and FxModule.kt (Android) declaring FxPressableView with its press events and the feedback prop. This fixes requireNativeView lookup failures that prevented mount. (Superseded by the event-pipeline fix below — the events are declared with onFx-prefixed names, not the bare onPress* shown in earlier drafts.)
 
 **B2 — Recognizer Activation:** Called pressHandler.update(mode: "active", dragAxis: nil) at init in iOS FxPressableView, and pressHandler.update("active", null) in Android. This puts the FSM into active mode for content press (originally it was NONE, so no touches were processed).
 
@@ -126,6 +126,16 @@ During headless gate, iOS xcodebuild failed with "cannot find type 'FxPressHost'
 **Medium: FxPressableView Hit Target Unbounded.** Android hitTarget returned true for all coordinates, breaking drag-out cancellation. Fix: bounded to view bounds (x >= 0 && x <= width && y >= 0 && y <= height).
 
 **Low: Internal ID in TSDoc.** FxPressable.tsx comment mentioned "use FxView (U12)". Fix: removed "(U12)" per code comments guide.
+
+### Fix Round 2 — Planner (event pipeline + ripple + feedback)
+
+**High: Event pipeline was dead.** A prior fix removed the `Events(...)` declarations from both module View blocks to dodge React Native's reserved `topPress` conflict — but Expo wires `EventDispatcher` fields only against the declared event names, so with no `Events(...)` the callbacks were no-ops. Fix: native events renamed to onFx-prefixed (`onFxPressIn`/`onFxPressOut`/`onFxPress`/`onFxLongPress`) and re-declared via `Events(...)` in `FxModule.swift`/`FxModule.kt`; the public `onPress*` props map onto them in `FxPressable.tsx`, mirroring the shader surface's `onShaderPress*`. The `onFx` prefix avoids `topPress`.
+
+**Medium: Android ripple radius locked to 1px.** `setUpRipple()` ran in `init` (pre-layout, width/height 0), so the half-min-dimension radius collapsed to 1. Fix: radius moved to `onSizeChanged`; `setUpRipple` now only builds the drawable + color.
+
+**Low: iOS press-down jump.** `applyPressDown` started both animations from `1.0`, so a re-press during spring-back jumped. Fix: it now reads the current presentation-layer scale/opacity as the from-value (matching `restorePressUp`).
+
+**Build note.** `FxPressableView.swift` had not been in the iOS build's source set across earlier rounds (no `pod install` after the file was added), so prior "iOS BUILD SUCCEEDED" never compiled it. After `pod install` it compiles; iOS `xcodebuild` + Android `compileDebugKotlin`/`assembleDebug` both green.
 
 ## Next Steps (for device gate / later units)
 
