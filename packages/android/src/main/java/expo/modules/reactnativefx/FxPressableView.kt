@@ -38,17 +38,9 @@ internal class FxPressableView(
 
   // Prefixed names avoid React Native's reserved `topPress`; the public `onPress*` props map
   // to these in `FxPressable.tsx`, mirroring the shader surface's `onShaderPress*`.
-
-  /** Fired when a press begins. */
   val onFxPressIn by EventDispatcher<FxPressPressEvent>()
-
-  /** Fired when a press exits (touch lifted or cancelled). */
   val onFxPressOut by EventDispatcher<FxPressPressEvent>()
-
-  /** Fired on touch lift if the press was not cancelled or long-pressed. */
   val onFxPress by EventDispatcher<FxPressPressEvent>()
-
-  /** Fired if the touch is held long enough. */
   val onFxLongPress by EventDispatcher<FxPressPressEvent>()
 
   /**
@@ -80,13 +72,6 @@ internal class FxPressableView(
 
   internal fun setFeedback(feedback: String) {
     // V1 supports "native" feedback; other values ignored for now.
-  }
-
-  /**
-   * Stops press tracking when the view is removed from the window.
-   */
-  override fun onDetachedFromWindow() {
-    super.onDetachedFromWindow()
   }
 
   // MARK: - Child Mounting
@@ -181,33 +166,17 @@ internal class FxPressableView(
 
   // MARK: - FxPressHost Implementation
 
-  /**
-   * Reports whether the given point is within the hit target bounds.
-   * Returns true only for coordinates within the view bounds.
-   */
   override fun hitTarget(x: Float, y: Float): Boolean {
     return x >= 0 && x <= width && y >= 0 && y <= height
   }
 
-  /**
-   * Handles the start of a press: activates ripple and dispatches onPressIn.
-   */
   override fun handlePressBegin(x: Float, y: Float, depth: Int) {
     rippleDrawable?.state = intArrayOf(android.R.attr.state_pressed)
     onFxPressIn(FxPressPressEvent())
   }
 
-  /**
-   * Handles press movement. No feedback change on move for FxPressableView.
-   */
-  override fun handlePressChanged(x: Float, y: Float, depth: Int) {
-    // No-op: no feedback changes on press moved
-  }
+  override fun handlePressChanged(x: Float, y: Float, depth: Int) {}
 
-  /**
-   * Handles the end of a press: deactivates ripple, dispatches onPressOut and
-   * optionally onPress if the press should fire (not cancelled, not long-pressed).
-   */
   override fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean) {
     rippleDrawable?.state = intArrayOf()
     onFxPressOut(FxPressPressEvent())
@@ -216,34 +185,19 @@ internal class FxPressableView(
     }
   }
 
-  /**
-   * Handles press cancellation: deactivates ripple and dispatches onPressOut.
-   */
   override fun handlePressCancel(x: Float, y: Float) {
     rippleDrawable?.state = intArrayOf()
     onFxPressOut(FxPressPressEvent())
   }
 
-  /**
-   * Handles long press: dispatches onLongPress.
-   */
   override fun handleLongPress(x: Float, y: Float) {
     onFxLongPress(FxPressPressEvent())
   }
 
-  /**
-   * No-op on Android; touch dispatch is handled in dispatchTouchEvent.
-   */
-  override fun attachRecognizer(recognizer: android.view.GestureDetector) {
-    // No-op on Android
-  }
+  // Android drives the FSM through `dispatchTouchEvent`, so there is no recognizer to attach.
+  override fun attachRecognizer(recognizer: android.view.GestureDetector) {}
 
-  /**
-   * No-op on Android; touch dispatch is handled in dispatchTouchEvent.
-   */
-  override fun detachRecognizer(recognizer: android.view.GestureDetector) {
-    // No-op on Android
-  }
+  override fun detachRecognizer(recognizer: android.view.GestureDetector) {}
 
   // MARK: - Ripple Setup
 
