@@ -262,10 +262,13 @@ internal class FxPressableView(
       0x20000000
     }
 
+    // `ShapeDrawable()` is the MASK (3rd arg), not the content (2nd) — a content layer paints
+    // its opaque default fill over the children (a solid black square). With a null content and
+    // a rect mask, the foreground is transparent at rest and bounds the ripple to the view.
     rippleDrawable = RippleDrawable(
       ColorStateList.valueOf(color),
-      ShapeDrawable(),
-      null
+      null,
+      ShapeDrawable()
     )
 
     intermediateContainer.foreground = rippleDrawable
