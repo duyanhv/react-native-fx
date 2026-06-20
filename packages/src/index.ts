@@ -42,6 +42,8 @@ export {
   Fx,
   FxPresence,
   type FxPresenceProps,
+  FxPressable,
+  type FxPressableProps,
   type FxProps,
   type FxScrollProps,
   type FxScrollTile,
