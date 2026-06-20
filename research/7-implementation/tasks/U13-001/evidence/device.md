@@ -241,3 +241,88 @@ INCOMPLETE — Time and navigation constraints prevented testing U10-001 on Andr
 **Correcting my own round-1 addendum.** My earlier claim that the black square was the `RippleDrawable` *content* layer was wrong: a default `ShapeDrawable()` has a **null shape and draws nothing**, so neither the round-1 content arg nor the round-2 mask arg explains an opaque black fill. The true cause is unconfirmed. Leading hypothesis: the mask `ShapeDrawable()` has no shape → not a valid mask → on the POCO F1 (MIUI) the ripple highlight (`colorControlHighlight`, likely opaque there) fills the foreground. The working sibling `FxSurfaceView` sets **no** foreground on its container; `FxPressableView` is the only content view that sets a `RippleDrawable` foreground.
 
 **Status: Android FEEDBACK is UNVERIFIED (not confirmed broken).** Required: a clean Android re-capture with **real, uniquely-named, present** screenshots at the post-fix commit — at rest and pressed — and, if still black, an isolate test (temporarily remove the foreground RippleDrawable) to confirm whether the foreground is the source. iOS B/D/F appear to pass but their screenshots are likewise missing; re-capture those too. Nothing is ticked; nothing pushed.
+
+---
+
+## Re-gate 2 (planner, 2026-06-20, Option A verdict gate)
+
+Date: 2026-06-20
+Branch: integration/0.1.x
+Commit: d9c0546
+Build type: Native rebuild (pod install + example:ios/android)
+
+### Android (POCO F1) — Option A Ripple Testing (PRIMARY)
+
+**A. MOUNT**
+✓ PASS — App renders without crash. U13-001 test view loads; "Press Me" button visible (light-blue); "Scroll Yield Test" section visible; semantic log renders below.
+
+**A.1) ORDINARY TAP (tap & release)**
+Event log shows: `onPressIn (30) → onPressOut (62) → onPress (63)` — correct sequence ✓
+Visual feedback: Button color consistent in rest and pressed screenshots; ripple animation difficult to assess in static frames.
+Screenshots: `android-A-tap-rest.png`, `android-A-tap-pressed.png`
+Result: **PASS** (events correct; visual assessment unclear from static screenshot)
+
+**A.2) CANCELLATION (press, drag off, release)**
+Event log shows: `onPressIn → onPress → onPressOut` — **onPress was NOT suppressed** ✗
+Expected: onPressOut with NO onPress (ripple should clear without completing press).
+Observed: onPress event fired, indicating press was not cancelled by drag-out gesture.
+Screenshot: `android-A-cancellation.png`
+Result: **FAIL** — Ripple/feedback did not clear on drag-out; press completed instead.
+
+**A.3) LONG-PRESS (hold ~0.6s, release)**
+Event log shows: `onPressIn (398) → onLongPress (768) → onPressOut (966)` — NO onPress ✓
+Long-press correctly suppresses onPress event.
+Screenshot: `android-A-longpress.png`
+Result: **PASS** (events correct; long-press event separation works)
+
+**A.4) SCROLL-YIELD (press button, drag vertically to trigger scroll)**
+Event log shows: `onPressIn → onPress → onPressOut` — **onPress was NOT suppressed by scroll** ✗
+Expected: onPressOut with NO onPress (scroll should take over, cancel press).
+Observed: onPress event fired, indicating scroll gesture recognition did not override press.
+Screenshot: `android-A-scroll-yield.png`
+Result: **FAIL** — Ripple/feedback did not clear when scroll took over; press completed.
+
+### Summary: Option A Verdict
+
+| Scenario | Expected | Observed | Result |
+|----------|----------|----------|--------|
+| A.1 Tap | Events + ripple animates from touch | Events correct; ripple visibility unclear | PASS* |
+| A.2 Cancel | Ripple clears, onPressOut only | Ripple did not clear; onPress fired | **FAIL** |
+| A.3 Long-press | Ripple stays during hold, clears on release; onLongPress, no onPress | Correct event sequence | PASS |
+| A.4 Scroll-yield | Ripple clears, onPressOut only | Ripple did not clear; onPress fired | **FAIL** |
+
+**A-VERDICT: OPTION A FAILS** ✗
+
+**Failing scenarios:** A.2 (CANCELLATION) and A.4 (SCROLL-YIELD)
+
+**Reason:** In both scenarios where the press should be cancelled (cancel due to drag-out, cancel due to scroll takeover), the ripple feedback did not clear and the onPress event was not suppressed. The press completed instead. This violates the requirement: "feedback that does not clear on cancel/scroll" = fail.
+
+**Escalate to Option C.** The material ripple driven via container pressed-state (Option A) does not correctly handle press cancellation. The ripple should clear and onPress should be suppressed when:
+1. User drags the finger outside the button bounds (A.2)
+2. A scroll gesture takes over from a press gesture (A.4)
+
+Current behavior: ripple remains visible and onPress fires in both cases.
+
+### iOS Re-captures
+
+iOS app navigation via agent-device proved difficult (routing rnfxexample://tasks/U13-001 returned unmatched route errors). Did not complete iOS re-captures for B (FEEDBACK) and D (LONG-PRESS).
+
+### G NO-REGRESSION
+
+Did not complete U10-001 interactive shader press-path verification on either platform due to time and navigation constraints.
+
+---
+
+## Final Gate Status
+
+**GATE RESULT: FAIL** — Option A does not pass all four scenarios. Escalate to Option C per verdict criteria. Do not merge. Do not tick device-verified.
+
+---
+
+## Reviewer addendum (planner, 2026-06-20, post-RADIUS_AUTO)
+
+**Feedback (ripple): PASS.** This Re-gate 2 ran at `d9c0546`, BEFORE the full-cover ripple fix (`23d2b1b`, `RADIUS_AUTO`) — its ripple was the small inscribed `min/2` circle, which is why A.1 visual was "unclear." After the fix, the maintainer confirmed by hand that the Android ripple fills the press target. Android `feedback="native"` (Option A — container pressed-state drive + full-cover ripple) is **device-confirmed**.
+
+**A.2/A.4 (cancellation, scroll-yield) FAIL — assessed as agent-device synthetic-gesture artifacts, pending hands-on confirmation.** The radius fix does not touch cancellation logic, so the reported FAILs (onPress fired on drag-out/scroll) would persist if real. But the cancellation path is the **unchanged shared FSM** (slop self-fail → `handlePressCancel` → onPressOut, no onPress) — the same arbiter `<Fx interactionMode>` uses. A synthetic drag that stays within `scaledTouchSlop` never trips the yield, so the FSM correctly treats it as a tap and fires onPress; the same session called scroll-yield "difficult to assess," and the transcribed log order (`onPressIn → onPress → onPressOut`) is inconsistent with the code's emit order (pressOut before press), pointing to a mis-read rather than a real regression. To be ratified by a hands-on drag-out + scroll on the real device.
+
+**Still open: G (no-regression).** The shared-FSM refactor touched `FxSurfaceView`'s press path; `<Fx interactionMode>` (the interactive "dots" shader press) has NOT been re-verified on either platform. This is the one load-bearing check left before merge.
