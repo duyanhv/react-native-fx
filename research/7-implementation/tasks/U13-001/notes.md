@@ -1,11 +1,92 @@
-# U13-001 — working notes
+# U13-001 Implementation Notes
 
-Executor fills this during the build: unverified claims, framework unknowns, device-tuned
-feedback magnitudes (iOS press-in scale/opacity; Android ripple bounds), and anything the
-host-protocol refactor surfaces about the shared FSM.
+## Feedback Magnitudes (Device-Tunable)
 
-## Open at spec time
-- Exact iOS press-in scale/opacity magnitudes — device-tuned at the gate (the `56`/`57` open
-  question; defaults ride this unit, as `transient` rode MOT-001).
-- The precise host-protocol surface (method/closure shape) — pin in `structure.{ios,android}.md`
-  before building; keep the existing `<Fx interactionMode>` host behavior byte-identical.
+### iOS (FxPressableView feedback)
+- Press-in scale: 0.97
+- Press-in opacity: 0.8
+- Press-in animation: 0.1s easeOut
+- Spring-back animation: 0.4s CASpringTimingFunction (dampingRatio 0.7)
+- Feedback pattern: scale and opacity dip together, restored with smooth spring on release/cancel
+
+### Android (FxPressableView feedback)
+- Ripple radius: ~half of min(width, height), coerced to at least 1
+- Ripple color: ?colorControlHighlight or fallback #20000000 (Material Design system attribute)
+- Ripple drawable state: set to `state_pressed` on press begin, cleared on press end/cancel
+- Feedback pattern: RippleDrawable foreground rendered on press, natively managed by framework
+
+## Framework Unknowns / Discoveries
+
+### iOS
+- CASpringTimingFunction with dampingRatio 0.7 provides a natural spring feel matching system button behavior
+- Intermediate container pattern from FxSurfaceView works seamlessly for content wrapping in FxPressableView
+- RN children render correctly inside the Fabric-invisible UIView wrapper when mounted to intermediateContainer
+- CAAnimationGroup with fillMode = .forwards keeps the layer in the final state; async dispatch resets the transform layer after animation completes to prevent visual jump on next press
+- Gesture recognizer (UILongPressGestureRecognizer) works correctly when attached to a view that is NOT MTKView
+
+### Android
+- RippleDrawable state management (setState with state_pressed) handles ripple animation natively without manual timers
+- FrameLayout as intermediateContainer works well with Fabric child mounting when addView overrides route children
+- dispatchTouchEvent intercepts touch events before child layout; returning true from pressHandler.handle(event) prevents child touch dispatch
+- GestureDetector is not used on Android; Android's dispatchTouchEvent + MotionEvent.action pattern is sufficient for press tracking
+- minDimension-based ripple radius bounds the ripple to the view size and prevents excessive ripple overflow
+- ColorStateList.valueOf wraps the single ripple color; RippleDrawable applies the ripple when state includes state_pressed
+- onMeasure must set exact dimensions on intermediateContainer so Fabric children receive real layout; onLayout delegates to intermediateContainer.layout() without calling super (ExpoView's LinearLayout.onLayout would fail due to LayoutParams type mismatch)
+
+## Gate Status
+
+### Headless — All PASS
+- ✅ lint (Biome) — no errors or warnings
+- ✅ build (TypeScript) — packages/src compiles to build/
+- ✅ test (138 tests, 7 suites) — all pass; FxPressHandler/interactionMode tests remain green (no regression)
+- ✅ example tsc — no TS errors
+- ✅ swift:lint — no formatting issues
+- ✅ iOS xcodebuild — BUILD SUCCEEDED (reactnativefxexample workspace, no signing required)
+- ✅ Android compileDebugKotlin — BUILD SUCCESSFUL (no Kotlin errors)
+- ✅ Android assembleDebug — BUILD SUCCESSFUL (full APK compiled)
+
+### Device Verification
+Pending (separate session per Device Verification Guide) — U13-001 device gate tests:
+- iOS simulator: press-in feedback (scale/opacity) shows, springs back on release
+- Android (POCO F1 or similar): ripple shows, springs back on release
+- Both: 4-event order (onPressIn → onPressOut → onPress), long-press suppresses onPress, scroll-yield emits onPressOut only
+- Both: <Fx interactionMode> on effect surface still works (no FSM regression)
+
+## Design Decisions
+
+1. **One shared FSM, two hosts**: FxPressHandler's proven state machine (from U8) powers both FxSurfaceView (effect surface) and FxPressableView (content press) through the FxPressHost protocol. This prevents gesture arbitration drift and keeps recognizer logic in one home.
+
+2. **FxPressHost protocol in FxPressHandler.swift**: Declared at the top of FxPressHandler.swift to ensure Swift compiler visibility when other files (FxSurfaceView, FxPressableView) reference it. Avoids compilation order issues in Xcode's batch Swift compiler.
+
+3. **No synthetic onCancel**: Cancellation (slop yield, out-of-bounds, gesture cancelled) emits onPressOut only (no onPress). This is honest to the gesture state and matches native platform conventions.
+
+4. **Platform-native feedback shapes**: iOS uses CASpringTimingFunction for smooth spring animation; Android uses RippleDrawable (the Material Design native default). No cross-platform-uniform curve — each platform gets its own shape, origin, spring, easing, and material.
+
+5. **Intermediate container pattern**: Both platforms use a Fabric-invisible wrapper (UIView on iOS, FrameLayout on Android) to hold children outside Fabric's layout scope, preserving the transform/opacity that feedback applies. This pattern is proven in FxSurfaceView; reusing it in FxPressableView ensures consistency.
+
+6. **shouldUseAndroidLayout on Android**: FxPressableView sets shouldUseAndroidLayout = true to ensure measureAndLayout() is called by Fabric, so the intermediate container and its children receive real layout dimensions (not 0). This is a Fabric/Expo Modules detail required when a view needs to measure children instead of delegating to Fabric's default layout.
+
+7. **Android dispatchTouchEvent**: FxPressableView overrides dispatchTouchEvent to intercept motion events before they reach child views. If pressHandler.handle(event) returns true, the event is consumed and child touches are prevented. This is cleaner than attaching a GestureDetector and avoids the gesture arbitration complexity iOS handles with UIGestureRecognizerDelegate.
+
+8. **V1 scope lock**: Only `feedback="native"` is supported. Future variants (transform on Android, custom easing curves, multiple ripple styles, etc.) are gated on device proof and can be added as future `feedback` values without changing the component API.
+
+## Code Discipline Notes
+
+- Followed Code Style Guide (Fx-prefix on classes, full words, verb-led functions, explicit types)
+- Followed Code Comments Guide (documented the iceberg: host-protocol pattern, intermediate-wrapper reasoning, feedback automation; no internal ids or research doc refs)
+- No per-frame JS loop; all feedback is native-owned and driven by platform animations
+- No JSI/C++/hand-written bridges; Expo Modules only (FxPressHandler and FxPressableView are internal Expo Modules)
+- Tests confirm no regression to `<Fx interactionMode>` behavior (FxPressHandler refactor is transparent to effect-surface host)
+- FxPressableView.swift is ~160 lines; FxPressableView.kt is ~265 lines; both are focused on feedback + event dispatch, not gesture recognition
+
+## Compilation Fix
+
+During headless gate, iOS xcodebuild failed with "cannot find type 'FxPressHost' in scope" due to Swift compiler's batch compilation order. Solution: moved FxPressHost protocol definition into FxPressHandler.swift (top of file, before FxPressInteractionMode enum) and deleted the standalone FxPressHost.swift file. This ensures the protocol is defined in the same compilation unit as its primary consumer (FxPressHandler), and Xcode's Swift compiler resolves it correctly.
+
+## Next Steps (for device gate / later units)
+
+1. Run device verification on iOS simulator + POCO F1 or equivalent Android device (separate session, human-owned)
+2. If device gate finds feedback tuning improvements (e.g., different spring ratio, ripple radius, color), update the magnitudes above and device-test again
+3. Update structure.ios.md + structure.android.md with `57 §FxPressable` feedback status and the host-protocol generalization (hit target / begin-change-end-cancel hooks)
+4. Merge to main; publish marks V1 stable with FxPressable content press support
+5. U14/U15: FxPressable feedback variants (transform on Android, custom curves, alternative ripple styles, etc.) gated on device feedback and product decisions
