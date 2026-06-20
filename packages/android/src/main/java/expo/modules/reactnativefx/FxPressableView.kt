@@ -2,8 +2,10 @@ package expo.modules.reactnativefx
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RectShape
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
@@ -216,13 +218,15 @@ internal class FxPressableView(
       0x20000000
     }
 
-    // `ShapeDrawable()` is the MASK (3rd arg), not the content (2nd) — a content layer paints
-    // its opaque default fill over the children (a solid black square). With a null content and
-    // a rect mask, the foreground is transparent at rest and bounds the ripple to the view.
+    // The mask (3rd arg) needs a concrete shape: a default `ShapeDrawable()` has a null shape, an
+    // invalid mask that can let the ripple highlight fill the whole foreground on some devices. A
+    // full-bounds opaque `RectShape` masks the ripple to the view; null content keeps it transparent
+    // at rest.
+    val mask = ShapeDrawable(RectShape()).apply { paint.color = Color.WHITE }
     rippleDrawable = RippleDrawable(
       ColorStateList.valueOf(color),
       null,
-      ShapeDrawable()
+      mask
     )
 
     intermediateContainer.foreground = rippleDrawable
