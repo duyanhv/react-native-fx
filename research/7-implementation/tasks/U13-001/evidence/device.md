@@ -1,8 +1,8 @@
 # U13-001 device verification — FxPressable
 
-Date: 2026-06-20  
-Branch: integration/0.1.x  
-Commit: b7a3edd  
+Date: 2026-06-20
+Branch: integration/0.1.x
+Commit: b7a3edd
 Build type: Native rebuild (pod install + example:ios/android)
 
 ---
@@ -12,7 +12,7 @@ Build type: Native rebuild (pod install + example:ios/android)
 Device: iPhone 17 Pro simulator, iOS 18
 
 ### A. MOUNT
-**PASS.** Screen renders without redbox/crash. FxPressable "Press Me" button visible in section 1, "Scroll Yield Test" button visible in section 2, semantic log renders below.  
+**PASS.** Screen renders without redbox/crash. FxPressable "Press Me" button visible in section 1, "Scroll Yield Test" button visible in section 2, semantic log renders below.
 Screenshot: `ios-u13-001-screen.png`
 
 ### C. EVENT ORDER (tap, release)
@@ -22,11 +22,11 @@ onPress
 onPressOut
 onPressIn
 ```
-Actual order (oldest→newest): `onPressIn → onPressOut → onPress` ✓  
+Actual order (oldest→newest): `onPressIn → onPressOut → onPress` ✓
 Screenshot: `ios-u13-event-order.png`
 
 ### B. FEEDBACK (press-and-hold)
-**PARTIAL.** Visual feedback (scale + opacity) appears to be applied, but long-press behavior needs verification.  
+**PARTIAL.** Visual feedback (scale + opacity) appears to be applied, but long-press behavior needs verification.
 Screenshot: `ios-u13-longpress.png`
 
 ### D. LONG-PRESS (hold ~0.5s, release)
@@ -48,7 +48,7 @@ Screenshot: `ios-u13-longpress.png`
 Device: POCO F1 physical device
 
 ### A. MOUNT
-**PASS.** Screen renders without crash. "Press Me" button visible as a black square (no visual styling). "Scroll Yield Test" in inner ScrollView. Semantic log renders below.  
+**PASS.** Screen renders without crash. "Press Me" button visible as a black square (no visual styling). "Scroll Yield Test" in inner ScrollView. Semantic log renders below.
 Screenshot: `android-u13-001-screen.png`
 
 ### C. EVENT ORDER (tap, release)
@@ -58,12 +58,12 @@ onPress (504)
 onPressOut (504)
 onPressIn (472)
 ```
-Actual order (oldest→newest): `onPressIn → onPressOut → onPress` ✓  
+Actual order (oldest→newest): `onPressIn → onPressOut → onPress` ✓
 Screenshot: `android-u13-tap.png`
 
 ### B. FEEDBACK (press-and-hold)
-**FAIL.** FxPressable on Android renders as a plain black square with NO visual feedback (no scale, no opacity, no material ripple). The button does not scale down or dim on press. No visual indication of press state.  
-Expected: Material ripple animation from touch point or opacity/scale change.  
+**FAIL.** FxPressable on Android renders as a plain black square with NO visual feedback (no scale, no opacity, no material ripple). The button does not scale down or dim on press. No visual indication of press state.
+Expected: Material ripple animation from touch point or opacity/scale change.
 Observed: Static black square, no animation on press/release.
 
 ### D. LONG-PRESS (hold ~0.5s, release)
@@ -126,9 +126,9 @@ Observed: Static black square, no animation on press/release.
 
 ## Re-gate (planner, 2026-06-20)
 
-Date: 2026-06-20  
-Branch: integration/0.1.x  
-Commit: 448c654  
+Date: 2026-06-20
+Branch: integration/0.1.x
+Commit: 448c654
 Build type: Native rebuild (pod install + example:ios/android)
 
 ### iOS Simulator — iPhone 17 Pro (iOS 18) — Re-gate Results
@@ -145,7 +145,7 @@ PASS ✓ Visual feedback confirmed: button scales (~0.97) and dims on press, spr
 PASS ✓ From round 1, re-confirmed: onPressIn → onPressOut → onPress.
 
 **D. LONG-PRESS (hold ~0.5s, release)**
-PASS ✓ Semantic log shows: onPressIn → onLongPress → onPressOut. NO onPress event fires (correctly suppressed by long-press). 
+PASS ✓ Semantic log shows: onPressIn → onLongPress → onPressOut. NO onPress event fires (correctly suppressed by long-press).
 Log output: `onPressOut, onLongPress, onPressIn`
 - Screenshot: `ios-04-logs-longpress.png`
 
