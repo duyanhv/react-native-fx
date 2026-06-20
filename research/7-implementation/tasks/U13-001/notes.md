@@ -46,7 +46,11 @@
 - ✅ Android assembleDebug — BUILD SUCCESSFUL (full APK compiled)
 
 ### Device Verification
-Pending (separate session per Device Verification Guide) — U13-001 device gate tests:
+Fix round 1 mount proof (required before full device gate):
+- iOS simulator (iPhone 17 Pro Max): rebuilt example with native FxModule registration; FxPressableView mounts or requireNativeView error confirms B1/B2 status. Full press feedback + scroll yield testing pending.
+- Android (emulator/device pending): similar mount proof required; rebuild and navigate to U13-001 → "FxPressable" screen to confirm no redbox.
+
+Full device gate (separate later session per Device Verification Guide):
 - iOS simulator: press-in feedback (scale/opacity) shows, springs back on release
 - Android (POCO F1 or similar): ripple shows, springs back on release
 - Both: 4-event order (onPressIn → onPressOut → onPress), long-press suppresses onPress, scroll-yield emits onPressOut only
@@ -79,9 +83,38 @@ Pending (separate session per Device Verification Guide) — U13-001 device gate
 - Tests confirm no regression to `<Fx interactionMode>` behavior (FxPressHandler refactor is transparent to effect-surface host)
 - FxPressableView.swift is ~160 lines; FxPressableView.kt is ~265 lines; both are focused on feedback + event dispatch, not gesture recognition
 
-## Compilation Fix
+## Compilation Fixes
 
+### Initial Compilation (Round 0)
 During headless gate, iOS xcodebuild failed with "cannot find type 'FxPressHost' in scope" due to Swift compiler's batch compilation order. Solution: moved FxPressHost protocol definition into FxPressHandler.swift (top of file, before FxPressInteractionMode enum) and deleted the standalone FxPressHost.swift file. This ensures the protocol is defined in the same compilation unit as its primary consumer (FxPressHandler), and Xcode's Swift compiler resolves it correctly.
+
+### Fix Round 1 (Planner Review Blockers + Quality)
+
+**B1 — View Registration:** Added View blocks to FxModule.swift (iOS) and FxModule.kt (Android) declaring FxPressableView with events (onPressIn, onPressOut, onPress, onLongPress) and feedback prop. This fixes requireNativeView lookup failures that prevented mount.
+
+**B2 — Recognizer Activation:** Called pressHandler.update(mode: "active", dragAxis: nil) at init in iOS FxPressableView, and pressHandler.update("active", null) in Android. This puts the FSM into active mode for content press (originally it was NONE, so no touches were processed).
+
+**B3 — iOS Passive Event Regression:** Guarded dispatchShaderPressIn in FxSurfaceView.handlePressBegin on pendingMode == "active" so passive presses don't emit onShaderPressIn. Android already had this guard.
+
+**B4 — Android Drag-Tilt Regression:** Restored updateDragTiltUniforms calls in FxSurfaceView.handlePressEnd and handlePressCancel to reset drag-tilt uniforms on lift (the original code called settleDragTilt; the refactor omitted it).
+
+**Q1 — iOS Feedback Animation:** Replaced CAAnimationGroup + asyncAfter(0.4s) with per-property CASpringAnimation using from-current-value, eliminating the 400ms window where rapid re-presses glitch due to asyncAfter resetting the layer after a new animation starts.
+
+**Q2 — Android Surface Visibility:** Removed unintended updateEffectSurfaceVisibility() call from handlePressBegin (it wasn't in the original handleDown).
+
+**Q3 — Passive Uniform Reset:** Both platforms now call handlePressEnd for passive mode lifts so uniforms reset. But initially this dispatched press events unconritically. Fixed in critical review findings: guarded all event dispatch on active mode, so passive presses reset uniforms only (no semantic events).
+
+**Q4 — Android Touch Dispatch Intent:** Enhanced comment on dispatchTouchEvent explaining that consuming touch events is deliberate: "FxPressableView owns the press interaction. The wrapped child is presentational."
+
+### Fix Round 1 — Critical Review Findings (Mid-Round)
+
+**High: Passive Events Leak.** Passive effect-surface presses were emitting onShaderPressOut. Fix: guarded dispatchShaderPressOut in FxSurfaceView.handlePressEnd and handlePressCancel on active mode only. Passive presses now reset uniforms but emit no semantic events (per contract `30`).
+
+**High: Drag-Tilt Not Reset.** Android drag-tilt reset was passing current coordinates instead of null, recomputing tilt from the release point instead of zeroing. Fix: updateDragTiltUniforms(null, null, null, null, null) to trigger the reset branch (x == null check).
+
+**Medium: FxPressableView Hit Target Unbounded.** Android hitTarget returned true for all coordinates, breaking drag-out cancellation. Fix: bounded to view bounds (x >= 0 && x <= width && y >= 0 && y <= height).
+
+**Low: Internal ID in TSDoc.** FxPressable.tsx comment mentioned "use FxView (U12)". Fix: removed "(U12)" per code comments guide.
 
 ## Next Steps (for device gate / later units)
 
