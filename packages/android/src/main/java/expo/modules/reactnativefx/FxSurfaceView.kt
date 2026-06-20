@@ -36,7 +36,7 @@ data class FxShaderPressEvent(
 class FxSurfaceView(
   context: Context,
   appContext: AppContext
-) : FxNativeView(context, appContext), ReactPointerEventsView {
+) : FxNativeView(context, appContext), ReactPointerEventsView, FxPressHost {
 
   /**
    * The content-motion container holds a Fabric-mounted child tree; it is added outside
@@ -84,7 +84,6 @@ class FxSurfaceView(
   private var lastDispatchedShader: String? = null
   private var lastDispatchedSource: String? = null
   private var effectSurfaceView: FxSurfaceShaderView? = null
-  private val pressHandler = FxPressHandler(this)
 
   // Tracks which uniforms have been imperatively overridden via `setUniform` so that
   // `applyResolvedConfig` does not clobber them on a later prop batch. The key is the uniform
@@ -94,6 +93,8 @@ class FxSurfaceView(
   // Tracks the current interaction mode so leaving `controlled` can clear the imperative
   // overrides and restore prop-derived values.
   private var currentInteractionMode = "none"
+
+  private val pressHandler = FxPressHandler(this, context)
 
   /**
    * A Fabric-invisible container that holds RN children so Fabric cannot clobber
@@ -567,6 +568,49 @@ class FxSurfaceView(
     effectSurfaceView?.resumePresentationLoop()
     contentAnimationDriver.resume()
     contentDistortion.resume()
+  }
+
+  // MARK: - FxPressHost
+
+  override fun hitTarget(x: Float, y: Float): Boolean {
+    return containsInteractiveShape(x, y)
+  }
+
+  override fun handlePressBegin(x: Float, y: Float, depth: Int) {
+    updateEffectSurfaceVisibility()
+    updatePressUniforms(x, y, depth.toFloat())
+    if (currentInteractionMode == "active") {
+      dispatchShaderPressIn(x, y)
+    }
+  }
+
+  override fun handlePressChanged(x: Float, y: Float, depth: Int) {
+    updatePressUniforms(x, y, depth.toFloat())
+  }
+
+  override fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean) {
+    updatePressUniforms(x, y, 0f)
+    dispatchShaderPressOut(x, y)
+    if (includePressEvent) {
+      dispatchShaderPress(x, y)
+    }
+  }
+
+  override fun handlePressCancel(x: Float, y: Float) {
+    updatePressUniforms(x, y, 0f)
+    dispatchShaderPressOut(x, y)
+  }
+
+  override fun handleLongPress(x: Float, y: Float) {
+    dispatchShaderLongPress(x, y)
+  }
+
+  override fun attachRecognizer(recognizer: android.view.GestureDetector) {
+    // Gesture detectors are attached to the view via dispatchTouchEvent, not a separate method
+  }
+
+  override fun detachRecognizer(recognizer: android.view.GestureDetector) {
+    // Gesture detectors are detached by stopping their use in dispatchTouchEvent
   }
 }
 
