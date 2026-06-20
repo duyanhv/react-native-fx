@@ -18,7 +18,7 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
   // MARK: - State
 
   private let intermediateContainer = UIView()
-  private let pressHandler: FxPressHandler
+  private var pressHandler: FxPressHandler!
 
   /// Feedback magnitudes (device-tunable, stored for later notes.md).
   private let pressScaleTarget: CGFloat = 0.97
@@ -75,7 +75,7 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
 
   internal func handlePressBegin(point: CGPoint, depth: Int) {
     applyPressDown()
-    onPressIn.dispatch([:])
+    onPressIn([:])
   }
 
   internal func handlePressChanged(point: CGPoint, depth: Int) {
@@ -84,19 +84,19 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
 
   internal func handlePressEnd(point: CGPoint, includePressEvent: Bool) {
     restorePressUp()
-    onPressOut.dispatch([:])
+    onPressOut([:])
     if includePressEvent {
-      onPress.dispatch([:])
+      onPress([:])
     }
   }
 
   internal func handlePressCancel(point: CGPoint) {
     restorePressUp()
-    onPressOut.dispatch([:])
+    onPressOut([:])
   }
 
   internal func handleLongPress(point: CGPoint) {
-    onLongPress.dispatch([:])
+    onLongPress([:])
   }
 
   internal func attachRecognizer(_ recognizer: UILongPressGestureRecognizer) {
