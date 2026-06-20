@@ -13,11 +13,14 @@ export interface FxPressableProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// Native event names are `onFx`-prefixed to avoid React Native's reserved `topPress`; the
+// public `onPress*` props map onto them below (the shader surface does the same with
+// `onShaderPress*`).
 type NativeFxPressableProps = {
-  onPressIn?: () => void;
-  onPressOut?: () => void;
-  onPress?: () => void;
-  onLongPress?: () => void;
+  onFxPressIn?: () => void;
+  onFxPressOut?: () => void;
+  onFxPress?: () => void;
+  onFxLongPress?: () => void;
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
   ref?: ForwardedRef<unknown>;
@@ -51,10 +54,10 @@ const FxPressableBase = forwardRef<unknown, FxPressableProps>(function FxPressab
     <NativeFxPressableView
       ref={ref}
       style={style}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      onPress={onPress}
-      onLongPress={onLongPress}
+      onFxPressIn={onPressIn}
+      onFxPressOut={onPressOut}
+      onFxPress={onPress}
+      onFxLongPress={onLongPress}
     >
       {children}
     </NativeFxPressableView>

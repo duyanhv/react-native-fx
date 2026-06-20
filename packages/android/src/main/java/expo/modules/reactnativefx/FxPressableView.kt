@@ -36,17 +36,20 @@ internal class FxPressableView(
    */
   override val shouldUseAndroidLayout: Boolean = true
 
+  // Prefixed names avoid React Native's reserved `topPress`; the public `onPress*` props map
+  // to these in `FxPressable.tsx`, mirroring the shader surface's `onShaderPress*`.
+
   /** Fired when a press begins. */
-  val onPressIn by EventDispatcher<FxPressPressEvent>()
+  val onFxPressIn by EventDispatcher<FxPressPressEvent>()
 
   /** Fired when a press exits (touch lifted or cancelled). */
-  val onPressOut by EventDispatcher<FxPressPressEvent>()
+  val onFxPressOut by EventDispatcher<FxPressPressEvent>()
 
   /** Fired on touch lift if the press was not cancelled or long-pressed. */
-  val onPress by EventDispatcher<FxPressPressEvent>()
+  val onFxPress by EventDispatcher<FxPressPressEvent>()
 
   /** Fired if the touch is held long enough. */
-  val onLongPress by EventDispatcher<FxPressPressEvent>()
+  val onFxLongPress by EventDispatcher<FxPressPressEvent>()
 
   /**
    * A Fabric-invisible container that holds RN children so Fabric cannot clobber
@@ -191,7 +194,7 @@ internal class FxPressableView(
    */
   override fun handlePressBegin(x: Float, y: Float, depth: Int) {
     rippleDrawable?.state = intArrayOf(android.R.attr.state_pressed)
-    onPressIn(FxPressPressEvent())
+    onFxPressIn(FxPressPressEvent())
   }
 
   /**
@@ -207,9 +210,9 @@ internal class FxPressableView(
    */
   override fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean) {
     rippleDrawable?.state = intArrayOf()
-    onPressOut(FxPressPressEvent())
+    onFxPressOut(FxPressPressEvent())
     if (includePressEvent) {
-      onPress(FxPressPressEvent())
+      onFxPress(FxPressPressEvent())
     }
   }
 
@@ -218,14 +221,14 @@ internal class FxPressableView(
    */
   override fun handlePressCancel(x: Float, y: Float) {
     rippleDrawable?.state = intArrayOf()
-    onPressOut(FxPressPressEvent())
+    onFxPressOut(FxPressPressEvent())
   }
 
   /**
    * Handles long press: dispatches onLongPress.
    */
   override fun handleLongPress(x: Float, y: Float) {
-    onLongPress(FxPressPressEvent())
+    onFxLongPress(FxPressPressEvent())
   }
 
   /**
@@ -245,15 +248,11 @@ internal class FxPressableView(
   // MARK: - Ripple Setup
 
   /**
-   * Initializes the RippleDrawable foreground with a bounded radius and material color.
-   *
-   * The ripple radius is approximately half the smaller of width/height (bounded to the
-   * container size). The color is derived from ?colorControlHighlight or defaults to #20000000.
+   * Initializes the RippleDrawable foreground with the material highlight color. The radius
+   * is set in `onSizeChanged` once the view has a real size — computing it here (from `init`,
+   * before layout) would lock it to the 0-dimension fallback.
    */
   private fun setUpRipple() {
-    val minDimension = kotlin.math.min(width, height)
-    val radius = (minDimension / 2).coerceAtLeast(1)
-
     val color = try {
       context.obtainStyledAttributes(intArrayOf(android.R.attr.colorControlHighlight))
         .use { ta ->
@@ -267,10 +266,18 @@ internal class FxPressableView(
       ColorStateList.valueOf(color),
       ShapeDrawable(),
       null
-    ).apply {
-      setRadius(radius)
-    }
+    )
 
     intermediateContainer.foreground = rippleDrawable
+  }
+
+  /**
+   * Sizes the ripple to roughly half the smaller dimension, once the view has a real size.
+   * The ripple radius cannot be computed in `init` because the view has no dimensions yet.
+   */
+  override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+    super.onSizeChanged(width, height, oldWidth, oldHeight)
+    val radius = (kotlin.math.min(width, height) / 2).coerceAtLeast(1)
+    rippleDrawable?.setRadius(radius)
   }
 }

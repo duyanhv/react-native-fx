@@ -10,10 +10,12 @@ import UIKit
 internal final class FxPressableView: FxNativeView, FxPressHost {
   // MARK: - Events
 
-  internal let onPressIn = EventDispatcher()
-  internal let onPressOut = EventDispatcher()
-  internal let onPress = EventDispatcher()
-  internal let onLongPress = EventDispatcher()
+  // Prefixed names avoid React Native's reserved `topPress`; the public `onPress*` props map
+  // to these in `FxPressable.tsx`, mirroring the shader surface's `onShaderPress*`.
+  internal let onFxPressIn = EventDispatcher()
+  internal let onFxPressOut = EventDispatcher()
+  internal let onFxPress = EventDispatcher()
+  internal let onFxLongPress = EventDispatcher()
 
   // MARK: - State
 
@@ -75,7 +77,7 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
 
   internal func handlePressBegin(point: CGPoint, depth: Int) {
     applyPressDown()
-    onPressIn([:])
+    onFxPressIn([:])
   }
 
   internal func handlePressChanged(point: CGPoint, depth: Int) {
@@ -84,19 +86,19 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
 
   internal func handlePressEnd(point: CGPoint, includePressEvent: Bool) {
     restorePressUp()
-    onPressOut([:])
+    onFxPressOut([:])
     if includePressEvent {
-      onPress([:])
+      onFxPress([:])
     }
   }
 
   internal func handlePressCancel(point: CGPoint) {
     restorePressUp()
-    onPressOut([:])
+    onFxPressOut([:])
   }
 
   internal func handleLongPress(point: CGPoint) {
-    onLongPress([:])
+    onFxLongPress([:])
   }
 
   internal func attachRecognizer(_ recognizer: UILongPressGestureRecognizer) {
@@ -115,8 +117,12 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
     intermediateContainer.layer.removeAnimation(forKey: "opacitySpring")
     intermediateContainer.layer.removeAnimation(forKey: "pressDown")
 
+    // Start from the current presentation values so a press during spring-back does not jump.
+    let currentScale = intermediateContainer.layer.presentation()?.value(forKey: "transform.scale")
+    let currentOpacity = intermediateContainer.layer.presentation()?.opacity
+
     let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
-    scaleAnim.fromValue = 1.0
+    scaleAnim.fromValue = currentScale ?? 1.0
     scaleAnim.toValue = pressScaleTarget
     scaleAnim.duration = 0.1
     scaleAnim.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -124,7 +130,7 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
     scaleAnim.isRemovedOnCompletion = false
 
     let opacityAnim = CABasicAnimation(keyPath: "opacity")
-    opacityAnim.fromValue = 1.0
+    opacityAnim.fromValue = currentOpacity ?? 1.0
     opacityAnim.toValue = pressOpacityTarget
     opacityAnim.duration = 0.1
     opacityAnim.timingFunction = CAMediaTimingFunction(name: .easeOut)
