@@ -184,6 +184,37 @@ component.
 - Because effects are draw-time, an effect applied to content never interferes with
   `dispatchTouchEvent`/hit-testing.
 
+### Recognizer hosts (cooperatively shared via host interface)
+
+The `FxPressHandler` FSM (recognizer + arbitration) is decoupled from its hosts via a small **host interface** that receives press begin/change/end/cancel/long-press callbacks and supplies hit-test information. Both hosts implement the interface; the FSM stays in `FxPressHandler` and never duplicates.
+
+**Host interface (Kotlin):**
+```kotlin
+internal interface FxPressHost {
+  fun hitTarget(x: Float, y: Float): Boolean
+  fun handlePressBegin(x: Float, y: Float, depth: Int)
+  fun handlePressChanged(x: Float, y: Float, depth: Int)
+  fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean)
+  fun handlePressCancel(x: Float, y: Float)
+  fun handleLongPress(x: Float, y: Float)
+  fun attachRecognizer(recognizer: GestureDetector)
+  fun detachRecognizer(recognizer: GestureDetector)
+}
+```
+
+**FxSurfaceView host behavior** (unchanged from U8, now behind interface):
+- Hit-test: `containsInteractiveShape(x, y)` for active/passive.
+- Feedback: native shader uniforms on begin/changed, reset on end/cancel.
+- Long-press: `dispatchShaderLongPress(point)` fires the event.
+- Press end: `dispatchShaderPressOut(point)` on end/cancel; `dispatchShaderPress(point)` if `includePressEvent == true`; `dispatchShaderPressIn(point)` on begin.
+
+**FxPressableView host behavior** (new, content-press):
+- Hit-test: full view bounds.
+- Feedback: `RippleDrawable` foreground on the `intermediateContainer` (FrameLayout wrapper, Fabric-invisible). Ripple uses bounded radius ~half smaller dimension, color from `?colorControlHighlight` or fallback `#20000000`.
+- Long-press: emits `onLongPress` event to JS.
+- Press end: emits `onPress` event if `includePressEvent == true`; `onPressIn/Out` on begin/end/cancel.
+- Cancellation (slop yield via `requestDisallowInterceptTouchEvent` release / out-of-bounds): emits `onPressOut` only, no `onPress`.
+
 ### Lifecycle
 
 - Pause frame callbacks in `onDetachedFromWindow` and while the app is backgrounded. Treat

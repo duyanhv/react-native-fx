@@ -137,6 +137,38 @@ layout/hit-testing to a `UIHostingController`.
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.
 
+### Recognizer hosts (cooperatively shared via host protocol)
+
+The `FxPressHandler` FSM (recognizer + arbitration) is decoupled from its hosts via a small **host protocol** that receives press begin/change/end/cancel/long-press callbacks and supplies hit-test information. Both hosts implement the protocol; the FSM stays in `FxPressHandler` and never duplicates.
+
+**Host protocol:**
+- `hitTarget(point: CGPoint) -> Bool`: hit-test at a point (effect surface: shader shape via `containsInteractiveShape`; content: full bounds).
+- `handlePressBegin(point: CGPoint, depth: Int)`: called on recognizer state `.began`; surface applies uniforms, content applies feedback.
+- `handlePressChanged(point: CGPoint, depth: Int)`: called on recognizer state `.changed`; surface updates uniforms, content does nothing.
+- `handlePressEnd(point: CGPoint, includePressEvent: Bool)`: called on recognizer state `.ended`; surface resets uniforms, content restores feedback and emits press event if parameter is true.
+- `handlePressCancel(point: CGPoint)`: called on recognizer state `.cancelled`; both reset to idle.
+- `handleLongPress(point: CGPoint)`: called after long-press timer fires; only active surface responds.
+- `attachRecognizer(_:)` / `detachRecognizer(_:)`: add/remove the gesture recognizer from the host's view.
+
+**FxSurfaceView host behavior** (unchanged from U8, now behind protocol):
+- Hit-test: `containsInteractiveShape(point:)` for `active` mode, always true for `passive`.
+- Feedback: `updatePressUniforms(point:, depth:)` on begin/changed, reset on end/cancel.
+- Long-press: `dispatchShaderLongPress(point:)` fires the event.
+- Press end: `dispatchShaderPressOut(point:)` fires on end/cancel; `dispatchShaderPress(point:)` fires press only if `includePressEvent == true` (unless long-press fired); `dispatchShaderPressIn(point:)` fires on begin.
+
+**FxPressableView host behavior** (new, content-press):
+- Hit-test: full view bounds (no shape testing).
+- Feedback: iOS press-in scale ~0.97 + opacity dip on `intermediateContainer` (managed `UIView` wrapping RN children), springs back on end/cancel using `FxSpring` timing (CASpringTimingFunction-based). Android: RippleDrawable foreground on the container.
+- Long-press: emits `onLongPress` event to JS.
+- Press end: emits `onPress` event if `includePressEvent == true`; `onPressIn/Out` fire on begin/end/cancel.
+- Cancellation (slop yield / out-of-bounds): emits `onPressOut` only, no `onPress`.
+
+**iOS feedback (`feedback="native"`):**
+Reuses the `FxSpring` timing primitive (a `CABasicAnimation` with a `CASpringTimingFunction`) for the spring-back. On press-in, scales `intermediateContainer` to 0.97 and opacity to 0.8; on release/cancel, animates both back to 1.0 and 1.0 respectively over the spring curve. The spring parameters (damping, stiffness, mass) match FxSpring's defaults. The container is the sole target; no transform of child RN views.
+
+**Android feedback (`feedback="native"`):**
+A bounded `RippleDrawable` foreground on the container. Ripple uses a radius cap at ~half the smaller of width/height, color from `?colorControlHighlight` or fallback `#20000000`. Transform feedback on Android is **deferred to a future `feedback` variant** if device testing proves necessary.
+
 ### Lifecycle
 
 - Pause the loop off-window/backgrounded; tear down the per-view `MTKView` (drop its
