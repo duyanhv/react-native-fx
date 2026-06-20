@@ -1,5 +1,5 @@
 # Surface: effect composition
-Status: researched (API)
+Status: shipped (V1 — builder form for one effect, single render-target; multi-layer composition deferred to its own unit) · researched (API for the full chain)
 Phase: v1
 Feeds: the public package; consumes 02-capability-ir, 20–24; pairs with 41 (fx.motion)
 Owns: the effect-composition builder — `fx.effect.*` → `EffectStack` (visual layers only).
@@ -77,10 +77,23 @@ Unit 11 exposes only the **backed** steps until each render target plus an examp
 So Unit 11's builder ships **no `fill` / `symbol` terminal steps and no `filter`** until the render
 targets land.
 
+**Shipped (Unit 11, device-verified 2026-06-20).** `fx.effect.glow`/`.glass`/`.mesh` ship as the
+immutable `EffectStack` builder, consumed by `<Fx effect={stack}>`, which reuses `<Fx effect="id">`'s
+`resolveEffect`→`select()`→mount path for the stack's **one** backed render-target. This is the
+**builder form for one effect with timing/defaults — not composition.** A second render-target
+method on a builder that already holds a step is a dev-warn + no-op (the original step is preserved),
+so the rendered surface stays honest while the multi-layer native compositor below is still a future
+unit. `.animate()`/`.defaults()` record their `Transition` for API stability but are **not** wired to
+native rendering in V1 (no effect-transition channel exists on the substrate views). Builder == string
+form was device-verified on iOS 18 sim + POCO F1 (`fx.effect.glow/glass/mesh` render identically to
+`edge-glow`/`glass`/`mesh-gradient`; the two-render-target chain renders the first step only). `mesh`
+carries **intensity only** (the fill renderer ignores colors/angle/kind — U3-009).
+
 Each method (`.mesh`/`.glow`/`.glass`/`.blur`) is a JS preset (`50`) pushing a step. `<Fx>`
 is the adapter: it runs `select()` per step (`02`, `target:'effect'`), mounts the native
 layer stack, and the resolved record crosses the bridge **once**. Native composites in
-order and eases each layer per its effective `transition`.
+order and eases each layer per its effective `transition`. *(This per-step composite is the
+designed end-state; V1 backs a single render-target per the Shipped note above.)*
 
 ## Effect vs motion — two builders, two types
 

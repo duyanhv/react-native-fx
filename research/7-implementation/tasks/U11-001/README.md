@@ -120,16 +120,19 @@ Subtask: fx.effect.* builder + EffectStack, single render-target (blueprint Phas
 ## Lifecycle
 
 ```
-[ ] spec'd        this file
-[ ] rules-gated   #1/#2/#4/#5/#7 — single native-backed render-target; no implied layering
-[ ] implemented   src/effects/stack.ts (types + immutable builder + guard) + src/fx.ts (effect ns)
+[x] spec'd        this file
+[x] rules-gated   #1/#2/#4/#5/#7 — single native-backed render-target; no implied layering
+[x] implemented   src/effects/stack.ts (types + immutable builder + guard) + src/fx.ts (effect ns)
                   + src/surface/Fx.tsx (effect prop widened to EffectId | EffectStack) + exports
-[ ] commented     iceberg only — no internal ids; "builder form for one effect", not "composition"
-[ ] headless-done tsc/build/lint + the builder/guard/resolution tests + example tsc green
-[ ] device-verified  builder forms == string forms on iOS sim + POCO F1; 2-target chain → first step
-[ ] reviewed
-[ ] docs-closed   55 builder status (single render-target, not "composition"); exports; fx namespace
-[ ] merged
+[x] commented     iceberg only — no internal ids; "builder form for one effect", not "composition"
+[x] headless-done tsc/build/lint + the builder/guard/resolution tests + example tsc green (138 tests)
+[x] device-verified  5/5 iOS 18 sim + POCO F1; builder == string form; 2-target chain → first step
+                  only (evidence/device.md, harness 77a9b1b). Caveat: Metro warning text not captured
+                  verbatim — non-blocking (LogBox toast + same guard branch + headless-unit-covered)
+[x] reviewed      planner cross-checked the four screenshots independently (not the summary)
+[x] docs-closed   55 Status → shipped (builder form for one effect, single render-target, not
+                  "composition") + Shipped note; exports + fx.effect namespace confirmed
+[x] merged
 ```
 
 ## Start here
