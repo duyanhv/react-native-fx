@@ -112,9 +112,7 @@ internal class FxPressHandler(private val host: FxPressHost, context: android.co
     val shouldEmitPress = didBeginActivePress
     didBeginActivePress = false
     hasActivePointer = false
-    if (shouldEmitPress) {
-      host.handlePressEnd(event.x, event.y, includePressEvent = !didFireLongPress)
-    }
+    host.handlePressEnd(event.x, event.y, includePressEvent = shouldEmitPress && !didFireLongPress)
     return shouldEmitPress
   }
 
@@ -123,6 +121,8 @@ internal class FxPressHandler(private val host: FxPressHost, context: android.co
     (host as? android.view.View)?.parent?.requestDisallowInterceptTouchEvent(false)
     if (didBeginActivePress) {
       host.handlePressCancel(lastX, lastY)
+    } else {
+      host.handlePressEnd(lastX, lastY, includePressEvent = false)
     }
     didBeginActivePress = false
     didFireLongPress = false

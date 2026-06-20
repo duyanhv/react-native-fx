@@ -23,7 +23,6 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
   /// Feedback magnitudes (device-tunable, stored for later notes.md).
   private let pressScaleTarget: CGFloat = 0.97
   private let pressOpacityTarget: CGFloat = 0.8
-  private var currentPressAnimation: CABasicAnimation?
 
   // MARK: - Lifecycle
 
@@ -31,6 +30,7 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
     super.init(appContext: appContext)
     setUpIntermediateContainer()
     pressHandler = FxPressHandler(host: self)
+    pressHandler.update(mode: "active", dragAxis: nil)
   }
 
   deinit {
@@ -45,6 +45,12 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
     intermediateContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     intermediateContainer.frame = bounds
     addSubview(intermediateContainer)
+  }
+
+  // MARK: - Configuration
+
+  internal func setFeedback(_ feedback: String) {
+    // V1 supports "native" feedback; other values ignored for now.
   }
 
   // MARK: - Child Mounting (Fabric-invisible wrapper pattern)
@@ -105,7 +111,9 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
 
   /// Applies press-down animation: scale to 0.97 and opacity to 0.8 over 0.1s easeOut.
   private func applyPressDown() {
-    intermediateContainer.layer.removeAnimation(forKey: "pressSpring")
+    intermediateContainer.layer.removeAnimation(forKey: "scaleSpring")
+    intermediateContainer.layer.removeAnimation(forKey: "opacitySpring")
+    intermediateContainer.layer.removeAnimation(forKey: "pressDown")
 
     let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
     scaleAnim.fromValue = 1.0
@@ -131,31 +139,33 @@ internal final class FxPressableView: FxNativeView, FxPressHost {
     intermediateContainer.layer.add(group, forKey: "pressDown")
   }
 
-  /// Restores press-up animation: spring back to scale 1.0 and opacity 1.0 over 0.4s
-  /// with a damping ratio of 0.7.
+  /// Restores press-up animation: spring back to scale 1.0 and opacity 1.0 with proper
+  /// from-current-value handling so rapid re-presses don't glitch. Uses CASpringAnimation
+  /// per property with clean cancellation.
   private func restorePressUp() {
     intermediateContainer.layer.removeAnimation(forKey: "pressDown")
 
-    let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
-    scaleAnim.fromValue = pressScaleTarget
+    let scaleAnim = CASpringAnimation(keyPath: "transform.scale")
+    scaleAnim.damping = 0.7
+    scaleAnim.stiffness = 100
+    scaleAnim.mass = 1
+    let currentScale = intermediateContainer.layer.presentation()?.value(forKey: "transform.scale")
+    scaleAnim.fromValue = currentScale ?? pressScaleTarget
     scaleAnim.toValue = 1.0
+    scaleAnim.fillMode = .forwards
+    scaleAnim.isRemovedOnCompletion = false
 
-    let opacityAnim = CABasicAnimation(keyPath: "opacity")
-    opacityAnim.fromValue = pressOpacityTarget
+    let opacityAnim = CASpringAnimation(keyPath: "opacity")
+    opacityAnim.damping = 0.7
+    opacityAnim.stiffness = 100
+    opacityAnim.mass = 1
+    let currentOpacity = intermediateContainer.layer.presentation()?.opacity
+    opacityAnim.fromValue = currentOpacity ?? pressOpacityTarget
     opacityAnim.toValue = 1.0
+    opacityAnim.fillMode = .forwards
+    opacityAnim.isRemovedOnCompletion = false
 
-    let spring = CASpringTimingFunction(dampingRatio: 0.7)
-    let group = CAAnimationGroup()
-    group.animations = [scaleAnim, opacityAnim]
-    group.duration = 0.4
-    group.timingFunction = spring
-    group.fillMode = .forwards
-    group.isRemovedOnCompletion = false
-    intermediateContainer.layer.add(group, forKey: "pressSpring")
-
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-      self?.intermediateContainer.layer.transform = CATransform3DIdentity
-      self?.intermediateContainer.layer.opacity = 1.0
-    }
+    intermediateContainer.layer.add(scaleAnim, forKey: "scaleSpring")
+    intermediateContainer.layer.add(opacityAnim, forKey: "opacitySpring")
   }
 }

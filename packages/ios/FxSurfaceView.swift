@@ -717,7 +717,9 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate, FxPressHost {
     if pendingMode == "active", let dragAxis = pendingDragAxis {
       updateDragTiltUniforms(origin: point, current: point, dragAxis: dragAxis)
     }
-    dispatchShaderPressIn(point: point)
+    if pendingMode == "active" {
+      dispatchShaderPressIn(point: point)
+    }
   }
 
   func handlePressChanged(point: CGPoint, depth: Int) {

@@ -577,7 +577,6 @@ class FxSurfaceView(
   }
 
   override fun handlePressBegin(x: Float, y: Float, depth: Int) {
-    updateEffectSurfaceVisibility()
     updatePressUniforms(x, y, depth.toFloat())
     if (currentInteractionMode == "active") {
       dispatchShaderPressIn(x, y)
@@ -590,6 +589,9 @@ class FxSurfaceView(
 
   override fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean) {
     updatePressUniforms(x, y, 0f)
+    if (currentInteractionMode == "active") {
+      updateDragTiltUniforms(null, null, x, y, null)
+    }
     dispatchShaderPressOut(x, y)
     if (includePressEvent) {
       dispatchShaderPress(x, y)
@@ -598,6 +600,9 @@ class FxSurfaceView(
 
   override fun handlePressCancel(x: Float, y: Float) {
     updatePressUniforms(x, y, 0f)
+    if (currentInteractionMode == "active") {
+      updateDragTiltUniforms(null, null, x, y, null)
+    }
     dispatchShaderPressOut(x, y)
   }
 

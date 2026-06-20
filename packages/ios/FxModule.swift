@@ -117,5 +117,13 @@ public class FxModule: Module {
         view.applyResolvedConfig()
       }
     }
+
+    View(FxPressableView.self) {
+      Events("onPressIn", "onPressOut", "onPress", "onLongPress")
+
+      Prop("feedback") { (view: FxPressableView, value: String) in
+        view.setFeedback(value)
+      }
+    }
   }
 }

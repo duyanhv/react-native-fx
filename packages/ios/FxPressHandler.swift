@@ -129,19 +129,25 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     guard let host else { return }
     longPressTimer?.invalidate()
     longPressTimer = nil
-    guard didBeginActivePress else { return }
-    didBeginActivePress = false
-    let includePressEvent = !didFireLongPress
-    host.handlePressEnd(point: location, includePressEvent: includePressEvent)
+    if didBeginActivePress {
+      didBeginActivePress = false
+      let includePressEvent = !didFireLongPress
+      host.handlePressEnd(point: location, includePressEvent: includePressEvent)
+    } else {
+      host.handlePressEnd(point: location, includePressEvent: false)
+    }
   }
 
   private func handleCancelled() {
     guard let host else { return }
     longPressTimer?.invalidate()
     longPressTimer = nil
-    guard didBeginActivePress else { return }
-    didBeginActivePress = false
-    host.handlePressCancel(point: origin)
+    if didBeginActivePress {
+      didBeginActivePress = false
+      host.handlePressCancel(point: origin)
+    } else {
+      host.handlePressEnd(point: origin, includePressEvent: false)
+    }
   }
 
   private func handleFailed() {

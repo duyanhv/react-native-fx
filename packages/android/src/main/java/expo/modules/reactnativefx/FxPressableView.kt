@@ -72,6 +72,11 @@ internal class FxPressableView(
       )
     )
     setUpRipple()
+    pressHandler.update("active", null)
+  }
+
+  internal fun setFeedback(feedback: String) {
+    // V1 supports "native" feedback; other values ignored for now.
   }
 
   /**
@@ -158,7 +163,11 @@ internal class FxPressableView(
 
   /**
    * Intercepts touch events and delegates to the press handler. If the handler consumes
-   * the event, returns true to prevent further dispatch. Otherwise, defers to super.
+   * the event, returns true to prevent further dispatch to the wrapped child.
+   *
+   * This is intentional: FxPressableView owns the press interaction. The wrapped child
+   * is presentational and receives its own press feedback via the press events. Consuming
+   * touch events prevents the child from duplicating press handling.
    */
   override fun dispatchTouchEvent(event: MotionEvent): Boolean {
     if (pressHandler.handle(event)) {
