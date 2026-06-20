@@ -110,8 +110,6 @@ class FxModule : Module() {
     }
 
     View(FxPressableView::class) {
-      Events("onPressIn", "onPressOut", "onPress", "onLongPress")
-
       Prop("feedback") { view: FxPressableView, value: String ->
         view.setFeedback(value)
       }
