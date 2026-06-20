@@ -733,10 +733,10 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate, FxPressHost {
     updatePressUniforms(point: nil, depth: 0)
     if pendingMode == "active" {
       updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
-    }
-    dispatchShaderPressOut(point: point)
-    if includePressEvent {
-      dispatchShaderPress(point: point)
+      dispatchShaderPressOut(point: point)
+      if includePressEvent {
+        dispatchShaderPress(point: point)
+      }
     }
   }
 
@@ -744,8 +744,8 @@ internal final class FxSurfaceView: FxNativeView, MTKViewDelegate, FxPressHost {
     updatePressUniforms(point: nil, depth: 0)
     if pendingMode == "active" {
       updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
+      dispatchShaderPressOut(point: point)
     }
-    dispatchShaderPressOut(point: point)
   }
 
   func handleLongPress(point: CGPoint) {

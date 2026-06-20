@@ -180,10 +180,10 @@ internal class FxPressableView(
 
   /**
    * Reports whether the given point is within the hit target bounds.
-   * Returns true for full bounds (no shape testing required for FxPressableView).
+   * Returns true only for coordinates within the view bounds.
    */
   override fun hitTarget(x: Float, y: Float): Boolean {
-    return true
+    return x >= 0 && x <= width && y >= 0 && y <= height
   }
 
   /**

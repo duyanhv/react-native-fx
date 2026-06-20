@@ -590,20 +590,20 @@ class FxSurfaceView(
   override fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean) {
     updatePressUniforms(x, y, 0f)
     if (currentInteractionMode == "active") {
-      updateDragTiltUniforms(null, null, x, y, null)
-    }
-    dispatchShaderPressOut(x, y)
-    if (includePressEvent) {
-      dispatchShaderPress(x, y)
+      updateDragTiltUniforms(null, null, null, null, null)
+      dispatchShaderPressOut(x, y)
+      if (includePressEvent) {
+        dispatchShaderPress(x, y)
+      }
     }
   }
 
   override fun handlePressCancel(x: Float, y: Float) {
     updatePressUniforms(x, y, 0f)
     if (currentInteractionMode == "active") {
-      updateDragTiltUniforms(null, null, x, y, null)
+      updateDragTiltUniforms(null, null, null, null, null)
+      dispatchShaderPressOut(x, y)
     }
-    dispatchShaderPressOut(x, y)
   }
 
   override fun handleLongPress(x: Float, y: Float) {

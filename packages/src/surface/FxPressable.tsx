@@ -36,7 +36,7 @@ const NativeFxPressableView = requireNativeView<NativeFxPressableProps>(
  * Cancellation (drag out of bounds, scroll yield) emits onPressOut only, suppressing onPress.
  *
  * `feedback` defaults to `'native'` in V1 and is the only scoped prop. Content motion,
- * state, and effect props are not supported — use `FxView` (U12) or `Fx` for those.
+ * state, and effect props are not supported — use `Fx` or `FxView` for those.
  */
 const FxPressableBase = forwardRef<unknown, FxPressableProps>(function FxPressable(
   { feedback = 'native', onPressIn, onPressOut, onPress, onLongPress, children, style },
