@@ -1,14 +1,16 @@
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { EdgeGlow, Fx } from "react-native-fx";
+import { EdgeGlow, Fx, fx } from "react-native-fx";
 import { useTheme } from "../components/theme";
 
 /**
- * U10-001 device gate — the `<Fx effect>` front door.
+ * Device gate — the `<Fx effect>` front door (string form) and the `fx.effect.*` builder form.
  *
  * Exercises the matrix: a decorative hosted shader, an interactive shader (press + load
  * events), glass, mesh-gradient, EdgeGlow, a `composition="background"` placement, and the
- * adapter-degradation wiring. The semantic log is the runbook surface for the device gate.
+ * adapter-degradation wiring. Sections 7–8 add the builder: each `fx.effect.*` call renders
+ * identically to its string-form equivalent, and a two-render-target chain renders only the
+ * first step (the rest dev-warn in Metro). The semantic log is the runbook surface.
  */
 export function EffectSurfaceScreen() {
 	const { palette } = useTheme();
@@ -92,6 +94,50 @@ export function EffectSurfaceScreen() {
 				</View>
 			</View>
 
+			<Text style={labelStyle}>
+				7 · builder form == string form (left: fx.effect.*, right: effect="id")
+			</Text>
+			<View style={styles.pairRow}>
+				<View style={[boxStyle, styles.pairBox]}>
+					<Fx effect={fx.effect.glow()} style={styles.fill} />
+					<Text style={[styles.pairTag, { color: palette.textFaint }]}>glow()</Text>
+				</View>
+				<View style={[boxStyle, styles.pairBox]}>
+					<Fx effect="edge-glow" style={styles.fill} />
+					<Text style={[styles.pairTag, { color: palette.textFaint }]}>"edge-glow"</Text>
+				</View>
+			</View>
+			<View style={styles.pairRow}>
+				<View style={[boxStyle, styles.pairBox]}>
+					<Fx effect={fx.effect.glass({ variant: "regular" })} style={styles.fill} />
+					<Text style={[styles.pairTag, { color: palette.textFaint }]}>glass()</Text>
+				</View>
+				<View style={[boxStyle, styles.pairBox]}>
+					<Fx effect="glass" style={styles.fill} />
+					<Text style={[styles.pairTag, { color: palette.textFaint }]}>"glass"</Text>
+				</View>
+			</View>
+			<View style={styles.pairRow}>
+				<View style={[boxStyle, styles.pairBox]}>
+					<Fx effect={fx.effect.mesh()} style={styles.fill} />
+					<Text style={[styles.pairTag, { color: palette.textFaint }]}>mesh()</Text>
+				</View>
+				<View style={[boxStyle, styles.pairBox]}>
+					<Fx effect="mesh-gradient" style={styles.fill} />
+					<Text style={[styles.pairTag, { color: palette.textFaint }]}>"mesh-gradient"</Text>
+				</View>
+			</View>
+
+			<Text style={labelStyle}>
+				8 · two-render-target chain → renders the FIRST step only (glow); the second
+				dev-warns in Metro
+			</Text>
+			<View style={boxStyle}>
+				{/* A chain holding two render-targets: V1 renders the first step (edge-glow) and
+				    drops the rest with a dev warning — multi-layer compositing is a future unit. */}
+				<Fx effect={fx.effect.glow().glass({ variant: "regular" })} style={styles.fill} />
+			</View>
+
 			<Text style={[styles.label, { color: palette.textFaint }]}>
 				Adapter degradation fires onError(reason:"unsupported") when an effect is unavailable
 				on this device/substrate (e.g. a shader below iOS 17). It does not fire for the
@@ -116,6 +162,19 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		borderWidth: StyleSheet.hairlineWidth,
 		overflow: "hidden",
+	},
+	pairRow: {
+		flexDirection: "row",
+		gap: 16,
+	},
+	pairBox: {
+		flex: 1,
+	},
+	pairTag: {
+		position: "absolute",
+		bottom: 4,
+		left: 6,
+		fontSize: 11,
 	},
 	fill: {
 		flex: 1,
