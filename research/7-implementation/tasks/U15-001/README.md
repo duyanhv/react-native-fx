@@ -179,7 +179,8 @@ Subtask: typed material config — tint + colorScheme, native-backed only (bluep
 [x] docs-closed   02/manifest (incl. UniformSpec default?), catalog, 21 (tintColor→tint, weight struck, hex format),
                   structure.{ios,android}.md (parser + format), data-layer material mirror (tintColor+default→tint
                   no-default; intensity/weight removed), a2-triage Outcome 1 row marked shipped + weight-struck.
-[ ] merged
+[x] merged        on integration/0.1.x (maintainer merge-tick delegated 2026-06-21);
+                  commits 7440f19 (impl) + 89b594b (review fixes) + 00f6d6e (docs-closed + evidence)
 ```
 
 ## Start here
