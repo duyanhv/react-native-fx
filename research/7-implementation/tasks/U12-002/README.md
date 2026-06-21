@@ -135,7 +135,8 @@ Subtask: FxView effect prop — behind-content decoration (blueprint Phase S, Un
 [x] docs-closed   structure.{ios,android}.md effect notes flipped (JS-composed behind-content child,
                   not a native prop; Android overdraw note added); 57 Decision 2 + example record
                   behind-content shipped/device-verified
-[ ] merged
+[x] merged        on integration/0.1.x (maintainer merge-tick delegated 2026-06-21);
+                  commits 379e62c (impl) + 1c3d60a (docs-closed + evidence + harness)
 ```
 
 ## Start here
