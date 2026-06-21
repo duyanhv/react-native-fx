@@ -180,16 +180,20 @@ Subtask: FxView — state-driven content presentation over a new content host (b
                   interrupt contract, why no retention machine
 [x] headless-done packages lint/build/tests/example tsc; iOS xcodebuild (AFTER pod install) + Android
                   compileDebugKotlin/assembleDebug green; presence/pressable/interactionMode unbroken
-[ ] device-verified  state-flip easing + settle event + interrupt + touch-through, both platforms; lift feels
-                  platform-idiomatic; no host/driver regression. evidence/device.md  (HUMAN gate)
-                  LAW NOTE: the provisional `lift` seed (scale 1.03, translationY −3) is identical on both
-                  platforms — a cross-platform-uniform start, lightly in tension with rule #2. The gate must
-                  consciously tune these per-platform (does iOS call for the same magnitude as Android?), not
-                  ratify the uniform seed. Update FxStateViewCoordinator.{swift,kt} if they diverge.
-[ ] reviewed      independent re-run of every gate (incl. native pod install + xcodebuild + assembleDebug),
-                  diff read, registration re-verified, evidence existence + mtime checked, tree state
-[ ] docs-closed   structure.{ios,android}.md state host + driver + dispatch; 40 onStateChange wired; 57 §FxView
-                  state vocab device-verified; 52/index export; blueprint Unit 12 corrected + U12-002 split row
+[x] device-verified  full matrix PASS both platforms (gate owner ratified 2026-06-21): visible lift +
+                  no clip cutoff, one settle event per flip, interrupt ordering (hand-ratified — synthetic
+                  cannot race the spring), touch-through, no host/driver regression. evidence/device.md
+                  LAW resolved: magnitudes diverged per platform — iOS scale 1.03/translateY −3pt,
+                  Android scale 1.04/translateY −6dp (density-scaled). Transform-only stands; elevation (B)
+                  not needed. Plus the Android clip-overdraw parity fix (clipChildren=false).
+[x] reviewed      independent re-run of every gate (tsc/lint/142 tests/build/swift-lint by reviewer; Android
+                  compileDebugKotlin BUILD SUCCESSFUL; iOS FxStateView ×8 in Pods.xcodeproj — pod install ran;
+                  both module registrations; no internal-id leaks); two bounded fixes folded (super call; the
+                  Android px→dp + clip parity); evidence existence + mtime checked
+[x] docs-closed   structure.{ios,android}.md state host + driver + dispatch + clip parity; 40 onStateChange
+                  wired + payload reconciled to {state,finished,interrupted}; 57 §FxView state vocab resolved +
+                  device-verified + seeded lift defaults; 52/index export; blueprint Unit 12 corrected
+                  (native as-built) + effect split to U12-002
 [ ] merged        on integration/0.1.x  (HUMAN gate — maintainer's explicit word)
 ```
 

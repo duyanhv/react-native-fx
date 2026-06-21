@@ -90,8 +90,7 @@ boundary.
 
 ## Open questions
 
-- **`FxView` state vocabulary** — ratified as `idle` · `selected` for `lift` (DOC-005).
-  The per-platform `MotionSpec` map defaults are device-pending — they ride the as-yet-unbuilt `FxView` state catalog (MOT-001 shipped only the `transient` presence catalog and closed at U7-003).
+- **`FxView` state vocabulary** — **resolved.** Ratified as `idle` · `selected` for `lift` (DOC-005); shipped + device-verified (U12-001, 2026-06-21). The per-platform `lift` `MotionSpec` defaults are seeded and diverged per the law: iOS `scale 1.03` + `translateY -3pt`, Android `scale 1.04` + `translateY -6dp` (density-scaled). Provisional magnitudes, tuned at the device gate; mechanics in `structure.{ios,android}.md`. (MOT-001 shipped only the `transient` presence catalog; this is the first `FxView` state entry.)
 - **`FxPressable` `feedback` values** — **resolved.** Ratified as `native` (DOC-005); shipped + device-verified (U13-001, 2026-06-20). The per-platform realization: iOS a scale/opacity press-in spring; Android a full-cover material ripple driven via the container's pressed-state path (the shared `FxPressHandler` FSM owns gesture arbitration). Mechanics in `structure.{ios,android}.md`.
 - **`FxGroup` morph scope** — **resolved (DOC-006, 2026-06-10).** Glass-only in V1; system-owned merge contract. See Decision 6 above.
 - Native mechanics (the managed wrapper, state handshake) are `open` in `33`/`34`/`35`.

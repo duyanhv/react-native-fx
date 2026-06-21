@@ -119,9 +119,9 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 ### Unit 12: `FxView` — state-driven content presentation
 *   **Contract:** `57`, `50`, `54`, `41`
 *   **Precedent (battle-tested):** `FxPresence` (the sibling content coordinator, U7-001); the content-motion driver (U6) + wrapper mechanic (U4).
-*   **Decision + flip-trigger:** **mimic** the `FxPresence` shape. `FxView` wraps content in one managed wrapper and animates transform/opacity between mounted `state`s via the content driver; props `state` / `preset` / `motion` / `effect` / `transition`; V1 `lift` state preset, `idle` / `selected` vocab (DOC-005). Wires the `onFxStateChange` native dispatcher (`40` flags it unwired). → *Flip-trigger: none.*
+*   **Decision + flip-trigger:** **mimic** the `FxPresence` shape. `FxView` wraps content in one managed wrapper and animates transform/opacity between mounted `state`s via the content driver; props `state` / `preset` / `motion` / `transition` (V1); V1 `lift` state preset, `idle` / `selected` vocab (DOC-005). Wires the `onFxStateChange` native dispatcher (now wired, U12-001). → *Flip-trigger: none.* **`effect` is split to U12-002** — effect decoration attached to content, a distinct ownership problem (z-order, clipping, composition position, hosted-vs-expo-view relative to the host).
 *   **Explicit Reject:** per-child motion (`57` Decision 5); animating flow layout (`04` Decision 2).
-*   **Shape · phase:** `src/surface/FxView.tsx` + native `onStateChange` dispatch · **Surface**
+*   **Shape · phase (as-built, U12-001):** the `Surface` note was stale — `FxView` is a **native unit**. `src/surface/FxView.tsx` over a new `FxStateView` content host (iOS + Android, over `FxNativeView`, no Metal — reuses the `FxPressableView` wrapper pattern + `FxAnimationDriver`) driven by `FxStateViewCoordinator`'s N-state FSM, with the `onFxStateChange` settle/interrupt dispatcher. · **Surface + native**
 *   **Depends on:** Unit 4, Unit 6, Unit 10
 
 ### Unit 13: `FxPressable` — native press feedback
