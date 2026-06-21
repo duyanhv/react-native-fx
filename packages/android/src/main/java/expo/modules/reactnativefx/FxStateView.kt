@@ -37,6 +37,10 @@ internal class FxStateView(
       FrameLayout.LayoutParams.MATCH_PARENT,
       FrameLayout.LayoutParams.MATCH_PARENT
     )
+    // State motion (lift/scale) draws past the layout box; an Android ViewGroup clips children by
+    // default, where the iOS wrapper does not. Allow presentation overdraw without touching layout.
+    clipChildren = false
+    clipToPadding = false
   }
 
   private val animationDriver = FxAnimationDriver(intermediateContainer) {
@@ -50,6 +54,8 @@ internal class FxStateView(
   private var pendingStateMotion: List<FxStateMotionEntry>? = null
 
   init {
+    clipChildren = false
+    clipToPadding = false
     super.addView(
       intermediateContainer,
       LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)

@@ -85,6 +85,11 @@ internal class FxStateViewCoordinator(private val view: FxStateView) {
   private fun userSpec(state: String): FxMotionPhaseSpec? =
     stateMotion?.firstOrNull { it.state == state }?.spec
 
+  // `View.translationY` is pixels; scale fixed travel by density so a motion value reads as an
+  // RN layout unit, matching iOS points.
+  private val density: Float
+    get() = view.resources.displayMetrics.density
+
   /**
    * The provisional per-platform `lift` preset shape. The magnitudes are device-pending
    * with the motion catalog and will be tuned at the device gate.
@@ -93,7 +98,7 @@ internal class FxStateViewCoordinator(private val view: FxStateView) {
     if (preset != "lift") return null
     return when (state) {
       "idle" -> FxAnimationVector()
-      "selected" -> FxAnimationVector(scale = 1.03f, translationY = -3f)
+      "selected" -> FxAnimationVector(scale = 1.04f, translationY = -6f * density)
       else -> null
     }
   }
@@ -110,7 +115,7 @@ internal class FxStateViewCoordinator(private val view: FxStateView) {
   }
 
   private fun resolveTravel(travel: FxTravelSpec): Float {
-    travel.value?.let { return it.toFloat() }
+    travel.value?.let { return it.toFloat() * density }
     // TODO: resolve measured-edge travel from a layout observer when a state uses it.
     return 0f
   }
