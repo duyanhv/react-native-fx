@@ -33,6 +33,11 @@ describe('fx.effect factory functions', () => {
     expect(stack.steps[0].config).toEqual({ variant: 'clear', interactive: true });
   });
 
+  it('glass forwards tint and colorScheme into the step', () => {
+    const stack = fx.effect.glass({ tint: '#ff6b6b', colorScheme: 'dark' });
+    expect(stack.steps[0].config).toEqual({ tint: '#ff6b6b', colorScheme: 'dark' });
+  });
+
   it('mesh forwards intensity into the step', () => {
     const stack = fx.effect.mesh({ intensity: 0.5 });
     expect(stack.steps[0].intensity).toBe(0.5);

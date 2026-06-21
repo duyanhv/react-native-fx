@@ -78,6 +78,21 @@ describe('curated shader catalog conformance', () => {
   });
 });
 
+describe('manifest material node — tint + colorScheme uniforms', () => {
+  it('declares tint as a color uniform with no default', () => {
+    const tint = manifest.nodes.material.uniforms.tint;
+    expect(tint.type).toBe('color');
+    expect('default' in tint).toBe(false);
+  });
+
+  it('declares colorScheme as an enum uniform defaulting to system', () => {
+    const cs = manifest.nodes.material.uniforms.colorScheme;
+    expect(cs.type).toBe('enum');
+    expect(cs.default).toBe('system');
+    expect(cs.options).toEqual(['system', 'light', 'dark']);
+  });
+});
+
 describe('manifest fill node', () => {
   it('declares the gradient/mesh render-target', () => {
     const fill = manifest.nodes.fill;

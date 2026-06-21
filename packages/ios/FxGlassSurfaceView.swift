@@ -17,6 +17,8 @@ internal final class FxGlassSurfaceView: UIView {
   private let effectView = UIVisualEffectView()
   private var variant: String = "regular"
   private var interactive: Bool = false
+  private var tint: String?
+  private var colorScheme: String?
   private var cornerRadius: CGFloat = 0
 
   /// Tracks whether the view has had a layout pass for the current window attachment;
@@ -42,7 +44,10 @@ internal final class FxGlassSurfaceView: UIView {
   internal func setMaterialConfig(_ config: MaterialConfig?) {
     let newVariant = config?.variant ?? "regular"
     let newInteractive = config?.interactive ?? false
-    guard newVariant != variant || newInteractive != interactive else {
+    let newTint = config?.tint
+    let newColorScheme = config?.colorScheme
+    guard newVariant != variant || newInteractive != interactive
+            || newTint != tint || newColorScheme != colorScheme else {
       return
     }
 
@@ -53,6 +58,8 @@ internal final class FxGlassSurfaceView: UIView {
     }
     variant = newVariant
     interactive = newInteractive
+    tint = newTint
+    colorScheme = newColorScheme
     // The interactive glass carries the system press response, so it stays reachable
     // to assistive technologies; only the decorative variant is hidden.
     accessibilityElementsHidden = !newInteractive
@@ -101,6 +108,9 @@ internal final class FxGlassSurfaceView: UIView {
 
     let glassEffect = UIGlassEffect(style: resolveStyle())
     glassEffect.isInteractive = interactive
+    glassEffect.tintColor = uiColorFrom(tint)
+    // colorScheme rides the effect view, not the UIGlassEffect (mirrors GlassView.swift).
+    effectView.overrideUserInterfaceStyle = userInterfaceStyleFrom(colorScheme)
     effectView.effect = glassEffect
     applyCornerConfiguration()
   }
@@ -111,6 +121,44 @@ internal final class FxGlassSurfaceView: UIView {
       return .clear
     default:
       return .regular
+    }
+  }
+
+  /// Parses a CSS hex color string (#RGB, #RRGGBB, or #RRGGBBAA) to UIColor.
+  /// Returns nil for a nil or unrecognised value, which leaves the glass untinted.
+  private func uiColorFrom(_ hex: String?) -> UIColor? {
+    guard var h = hex else { return nil }
+    h = h.trimmingCharacters(in: .whitespacesAndNewlines)
+    if h.hasPrefix("#") { h = String(h.dropFirst()) }
+    guard let value = UInt64(h, radix: 16) else { return nil }
+    switch h.count {
+    case 3:
+      let r = CGFloat((value >> 8) & 0xF) / 15
+      let g = CGFloat((value >> 4) & 0xF) / 15
+      let b = CGFloat(value & 0xF) / 15
+      return UIColor(red: r, green: g, blue: b, alpha: 1)
+    case 6:
+      return UIColor(
+        red:   CGFloat((value >> 16) & 0xFF) / 255,
+        green: CGFloat((value >>  8) & 0xFF) / 255,
+        blue:  CGFloat( value        & 0xFF) / 255,
+        alpha: 1)
+    case 8:
+      return UIColor(
+        red:   CGFloat((value >> 24) & 0xFF) / 255,
+        green: CGFloat((value >> 16) & 0xFF) / 255,
+        blue:  CGFloat((value >>  8) & 0xFF) / 255,
+        alpha: CGFloat( value        & 0xFF) / 255)
+    default:
+      return nil
+    }
+  }
+
+  private func userInterfaceStyleFrom(_ scheme: String?) -> UIUserInterfaceStyle {
+    switch scheme {
+    case "light": return .light
+    case "dark":  return .dark
+    default:      return .unspecified
     }
   }
 
@@ -132,4 +180,6 @@ internal final class FxGlassSurfaceView: UIView {
 struct MaterialConfig: Record {
   @Field var variant: String = "regular"
   @Field var interactive: Bool = false
+  @Field var tint: String?
+  @Field var colorScheme: String?
 }

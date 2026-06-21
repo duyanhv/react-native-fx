@@ -69,6 +69,8 @@ export const manifest = {
       uniforms: {
         variant: { type: 'enum', default: 'regular', options: ['regular', 'clear'] },
         interactive: { type: 'boolean', default: false },
+        tint: { type: 'color' },
+        colorScheme: { type: 'enum', default: 'system', options: ['system', 'light', 'dark'] },
       },
       lower: {
         ios: [

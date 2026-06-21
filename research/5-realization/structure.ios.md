@@ -292,6 +292,17 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
   uniform radius. If the host layer reports `cornerRadius == 0`, the glass renders as a sharp
   rectangle — the fallback when the layer has no rounded corner (or when Fabric does not set
   it). Radius changes update `cornerConfiguration` in place; they never remount the rung.
+- **`tint` + `colorScheme` (iOS-26 rung)** — `tint` (a CSS hex string) maps to
+  `UIGlassEffect.tintColor` via a local hex parser (nil → no tint, the untinted system
+  glass). `colorScheme` maps to `effectView.overrideUserInterfaceStyle`: `system` →
+  `.unspecified`, `light` → `.light`, `dark` → `.dark`; it is applied to the
+  `UIVisualEffectView`, not the `UIGlassEffect` (mirrors
+  `references/expo/packages/expo-glass-effect/ios/GlassView.swift`). Both are applied
+  in-place via the existing `setMaterialConfig` diff path — no remount.
+- **`colorScheme` on the below-26 fallback** — `colorScheme` passes through to
+  `FxMaterialView` as a SwiftUI `ColorScheme?` and is applied via
+  `.environment(\.colorScheme, scheme)`. `tint` has no equivalent on SwiftUI adaptive
+  materials and degrades silently on this rung — the system material has no tint API.
 - **`.ultraThinMaterial`** — `requires {os:15, hosted}` · `applyVia:.background`.
   Fallback below 26.
 

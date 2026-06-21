@@ -63,7 +63,8 @@ export interface Lowering {
 
 export interface UniformSpec {
   type: 'number' | 'string' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
-  default: unknown;
+  /** Absent means no platform default — the native side treats the field as unset. */
+  default?: unknown;
   range?: readonly [number, number];
   options?: readonly string[];
 }

@@ -148,15 +148,23 @@ Subtask: typed material config — tint + colorScheme, native-backed only (bluep
 
 ```
 [x] spec'd        this file
-[ ] rules-gated   #1/#2/#4/#5/#6/#7 — native-backed config, own-content Android, no new component
-[ ] implemented   manifest material uniforms + catalog MaterialConfig (lockstep) + iOS FxGlassSurfaceView/struct
-                  + Android material draw/struct + 21/02/structure reconciliation
-[ ] commented     iceberg: why no weight, why tint degrades sub-26 iOS, the tint→scrim mapping
-[ ] headless-done packages tsc (lockstep compiles) + build + lint + tests; iOS xcodebuild (after pod install);
-                  Android compileDebugKotlin/assembleDebug; example tsc
+[x] rules-gated   #1/#2/#4/#5/#6/#7 — native-backed config, own-content Android, no new component
+[x] implemented   manifest material uniforms + catalog MaterialConfig (lockstep) + iOS FxGlassSurfaceView/struct
+                  + FxMaterialView (below-26 colorScheme) + Android material draw/struct + 21/structure reconciliation
+[x] commented     iceberg: why tint degrades sub-26 iOS (FxMaterialView.swift), tint→scrim mapping (FxMaterialView.kt)
+[x] headless-done packages tsc (lockstep compiles) + build + lint + 145 tests; iOS pod install + xcodebuild BUILD SUCCEEDED;
+                  Android compileDebugKotlin/assembleDebug BUILD SUCCESSFUL; example tsc
+[x] reviewed      planner, 2026-06-21 — ALL gates re-run independently: packages tsc (lockstep compiles)/lint/145
+                  tests/build; example tsc; Android compileDebugKotlin --rerun-tasks (58 executed, not cached);
+                  iOS xcodebuild BUILD SUCCEEDED. Full diff read: TS lockstep clean (the unplanned `default?`
+                  widening in types.ts is correct + necessary for no-default tint); iOS mirrors GlassView.swift
+                  exactly (tint on the effect, colorScheme on the effect view), hex parser degrades safely;
+                  Android scrim tint + #1C1C1E dark base, safe parse fallback; tests assert manifest + builder.
+                  Internal-id audit: packages/ clean (the one U15-001 ref is an on-screen harness label — the
+                  accepted example-screen idiom, DEF-009 precedent). No fix-round.
 [ ] device-verified  tint + colorScheme visible both platforms; variant/interactive/intensity unregressed; evidence/device.md
-[ ] reviewed
-[ ] docs-closed   02/manifest, catalog, 21 (tintColor→tint, weight struck), structure.{ios,android}.md, a2-triage row
+[ ] docs-closed   done at headless: 02/manifest, catalog, 21 (tintColor→tint, weight struck), structure.{ios,android}.md.
+                  OWED post-device: confirm data-layer material mirror (if it enumerates uniforms) + tick a2-triage Outcome 1 row
 [ ] merged
 ```
 

@@ -313,6 +313,13 @@ Each section expands the Android rungs from `02`.
   **`regular` = 0.55** (heavier frost) and **`clear` = 0.28** (lighter, more transparent);
   unknown variants fall back to `regular`. Intensity and variant changes update the live
   view in place (`setIntensity`/`setMaterialConfig` → `invalidate()`), never remount.
+- **`tint` + `colorScheme`** — `tint` (a CSS hex string parsed by `Color.parseColor`)
+  drives the frost-scrim base color directly; unrecognised values fall back to white. When
+  `tint` is absent, `colorScheme` selects the base: `dark` → a near-black gray
+  (`#1C1C1E`-class, `Color.argb(255, 28, 28, 30)`); `light`/`system` → white (the
+  platform default). Both changes redraw in place via the existing `setMaterialConfig` →
+  `invalidate()` path — no remount. The highlight gradient always uses white (simulating
+  the light-reflection layer) regardless of `colorScheme`.
 - **`interactive` is inert on Android.** The press response is the iOS-26 system glass's
   own behavior; Android has no system equivalent, and the law forbids simulating another
   platform's behavior. The knob is accepted silently (the `MaterialConfig` Record carries
