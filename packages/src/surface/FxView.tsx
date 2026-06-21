@@ -1,9 +1,12 @@
 import { type ReactElement, type ReactNode, useCallback } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import type { EffectId } from '../effects/effects';
+import type { EffectStack } from '../effects/stack';
 import { toStateMotionWire } from '../motion/builders';
 import type { MotionSpec } from '../motion/types';
 import { type FxStateChangeEvent, NativeFxStateView } from '../runtime/FxStateView';
+import { Fx } from './Fx';
 
 /** The V1 state preset vocabulary — behavior-named, not UI-named. */
 export type FxStatePreset = 'lift';
@@ -24,6 +27,8 @@ export type FxViewProps = {
   motion?: Record<string, MotionSpec>;
   /** Expert timing. V1 honors the platform-default spring. */
   transition?: { spring?: 'native' };
+  /** An effect decoration rendered behind the content, lifting with it through state transitions. */
+  effect?: EffectId | EffectStack;
   /** Fires once when the transition settles or is cut short. */
   onStateChange?: (event: FxStateChange) => void;
   /** Wrapper/placement style — the app owns placement, not fx. */
@@ -41,6 +46,7 @@ export function FxView({
   state,
   preset = 'lift',
   motion,
+  effect,
   onStateChange,
   style,
   children,
@@ -63,6 +69,12 @@ export function FxView({
       onFxStateChange={handleStateChange}
       style={style}
     >
+      {/* The wrapper makes decoration touch-transparent while first-child order keeps it behind content. */}
+      {effect != null && (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Fx effect={effect} style={StyleSheet.absoluteFill} />
+        </View>
+      )}
       {children}
     </NativeFxStateView>
   );
