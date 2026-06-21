@@ -168,11 +168,17 @@ Subtask: typed material config — tint + colorScheme, native-backed only (bluep
                   harness public-path row added — <Fx effect={fx.effect.glass({tint,colorScheme})}> (builder→materialConfig,
                   Fx.tsx), not only FxHostedView; (3) 02 UniformSpec schema reconciled to default?:unknown. Re-gated:
                   packages tsc/lint; example tsc; Android compileDebugKotlin --rerun-tasks (58 executed). iOS untouched.
-[ ] device-verified  tint + colorScheme visible both platforms (incl. the public fx.effect.glass path);
-                  variant/interactive/intensity unregressed; evidence/device.md
-[ ] docs-closed   done at headless + fix-round: 02/manifest (incl. UniformSpec default?), catalog, 21 (tintColor→tint,
-                  weight struck, hex format pinned), structure.{ios,android}.md (parser + format).
-                  OWED post-device: confirm data-layer material mirror (if it enumerates uniforms) + tick a2-triage Outcome 1 row
+[x] device-verified  6/6 PASS both platforms (maintainer-ran + ratified 2026-06-21, gate build 89b594b):
+                  iOS tint via UIGlassEffect.tintColor + colorScheme via overrideUserInterfaceStyle; Android scrim
+                  tint + dark base; the FxHostedView and public <Fx effect={fx.effect.glass(…)}> paths render
+                  identically; variant/intensity/fill unregressed; no crash. Static appearance checks — agent
+                  capture authoritative, no hand-ratification needed. evidence/device.md + 15 PNGs.
+                  REVIEWER NOTE: the gate agent wrote evidence to a stray repo-root `tasks/U15-001/` — planner
+                  relocated it to the canonical path, removed the stray folder, and corrected the device.md commit
+                  header (7440f19 → 89b594b; the public-path rows + PNG mtimes prove the post-fix build).
+[x] docs-closed   02/manifest (incl. UniformSpec default?), catalog, 21 (tintColor→tint, weight struck, hex format),
+                  structure.{ios,android}.md (parser + format), data-layer material mirror (tintColor+default→tint
+                  no-default; intensity/weight removed), a2-triage Outcome 1 row marked shipped + weight-struck.
 [ ] merged
 ```
 

@@ -22,7 +22,7 @@ The codebase findings behind the conditional calls (verified against `packages/`
 
 | Deliverable | Why build | Scope guard | Track as |
 |---|---|---|---|
-| typed **material** config | product-facing DX; honors "JS configures semantics, native owns pixels"; native glass already backs it | extend `MaterialConfig` + the `material` manifest node + the `ConfigFor` lockstep with `tint`/`colorScheme`/`weight` **only as iOS `UIGlassEffect` / Android material actually back each** — never add a uniform native ignores (the `fill`/`filter` trap below) | NEW Phase-S unit (proposed **Unit 15**) |
+| typed **material** config | product-facing DX; honors "JS configures semantics, native owns pixels"; native glass already backs it | extend `MaterialConfig` + the `material` manifest node + the `ConfigFor` lockstep with `tint`/`colorScheme`/`weight` **only as iOS `UIGlassEffect` / Android material actually back each** — never add a uniform native ignores (the `fill`/`filter` trap below) | **SHIPPED — U15-001 (device-verified 2026-06-21).** `tint` + `colorScheme` shipped, native-backed both platforms; **`weight` STRUCK** — no `UIGlassEffect` thickness, fallback-only backing is the very trap this row warns against |
 
 ---
 

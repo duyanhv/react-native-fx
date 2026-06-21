@@ -117,10 +117,9 @@ const manifest: CapabilityManifest = {
       uniforms: {
         variant:     { type: 'enum', default: 'regular', options: ['regular', 'clear'] },
         interactive: { type: 'boolean',  default: false },    // system liquid press response
-        tintColor:   { type: 'color', default: '#FFFFFF' },
+        tint:        { type: 'color' },                       // no default — undefined = untinted (U15-001)
         colorScheme: { type: 'enum', default: 'system', options: ['system', 'light', 'dark'] },
-        intensity:   { type: 'number', default: 1, range: [0, 1] },
-        weight:      { type: 'enum', default: 'regular', options: ['ultraThin', 'thin', 'regular', 'thick', 'chrome'] },
+        // intensity is the separate <Fx> presence prop, not a material uniform; weight struck (no UIGlassEffect thickness).
       },
       lower: {
         ios: [
