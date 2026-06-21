@@ -73,7 +73,9 @@ boundary.
    `preset`/`feedback` (`56`).
 2. **`FxView`: `preset` (platform-idiomatic) + `motion` (a map of mounted states) + `effect`
    + `transition`.** `motion`'s keys are dev-named states, *not* lifecycle phases (those are
-   `FxPresence`); same prop name, different typed map.
+   `FxPresence`); same prop name, different typed map. `effect` renders **behind** the content
+   in V1 (decoration attached to it, lifting under the same transform); an on-top overlay is a
+   future composition decision. Shipped + device-verified (U12-002, 2026-06-21).
 3. **`FxPressable` is its own component** — it owns the press recognizer/cancellation/events,
    not just motion, so folding it into `FxView` would make a kitchen sink. (Shared native
    base internally; clear public API.)

@@ -175,7 +175,7 @@ A bounded `RippleDrawable` foreground on the container. Ripple uses a radius cap
 - `lift` preset (V1): `idle` → identity transform + opacity 1; `selected` → scale 1.03 + `translationY –3 pt`. Device-tuned at the gate. `stateMotion` overrides the preset per-state.
 - Props cross as `state` (string), `preset` (string), `stateMotion` (`[FxStateMotionEntry]`, an array of `{ state, spec }` records — dynamic-key maps cannot cross as Expo Records). `OnViewDidUpdateProps` batches all three before driving.
 - Event name: `onFxStateChange`. Payload: `{ state: String, finished: Bool, interrupted: Bool }`.
-- No `effect` prop (deferred to a later unit). No deferred-unmount handshake (all states are always mounted).
+- The `effect` decoration is **not** a native prop on the state host — `FxView` composes it in JS as a `pointerEvents="none"` `<Fx>` first child. The standard child-mount routes it into the `intermediateContainer` behind the content (earlier child = lower z-order), so it lifts with the content under the same transform. Decorative, behind-content only; an on-top overlay is a future composition decision. No deferred-unmount handshake (all states are always mounted).
 
 ### Lifecycle
 

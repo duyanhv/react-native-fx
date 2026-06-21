@@ -129,8 +129,12 @@ Subtask: FxView effect prop — behind-content decoration (blueprint Phase S, Un
                   tsc all green); Fx style-forward verified (Fx.tsx:43/116, absoluteFill wins, default
                   composition undefined — no positioning conflict); comment + JSDoc audited iceberg-clean;
                   no fix-round
-[ ] device-verified  5-row matrix PASS both platforms; evidence/device.md
-[ ] docs-closed   structure.{ios,android}.md "deferred" notes → shipped; 57 example confirmed
+[x] device-verified  5-row matrix PASS both platforms (maintainer-ratified 2026-06-21);
+                  Row 4 hand-ratified (manual interrupt — the FSM is U12-001's, unchanged);
+                  all 11 cited screenshots verified present, mtimes fit the gate. evidence/device.md
+[x] docs-closed   structure.{ios,android}.md effect notes flipped (JS-composed behind-content child,
+                  not a native prop; Android overdraw note added); 57 Decision 2 + example record
+                  behind-content shipped/device-verified
 [ ] merged
 ```
 

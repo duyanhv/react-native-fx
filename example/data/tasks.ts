@@ -20,6 +20,14 @@ export const TASKS: DeviceTask[] = [
 		screen: "fx-view",
 	},
 	{
+		id: "U12-002",
+		title: "FxView effect prop",
+		platform: "iOS · Android",
+		what: "behind-content effect decoration · lifts with content · touch-through · no-effect regression",
+		status: "in-progress",
+		screen: "fx-view",
+	},
+	{
 		id: "U13-001",
 		title: "FxPressable",
 		platform: "iOS · Android",

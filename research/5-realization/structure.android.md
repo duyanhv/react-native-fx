@@ -223,7 +223,7 @@ internal interface FxPressHost {
 - `lift` preset (V1): `idle` → identity; `selected` → `scaleX/Y = 1.04`, `translationY = –6 dp`. Tuned independently from iOS (a platform-native lift, not a cross-platform-uniform seed); still device-tunable. `stateMotion` overrides per-state. `View.translationY` is pixels, so the coordinator scales every fixed travel — preset and `stateMotion` alike — by display density, making a motion value an RN layout unit that lands the same physical distance as iOS points.
 - Props: `state` (String), `preset` (String), `stateMotion` (`List<FxStateMotionEntry>`, an array of `{ state, spec }` records — dynamic-key maps cannot cross as Expo Records). `OnViewDidUpdateProps` batches all three before driving.
 - Event: `onFxStateChange`. Payload: `FxStateChangeEvent { state: String, finished: Boolean, interrupted: Boolean }`.
-- No `effect` prop (deferred). No deferred-unmount handshake (all states are always mounted).
+- The `effect` decoration is **not** a native prop on the state host — `FxView` composes it in JS as a `pointerEvents="none"` `<Fx>` first child. The standard child-mount routes it into the `intermediateContainer` behind the content (earlier child = lower z-order), so it lifts with the content under the same transform; the `clipChildren = false` unclip above lets a behind-content edge effect overdraw with it. Decorative, behind-content only; an on-top overlay is a future composition decision. No deferred-unmount handshake (all states are always mounted).
 
 ### Lifecycle
 
