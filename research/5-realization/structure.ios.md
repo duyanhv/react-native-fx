@@ -169,6 +169,14 @@ Reuses the `FxSpring` timing primitive (a `CABasicAnimation` with a `CASpringTim
 **Android feedback (`feedback="native"`):**
 A bounded `RippleDrawable` foreground on the container. Ripple uses a radius cap at ~half the smaller of width/height, color from `?colorControlHighlight` or fallback `#20000000`. Transform feedback on Android is **deferred to a future `feedback` variant** if device testing proves necessary.
 
+**FxStateView host behavior** (new, state-driven content motion):
+- Wraps RN children in a Fabric-invisible `intermediateContainer` (`UIView`). `FxAnimationDriver` animates `intermediateContainer`'s `transform`/`alpha` — the same driver used for presence motion, reused as-is.
+- `FxStateViewCoordinator` manages an N-state "current → target" FSM. The first prop application snaps without animation (`isFirstApplication` guard). Same-target re-drives are no-ops. An in-flight retarget fires `onFxStateChange` with `{ state, finished: false, interrupted: true }` for the superseded transition, then retargets the driver; the settled transition fires `{ state, finished: true, interrupted: false }`. Exactly one settle event per drive.
+- `lift` preset (V1): `idle` → identity transform + opacity 1; `selected` → scale 1.03 + `translationY –3 pt`. Device-tuned at the gate. `stateMotion` overrides the preset per-state.
+- Props cross as `state` (string), `preset` (string), `stateMotion` (`[FxStateMotionEntry]`, an array of `{ state, spec }` records — dynamic-key maps cannot cross as Expo Records). `OnViewDidUpdateProps` batches all three before driving.
+- Event name: `onFxStateChange`. Payload: `{ state: String, finished: Bool, interrupted: Bool }`.
+- No `effect` prop (deferred to a later unit). No deferred-unmount handshake (all states are always mounted).
+
 ### Lifecycle
 
 - Pause the loop off-window/backgrounded; tear down the per-view `MTKView` (drop its

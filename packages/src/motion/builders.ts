@@ -70,6 +70,26 @@ export type MotionWire = {
  * apply the preset fallback. */
 export type PresenceMotionWire = { enter?: MotionWire; exit?: MotionWire };
 
+/** A state-motion map as it crosses the bridge: one entry per named state. */
+export type StateMotionWire = Array<{ state: string; spec: MotionWire }>;
+
+/** Normalizes a state motion map to its wire form, or undefined when nothing is set. */
+export function toStateMotionWire(
+  motion?: Record<string, MotionSpec>
+): StateMotionWire | undefined {
+  if (!motion) return undefined;
+  const result: StateMotionWire = [];
+  const keys = Object.keys(motion);
+  for (let i = 0; i < keys.length; i++) {
+    const state = keys[i];
+    const spec = motion[state];
+    if (spec !== undefined) {
+      result.push({ state, spec: toMotionWire(spec) });
+    }
+  }
+  return result.length > 0 ? result : undefined;
+}
+
 /** Normalizes a presence motion map to its wire form, or undefined when nothing is set. */
 export function toPresenceMotionWire(motion?: PresenceMotion): PresenceMotionWire | undefined {
   if (!motion) {

@@ -10,6 +10,7 @@ import { DragAxisSpikeScreen } from "../../screens/drag-axis-spike";
 import { EffectSurfaceScreen } from "../../screens/effect-surface";
 import { FillMaterialScreen } from "../../screens/fill-material";
 import { FxPressableScreen } from "../../screens/fx-pressable";
+import { FxViewScreen } from "../../screens/fx-view";
 import { HostingParityScreen } from "../../screens/hosting-parity";
 import { PresenceScreen } from "../../screens/presence";
 import { RuntimeShaderScreen } from "../../screens/runtime-shader";
@@ -53,6 +54,8 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <EffectSurfaceScreen />;
 		case "fx-pressable":
 			return <FxPressableScreen />;
+		case "fx-view":
+			return <FxViewScreen />;
 		default:
 			return <TaskBlankScreen label={label} />;
 	}

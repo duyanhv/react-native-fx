@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "fx-pressable" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "fx-pressable" | "fx-view" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "U12-001",
+		title: "FxView",
+		platform: "iOS · Android",
+		what: "state-driven content motion · lift preset · settle event · interrupt ordering",
+		status: "in-progress",
+		screen: "fx-view",
+	},
 	{
 		id: "U13-001",
 		title: "FxPressable",

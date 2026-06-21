@@ -47,7 +47,11 @@ export {
   type FxProps,
   type FxScrollProps,
   type FxScrollTile,
+  type FxStateChange,
+  type FxStatePreset,
   type FxTransition,
   type FxTransitionEnd,
+  FxView,
+  type FxViewProps,
   type PresencePreset,
 } from './surface';

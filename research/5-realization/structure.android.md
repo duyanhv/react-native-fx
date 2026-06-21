@@ -216,6 +216,14 @@ internal interface FxPressHost {
 - Cancellation (slop self-fail / out-of-bounds): clears the pressed state, emits press-out only, no press.
 - Events cross as `onFx`-prefixed names (`onFxPressIn`/`onFxPressOut`/`onFxPress`/`onFxLongPress`) to avoid React Native's reserved `topPress`; the public `onPress*` props map onto them in JS (as the shader surface does with `onShaderPress*`).
 
+**FxStateView host behavior** (new, state-driven content motion):
+- Wraps RN children in a Fabric-invisible `intermediateContainer` (`FrameLayout`). `shouldUseAndroidLayout = true` prevents Fabric from sizing the `LinearLayout` shell to 0×0. `FxAnimationDriver` animates `intermediateContainer`'s `scaleX`/`scaleY`/`translationY`/`alpha` — the same driver used for presence motion, reused as-is.
+- `FxStateViewCoordinator` manages an N-state "current → target" FSM identical to the iOS peer. First application snaps. Same-target re-drives are no-ops. In-flight retarget fires `onFxStateChange` with `interrupted = true`/`finished = false` for the superseded transition, then retargets; settled transition fires `finished = true`/`interrupted = false`.
+- `lift` preset (V1): `idle` → identity; `selected` → `scaleX/Y = 1.03`, `translationY = –3 dp`. Device-tuned at the gate. `stateMotion` overrides per-state.
+- Props: `state` (String), `preset` (String), `stateMotion` (`List<FxStateMotionEntry>`, an array of `{ state, spec }` records — dynamic-key maps cannot cross as Expo Records). `OnViewDidUpdateProps` batches all three before driving.
+- Event: `onFxStateChange`. Payload: `FxStateChangeEvent { state: String, finished: Boolean, interrupted: Boolean }`.
+- No `effect` prop (deferred). No deferred-unmount handshake (all states are always mounted).
+
 ### Lifecycle
 
 - Pause frame callbacks in `onDetachedFromWindow` and while the app is backgrounded. Treat

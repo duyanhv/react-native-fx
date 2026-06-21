@@ -5,6 +5,7 @@ import {
   identity,
   scale,
   toPresenceMotionWire,
+  toStateMotionWire,
 } from '../motion/builders';
 import type { MotionSpec } from '../motion/types';
 
@@ -59,6 +60,31 @@ describe('effectiveMotion', () => {
   it('does not reverse enter into a missing exit', () => {
     // no implicit reverse — a missing exit resolves to identity, never enter flipped
     expect(effectiveMotion('exit', { enter: userEnter })).toEqual({});
+  });
+});
+
+// ── state motion wire ────────────────────────────────────────────────
+
+describe('toStateMotionWire', () => {
+  it('returns undefined when motion is undefined', () => {
+    expect(toStateMotionWire(undefined)).toBeUndefined();
+  });
+
+  it('returns undefined when the map is empty', () => {
+    expect(toStateMotionWire({})).toBeUndefined();
+  });
+
+  it('maps each state key to a wire entry', () => {
+    const wire = toStateMotionWire({ idle: {}, selected: { scale: 1.03, translateY: -3 } });
+    expect(wire).toEqual([
+      { state: 'idle', spec: {} },
+      { state: 'selected', spec: { scale: 1.03, translateY: { value: -3 } } },
+    ]);
+  });
+
+  it('normalizes a measured token inside a state spec', () => {
+    const wire = toStateMotionWire({ hidden: { translateY: { measure: 'edge', edge: 'bottom' } } });
+    expect(wire).toEqual([{ state: 'hidden', spec: { translateY: { measureEdge: 'bottom' } } }]);
   });
 });
 

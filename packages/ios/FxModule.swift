@@ -125,5 +125,23 @@ public class FxModule: Module {
         view.setFeedback(value)
       }
     }
+
+    View(FxStateView.self) {
+      Events("onFxStateChange")
+
+      Prop("state") { (view: FxStateView, value: String) in
+        view.setState(value)
+      }
+      Prop("preset") { (view: FxStateView, value: String) in
+        view.setPreset(value)
+      }
+      Prop("stateMotion") { (view: FxStateView, value: [FxStateMotionEntry]?) in
+        view.setStateMotion(value)
+      }
+
+      OnViewDidUpdateProps { (view: FxStateView) in
+        view.applyResolvedConfig()
+      }
+    }
   }
 }
