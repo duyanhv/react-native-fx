@@ -194,7 +194,7 @@ Subtask: FxView — state-driven content presentation over a new content host (b
                   wired + payload reconciled to {state,finished,interrupted}; 57 §FxView state vocab resolved +
                   device-verified + seeded lift defaults; 52/index export; blueprint Unit 12 corrected
                   (native as-built) + effect split to U12-002
-[ ] merged        on integration/0.1.x  (HUMAN gate — maintainer's explicit word)
+[x] merged        on integration/0.1.x (maintainer merge-tick delegated 2026-06-21; pushed to PR #7)
 ```
 
 ## Start here
