@@ -118,7 +118,7 @@ export interface Lowering {
 // ── one IR node (capability) ─────────────────────────────────────────
 export interface UniformSpec {
   type: 'number' | 'string' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
-  default: unknown;        // 'string' carries open text (a symbol name, a BYO id)
+  default?: unknown;       // 'string' carries open text (a symbol name, a BYO id); absent ⇒ no platform default
   range?: readonly [number, number];
   options?: readonly string[];   // for type:'enum'
 }

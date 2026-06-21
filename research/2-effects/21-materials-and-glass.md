@@ -46,7 +46,7 @@ prior-art libs (so their users feel at home), plus fx-only extensions:
 interface MaterialUniforms {
   variant?: 'regular' | 'clear';       // UIGlassEffect.Style on 26 (NOT the public `effect` id)
   interactive?: boolean;               // system liquid press response (UIGlassEffect.isInteractive)
-  tint?: string;                       // blur-preserving color cast (UIGlassEffect.tintColor / Android scrim)
+  tint?: string;                       // blur-preserving color cast — #RGB/#RRGGBB/#RRGGBBAA hex (UIGlassEffect.tintColor / Android scrim)
   colorScheme?: 'system' | 'light' | 'dark'; // appearance override (overrideUserInterfaceStyle / Android base)
   intensity?: number;                  // 0–1 presence (fractionComplete) — a <Fx> prop, not a MaterialConfig field
 }

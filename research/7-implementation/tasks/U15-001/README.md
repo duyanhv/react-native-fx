@@ -161,9 +161,17 @@ Subtask: typed material config — tint + colorScheme, native-backed only (bluep
                   exactly (tint on the effect, colorScheme on the effect view), hex parser degrades safely;
                   Android scrim tint + #1C1C1E dark base, safe parse fallback; tests assert manifest + builder.
                   Internal-id audit: packages/ clean (the one U15-001 ref is an on-screen harness label — the
-                  accepted example-screen idiom, DEF-009 precedent). No fix-round.
-[ ] device-verified  tint + colorScheme visible both platforms; variant/interactive/intensity unregressed; evidence/device.md
-[ ] docs-closed   done at headless: 02/manifest, catalog, 21 (tintColor→tint, weight struck), structure.{ios,android}.md.
+                  accepted example-screen idiom, DEF-009 precedent).
+                  THREE maintainer-flagged fixes applied + re-gated (2026-06-21): (1) Android tint parser — replaced
+                  Color.parseColor (rejects #RGB; reads 8-digit as #AARRGGBB alpha-first) with a local parser matching
+                  iOS (#RGB/#RRGGBB/#RRGGBBAA, alpha-last) so 8-digit tints render identically cross-platform; (2)
+                  harness public-path row added — <Fx effect={fx.effect.glass({tint,colorScheme})}> (builder→materialConfig,
+                  Fx.tsx), not only FxHostedView; (3) 02 UniformSpec schema reconciled to default?:unknown. Re-gated:
+                  packages tsc/lint; example tsc; Android compileDebugKotlin --rerun-tasks (58 executed). iOS untouched.
+[ ] device-verified  tint + colorScheme visible both platforms (incl. the public fx.effect.glass path);
+                  variant/interactive/intensity unregressed; evidence/device.md
+[ ] docs-closed   done at headless + fix-round: 02/manifest (incl. UniformSpec default?), catalog, 21 (tintColor→tint,
+                  weight struck, hex format pinned), structure.{ios,android}.md (parser + format).
                   OWED post-device: confirm data-layer material mirror (if it enumerates uniforms) + tick a2-triage Outcome 1 row
 [ ] merged
 ```

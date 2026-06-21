@@ -143,15 +143,42 @@ private fun scrimWeightFor(variant: String?): Float {
 /**
  * Resolves the frost-scrim base color from tint and colorScheme.
  *
- * tint (a CSS hex string) drives the scrim color directly when set, letting the caller
- * cast the material in any hue. When absent, colorScheme selects the base:
- * dark → near-black, light/system → white (the platform default).
+ * tint drives the scrim color directly when set, letting the caller cast the material in
+ * any hue. When absent, colorScheme selects the base: dark → near-black, light/system →
+ * white (the platform default).
  */
 private fun scrimBaseColorFor(tint: String?, colorScheme: String?): Int {
   if (tint != null) {
-    return try { Color.parseColor(tint) } catch (_: IllegalArgumentException) { Color.WHITE }
+    return parseHexColor(tint) ?: Color.WHITE
   }
   return if (colorScheme == "dark") DARK_SCRIM_BASE else Color.WHITE
+}
+
+/**
+ * Parses a hex color (#RGB, #RRGGBB, or #RRGGBBAA) to an ARGB int. The format set and the
+ * alpha-last byte order match the iOS parser exactly, so an 8-digit tint renders the same
+ * color on both platforms — `Color.parseColor` cannot be used (it rejects #RGB and reads
+ * 8-digit hex as #AARRGGBB, alpha-first). Returns null for an unrecognised value.
+ */
+private fun parseHexColor(hex: String): Int? {
+  val h = hex.trim().removePrefix("#")
+  val value = h.toLongOrNull(16) ?: return null
+  return when (h.length) {
+    3 -> Color.rgb(
+      (((value shr 8) and 0xF) * 17).toInt(),
+      (((value shr 4) and 0xF) * 17).toInt(),
+      ((value and 0xF) * 17).toInt())
+    6 -> Color.rgb(
+      ((value shr 16) and 0xFF).toInt(),
+      ((value shr 8) and 0xFF).toInt(),
+      (value and 0xFF).toInt())
+    8 -> Color.argb(
+      (value and 0xFF).toInt(),
+      ((value shr 24) and 0xFF).toInt(),
+      ((value shr 16) and 0xFF).toInt(),
+      ((value shr 8) and 0xFF).toInt())
+    else -> null
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { FxHostedView } from "react-native-fx";
+import { Fx, FxHostedView, fx } from "react-native-fx";
 import { useTheme } from "../components/theme";
 
 const TINTS = [
@@ -109,6 +109,21 @@ export function FillMaterialScreen() {
 					effect="material"
 					intensity={0.7}
 					materialConfig={{ tint, colorScheme }}
+					style={StyleSheet.absoluteFill}
+				/>
+			</View>
+
+			<Text style={{ color: palette.textMuted, fontSize: 13 }}>
+				public path · {"<Fx effect={fx.effect.glass({ tint, colorScheme })}>"}
+			</Text>
+			<View style={[styles.box, { backgroundColor: palette.surface }]}>
+				<View style={styles.cardContent}>
+					<Text style={[styles.cardText, { color: palette.text }]}>
+						builder · tint: {tint ?? "none"} · {colorScheme}
+					</Text>
+				</View>
+				<Fx
+					effect={fx.effect.glass({ tint, colorScheme })}
 					style={StyleSheet.absoluteFill}
 				/>
 			</View>
