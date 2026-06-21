@@ -40,6 +40,10 @@ export type { ScrollAxis, ScrollSourceSpec, SourceSpec } from './source/types';
 export {
   EdgeGlow,
   Fx,
+  FxGroup,
+  type FxGroupProps,
+  FxItem,
+  type FxItemProps,
   FxPresence,
   type FxPresenceProps,
   FxPressable,

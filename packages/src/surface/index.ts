@@ -1,4 +1,5 @@
 export { EdgeGlow, Fx, type FxProps } from './Fx';
+export { FxGroup, type FxGroupProps, FxItem, type FxItemProps } from './FxGroup';
 export {
   FxPresence,
   type FxPresenceProps,

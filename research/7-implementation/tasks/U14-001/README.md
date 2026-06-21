@@ -119,16 +119,26 @@ Subtask: FxGroup/FxItem — the glass morph compound (blueprint Phase S, Unit 14
 
 ```
 [x] spec'd        this file
-[ ] rules-gated   #2/#3/#4/#5/#6/#7/#9 — UIKit container morph, child-mount not hosting, shape-native divergence
-[ ] implemented   iOS FxGroupView → UIVisualEffectView + UIGlassContainerEffect + mountChildComponentView pair;
+[x] rules-gated   #2/#3/#4/#5/#6/#7/#9 — UIKit container morph, child-mount not hosting, shape-native divergence
+[x] implemented   iOS FxGroupView → UIVisualEffectView + UIGlassContainerEffect + mountChildComponentView pair;
                   Android FxGroupView passthrough; src/surface/FxGroup.tsx + FxItem (minimal JS) + src/index.ts export
-[ ] commented     iceberg: UIKit-not-SwiftUI, the directness/spike rationale, the Android no-morph divergence
-[ ] headless-done packages tsc/build/lint/tests; iOS xcodebuild (after pod install); Android compileDebugKotlin/
-                  assembleDebug; example tsc
-[ ] device-verified  SPIKE-FIRST iOS 26 morph; then matrix both platforms; evidence/device.md
-[ ] reviewed
-[ ] docs-closed   structure.{ios,android}.md (UIKit container correction + routing + divergence); 57 wording tightened
-                  + Decision 4; 21 confirmed; 52/index export; blueprint Unit 14 Shape note
+[x] commented     iceberg: UIKit-not-SwiftUI, the directness/spike rationale, the Android no-morph divergence
+[x] headless-done packages tsc/build/lint/145 tests; iOS xcodebuild BUILD SUCCEEDED (after pod install 100 pods);
+                  Android compileDebugKotlin --rerun-tasks + assembleDebug BUILD SUCCESSFUL; example tsc clean
+[x] reviewed      planner, 2026-06-21 — ALL gates re-run independently: packages tsc/lint/145 tests/build;
+                  example tsc; Android compileDebugKotlin --rerun-tasks (58 executed); iOS xcodebuild BUILD
+                  SUCCEEDED. Full diff read: iOS container faithful to GlassContainer.swift (contentView
+                  child-routing, @available(26)+NSClassFromString guard, passthrough below 26); FxItem is a
+                  pure Fragment (zero native layer — maximally direct); Android passthrough clean; exports +
+                  binding correct; evidence at canonical path (no stray repo-root tasks/). Internal-id audit:
+                  packages/ clean (the U14-001 ref is an example device-task entry). No fix-round.
+                  CARRIED RISK (spec-anticipated, NOT a review failure): the glass is a grandchild of contentView
+                  (nested under FxHostedView), not a direct child as in the reference — whether UIGlassContainerEffect
+                  merges nested glass is the spike-first device question. May bounce for an FxItem/composition change.
+[ ] device-verified  SPIKE-FIRST iOS 26 morph (the nested-glass question); then matrix both platforms; evidence/device.md
+[ ] docs-closed   structure.{ios,android}.md (UIKit container correction + routing + divergence) — DONE at headless;
+                  OWED: 57 wording tightened ("real native morphing view" → "contributes a real native glass surface")
+                  + Decision 4; 21 confirmed; 52/index export confirmed; blueprint Unit 14 Shape note
 [ ] merged
 ```
 

@@ -11,6 +11,7 @@ import { EffectSurfaceScreen } from "../../screens/effect-surface";
 import { FillMaterialScreen } from "../../screens/fill-material";
 import { FxPressableScreen } from "../../screens/fx-pressable";
 import { FxViewScreen } from "../../screens/fx-view";
+import { GlassMorphScreen } from "../../screens/glass-morph";
 import { HostingParityScreen } from "../../screens/hosting-parity";
 import { PresenceScreen } from "../../screens/presence";
 import { RuntimeShaderScreen } from "../../screens/runtime-shader";
@@ -56,6 +57,8 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <FxPressableScreen />;
 		case "fx-view":
 			return <FxViewScreen />;
+		case "glass-morph":
+			return <GlassMorphScreen />;
 		default:
 			return <TaskBlankScreen label={label} />;
 	}

@@ -335,6 +335,10 @@ Each section expands the Android rungs from `02`.
   backdrop-blur library rung is documented and deferred until backdrop blur is genuinely
   demanded; when it lands it is an optional peer dependency (`53` decision 6) — no Compose
   dependency and no optional-peer machinery now.
+- **`FxGroup` — passthrough, no morph** — Android has no Liquid Glass and no cross-item glass
+  union (`57`, DOC-006). `FxGroupView` is a plain `FxNativeView` passthrough; each child
+  renders its own material surface individually. No merge threshold, no `spacing` prop
+  (deferred V2). This is the ratified shape-native divergence — not a gap to fill.
 
 ### `shader`
 - **Decorative** — `lower:shader, asset:agsl` · `requires {os:33, hosted}` ·

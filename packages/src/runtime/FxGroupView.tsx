@@ -1,12 +1,11 @@
 import { requireNativeView } from 'expo';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-/**
- * Props accepted by the grouped substrate binding before compound rendering is built.
- */
+/** Props accepted by the grouped substrate native view. */
 export type NativeFxGroupProps = {
   style?: StyleProp<ViewStyle>;
+  children?: ReactNode;
 };
 
 /**

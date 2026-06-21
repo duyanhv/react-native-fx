@@ -267,10 +267,17 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
   `UIGlassEffect.Style.regular`/`.clear` (unknown values fall back to the regular glass), and
   `interactive` sets `UIGlassEffect.isInteractive` — the system interaction view owns the
   press and its arbitration (`interaction:'self'`; fx installs no recognizer). fx does not
-  adopt an identity/none style (`21` ships `regular`/`clear` only). `GlassEffectContainer` is
-  still the SwiftUI realization of the **`FxGroup`/`FxItem`** compound (`57`) when multiple
-  glass shapes must morph (glass can't sample glass); the morphing compound remains a
-  SwiftUI-side concern, out of this rung's slice.
+  adopt an identity/none style (`21` ships `regular`/`clear` only). The **`FxGroup`/`FxItem`**
+  compound (`57`) uses the UIKit `UIGlassContainerEffect` — not the SwiftUI
+  `GlassEffectContainer` — because the items are UIKit surfaces (`FxGlassSurfaceView`).
+  `FxGroupView` owns a `UIVisualEffectView` carrying `UIGlassContainerEffect` (guarded
+  `@available(iOS 26.0)` + `NSClassFromString("UIGlassContainerEffect") != nil`) and routes
+  children into `containerEffectView.contentView` via `mountChildComponentView`, making
+  sibling glass surfaces direct siblings under the container effect layer so the system can
+  merge them. Below iOS 26 or when the class is absent: a plain passthrough; items render
+  their own glass rung individually (the ratified shape-native divergence, DOC-006). `FxItem`
+  is minimal JS — a React Fragment passthrough with no native view — so the glass mounts as
+  directly as possible under `FxGroupView`.
 - **Glass lifecycle (pinned mechanic)** — `UIGlassEffect` must be (re)created during
   `layoutSubviews()`, not `didMoveToWindow()` (creating it there does not render —
   expo/expo#43732). Toggling `isInteractive` requires clearing the prior effect

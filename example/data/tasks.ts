@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "fx-pressable" | "fx-view" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "fx-pressable" | "fx-view" | "glass-morph" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "U14-001",
+		title: "FxGroup / FxItem",
+		platform: "iOS 26 · Android",
+		what: "glass morph compound · two items merge when close (iOS 26 spike) · individual glass on Android + pre-26 · touch-through",
+		status: "in-progress",
+		screen: "glass-morph",
+	},
 	{
 		id: "U12-001",
 		title: "FxView",
