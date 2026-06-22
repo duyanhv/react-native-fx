@@ -134,8 +134,8 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 
 ### Unit 14: `FxGroup` / `FxItem` — the morphing compound
 *   **Contract:** `57`, `21`
-*   **Precedent (battle-tested):** the `FxGroupView` substrate binding (exists); iOS `GlassEffectContainer` / Android glass stack (U3-002 / U3-003).
-*   **Decision + flip-trigger:** **adapt** the platform glass-container idiom. `FxGroup` / `FxItem` — the one honest compound (each item a real native morphing view); V1 morph scope is glass-only (DOC-006); explicit `spacing` deferred to V2. → *Flip-trigger: morph beyond glass (a new ledger row).*
+*   **Precedent (battle-tested):** the `FxGroupView` substrate binding (exists); iOS UIKit `UIGlassContainerEffect` container / Android glass stack (U3-002 / U3-003).
+*   **Decision + flip-trigger:** **adapt** the platform glass-container idiom. `FxGroup` / `FxItem` — the one honest compound (each item contributes a real native glass surface; the iOS container is the UIKit `UIGlassContainerEffect`, and `FxItem` is JS-only — no native view of its own); V1 morph scope is glass-only (DOC-006); explicit `spacing` deferred to V2. → *Flip-trigger: morph beyond glass (a new ledger row).*
 *   **Explicit Reject:** a generic `Material` / `GlassContainer` component (`21` Decision 3); morphing arbitrary effects in V1.
 *   **Shape · phase:** `src/surface/FxGroup.tsx` (+ `FxItem`) over `FxGroupView` · **Surface**
 *   **Depends on:** Unit 1, Unit 3 (merged)

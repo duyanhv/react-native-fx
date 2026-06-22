@@ -134,8 +134,9 @@ in `02`). If the lib isn't present, the rung guards out and the ladder degrades 
    **no `Material`/`GlassContainer` component**; glass is mounted by `<Fx>`/`FxView effect`.
 4. **Premium fallback, never a flat box** — below the glass floor, degrade to a real
    material/blur, not a plain `View`.
-5. **`FxGroup` merge contract is system-owned in V1.** Glass morphing uses the system's
-   `GlassEffectContainer` on iOS 26+; fx exposes no explicit `spacing` or merge-threshold
+5. **`FxGroup` merge contract is system-owned in V1.** Glass morphing uses the system glass
+   container on iOS 26+ (the UIKit `UIGlassContainerEffect`; mechanics in `structure.ios.md`);
+   fx exposes no explicit `spacing` or merge-threshold
    prop in V1. The merge-threshold contract is deferred to V2. Glass is the only effect
    that supports cross-item morph in V1.
 6. **The Android glass default + uniform mapping are pinned (FX-003; U3-003 device gate,
@@ -160,8 +161,9 @@ in `02`). If the lib isn't present, the rung guards out and the ladder degrades 
   2026-06-11).** Normalized 0–1: iOS `fractionComplete`, Android blur radius + overlay alpha
   (Decision 6).
 - **`FxGroup` merge contract for glass** — **resolved (DOC-006, 2026-06-10).** Merge
-  semantics are system-owned in V1 via `GlassEffectContainer`; no explicit `spacing` prop.
-  See `57` Decision 6 and `21` Decision 5.
+  semantics are system-owned in V1 via the UIKit `UIGlassContainerEffect`; no explicit
+  `spacing` prop. See `57` Decision 6 and `21` Decision 5. Shipped + device-verified
+  (U14-001, 2026-06-22): iOS 26 sibling glass morphs; Android renders individual material.
 
 ## Platform notes
 

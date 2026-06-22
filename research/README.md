@@ -49,7 +49,7 @@ the native/runtime ownership boundaries fx physically mounts:
 | `FxView` | mounted-state presentation: `state` → transform/opacity, optional decoration |
 | `FxPressable` | native press recognizer + platform feedback |
 | `<Fx>` | fx-owned drawn effects, single effect id or `EffectStack`; interactive shader surface via `interactionMode` |
-| `FxGroup` / `FxItem` | the honest compound for real native morphing layers, especially glass |
+| `FxGroup` / `FxItem` | the honest compound: each item contributes a real native glass surface that morphs between siblings (glass-only in V1; `FxItem` is JS-only) |
 
 Everything else is a prop or data:
 
