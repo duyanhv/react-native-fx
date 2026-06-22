@@ -16,6 +16,9 @@ inside an `EffectStack`** (a step in `fx.effect.*`, mounted by `<Fx>`, or attach
 ## The node
 
 - **id:** `filter` · **kind:** modifier · **interaction:** `none` · **phase:** v1.
+- **V1 status: unselectable** — both lowering rungs are marked `status:'planned'`; no
+  `FxFilterView` renderer exists. `select()` returns `{via:'none'}` for all contexts.
+  `FilterConfig` is exported for type use, but the node is not offered until a renderer ships.
 - Applies to the effect's **own** layers (e.g. a `.blur()` step over a `fill`/`shader` in
   the same `EffectStack`) — never over arbitrary RN children.
 
@@ -39,9 +42,10 @@ native side may ease them via the `transition` channel (`40`).
 
 | | iOS | Android |
 |---|---|---|
-| filters | SwiftUI `.blur`/`.saturation`/`.contrast`/`.hueRotation`/`.shadow` (hosted) | `RenderEffect` blur + color-filter chain (31, hosted) |
+| filters | SwiftUI `.blur`/`.saturation`/… (hosted, `status:'planned'`) | `RenderEffect` chain (31, hosted, `status:'planned'`) |
 
-**Parity**, with one asymmetry: on iOS these modifiers are safe only over the
+Both rungs are `status:'planned'` — `select()` skips them and returns `{via:'none'}`.
+**Planned parity**, with one asymmetry: on iOS these modifiers are safe only over the
 effect's own hosted content (wrapping live RN content severs touch); on Android
 `RenderEffect` is draw-time, so it *could* apply over live content without severing —
 but V1 keeps the bundled-inside-effect rule on both platforms for consistency.
@@ -75,8 +79,8 @@ operation, not a render-target.
 
 ## Degradation
 
-If the filter rung is unavailable (e.g. Android <31 `RenderEffect`), the stack **drops the
-filter step** and the render-target still draws — graceful, never an error.
+In V1, `filter` is always `{via:'none'}` (both rungs `status:'planned'`). A stack that
+includes a `filter` step silently drops it — the render-targets below still draw, gracefully.
 
 ## Events
 
@@ -89,8 +93,8 @@ filter step** and the render-target still draws — graceful, never an error.
    `EffectStack` (over `fill`/`shader` layers, mounted by `<Fx>`/`FxView effect`), never
    around a live RN subtree.
 2. **Filters chain in declared order** and are static config eased by `transition`.
-3. **Parity node** — native filter modifiers both sides; the Android draw-time
-   freedom is noted but not exposed as a wrapper in V1.
+3. **Planned parity node** — native filter modifiers planned on both sides; the Android
+   draw-time freedom is noted but not exposed as a wrapper in V1.
 
 ## Open questions
 

@@ -22,44 +22,61 @@ Every architectural decision in this doc traces to one of these sources.
 
 ## 1. Target Folder Structure
 
+> *Status-reconciled against the real `packages/` tree (2026-06-19, DOC-028). Each JS file is tagged **[shipped]** (in code), **[Phase-S]** (a decomposed-but-unbuilt surface unit — `blueprint.md` Phase S), or **[deferred]** (no V1 consumer, parked). The native sub-trees below are **illustrative, not exhaustive** — the runtime + as-built mechanics added files §1 never listed (e.g. `FxScrollView.swift`, `FxShaderRegistry.swift`, the per-effect `Fx*View` renderers); the object/file ground truth for the post-Unit-9 + within-Unit mechanics is §11, and the real directory is the authority.*
+
 ```
 packages/
 ├── src/                          ← JS SURFACE (mirror of research planes)
 │   ├── manifest/                 ← dependency SINK (imports nothing from other src/)
-│   │   ├── index.ts                the manifest barrel [research: G1]
-│   │   ├── select.ts               the adapter dispatch [research: G2]
-│   │   └── types.ts                shared IR types [research: 02]
+│   │   ├── index.ts                [shipped] the manifest barrel [research: G1]
+│   │   ├── manifest.ts             [shipped] the canonical CapabilityManifest data [research: 02]
+│   │   ├── config.ts               [shipped] per-effect typed config, type-derived [research: 02]
+│   │   ├── select.ts               [shipped] the adapter dispatch [research: G2]
+│   │   └── types.ts                [shipped] shared IR types [research: 02]
 │   │
 │   ├── surface/                  ← PUBLIC COMPONENTS
-│   │   ├── FxPresence.tsx          [research: 54]
-│   │   ├── FxView.tsx              [research: 57]
-│   │   ├── FxPressable.tsx         [research: 57]
-│   │   ├── Fx.tsx                  [research: 55] (single-or-stack)
-│   │   ├── FxGroup.tsx             [research: 57]
-│   │   ├── FxItem.tsx              [research: 57]
-│   │   └── types.ts
+│   │   ├── FxPresence.tsx          [shipped] [research: 54]
+│   │   ├── presenceMachine.ts      [shipped] the pure retention FSM behind FxPresence [research: 35]
+│   │   ├── FxScroll.tsx            [shipped] Fx namespace + FxScroll (source driver, DEF-014) [research: 50]
+│   │   ├── index.ts / types.ts     [shipped] barrel + shared surface types
+│   │   ├── Fx.tsx                  [Phase-S] <Fx effect> + EdgeGlow (Unit 10) [research: 55]
+│   │   ├── FxView.tsx              [Phase-S] state-driven presentation (Unit 12) [research: 57]
+│   │   ├── FxPressable.tsx         [Phase-S] native press feedback (Unit 13) [research: 57]
+│   │   ├── FxGroup.tsx             [Phase-S] morph compound (Unit 14) [research: 57]
+│   │   └── FxItem.tsx              [Phase-S] morph item (Unit 14) [research: 57]
 │   │
 │   ├── effects/                  ← EFFECT SEMANTICS + IDs
-│   │   ├── catalog.ts              shader/fill/material/filter/symbol ids [research: 20-24]
-│   │   └── types.ts
+│   │   ├── catalog.ts              [shipped] shader/fill/material/filter/symbol ids [research: 20-24]
+│   │   └── registry.ts             [shipped] registerShader BYO compile (DEF-008) [research: 22]
 │   │
 │   ├── motion/                   ← MOTION VOCABULARY
-│   │   ├── MotionSpec.ts           fx.motion.* builders [research: 41]
-│   │   └── types.ts
+│   │   ├── builders.ts             [shipped] fx.motion.* builders + fallback rule [research: 41]
+│   │   ├── index.ts                [shipped] barrel
+│   │   └── types.ts                [shipped] MotionSpec / Travel [research: 41]
+│   │
+│   ├── source/                   ← SCROLL-LINKED DRIVER (DEF-014)
+│   │   ├── builders.ts             [shipped] fx.source.scroll [research: 50 §Decision 9]
+│   │   ├── index.ts                [shipped] barrel
+│   │   └── types.ts                [shipped] SourceSpec / ScrollSourceSpec
 │   │
 │   ├── presets/                  ← PRESET RESOLUTION
-│   │   ├── defaults.ts             per-platform shape+timing catalog [research: G4/M3]
-│   │   ├── palettes.ts             [research: 50]
-│   │   └── themes.ts               [research: 50]
+│   │   ├── types.ts                [shipped] TODO stub only — no resolver (surface resolves preset natively)
+│   │   ├── defaults.ts             [deferred] per-platform shape+timing catalog [research: G4/M3]
+│   │   ├── palettes.ts             [deferred] no V1 consumer — not a design-token layer (DOC-029) [research: 50]
+│   │   └── themes.ts               [deferred] no V1 consumer (DOC-029) [research: 50]
 │   │
 │   ├── runtime/                  ← JS BINDINGS (thin glue) — one per registered native view
-│   │   ├── FxHostedView.tsx        default requireNativeView wrapper
-│   │   ├── FxSurfaceView.tsx       named requireNativeView wrapper (presence/state/press route here)
-│   │   └── FxGroupView.tsx         named requireNativeView wrapper
+│   │   ├── FxHostedView.tsx        [shipped] default requireNativeView wrapper (+ .web stub)
+│   │   ├── FxSurfaceView.tsx       [shipped] expo-view wrapper — presence/state/press route here (+ .web)
+│   │   ├── FxSurfaceView.types.ts  [shipped] the controlled ref surface: setUniform/setHighlight (DEF-020)
+│   │   ├── FxGroupView.tsx          [shipped] morph compound wrapper (+ .web stub)
+│   │   └── FxScrollView.tsx         [shipped] source binding (+ .android / .web fallbacks, DEF-014)
 │   │
-│   └── index.ts                  ← PUBLIC API (root export) [research: 52 §Public exports]
+│   ├── fx.ts                     ← [shipped] the fx.* builder namespace (motion / source; effect → Unit 11)
+│   └── index.ts                  ← [shipped] PUBLIC API root export [research: 52 §Public exports]
+│       (+ __tests__/ — Jest: manifest, motion builders, presence machine, shader registry)
 │
-├── ios/                          ← iOS NATIVE
+├── ios/                          ← iOS NATIVE (illustrative — see the note above; real dir is authority)
 │   ├── FxModule.swift              Expo Module [finding: multiple views, first=default]
 │   ├── FxNativeView.swift          ABSTRACT BASE (diff-based props, AsyncFunction surface, lifecycle)
 │   ├── FxHostedView.swift          FxEffectRenderer (hosted, decorative)
@@ -69,11 +86,14 @@ packages/
 │   ├── FxAnimationDriver.swift     native spring animator [research: 34]
 │   ├── FxPresenceCoordinator.swift presence FSM [research: 35]
 │   ├── FxPressHandler.swift        press handler (6-state FSM) [finding: gesture-handler borrow]
+│   ├── FxScrollView.swift          source driver — persistent UIHostingController (DEF-014)
+│   ├── FxShaderRegistry.swift      runtime BYO .metal compile (DEF-008)
+│   ├── (FxFillView / FxMaterialView / FxSymbolView / FxShaderView / FxGlassSurfaceView … per-effect renderers)
 │   ├── Shaders/
 │   │   └── FxShaders.metal         curated .metal shaders [research: 22]
 │   └── ReactNativeFx.podspec
 │
-├── android/                      ← ANDROID NATIVE
+├── android/                      ← ANDROID NATIVE (illustrative — see the note above; real dir is authority)
 │   ├── FxModule.kt                 Expo Module [finding: multiple views, first=default]
 │   ├── FxNativeView.kt             ABSTRACT BASE
 │   ├── FxHostedView.kt             FxEffectRenderer (hosted, decorative)
@@ -83,6 +103,8 @@ packages/
 │   ├── FxAnimationDriver.kt        native spring animator
 │   ├── FxPresenceCoordinator.kt    presence FSM
 │   ├── FxPressHandler.kt           press handler (6-state FSM) [finding: gesture-handler borrow]
+│   ├── FxShaderRegistry.kt         runtime BYO .agsl compile (DEF-008)
+│   ├── (FxMaterialView / FxShaderView / FxSurfaceShaderView / FxContentDistortion … per-effect renderers)
 │   └── assets/
 │       └── shaders/
 │           └── *.agsl              curated AGSL shaders [research: 22]
@@ -220,9 +242,9 @@ const FxGroupView   = requireNativeView('ReactNativeFx', 'FxGroupView');    // m
 > [ref: expo/ios/Core/Functions/AsyncFunctionDefinition.swift]
 
 **Events → JS** (discrete only, never per-frame):
-- `onTransitionEnd({ phase })` — presence lifecycle [research: 35]
-- `onStateChange({ state })` — FxView state transitions [research: 40]
-- `onPressIn/onPressOut/onPress` — interaction events (active mode) [research: 30]
+- `onTransitionEnd({ owner, phase?, finished, interrupted })` — presence/view/effect completion; `owner` discriminates which surface fired [research: 40 §Event payloads]
+- `onStateChange({ from, to })` — FxView state transitions [research: 40 §Event payloads]
+- `onPressIn/onPressOut/onPress` — interaction events (active mode); interactive shader/effect surfaces only — `material` is `interaction:'self'` and surfaces no `onPress*` (the system view owns its press) [research: 30, 21]
 - `onLoad/onError` — BYO shader compilation result [research: 22]
 
 Native registered event names are **prefixed** to dodge React Native's reserved event props —
@@ -239,7 +261,7 @@ not restate it.
 
 ## 3. Runtime Object Model
 
-From `research: 36`, the orchestrator owns or delegates to six stable native objects. Only objects JS holds a reference to use Expo `SharedObject`; internal objects are plain native classes.
+From `research: 36`, the orchestrator owns or delegates to **five** named runtime objects, plus the press recognizer (`FxPressHandler`) as a native **input source** — not a sixth object (`36 §The objects`). Only objects JS holds a reference to use Expo `SharedObject`; internal objects are plain native classes.
 
 > **[finding] `SharedObject` is for native objects that need a JS counterpart — bidirectional native↔JS mapping, GC-aware lifecycle (weak JS refs, `sharedObjectWillRelease` hooks), `emit(event:payload:)`. Internal objects (driver, coordinator, observer, recognizer) are plain Swift/Kotlin classes. They don't cross the JS boundary, so no `SharedObject` overhead.**
 > [ref: expo/ios/Core/SharedObjects/SharedObject.swift]
@@ -247,11 +269,11 @@ From `research: 36`, the orchestrator owns or delegates to six stable native obj
 | Object | Owns | Reads | Emits | JS-Facing? |
 |--------|------|-------|-------|------------|
 | **`FxNativeView`** | Expo Modules boundary, diff-based props, shared lifecycle and ref surface | resolved props from `updateProps` | — (concrete views declare `EventDispatcher`) | View (Fabric identity) |
-| **`FxEffectRenderer`** | effect layers, GPU surface (interactive); hosted SwiftUI/Compose or expo-view MTKView/RenderEffect | effect config, pointer uniforms (interactive) | `onLoad`, `onError`, `onPress*` | No (internal; events through view) |
-| **`FxPresenceCoordinator`** | lifecycle FSM (`absent · entering · present · exiting`, the `35` naming — built U7-001), deferred-unmount handshake | `visible` target | `onTransitionEnd({ phase, finished, interrupted })` via EventDispatcher | No (internal) |
+| **`FxEffectRenderer`** | effect layers, GPU surface (interactive); hosted SwiftUI/Compose or expo-view MTKView/RenderEffect. **V1: not a discrete object — rendering is inline in the view classes; the discrete object is V2 (DEF-021, `36 §V1 realization`)** | effect config, pointer uniforms (interactive) | `onLoad`, `onError`, `onPress*` (interactive surfaces; not `material`, `interaction:'self'` `21`) | No (internal; events through view) |
+| **`FxPresenceCoordinator`** | lifecycle FSM (`absent · entering · present · exiting`, the `35` naming — built U7-001), deferred-unmount handshake | `visible` target | `onTransitionEnd({ owner:'presence', phase, finished, interrupted })` via EventDispatcher | No (internal) |
 | **`FxAnimationDriver`** | interruptible native animation (spring/timing); content family (CASpringAnimation/SpringAnimation) and effect family (SwiftUI .animation/Compose animate*AsState) | targets, measurements from `FxLayoutObserver` | `onTransitionEnd` (completion) via coordinator | No (internal) |
 | **`FxLayoutObserver`** | post-layout reads of wrapper (size, origin, travel, insets) | Yoga/Fabric frame from `layoutMetrics` | — (passive, read on demand by driver) | No (internal) |
-| **`FxPressHandler`** | 6-state FSM (press recognizer), cooperative slop-yield, coalescing keys | touch location → `pressDepth`/`pointerX`/`pointerY` | `onPress*` via EventDispatcher | No (internal) |
+| **`FxPressHandler`** *(input source, not one of the five — `36`)* | 6-state FSM (press recognizer), cooperative slop-yield, coalescing keys | touch location → `pressDepth`/`pointerX`/`pointerY` | `onPress*` via EventDispatcher | No (internal) |
 
 ### 3.1 Wiring Rules (one-way, per `04`)
 
@@ -282,7 +304,7 @@ ios/FxHostedView.swift (extends FxNativeView) — decorative; or FxSurfaceView f
        │
        ├── hosted path (decorative):
        │   • SwiftUI host + .colorEffect + TimelineView
-       │   • clock: TimelineView(.animation) / withFrameNanos
+       │   • clock: TimelineView(.animation) (iOS) / Choreographer on a plain View (Android V1; Compose withFrameNanos deferred)
        │   • uniforms: FxUniforms { time, resolution, intensity }
        │   [research: structure.ios §shader] [research: structure.android §shader]
        │
@@ -303,7 +325,7 @@ Data flow: props → native; uniforms written per frame by native; zero JS in fr
 
 | Condition | Substrate | Renderer |
 |-----------|-----------|----------|
-| `interactionMode='none'`, decorative | `hosted` | SwiftUI/Compose `.colorEffect` / `TimelineView` |
+| `interactionMode='none'`, decorative | `hosted` | SwiftUI `.colorEffect`/`TimelineView` (iOS) · plain `View` + `Paint.onDraw` + `Choreographer` (Android V1; Compose deferred) |
 | `interactionMode='active'|'passive'` | `expo-view` | `MTKView` + `CADisplayLink` / `RenderEffect` + `Choreographer` |
 | `interactionMode='controlled'` | `expo-view` | same GPU surface; `setUniform` writes from JS |
 
@@ -504,16 +526,16 @@ Serves both `FxPressable` (content) and `<Fx interactionMode>` (interactive effe
 | Mechanic | iOS | Android |
 |----------|-----|---------|
 | **Shader language** | `.metal` | `.agsl` |
-| **Decorative clock** | `TimelineView(.animation)` | `withFrameNanos` / `rememberInfiniteTransition` |
+| **Decorative clock** | `TimelineView(.animation)` | `Choreographer.FrameCallback` on a plain `View` (V1); Compose `withFrameNanos` / `rememberInfiniteTransition` deferred with the Compose rung |
 | **Interactive clock** | `CADisplayLink` | `Choreographer` frame callback |
 | **Content motion** | `CASpringAnimation` on `CALayer` | `SpringAnimation` (standard `SpringForce`); M3 Expressive behind `feature:'m3-expressive'` gate [REAL-001] |
 | **Effect motion** | `.animation` / `phaseAnimator` / `keyframeAnimator` | `animate*AsState` / `updateTransition`; M3 Expressive progressive enhancement |
-| **Glass / material** | `.glassEffect` (iOS 26) / `UIBlurEffect` | `RenderEffect.createBlurEffect` + overlay / Haze [research: 21] |
-| **Symbols** | `.symbolEffect` | AVD / Lottie [research: 24] |
+| **Glass / material** | UIKit `UIVisualEffectView`+`UIGlassEffect` (iOS 26) | `RenderEffect.createBlurEffect` + overlay / Haze [research: 21] |
+| **Symbols** | `.symbolEffect` | AVD / Lottie — planned, deferred (iOS-only in V1) [research: 24] |
 | **Touch (content)** | hit-tests MODEL layer (target pos mid-flight) [finding] | hit-tests VISUAL layer (actual pos mid-flight) [finding] |
 | **Touch (effect)** | `displayLink`-driven `MTKView` | draw-time `RenderEffect` — touch-safe |
-| **Content-distort** | OUT OF SCOPE (severs RN touch) [research: 01] | PLANNED (AGSL + RenderEffect, draw-time) [research: structure.android] |
-| **Shape morph** | NONE | M3 Expressive (native) [research: structure.android §shape-morph] |
+| **Content-distort** | OUT OF SCOPE (severs RN touch) [research: 01] | ships — `ripple` demonstrator (AGSL + RenderEffect, draw-time; DEF-009, device-proven) [research: structure.android §content-distort] |
+| **Shape morph** | NONE | M3 Expressive (native), `feature:'m3-expressive'` gate — Compose rung only; the V1 plain-`View` path exposes no rung [REAL-001] [research: structure.android §shape-morph] |
 
 ---
 
@@ -560,7 +582,8 @@ ios/FxNativeView.swift  /  android/FxNativeView.kt  ──  (the abstract base, 
 > views are **not planned** — they ship as `src/surface/` components over the existing binding. The
 > runtime-object granularity behind this (driver family-split, scheduling) is **resolved** (RT-008,
 > U9 ratify 2026-06-13, `36` §Resolved questions): one `FxAnimationDriver` with two families, per-view
-> clocks; the discrete `FxEffectRenderer` object + the `SharedObject` layer are V2 (DEF-020).
+> clocks; the discrete `FxEffectRenderer` object + the `SharedObject` layer are V2 (DEF-021, split
+> out of DEF-020 on 2026-06-15 — DEF-020 shipped only the view-ref `controlled` write path).
 
 ---
 
@@ -594,3 +617,32 @@ Every architectural decision in this doc traces to exactly one of:
 | Hybrid Views do NOT host RN children (HybridViewProps empty) | Nitro `HybridView` | `[ref: nitro/.../cpp/views/HybridView.hpp]` |
 | Nitro is NOT a fallback for content-wrapping; Expo Modules is the boundary | Cross-referencing: Nitro constraint + Expo child mounting | `[finding] §3.1` |
 | FSM-based handler (not registered recognizer) serves both FxPressable and <Fx> | Gesture Handler borrow + fx architecture | `[finding] §6` |
+
+---
+
+## 11. As-Built Mechanics not in §1 (addendum)
+
+This section is the as-built object/file ground truth for mechanics §1's *target* tree (written pre-Unit-9) does not carry; the build-ordered companion is `blueprint.md` Phase A. It holds two classes: **post-Unit-9 DEF work** (the table below) and **within-Unit mechanics** (the sub-table further down). All are merged and device-ratified.
+
+Four mechanics shipped after Unit 9 as deferred-ledger (`DEF-0xx`) work, each on a maintainer-accepted trigger rather than a forward Unit.
+
+| Mechanic | Ledger | Native | JS | Source doc | Enables |
+|----------|--------|--------|----|-----------|---------|
+| **`source` driver** — scroll-linked presentation (iOS-hosted render-server rung) | DEF-014 (2026-06-14) | `ios/FxScrollView.swift` (persistent `UIHostingController`), `ios/FxScrollRootView.swift` (`ScrollView` / `.scrollTransition`); Android deferred | `src/source/` (`fx.source.scroll`), `src/surface/FxScroll.tsx` (`Fx` namespace + `FxScroll`), `src/runtime/FxScrollView.{tsx,android.tsx,web.tsx}` | `02 §Decision 14`, `40 §Decision 7`, `50 §Decision 9`, `structure.ios.md §source` | ambient-RN-scroll tier + Android `source` rung (later rungs); `clock` driver sibling (unbuilt — DOC-025) |
+| **`controlled` mode** — view-ref imperative uniform writes | DEF-020 (2026-06-15) | `ios/FxSurfaceView.swift` + `ios/FxModule.swift` (`setUniform` / `setHighlight` `AsyncFunction`s); `android/…/FxSurfaceView.kt` + `FxSurfaceShaderView.kt` + `FxModule.kt` | `src/runtime/FxSurfaceView.types.ts` (ref surface) | `30 §Decision 7`, `50 §Decision 8`, `structure.{ios,android}` §controlled | DEF-011 (unblocked); the `SharedObject` / discrete `FxEffectRenderer` / HybridObject half is DEF-021 (blocked) |
+| **`dragAxis` / drag-tilt** — native-owned interaction | DEF-011 (2026-06-18) | `ios/FxPressHandler.swift` + `ios/FxSurfaceView.swift`; `android/…/FxPressHandler.kt` + `FxSurfaceView.kt` (drag/tilt scalars in the shared uniform buffer) | `src/runtime/FxSurfaceView.types.ts` (`dragAxis`) | `30 §Resolved` (G3), `structure.{ios,android}` §drag/tilt | DEF-006 optional app-owned Reanimated integration (no longer a blocker) |
+| **Runtime shader registration/compile** — BYO `.metal`/`.agsl` from JS | DEF-008 (2026-06-14) | `ios/FxShaderRegistry.swift` + `FxModule.registerShader` + `FxSurfaceView` (`makeLibrary(source:)`, cache by source string); `android/…/FxShaderRegistry.kt` + `FxModule.registerShader` + `FxSurfaceShaderView`/`FxSurfaceView` (per-view `RuntimeShader`) | `src/effects/registry.ts` (`registerShader`), `src/index.ts` export | `22 §Decision 7` (FX-007), `structure.{ios,android}` §shader | lifts the `22` D6 BYO-placement constraint; DEF-001 single-source compiler stays the rejected V2 alternative |
+
+**Platform divergences pinned in the source docs (not re-decided here):** the `source` rung is iOS-only in V1 (Android best-effort deferred); runtime-source shaders lower through the iOS expo-view Metal path even for decorative use (no public `ShaderLibrary` over `MTLLibrary`, iOS 26.5) and compile per-view on Android (mutable `RuntimeShader`); `dragAxis="both"` is standalone-only on iOS but blocks the parent on Android (the ratified rule-#6 divergence).
+
+**§1 target-tree drift — reconciled 2026-06-19 (DOC-028):** §1's JS `src/` tree now tags every file shipped / Phase-S / deferred and carries the formerly-omitted shipped files (`src/source/`, `src/surface/FxScroll.tsx`, `src/effects/registry.ts`, `src/runtime/FxScrollView.*` + `FxSurfaceView.types.ts`, `src/fx.ts`, `manifest/{manifest,config}.ts`). The native sub-trees there are now marked illustrative (this §11 table + the real directory are the authority for the post-Unit-9 / within-Unit native files).
+
+### Within-Unit mechanics not recorded at object granularity
+
+Three mechanics shipped *inside* tracked Units (A5 in Unit 7, A6 in Unit 6, A7 across Units 4/6/7) — no DEF row, no missing Unit, so the build map tracks them at the Unit level. They are recorded here at file granularity only because each carries cross-platform divergence worth pinning. The build-ordered companion is `blueprint.md` Phase A (A5–A7).
+
+| Mechanic | Unit | Native | JS | Source doc | Note |
+|----------|------|--------|----|-----------|------|
+| **`fx.motion.*` builders** — semantic motion vocabulary | U7-001 | the native coordinator fills the measured `{measure:'edge'}` token from the laid-out frame | `src/motion/builders.ts` (builders + fallback rule), `src/fx.ts` (`fx.motion`), `src/motion/types.ts` (`MotionSpec`/`Travel`) | `41 §fx.motion → MotionSpec`, `41 §The motion-map fallback`, `42 §The native measurement contract`, `50 §Decision 9` | unresolved specs (semantic, never timing); no implicit reverse; `fx.effect.*` (Unit 11) joins the same object |
+| **reduce-motion driver gating** — accessibility honored natively | U6-001 (policy DOC-010 / MOT-010) | `ios/FxAnimationDriver.swift` (`UIAccessibility.isReduceMotionEnabled`); `android/…/FxAnimationDriver.kt` (`areAnimatorsEnabled()` + `ANIMATOR_DURATION_SCALE`/`TRANSITION_ANIMATION_SCALE == 0`) | — | `41 §Decisions` (item 9), `42 §Reduce-motion`, `34 §Findings — reduce-motion` | V1 = instant degradation (0-duration); **Android gates manually** because the global animator scale does not stop a `SpringAnimation` (iOS gets it free) |
+| **idempotent teardown order** — leak-free, safe to run twice | U4/U6/U7 | `ios/FxSurfaceView.swift`, `ios/FxAnimationDriver.swift`, `ios/FxPresenceCoordinator.swift` (+ Android siblings) | — | `31 §Idempotent teardown` (+ `§The content-motion runtime`), `35` | loop-first → transients → pipeline/library/uniform → queue/device; content-motion runtime obeys the same contract; never leaks the retained-exiting child; `shouldBeRecycled() = false` means no reset hook needed |

@@ -38,9 +38,12 @@ The repo is a Bun workspace. Run the workspace-wide scripts from the root, and t
 bun run build       # build the library
 bun run lint        # lint and format-check everything CI checks
 bun run test        # run the test suite
-bun run example     # start the dev-harness app
-bun run example:ios # build and run the example on iOS
+bun run example         # start Metro for the dev-harness app
+bun run example:ios     # build, install, and run the example on iOS
+bun run example:android # build, install, and run the example on Android
 ```
+
+For the launch model — when a Metro reload suffices versus when you must rebuild the native binary — see the [Device Verification Guide](./Device%20Verification%20Guide.md#launching-the-app).
 
 ### TypeScript
 

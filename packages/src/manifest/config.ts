@@ -40,10 +40,10 @@ type EnumValue<U> = U extends { options: readonly (infer O)[] }
     : O
   : string;
 
-/** A node's config: every declared uniform/property as an optional, typed channel. */
-type ConfigFromSpecs<Specs> = {
-  [K in keyof Specs]?: Specs[K] extends UniformSpec ? UniformTSType<Specs[K]> : never;
-};
+/** A node's config — mapped from declared uniforms/properties; empty spec → `Record<string, never>`. */
+type ConfigFromSpecs<Specs> = [keyof Specs] extends [never]
+  ? Record<string, never>
+  : { [K in keyof Specs]?: Specs[K] extends UniformSpec ? UniformTSType<Specs[K]> : never };
 
 /** The typed config for a node — from its `uniforms`, or a driver's `properties`. */
 export type ConfigFor<N extends NodeId> = Manifest['nodes'][N] extends { uniforms: infer U }
@@ -83,3 +83,9 @@ export type MaterialConfigConformsToManifest = Expect<
 export type SymbolConfigConformsToManifest = Expect<
   ConfigMatches<SymbolEffectConfig, Partial<SymbolConfig>>
 >;
+
+// `fill` exposes no per-call config in V1 — the empty-spec branch must derive the exact
+// `Record<string, never>`, not the structurally-loose `{}` (which accepts arbitrary keys), so the
+// effect surface cannot be handed config the renderer ignores. A failure here means the empty
+// derivation widened.
+export type FillConfigIsExactlyEmpty = Expect<Equal<FillConfig, Record<string, never>>>;

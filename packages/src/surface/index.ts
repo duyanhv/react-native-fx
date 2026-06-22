@@ -1,3 +1,5 @@
+export { EdgeGlow, Fx, type FxProps } from './Fx';
+export { FxGroup, type FxGroupProps, FxItem, type FxItemProps } from './FxGroup';
 export {
   FxPresence,
   type FxPresenceProps,
@@ -5,4 +7,11 @@ export {
   type FxTransitionEnd,
   type PresencePreset,
 } from './FxPresence';
-export { Fx, FxScroll, type FxScrollProps, type FxScrollTile } from './FxScroll';
+export { FxPressable, type FxPressableProps } from './FxPressable';
+export { FxScroll, type FxScrollProps, type FxScrollTile } from './FxScroll';
+export {
+  type FxStateChange,
+  type FxStatePreset,
+  FxView,
+  type FxViewProps,
+} from './FxView';

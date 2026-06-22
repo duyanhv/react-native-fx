@@ -1,7 +1,7 @@
 # Interactive content-distort (water-ripple)
 Status: open — WIP, non-authoritative
 Phase: post-v2 exploration
-Feeds: `wip/native-animation-api-extraction.md`, `wip/lane1-signal-grammar.md`, `wip/capability-boundary-classifier.md`, `2-effects/23-filters.md`, `5-realization/structure.android.md`
+Feeds: `wip/native-animation-api-extraction.md`, `wip/lane1-signal-grammar.md`, `0-spine/04`/`05` (capability-boundary taxonomy; `wip/capability-boundary-classifier.md` historical), `2-effects/23-filters.md`, `5-realization/structure.android.md`
 Scope: a named feature exploration — make the Android content-distort shipped by DEF-009 (a stateless, time-driven ripple) *interactive*: a ripple that follows touch like water, and an impulse triggered at a point like a rock dropped in a pond. Captures what it is, which lane it falls in, and what it depends on — so it is a recorded post-v2 target, not re-litigated each time it comes up. **No architecture decision; no ledger row.**
 
 ## Why this matters
@@ -106,8 +106,8 @@ not the default.
   for gesture-linked motion onto effect uniforms; the step-5 sequencing.
 - `wip/lane1-signal-grammar.md` — the native source → mapping → fx-owned-target grammar;
   Boundary-B effect-uniform targets; the Lane 1 vs Lane 2 (regime C) line.
-- `wip/capability-boundary-classifier.md` — the two-lane continuous-interaction model and the
-  falsifying test.
+- `0-spine/05` — canonical: the two-lane continuous-interaction model and the falsifying test
+  (`wip/capability-boundary-classifier.md` is the historical derivation).
 - `7-implementation/tasks/DEF-009/` — the shipped stateless foundation.
 - decision-ledger DEF-020 (imperative handle), DEF-011 (drag/tilt), DEF-006 (UI-thread channel) —
   the V2 enablers.

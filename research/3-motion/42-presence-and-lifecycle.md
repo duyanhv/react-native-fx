@@ -29,7 +29,7 @@ concrete shape *and* spring are the platform's own (the shape-native law, `41`).
 - `motion={{ enter, exit }}` — the explicit shape override (a typed map, `41`); fixes the
   shape cross-platform. `transition` — expert timing.
 - `tune` — adjust by intent, biased toward the platform (`41`). **Deferred from the V1
-  surface (DOC-019); resurrects with MOT-001.**
+  surface (DOC-019); resurrects with MOT-002 (MOT-001 closed at U7-003 without `tune`).**
 
 ## The presence preset catalog
 
@@ -44,12 +44,12 @@ per-platform shape+curve is the **default catalog** (open, device-filled). All p
 | `transient` | a brief, self-dismissing overlay | iOS banner vs Android snackbar — *edge and direction may differ* |
 
 **V1 ships `transient` only (Decision 7, DOC-018).** Two further behaviors are designed but
-**deferred to MOT-001** (the device-filled catalog): `sheet` (a slide-in panel — the platform's
+**deferred to `DEF-018`** (re-homed from MOT-001 at its closure, U7-003): `sheet` (a slide-in panel — the platform's
 sheet presentation, iOS sheet vs Material bottom sheet) and `modal` (a centered,
 attention-blocking surface — fade + scale, the scrim is the app's, not fx). Their behavior
 intent is settled, but they name *screen-scale* presentations that collide with the scope
-ceiling below, and their per-platform shape is device-pending anyway. They resurrect with the
-catalog once presence-under-navigation is settled.
+ceiling below, and their per-platform shape is device-pending anyway. They resurrect through
+the proven catalog pattern once presence-under-navigation is settled.
 
 `menu`/`tooltip` (anchor-origin) are **v2** — their origin is a *child* trigger, the
 per-child case `33`/`05` flag as the Expo-Modules boundary trigger. A **fab** is *composed*
@@ -77,7 +77,7 @@ Two consequences:
   DEF-003): portal the rendered output, never the `FxPresence` coordinator — fx ships no portal
   primitive but guarantees this coexistence (`54` § Placement & portal coexistence).
 - **Screen-scale presentation is the app's navigator, not a presence preset.** This is why
-  the screen-scale `sheet`/`modal` names defer to MOT-001 (above): naming a preset after a
+  the screen-scale `sheet`/`modal` names defer to `DEF-018` (above): naming a preset after a
   route-level presentation invites the one use the model cannot serve. `transient` (an
   in-screen, self-dismissing overlay) sits safely inside the ceiling.
 
@@ -138,7 +138,7 @@ paragraph of intentions.
   mid-flight lands pixel-exact on iOS. Design transient taps accordingly.
 
 `tune` modulates by intent (**this is V1.x design — `tune` is deferred from the V1 surface,
-DOC-019; retained here for MOT-001's resurrection**): `speed` scales duration, `emphasis`
+DOC-019; retained here for MOT-002's resurrection**): `speed` scales duration, `emphasis`
 scales spring bounce, `distance` scales travel — never raw curves (the bias from `41`).
 **`distance` precedence:**
 it scales **preset** motion and **measured** tokens (`{ measure: 'edge' }`, `41`); an
@@ -182,23 +182,23 @@ honored by the driver (`34`).
    binary `visible` — multi-step intro → hold → outro, one-shot bursts — are `clock`-driver
    timelines (native keyframe/phase sequences), arriving with the `clock` driver in V2,
    never as more presence surface.
-7. **V1 ships `transient` only; `sheet`/`modal` defer to MOT-001 (DOC-018, 2026-06-11).**
+7. **V1 ships `transient` only; `sheet`/`modal` defer to `DEF-018` (DOC-018, 2026-06-11; re-homed from MOT-001 at its closure, U7-003).**
    This revises DOC-005's ratified presence set (`transient · sheet · modal` → `transient`).
    `sheet`/`modal` name *screen-scale* presentations that collide with the scope ceiling
    (presence does not animate navigator transitions), and their per-platform shape is
-   device-pending with the catalog anyway. They resurrect with MOT-001's device-filled catalog
+   device-pending with the catalog anyway. They resurrect through the proven catalog pattern
    once presence-under-navigation is settled — behavior intent preserved (above), V1 surface
    narrowed.
 
 ## Open questions
 
-- **The per-platform default catalog** — its *shape* is now defined (above); the **values**
-  (each `(preset × phase)` row's source/shape/timing) are the device-filled open work, the
-  main deliverable. **Owned by MOT-001** — the spring magnitudes and geometries will be
-  validated on device and propagated to `41`/`42`.
+- **The per-platform default catalog** — its *shape* is now defined (above); the `transient`
+  **values** (each `(preset × phase)` row's source/shape/timing) are device-filled and verified
+  (**MOT-001 closed, U7-003**). The `sheet`/`modal` rows are the remaining open work, re-homed
+  to `DEF-018`.
 - **The behavior-preset vocabulary** — V1 ships **`transient` only** (Decision 7, DOC-018,
-  narrowing DOC-005's `transient · sheet · modal`). `sheet`/`modal` defer to MOT-001's
-  device-filled catalog; `menu`/`tooltip` (anchor-origin) remain v2.
+  narrowing DOC-005's `transient · sheet · modal`). `sheet`/`modal` defer to `DEF-018`
+  (re-homed from MOT-001); `menu`/`tooltip` (anchor-origin) remain v2.
 - **Anchor rect (v2)** — the measurement contract is defined (above); the exact native
   read-timing and the child-anchor-rect path (`menu`/`tooltip`) remain open in `33`.
 - ~~**Named states beyond binary `visible`** — multi-step intro→hold→outro; one-shot

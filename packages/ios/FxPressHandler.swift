@@ -1,5 +1,16 @@
 import UIKit
 
+internal protocol FxPressHost: AnyObject {
+  func hitTarget(point: CGPoint) -> Bool
+  func handlePressBegin(point: CGPoint, depth: Int)
+  func handlePressChanged(point: CGPoint, depth: Int)
+  func handlePressEnd(point: CGPoint, includePressEvent: Bool)
+  func handlePressCancel(point: CGPoint)
+  func handleLongPress(point: CGPoint)
+  func attachRecognizer(_ recognizer: UILongPressGestureRecognizer)
+  func detachRecognizer(_ recognizer: UILongPressGestureRecognizer)
+}
+
 internal enum FxPressInteractionMode {
   case none
   case passive
@@ -21,7 +32,7 @@ internal enum FxPressInteractionMode {
 }
 
 internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
-  private weak var surface: FxSurfaceView?
+  private weak var host: FxPressHost?
   private var recognizer: UILongPressGestureRecognizer?
   private var mode: FxPressInteractionMode = .none
   private var origin: CGPoint = .zero
@@ -33,8 +44,8 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
   private let longPressDuration: TimeInterval = 0.5
   private var dragAxis: String?
 
-  internal init(surface: FxSurfaceView) {
-    self.surface = surface
+  internal init(host: FxPressHost) {
+    self.host = host
   }
 
   internal func update(mode rawMode: String, dragAxis: String?) {
@@ -54,30 +65,26 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     longPressTimer = nil
     didBeginActivePress = false
     didFireLongPress = false
-    if !skipUniformReset {
-      surface?.updatePressUniforms(point: nil, depth: 0)
-      surface?.updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
-    }
     guard let recognizer else { return }
-    surface?.removeGestureRecognizer(recognizer)
+    host?.detachRecognizer(recognizer)
     self.recognizer = nil
   }
 
   private func attach() {
-    guard let surface else { return }
+    guard let host else { return }
     guard recognizer == nil else { return }
     let recognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleRecognizer(_:)))
     recognizer.minimumPressDuration = 0
     recognizer.cancelsTouchesInView = false
     recognizer.allowableMovement = .greatestFiniteMagnitude
     recognizer.delegate = self
-    surface.addGestureRecognizer(recognizer)
+    host.attachRecognizer(recognizer)
     self.recognizer = recognizer
   }
 
   @objc private func handleRecognizer(_ recognizer: UILongPressGestureRecognizer) {
-    guard let surface else { return }
-    let location = recognizer.location(in: surface)
+    guard let host, let view = host as? UIView else { return }
+    let location = recognizer.location(in: view)
     switch recognizer.state {
     case .began:
       handleBegan(at: location)
@@ -95,65 +102,56 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
   }
 
   private func handleBegan(at location: CGPoint) {
-    guard let surface else { return }
+    guard let host else { return }
     origin = location
     didFireLongPress = false
-    guard surface.containsInteractiveShape(point: location) else {
+    guard host.hitTarget(point: location) else {
       failRecognizer()
       return
     }
-    surface.updatePressUniforms(point: location, depth: mode == .active ? 1 : 0)
-    if mode == .active, dragAxis != nil {
-      surface.updateDragTiltUniforms(origin: location, current: location, dragAxis: dragAxis)
-    }
+    let depth = mode == .active ? 1 : 0
+    host.handlePressBegin(point: location, depth: depth)
     guard mode == .active else { return }
     didBeginActivePress = true
-    surface.dispatchShaderPressIn(point: location)
     scheduleLongPress()
   }
 
   private func handleChanged(at location: CGPoint) {
-    guard let surface else { return }
-    surface.updatePressUniforms(point: location, depth: didBeginActivePress ? 1 : 0)
-    if mode == .active, dragAxis != nil {
-      surface.updateDragTiltUniforms(origin: origin, current: location, dragAxis: dragAxis)
-    }
+    guard let host else { return }
+    let depth = didBeginActivePress ? 1 : 0
+    host.handlePressChanged(point: location, depth: depth)
     if shouldFail(at: location) {
       failRecognizer()
     }
   }
 
   private func handleEnded(at location: CGPoint) {
-    guard let surface else { return }
+    guard let host else { return }
     longPressTimer?.invalidate()
     longPressTimer = nil
-    surface.updatePressUniforms(point: location, depth: 0)
-    settleDragTilt()
-    guard didBeginActivePress else { return }
-    didBeginActivePress = false
-    surface.dispatchShaderPressOut(point: location)
-    guard !didFireLongPress else { return }
-    surface.dispatchShaderPress(point: location)
+    if didBeginActivePress {
+      didBeginActivePress = false
+      let includePressEvent = !didFireLongPress
+      host.handlePressEnd(point: location, includePressEvent: includePressEvent)
+    } else {
+      host.handlePressEnd(point: location, includePressEvent: false)
+    }
   }
 
   private func handleCancelled() {
-    guard let surface else { return }
+    guard let host else { return }
     longPressTimer?.invalidate()
     longPressTimer = nil
-    surface.updatePressUniforms(point: nil, depth: 0)
-    settleDragTilt()
-    guard didBeginActivePress else { return }
-    didBeginActivePress = false
-    surface.dispatchShaderPressOut(point: origin)
+    if didBeginActivePress {
+      didBeginActivePress = false
+      host.handlePressCancel(point: origin)
+    } else {
+      host.handlePressEnd(point: origin, includePressEvent: false)
+    }
   }
 
   private func handleFailed() {
     handleCancelled()
-  }
-
-  private func settleDragTilt() {
-    guard mode == .active, dragAxis != nil else { return }
-    surface?.updateDragTiltUniforms(origin: nil, current: nil, dragAxis: nil)
   }
 
   private func scheduleLongPress() {
@@ -161,16 +159,16 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     // Added in `.common` mode so the long-press still fires while the run loop is in a tracking
     // mode (an active scroll/drag); a default-mode timer would stall until tracking ends.
     let timer = Timer(timeInterval: longPressDuration, repeats: false) { [weak self] _ in
-      guard let self, let surface = self.surface, self.didBeginActivePress, !self.didFireLongPress else { return }
+      guard let self, let host = self.host, self.didBeginActivePress, !self.didFireLongPress else { return }
       self.didFireLongPress = true
-      surface.dispatchShaderLongPress(point: self.origin)
+      host.handleLongPress(point: self.origin)
     }
     RunLoop.main.add(timer, forMode: .common)
     longPressTimer = timer
   }
 
   private func shouldFail(at location: CGPoint) -> Bool {
-    guard let surface else { return true }
+    guard let host else { return true }
 
     // Axis-aware claiming when dragAxis is set under active mode.
     // The shader claims its configured axis; cross-axis movement past slop
@@ -202,7 +200,7 @@ internal final class FxPressHandler: NSObject, UIGestureRecognizerDelegate {
     let deltaX = location.x - origin.x
     let deltaY = location.y - origin.y
     let distanceSquared = deltaX * deltaX + deltaY * deltaY
-    return distanceSquared > allowableMovement * allowableMovement || !surface.containsInteractiveShape(point: location)
+    return distanceSquared > allowableMovement * allowableMovement || !host.hitTarget(point: location)
   }
 
   private func failRecognizer() {

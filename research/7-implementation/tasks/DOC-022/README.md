@@ -65,7 +65,9 @@ Write `research/7-implementation/v1-cut-checklist.md` — a short standing doc, 
     maintainer's close-bar call, not re-run.
   - **iOS-sim-doesn't-render-stitchable-shaders** — the curated `[[stitchable]]` shaders render
     only on a physical iPhone; iOS shader *visual* ratification must run on hardware (the iOS
-    sim verifies wiring/touch, not pixels).
+    sim verifies wiring/touch, not pixels). *(Premise corrected 2026-06-18 — the hosted-path
+    catalog does render on the Apple-silicon sim; DEF-014 + DEF-017 confirm. See the reconciled
+    waiver in `v1-cut-checklist.md`; hardware now proves only A15 GPU perf/fidelity.)*
   - U3-008 residuals (interactive-glass VoiceOver reachability; TalkBack demo) — noted, needs
     AX/TalkBack-equipped devices; merged with the residual recorded.
   - **Android `expo-view` interactive-shader rendering is a documented V1 gap** (EX-002:

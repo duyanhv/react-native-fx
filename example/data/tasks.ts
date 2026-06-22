@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "fx-pressable" | "fx-view" | "glass-morph" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,54 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "U14-001",
+		title: "FxGroup / FxItem",
+		platform: "iOS 26 · Android",
+		what: "glass morph compound · two items merge when close (iOS 26 spike) · individual glass on Android + pre-26 · touch-through",
+		status: "in-progress",
+		screen: "glass-morph",
+	},
+	{
+		id: "U12-001",
+		title: "FxView",
+		platform: "iOS · Android",
+		what: "state-driven content motion · lift preset · settle event · interrupt ordering",
+		status: "in-progress",
+		screen: "fx-view",
+	},
+	{
+		id: "U12-002",
+		title: "FxView effect prop",
+		platform: "iOS · Android",
+		what: "behind-content effect decoration · lifts with content · touch-through · no-effect regression",
+		status: "in-progress",
+		screen: "fx-view",
+	},
+	{
+		id: "U13-001",
+		title: "FxPressable",
+		platform: "iOS · Android",
+		what: "native press feedback over a shared press FSM · semantic event logging · scroll-yield behavior",
+		status: "verified",
+		screen: "fx-pressable",
+	},
+	{
+		id: "U10-001",
+		title: "<Fx effect> front door",
+		platform: "iOS · Android",
+		what: "string-form <Fx effect> resolves id→substrate · decorative + interactive shader · glass · mesh-gradient · EdgeGlow · composition · adapter degradation",
+		status: "verified",
+		screen: "effect-surface",
+	},
+	{
+		id: "U11-001",
+		title: "fx.effect.* builder form",
+		platform: "iOS · Android",
+		what: "sections 7–8 of effect-surface · fx.effect.glow/glass/mesh render == their string forms · two-render-target chain renders the first step only (+ dev warning in Metro)",
+		status: "verified",
+		screen: "effect-surface",
+	},
 	{
 		id: "DEF-009",
 		title: "Android content-distort ripple",

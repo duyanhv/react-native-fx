@@ -22,6 +22,14 @@ internal struct FxHostedRootView: View {
 
   // MARK: - Private helpers
 
+  private func colorSchemeFrom(_ scheme: String?) -> ColorScheme? {
+    switch scheme {
+    case "light": return .light
+    case "dark":  return .dark
+    default:      return nil
+    }
+  }
+
   @ViewBuilder
   private func effectView(for effect: String) -> some View {
     switch effect {
@@ -30,7 +38,7 @@ internal struct FxHostedRootView: View {
     case "material":
       // On iOS 26 the material effect mounts FxGlassSurfaceView on the UIKit path and
       // never reaches this dispatch; this case is the below-26 fallback.
-      FxMaterialView(intensity: props.intensity)
+      FxMaterialView(intensity: props.intensity, colorScheme: colorSchemeFrom(props.materialConfig?.colorScheme))
     case "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
       "aurora", "noise-field", "plasma", "caustics", "edge-glow":
       FxShaderView(shaderId: effect, intensity: props.intensity)

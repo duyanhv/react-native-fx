@@ -78,6 +78,33 @@ describe('curated shader catalog conformance', () => {
   });
 });
 
+describe('manifest material node — tint + colorScheme uniforms', () => {
+  it('declares tint as a color uniform with no default', () => {
+    const tint = manifest.nodes.material.uniforms.tint;
+    expect(tint.type).toBe('color');
+    expect('default' in tint).toBe(false);
+  });
+
+  it('declares colorScheme as an enum uniform defaulting to system', () => {
+    const cs = manifest.nodes.material.uniforms.colorScheme;
+    expect(cs.type).toBe('enum');
+    expect(cs.default).toBe('system');
+    expect(cs.options).toEqual(['system', 'light', 'dark']);
+  });
+});
+
+describe('manifest fill node', () => {
+  it('declares the gradient/mesh render-target', () => {
+    const fill = manifest.nodes.fill;
+    expect(fill.kind).toBe('render-target');
+    expect(fill.interaction).toBe('none');
+  });
+
+  it('exposes no uniforms in V1 — intensity is a surface prop, not a node uniform', () => {
+    expect(Object.keys(manifest.nodes.fill.uniforms)).toEqual([]);
+  });
+});
+
 describe('manifest shader node', () => {
   it('declares the fx-managed shader render-target', () => {
     const shader = manifest.nodes.shader;

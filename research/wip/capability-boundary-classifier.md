@@ -1,9 +1,19 @@
 # Capability boundary classifier — exploration
 
-Status: open — WIP, non-authoritative
+Status: historical — promoted to canon (DOC-026); non-authoritative
 Phase: cross-cutting architecture tool (feeds the "expand the lib" question)
 Feeds: `0-spine/02-capability-ir-and-lowering.md`, `0-spine/04-state-ownership-and-boundaries.md`, `0-spine/05-native-boundary-decision.md`, `5-realization/structure.{ios,android}.md`
 Scope: give every proposed native presentation capability one decision — **can fx add it inside an existing boundary, or does it move a boundary?** — derived bottom-up from the shipped primitives, not invented top-down.
+
+> **Promoted to canon (DOC-026, 2026-06-19).** The durable classifier is now authoritative in
+> `0-spine/04 §The presentation boundaries (A / B / L)` (Boundary A/B/L, the cross-tree-frontier
+> warning, the sorting rule, the nine-question gate, "Boundary L is empirically absent") and
+> `0-spine/05 §Capability mechanism` (the source-channel + substrate-depth axes, the escalation
+> regimes, the two-lane model, the falsifying test). **Cite `04`/`05`, not this file.** This doc
+> is retained for *derivation history* — the bottom-up shipped-primitive classification, the
+> capability-descriptor schema + memory-policy block, and the top-down stress cases were
+> deliberately left here as evidence, not promoted. Scope was the classifier only: the Lane 1
+> contract and the feeder-WIP repoints stay with DOC-021 / DOC-030.
 
 ## The central question
 

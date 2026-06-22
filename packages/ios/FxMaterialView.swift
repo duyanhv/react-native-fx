@@ -5,12 +5,21 @@ import SwiftUI
 /// Intensity selects `.ultraThinMaterial` / `.thinMaterial` / `.regularMaterial` to vary
 /// perceived material weight. On iOS 26 the material effect renders through
 /// `FxGlassSurfaceView` instead; this view never mounts there.
+///
+/// `colorScheme` forces light or dark appearance on the system material. `tint` has no
+/// equivalent on SwiftUI adaptive materials — it degrades silently on this rung.
 internal struct FxMaterialView: View {
   let intensity: Double
+  let colorScheme: ColorScheme?
 
+  @ViewBuilder
   var body: some View {
-    Rectangle()
-      .fill(materialForIntensity)
+    let base = Rectangle().fill(materialForIntensity)
+    if let scheme = colorScheme {
+      base.environment(\.colorScheme, scheme)
+    } else {
+      base
+    }
   }
 
   private var materialForIntensity: Material {

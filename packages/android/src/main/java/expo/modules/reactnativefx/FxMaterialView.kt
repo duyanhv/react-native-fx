@@ -21,33 +21,41 @@ private const val REGULAR_SCRIM_WEIGHT = 0.55f
 /** Frost-scrim weight for the `clear` variant — lighter, more of the backdrop shows through. */
 private const val CLEAR_SCRIM_WEIGHT = 0.28f
 
+/**
+ * Frost-scrim base for the dark colorScheme: a very dark near-black gray, approximating
+ * the dark adaptive material iOS shows below 26. Light and system use [Color.WHITE].
+ */
+private val DARK_SCRIM_BASE = Color.argb(255, 28, 28, 30)
+
 /** Top and bottom alphas of the vertical highlight gradient before intensity scaling. */
 private const val HIGHLIGHT_TOP_ALPHA = 0.35f
 private const val HIGHLIGHT_BOTTOM_ALPHA = 0.05f
 
 /**
- * Renders the Android material as an fx-drawn translucent composition: a white frost
- * scrim under a vertical highlight gradient, softened by a blur applied to this view's
- * own `RenderNode` via `setRenderEffect` on API 31+.
+ * Renders the Android material as an fx-drawn translucent composition: a frost scrim
+ * under a vertical highlight gradient, softened by a blur applied to this view's own
+ * `RenderNode` via `setRenderEffect` on API 31+.
  *
  * The blur never samples the backdrop — capturing parent content is costly and
  * stale-prone on Android, and fx never hosts RN content to sample it. Below API 31 the
  * same translucent stack draws without blur, so the material degrades but is never a
  * flat box.
  *
- * `interactive` in [MaterialConfig] is accepted and ignored: the glass press response is
- * the iOS system's own behavior, and Android has no equivalent to simulate.
+ * `tint` drives the frost-scrim base color; when absent the base follows `colorScheme`
+ * (light/system = white, dark = near-black). `interactive` is accepted and ignored: the
+ * glass press response is the iOS system's own behavior, and Android has no equivalent.
  */
 internal class FxMaterialView(
   context: Context,
   intensity: Double,
   config: MaterialConfig?
 ) : View(context), FxEffectView {
-  private val scrimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+  private val scrimPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private var highlightGradient: LinearGradient? = null
   private var intensity: Float = intensityFor(intensity)
   private var scrimWeight: Float = scrimWeightFor(config?.variant)
+  private var scrimBaseColor: Int = scrimBaseColorFor(config?.tint, config?.colorScheme)
 
   init {
     applyBlur()
@@ -55,6 +63,7 @@ internal class FxMaterialView(
 
   override fun onDraw(canvas: Canvas) {
     super.onDraw(canvas)
+    scrimPaint.color = scrimBaseColor
     scrimPaint.alpha = (scrimWeight * intensity * 255).toInt().coerceIn(0, 255)
     canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), scrimPaint)
 
@@ -70,14 +79,15 @@ internal class FxMaterialView(
     invalidate()
   }
 
-  // The variant changes only the scrim weight, so the live view redraws in place — no
-  // remount, matching the discrete-prop rule the host applies to intensity.
+  // Variant, tint, and colorScheme changes all redraw in place — no remount.
   fun setMaterialConfig(config: MaterialConfig?) {
     val weight = scrimWeightFor(config?.variant)
-    if (weight == scrimWeight) {
+    val baseColor = scrimBaseColorFor(config?.tint, config?.colorScheme)
+    if (weight == scrimWeight && baseColor == scrimBaseColor) {
       return
     }
     scrimWeight = weight
+    scrimBaseColor = baseColor
     invalidate()
   }
 
@@ -131,6 +141,47 @@ private fun scrimWeightFor(variant: String?): Float {
 }
 
 /**
+ * Resolves the frost-scrim base color from tint and colorScheme.
+ *
+ * tint drives the scrim color directly when set, letting the caller cast the material in
+ * any hue. When absent, colorScheme selects the base: dark → near-black, light/system →
+ * white (the platform default).
+ */
+private fun scrimBaseColorFor(tint: String?, colorScheme: String?): Int {
+  if (tint != null) {
+    return parseHexColor(tint) ?: Color.WHITE
+  }
+  return if (colorScheme == "dark") DARK_SCRIM_BASE else Color.WHITE
+}
+
+/**
+ * Parses a hex color (#RGB, #RRGGBB, or #RRGGBBAA) to an ARGB int. The format set and the
+ * alpha-last byte order match the iOS parser exactly, so an 8-digit tint renders the same
+ * color on both platforms — `Color.parseColor` cannot be used (it rejects #RGB and reads
+ * 8-digit hex as #AARRGGBB, alpha-first). Returns null for an unrecognised value.
+ */
+private fun parseHexColor(hex: String): Int? {
+  val h = hex.trim().removePrefix("#")
+  val value = h.toLongOrNull(16) ?: return null
+  return when (h.length) {
+    3 -> Color.rgb(
+      (((value shr 8) and 0xF) * 17).toInt(),
+      (((value shr 4) and 0xF) * 17).toInt(),
+      ((value and 0xF) * 17).toInt())
+    6 -> Color.rgb(
+      ((value shr 16) and 0xFF).toInt(),
+      ((value shr 8) and 0xFF).toInt(),
+      (value and 0xFF).toInt())
+    8 -> Color.argb(
+      (value and 0xFF).toInt(),
+      ((value shr 24) and 0xFF).toInt(),
+      ((value shr 16) and 0xFF).toInt(),
+      ((value shr 8) and 0xFF).toInt())
+    else -> null
+  }
+}
+
+/**
  * The structured configuration for the material effect.
  *
  * Carried as a Record across the Expo bridge; each property uses `@Field` so the bridge
@@ -144,4 +195,10 @@ class MaterialConfig : Record {
 
   @Field
   var interactive: Boolean = false
+
+  @Field
+  var tint: String? = null
+
+  @Field
+  var colorScheme: String? = null
 }

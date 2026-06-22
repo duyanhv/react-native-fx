@@ -19,29 +19,23 @@ export const manifest = {
   schemaVersion: 1,
   nodes: {
     // ── fill — gradients + mesh, decorative ──────────────────────────
+    // V1 renders a fixed platform-default gradient; intensity (a surface prop, not a node
+    // uniform) drives opacity. The kind/colors/angle/mesh-grid controls wire through when
+    // native MeshGradient/LinearGradient inputs land in a later pass.
     fill: {
       id: 'fill',
       kind: 'render-target',
       interaction: 'none',
       phase: 'v1',
-      uniforms: {
-        kind: { type: 'enum', default: 'gradient', options: ['gradient', 'mesh'] },
-        colors: { type: 'color[]', default: ['#5B8CFF'] },
-        angle: { type: 'number', default: 0 },
-        width: { type: 'number', default: 4, range: [2, 10] },
-        height: { type: 'number', default: 4, range: [2, 10] },
-        drift: { type: 'number', default: 0, range: [0, 1] },
-      },
+      uniforms: {},
       lower: {
         ios: [
           {
             via: 'native',
             primitive: 'MeshGradient',
             applyVia: '.overlay',
-            clock: 'timeline',
-            cadence: 'ambient',
             requires: { os: 18, substrate: 'hosted' },
-            note: 'animated mesh vertices + colors',
+            note: 'fixed platform-default mesh gradient; intensity → opacity',
           },
           {
             via: 'native',
@@ -53,20 +47,11 @@ export const manifest = {
         ],
         android: [
           {
-            via: 'shader',
-            asset: 'agsl',
-            applyVia: 'ShaderBrush',
-            clock: 'frame-nanos',
-            cadence: 'display-rate',
-            requires: { os: 33, substrate: 'hosted' },
-            note: 'mesh has no native primitive → AGSL',
-          },
-          {
             via: 'native',
-            primitive: 'Brush.sweepGradient',
+            primitive: 'LinearGradient',
             applyVia: 'background',
             requires: { os: 21, substrate: 'hosted' },
-            note: 'pre-33 fallback',
+            note: 'static hosted gradient; intensity → alpha',
           },
         ],
       },
@@ -84,6 +69,8 @@ export const manifest = {
       uniforms: {
         variant: { type: 'enum', default: 'regular', options: ['regular', 'clear'] },
         interactive: { type: 'boolean', default: false },
+        tint: { type: 'color' },
+        colorScheme: { type: 'enum', default: 'system', options: ['system', 'light', 'dark'] },
       },
       lower: {
         ios: [
@@ -185,6 +172,8 @@ export const manifest = {
     },
 
     // ── filter — blur / saturation / contrast / …, modifier ──────────
+    // Both lowering rungs are status:'planned' — no FxFilterView renderer exists in V1.
+    // select() returns {via:'none'} for all contexts; FilterConfig is exported for type use.
     filter: {
       id: 'filter',
       kind: 'modifier',
@@ -205,6 +194,7 @@ export const manifest = {
             primitive: '.blur / .saturation / .contrast / .brightness / .hueRotation / .opacity',
             applyVia: 'SwiftUI view modifiers (chained in EffectStack order)',
             requires: { os: 13, substrate: 'hosted' },
+            status: 'planned',
             note: 'applies to fx-owned layers only; never wraps live RN content',
           },
         ],
@@ -214,6 +204,7 @@ export const manifest = {
             primitive: 'RenderEffect chain',
             applyVia: 'graphicsLayer',
             requires: { os: 31, substrate: 'hosted' },
+            status: 'planned',
             note: 'draw-time; V1 keeps the fx-owned-layers rule',
           },
         ],

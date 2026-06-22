@@ -120,7 +120,7 @@ restate it.
 | `onTransitionEnd` | `onFxTransitionEnd` | every view | `Fx` prefix keeps the native namespace clear of RN/host collisions |
 | `onLoad` | `onFxLoad` | every view | RN reserves `onLoad` (media) |
 | `onError` | `onFxError` | every view | RN reserves `onError` |
-| `onStateChange` | *(unwired)* | `FxView` (not built) | the `FxView` state event has no native dispatcher yet — wire as `onFxStateChange` |
+| `onStateChange` | `onFxStateChange` | `FxView` (`FxStateView`) | **wired (U12-001, device-verified 2026-06-21).** Settle-only with interrupt semantics; `FxStateViewCoordinator.{swift,kt}` emits one event per settled or superseded transition; both platforms |
 | `onLongPress` | `onShaderLongPress` | `FxSurfaceView` | **wired (U8-001, device-verified 2026-06-13).** `FxPressHandler.{swift,kt}` posts a platform long-press timeout and dispatches `onShaderLongPress` once, with the tap suppressed after a completed long-press; both platforms |
 
 Conventions this pins: **press events carry the `onShader*` prefix** (they live on the
@@ -142,7 +142,9 @@ onTransitionEnd({
 })
 ```
 
-`onStateChange` carries `{ from, to }`; `onPress*` carry the standard press payload;
+`onStateChange` carries `{ state, finished, interrupted }` — the settled (or superseded)
+state plus the same completion flags as `onTransitionEnd`'s view variant, settle-only;
+`onPress*` carry the standard press payload;
 `onLoad`/`onError` carry `{ ok }` / `{ error }`. All are **events, not streams** (`35`).
 
 ## Interrupt semantics (retarget, never blind restart)

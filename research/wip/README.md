@@ -16,6 +16,12 @@ ledger process; when it's abandoned, delete it.
   two directions: platform-first surfaces with a universal layer above them, or a combined fx
   vocabulary first. The provisional answer is hybrid: combined defaults, platform-specific expert
   timing blocks, and raw native framework APIs private to the resolver.
+- [`anchored-reveal-and-library-shape.md`](./anchored-reveal-and-library-shape.md) — post-v2
+  exploration for a camera-style anchored reveal: read an RN/Yoga anchor rect, animate an fx-owned
+  shell and chrome into a target panel, and keep the feature Boundary A unless outside siblings
+  must reflow. Also frames the library shape as value builders (`fx.effect.*`, `fx.motion.*`,
+  `transition`), native wrappers (`Fx`, `FxPresence`, `FxView`), and geometry orchestration
+  (`FxAnchor`, `FxReveal`, future `FxFlow`).
 - [`interactive-content-distort.md`](./interactive-content-distort.md) — a named **feature**
   exploration (water-ripple): make DEF-009's stateless Android content-distort *interactive* — a
   ripple that follows touch, and an `(x,y)` impulse like a rock dropped in water. Classified
@@ -59,19 +65,6 @@ ledger process; when it's abandoned, delete it.
   expressiveness ceiling — where a case routes to Boundary L (sibling reflow), the cross-tree
   frontier (reorder commit), or Lane 2 (authored per-frame math). Companion to the classifier.
   Findings + grammar only — no architecture decision.
-- [`capability-boundary-classifier.md`](./capability-boundary-classifier.md) — the architecture
-  tool for "expanding the lib": given a proposed native presentation capability, decides whether
-  fx can add it inside an existing boundary or must move one. Derives the shared async contract
-  and three ownership boundaries (A content-motion, B effect, L layout-participation) bottom-up
-  from the shipped primitives, separates the orthogonal source-channel axis (discrete target vs
-  native continuous source; per-frame JS rejected), classifies every shipped/provisioned
-  primitive, and gives a nine-question classifier plus a memory-policy descriptor. Adds a third
-  axis (substrate depth: Expo Modules → component-view shim → custom Fabric component →
-  JSI/worklets) and the escalation regimes for crossing a boundary — measured-content flow as the
-  Boundary-L write gate, pushed-layout read as a substrate-only optimization, and a two-lane model
-  for continuous interaction (native-source = additive; authored worklet mapping = gated regime C)
-  with a concrete falsifying test. Companion to the flow draft. Findings + tool only — no
-  architecture decision.
 - [`native-slot-layout-transitions.md`](./native-slot-layout-transitions.md) — post-v2/v3
   exploration for native layout-continuity transitions without copying Reanimated's full
   Fabric mutation proxy. Compares a Fabric-aware observer path with a narrower native slot
@@ -81,14 +74,24 @@ ledger process; when it's abandoned, delete it.
   measured-content flow is the headline gate (depth-3 Boundary L). Includes React Native
   renderer/platform findings for commit timing, mutation override, layout application, child
   mounting, prop clobbering, and hit testing. Findings only — no architecture decision.
-- [`interactive-glass-touch-delivery.md`](./interactive-glass-touch-delivery.md) — spike for
-  sweep A2-4: why the hosted interactive-glass press response does not fire. Root-caused on
-  device via an A/B build: `.glassEffect(.interactive)` over a `.fill(.clear)` shape never
-  installs the system `UIPlatformGlassInteractionView`, so touch reaches SwiftUI but no press
-  fires (A2-1's clear-fill and A2-4's press are in direct conflict on the SwiftUI rung). Also
-  answers the `01`/SPINE-012 "self-gesturing inside a scroller" question: press and scroll
-  coexist except drags that start on the glass (captured by it). Recommends moving the rung to
-  `UIVisualEffectView` + `UIGlassEffect`. Findings + direction only — no fix landed.
+## Retired / historical (not active explorations — kept for derivation history)
+
+- [`capability-boundary-classifier.md`](./capability-boundary-classifier.md) — **promoted to canon
+  (DOC-026).** The A/B/L boundary taxonomy, the source-channel + substrate-depth axes, the
+  escalation regimes, the two-lane model, the sorting rule, and the nine-question gate now live in
+  `0-spine/04 §The presentation boundaries (A / B / L)` and `0-spine/05 §Capability mechanism`.
+  Retained for derivation history (the bottom-up shipped-primitive table, the descriptor schema,
+  and the stress cases were not promoted). Cite `04`/`05`.
+- [`interactive-glass-touch-delivery.md`](./interactive-glass-touch-delivery.md) — **retired
+  (DOC-030).** The sweep-A2-4 device spike behind the interactive-glass rung: `.glassEffect(.interactive)`
+  over a `.fill(.clear)` shape never installs the system `UIPlatformGlassInteractionView`, so no
+  press fires. Findings + the UIKit-rung fix direction (`UIVisualEffectView` + `UIGlassEffect`)
+  folded into `5-realization/structure.ios.md` §material and `0-spine/01` (decision 6) by the
+  U3-002 rework. Retained as the device-spike evidence record those docs cite.
+- [`critique-2026-06-10.md`](./critique-2026-06-10.md) — **retired (DOC-030).** The 2026-06-10
+  architecture / API / adoption critique; every finding dispositioned into task rows (its §Triage),
+  the live typed-config / palette thread now in U15-001 / U3-009 / DOC-029. Retained as the
+  evidence record; dispositions tracked in `7-implementation/progress.md`.
 
 Promoted (DOC-009, 2026-06-10): the motion driver-model rethink (`target`/`clock`/`source`,
 maintainer-accepted) folded into `0-spine/02`, `3-motion/40`–`42`, `4-runtime/34`, and

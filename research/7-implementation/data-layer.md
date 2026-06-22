@@ -92,27 +92,18 @@ const manifest: CapabilityManifest = {
     // [research: 02 §fill worked example]
     fill: {
       id: 'fill', kind: 'render-target', interaction: 'none', phase: 'v1',
-      uniforms: {
-        kind:    { type: 'enum',   default: 'gradient', options: ['gradient', 'mesh'] },
-        colors:  { type: 'color[]', default: ['#5B8CFF'] },  // gradient/mesh color stops; array of hex strings
-        stops:   { type: 'number', default: undefined, range: [0, 1] },
-        angle:   { type: 'number', default: 0 },
-        width:   { type: 'number', default: 4,  range: [2, 10] },    // mesh grid width
-        height:  { type: 'number', default: 4,  range: [2, 10] },    // mesh grid height
-        drift:   { type: 'number', default: 0,  range: [0, 1] },     // mesh vertex animation
-      },
+      uniforms: {},   // V1: fixed platform-default gradient; intensity (a surface prop) drives
+                      // opacity. The kind/colors/angle/mesh-grid wire-through is deferred.
       lower: {
         ios: [
-          { via: 'native', primitive: 'MeshGradient', applyVia: '.overlay', clock: 'timeline',
-            requires: { os: 18, substrate: 'hosted' }, note: 'animated mesh vertices + colors' },
+          { via: 'native', primitive: 'MeshGradient', applyVia: '.overlay',
+            requires: { os: 18, substrate: 'hosted' }, note: 'fixed platform-default mesh gradient; intensity → opacity' },
           { via: 'native', primitive: 'LinearGradient', applyVia: '.overlay',
             requires: { os: 13, substrate: 'hosted' }, note: 'pre-18 fallback' },
         ],
         android: [
-          { via: 'shader', asset: 'agsl', applyVia: 'ShaderBrush', clock: 'frame-nanos',
-            requires: { os: 33, substrate: 'hosted' }, note: 'mesh has no native primitive → AGSL' },
-          { via: 'native', primitive: 'Brush.sweepGradient', applyVia: 'background',
-            requires: { os: 21, substrate: 'hosted' }, note: 'pre-33 fallback' },
+          { via: 'native', primitive: 'LinearGradient', applyVia: 'background',
+            requires: { os: 21, substrate: 'hosted' }, note: 'static hosted gradient; intensity → alpha' },
         ],
       },
     },
@@ -126,10 +117,9 @@ const manifest: CapabilityManifest = {
       uniforms: {
         variant:     { type: 'enum', default: 'regular', options: ['regular', 'clear'] },
         interactive: { type: 'boolean',  default: false },    // system liquid press response
-        tintColor:   { type: 'color', default: '#FFFFFF' },
+        tint:        { type: 'color' },                       // no default — undefined = untinted (U15-001)
         colorScheme: { type: 'enum', default: 'system', options: ['system', 'light', 'dark'] },
-        intensity:   { type: 'number', default: 1, range: [0, 1] },
-        weight:      { type: 'enum', default: 'regular', options: ['ultraThin', 'thin', 'regular', 'thick', 'chrome'] },
+        // intensity is the separate <Fx> presence prop, not a material uniform; weight struck (no UIGlassEffect thickness).
       },
       lower: {
         ios: [
@@ -434,10 +424,11 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme, snackbar/bottom-sheet/dialog]**
 
-> **The per-platform shape, timing, and spring values in this table are device-pending and
-> owned by [MOT-001](../decision-ledger.md#motion).** They are provisioned values, not
-> ratified decisions. DOC-005 ratifies the adjacent vocabulary names (§5) only; the spring
-> magnitudes and geometries will be validated on device and propagated to `41`/`42` by MOT-001.
+> **The per-platform values in this table:** the `transient` presence rows are
+> **device-verified** ([MOT-001](../decision-ledger.md#motion) closed, U7-003) and propagated to
+> `41`/`42`; the `lift` (state) and `native` (feedback) rows stay **device-pending** — they ride
+> the as-yet-unbuilt `FxView` / `FxPressable`. They are provisioned values, not ratified
+> decisions; DOC-005 ratifies the adjacent vocabulary names (§5) only.
 
 ### Presence presets (FxPresence)
 
@@ -488,7 +479,7 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 | Effect ID | Composition | What fx draws |
 |-----------|-------------|---------------|
 | `edge-glow` | `background` / `overlay` | shader: edge-lit glow around view bounds; catalog entry pending native implementation [research: 22] |
-| `mesh-gradient` | `background` | fill: animated mesh gradient with palette, `MeshGradient` (iOS 18) / AGSL (Android 33) |
+| `mesh-gradient` | `background` | fill: fixed platform-default gradient, intensity-driven, `MeshGradient` (iOS 18) / `LinearGradient` (Android 21) |
 | `glass` | `surface` | material: Liquid Glass (iOS 26) / blur+overlay (Android); see §10 |
 | `fractal-clouds` | `background` / `overlay` | shader: organic noise, slow drift, sky-to-cloud [ref: packages/ios/Shaders/FxShaders.metal:91] |
 | `ink-smoke` | `background` / `overlay` | shader: diffused ink on warm paper [ref: packages/ios/Shaders/FxShaders.metal:106] |
@@ -512,9 +503,10 @@ const effectRung = select(manifest.nodes['motion'], 'ios', {
 > **[research: 41 §The preset / motion / tune / transition split]**
 > `tune = { speed, emphasis, distance }` adjusts intent inside the platform family, never raw curves.
 >
-> **`tune` is deferred from the V1 surface (DOC-019).** These formulas are MOT-001/MOT-002
-> territory — provisional, device-pending, and not shipped in V1. They resurrect with the
-> device-tuned catalog; V1 exposes `preset`/`motion`/`transition` only.
+> **`tune` is deferred from the V1 surface (DOC-019).** These formulas are the open `MOT-002`
+> territory — provisional, device-pending, and not shipped in V1 (MOT-001 closed with the V1
+> `transient` catalog at U7-003). They resurrect with `MOT-002`'s device-tuned vocabulary;
+> V1 exposes `preset`/`motion`/`transition` only.
 > **[ref: apple docs — UISpringTimingParameters, SwiftUI Spring]**
 > **[ref: android docs — SpringForce, M3 MotionScheme]**
 

@@ -43,7 +43,7 @@ only, and the `preset`/`motion`/`tune`/`transition` split is the law's shape-nat
 |---|---|---|
 | `preset` | behavior id (`transient`, `lift`, …) | **platform-idiomatic behavior bundle** — fx resolves the *whole shape + timing per platform*. Behavior-named, never UI-named. |
 | `motion` | **typed `MotionSpec` map** | **explicit shape override** — fixes the shape cross-platform. *Different map per component* (phases vs states), never one universal map. **The sole shape-override channel — no partial top-level shape props (`edge`/`origin`); MOT-004/DEF-005.** |
-| `tune` *(deferred — V1.x / MOT-001)* | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`). Not on the V1 surface (DOC-019). |
+| `tune` *(deferred — V1.x / MOT-002)* | `{ speed, emphasis, distance }` | **intent** adjustment inside the platform family (`41`). Not on the V1 surface (DOC-019). |
 | `transition` | `{ duration?, delay?, easing?, spring? }` | **expert timing override only** — never a shape |
 | `effect` | **`EffectStack`** or effect id | the visual effect bundle/layer(s). **Two meanings by owner:** on `<Fx>` it *is* the fx-owned drawn surface; on `FxView` it is decoration *attached to your content*. |
 | `feedback` | press-behavior id (`native`) | press feedback bundle (`FxPressable`) |
@@ -101,9 +101,18 @@ config-children, no `asChild`.
   source of truth; tweak it once, the default behavior changes everywhere.
 - **Override** = a `Partial<>` shallow-merged over the defaults in JS; override wins.
 - **Palettes/themes** = named color sets applied across effects — pure config, shareable.
+  **Deferred — no V1 consumer (DOC-025 / DOC-029):** fx exposes platform-native presentation
+  presets, not a color-token / theme layer, until a real consumer forces it. `presets/{palettes,themes}.ts`
+  are not built.
 - `time`/`resolution` are **never** in the resolved record (native-injected).
 
 The resolved value crosses as one flat record; native runs no preset branching.
+
+**V1 resolution status (DOC-025):** the section above describes the *designed* surface. In shipped
+V1 the `preset` bundle resolves **natively** — `FxPresence` passes `preset` raw to the native
+coordinator, where the platform catalog lives (the shape-native law, `41`). The JS resolver /
+defaults-merge (`src/presets/`) is **deferred** — no consumer until `<Fx effect>` (Unit 10/11)
+needs JS default-merge.
 
 ## Adapter dispatch (the JS consumer of the manifest)
 
@@ -121,10 +130,14 @@ uniform table (`22`); it flows through the identical preset/primitive/adapter pa
 The V1 `ShaderId` catalog is `fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`,
 `dots`, `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow`.
 
-`fractal-clouds`, `ink-smoke`, `liquid-chrome`, `loop`, and `dots` are the implemented
-starter shaders. `aurora`, `noise-field`, `plasma`, `caustics`, and `edge-glow` are V1
-catalog entries that need native MSL+AGSL implementations before package types/runtime
-expose them.
+All ten ship in the package today — each with a native MSL (iOS) + AGSL (Android)
+implementation on the hosted substrate, device-verified on iOS 17+ and Android API 33+
+(U3-006). They are reachable from JS through the canonical `<Fx effect="id">` surface
+(shipped + device-verified, U10-001) — `<Fx effect="aurora" />` decorative, or
+`interactionMode="active"` for the interactive path. The iOS interactive raster path renders a
+subset of the catalog (`fractal-clouds` / `ink-smoke` / `liquid-chrome` / `loop` / `dots`); the
+rest are hosted-only on iOS and report `onError` if mounted interactive, while Android's AGSL
+path renders all ten interactively.
 
 Public shader uniforms stay shared and minimal in V1. `intensity` is the stable semantic
 override. `time`, `resolution`, `pressDepth`, and `touch` are native-owned values injected
@@ -139,7 +152,7 @@ by the runtime.
    `preset`/`motion`/`tune`/`transition` split is the law's shape-native engine: `preset`
    resolves the whole behavior per platform, `motion` is the explicit cross-platform shape
    override, `tune` adjusts intent, `transition` is expert timing. **V1 ships the
-   `preset`/`motion`/`transition` triad; `tune` is deferred to MOT-001 (DOC-019).** Props are scoped to their
+   `preset`/`motion`/`transition` triad; `tune` is deferred to MOT-002 (DOC-019).** Props are scoped to their
    owning component (`visible`→`FxPresence`, `state`→`FxView`, `feedback`→`FxPressable`,
    `interactionMode`→`<Fx>`), not a flat pool.
 3. **Builder namespaces map one-to-one to data types** — `fx.effect`→`EffectStack`,
@@ -148,13 +161,16 @@ by the runtime.
    three preset-like bundles on different owned surfaces (an honest domain split).
 4. **Props by default; compound only for real native layers** (`FxGroup`/`FxItem`).
 5. **Presets resolve in JS**; palettes/themes are pure config; `time`/`resolution` never in
-   the record. V1 shader uniforms are shared and minimal.
+   the record. V1 shader uniforms are shared and minimal. **V1 narrowing (DOC-025/DOC-029):**
+   in shipped V1 the `preset` bundle resolves **natively** (`FxPresence` passes it raw; the JS
+   resolver is deferred, no consumer); palettes/themes are **deferred — no V1 consumer** (not a
+   design-token layer).
 6. **The component layer is the adapter** — `select()` over the manifest; degrades, never
    throws. **BYO reuses the `shader` node**, no separate API.
 
 ## Decisions
 
-7. **V1 vocabulary ratified (DOC-005), presence set narrowed (DOC-018).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). `sheet`/`modal` (presence) are **deferred to MOT-001** — they name screen-scale presentations that collide with presence's scope ceiling (`42`, DOC-018). The per-platform shape and timing defaults behind these presets are **device-pending** and owned by MOT-001; they will be validated on device and propagated to `41`/`42`.
+7. **V1 vocabulary ratified (DOC-005), presence set narrowed (DOC-018).** The `preset`/`feedback`/`effect` value sets that ship in V1 are: `transient` (presence); `lift` (state); `native` (feedback); `edge-glow` · `mesh-gradient` · `glass` + the ten curated shader ids (`22`, ratified by DOC-007). `sheet`/`modal` (presence) are **deferred to `DEF-018`** (re-homed from MOT-001 at its closure, U7-003) — they name screen-scale presentations that collide with presence's scope ceiling (`42`, DOC-018). The `transient` per-platform defaults are **device-verified** (MOT-001 closed, U7-003); the `lift` (state) and `native` (feedback) defaults stay **device-pending** — they ride the as-yet-unbuilt `FxView` / `FxPressable`.
 8. **Surface-freeze naming pass ratified (DEF-015, 2026-06-13).** The public surface is frozen with four calls:
    - **`<Fx effect={fx.effect.*}>` stays as-is.** The repetition of the `fx`/`effect` token appears only at the layer-3 builder call site (the power-user escape hatch); the front door is the string form `<Fx effect="plasma" />` and the presets, which do not repeat. The `fx.effect.* → EffectStack` / `fx.motion.* → MotionSpec` symmetry (Decision 3) is a deliberate mnemonic and is not broken to de-stutter a rare site. Lead public docs with the string form; treat `fx.effect.*` as the escape hatch. **No bare `effect` export ships in V1** (`55`).
    - **`interactionMode` and its `none | passive | active` vocabulary stay.** The names are platform-agnostic (no rule-#2 leak), and the obvious intent-word substitutes collide inside fx's own vocabulary (`pressable` is `FxPressable`; `reactive` reads as Reanimated). The V1 *public* value set was `none | passive | active`; `controlled` was deferred to DEF-020 and **ships in V2 (device-verified 2026-06-15)** as the view-ref discrete `setUniform`/`setHighlight` write path (continuous motion stays DEF-006; the detached `SharedObject` handle is DEF-021) — `30`.

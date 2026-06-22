@@ -2,7 +2,7 @@
 
 Status: open — WIP, non-authoritative
 Phase: additive (depth-1 Boundary A/B; no rule-break)
-Feeds: `capability-boundary-classifier.md` (the source of truth for boundaries, lanes, and regimes), `0-spine/02-capability-ir-and-lowering.md`, `5-realization/structure.{ios,android}.md`
+Feeds: `0-spine/04`/`05` (the canonical home for boundaries, lanes, and regimes; `capability-boundary-classifier.md` is the historical derivation), `0-spine/02-capability-ir-and-lowering.md`, `5-realization/structure.{ios,android}.md`
 Scope: define the native mapping vocabulary that lets a native continuous source drive fx-owned presentation declaratively — and find the exact interactions it *cannot* express, because that ceiling is the line that sends a case to Lane 2 (regime C) or Boundary L.
 
 ## The hard box
@@ -223,8 +223,9 @@ enough to gate individually.
 
 ## Sources
 
-- `capability-boundary-classifier.md` — defines Boundary A/B/L, the source-channel axis, Lane 1
-  vs Lane 2, and the regime-C gate this note operates within.
+- `0-spine/04` / `0-spine/05` — canonical: Boundary A/B/L (`04`), the source-channel axis, Lane 1
+  vs Lane 2, and the regime-C gate this note operates within (`05`). (`capability-boundary-classifier.md`
+  is the historical derivation.)
 - `research/wip/native-slot-layout-transitions.md` — the reserved-size vs measured-content (Yoga)
   split that decides when a reveal/collapse is Lane 1 versus Boundary L.
 - `packages/ios/FxSurfaceView.swift` and `FxPressHandler.swift` — press depth already drives a

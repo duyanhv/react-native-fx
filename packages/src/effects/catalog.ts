@@ -41,8 +41,8 @@ export type MaterialVariant = 'regular' | 'clear';
 export type MaterialConfig = {
   variant?: MaterialVariant;
   interactive?: boolean;
-  // TODO: tint, color scheme, and material fallback weight join this config when the
-  // full material surface lands.
+  tint?: string;
+  colorScheme?: 'system' | 'light' | 'dark';
 };
 
 /**

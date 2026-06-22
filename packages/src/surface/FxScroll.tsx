@@ -46,11 +46,3 @@ export function FxScroll({ source, tiles, style }: FxScrollProps): ReactElement 
 
   return <FxScrollView axis={source.axis} tiles={wireTiles} style={style} />;
 }
-
-/**
- * The fx surface namespace. Provisional home for the hosted scroll context as `Fx.Scroll`
- * until the general `<Fx>` effect surface lands and absorbs it.
- */
-export const Fx = {
-  Scroll: FxScroll,
-} as const;

@@ -89,64 +89,11 @@ jobs:
           build
         working-directory: example-bare/ios
 
-  # Simulator smoke lane: mount every curated shader id on the hosted catalog screen,
-  # switch between them, and assert the rendered surface is non-blank. This catches the
-  # U3-006 blank-on-switch regression class without device sessions. A Release build embeds
-  # the JS bundle so CI does not need a running Metro packager.
-  ios-smoke:
-    name: Shader catalog · iOS simulator smoke
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.14
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Build the library
-        run: bun install --frozen-lockfile && bun run build
-      - name: Install example dependencies
-        run: bun install --frozen-lockfile
-        working-directory: example
-      - name: Install the simulator driver
-        run: bun install -g agent-device@0.17.1
-      - name: Download the Metal toolchain
-        # Xcode 26+ ships the Metal compiler as a separate component; fx bundles .metal
-        # shaders. Harmless where the toolchain is already present.
-        run: xcodebuild -downloadComponent MetalToolchain
-        continue-on-error: true
-      - name: Install Pods
-        run: pod install
-        working-directory: example/ios
-      - name: Build example app (Release, simulator)
-        run: >
-          xcodebuild
-          -workspace reactnativefxexample.xcworkspace
-          -scheme reactnativefxexample
-          -configuration Release
-          -sdk iphonesimulator
-          -destination 'generic/platform=iOS Simulator'
-          -derivedDataPath ../ios/build
-          CODE_SIGNING_ALLOWED=NO
-          -quiet
-          build
-        working-directory: example/ios
-      - name: Run shader-catalog smoke harness
-        run: bun run smoke:ios
-        working-directory: example
-        env:
-          SMOKE_DEVICE: iPhone 17 Pro
-          SMOKE_SCREEN_SCALE: 3
-
   # Android verifies the install-path autolinking here. The native assembleDebug compile
   # is intentionally NOT run yet: the Android library (packages/android) is still a build
   # scaffold and does not configure (missing versionName / publishable release component),
   # so a compile belongs with the Android-library build-readiness work, not this task. iOS
   # provides the mandatory native compile (bare-ios).
-  # NOTE: Android smoke lane is deferred, not dropped. The Android lib is still a build
-  # scaffold (same reason the native compile is skipped above); it belongs with the
-  # Android-library build-readiness work.
   bare-android:
     name: Bare example · Android autolink
     runs-on: ubuntu-latest

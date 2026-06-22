@@ -12,9 +12,9 @@ private enum class FxPressInteractionMode {
   CONTROLLED,
 }
 
-internal class FxPressHandler(private val surface: FxSurfaceView) {
+internal class FxPressHandler(private val host: FxPressHost, context: android.content.Context) {
   private val handler = Handler(Looper.getMainLooper())
-  private val touchSlop = ViewConfiguration.get(surface.context).scaledTouchSlop.toFloat()
+  private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
   private val longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
 
   private var mode = FxPressInteractionMode.NONE
@@ -30,7 +30,7 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
   private val longPressRunnable = Runnable {
     if (didBeginActivePress && !didFireLongPress) {
       didFireLongPress = true
-      surface.dispatchShaderLongPress(lastX, lastY)
+      host.handleLongPress(lastX, lastY)
     }
   }
 
@@ -72,19 +72,16 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     originY = event.y
     lastX = event.x
     lastY = event.y
-    hasActivePointer = surface.containsInteractiveShape(event.x, event.y)
+    hasActivePointer = host.hitTarget(event.x, event.y)
     if (!hasActivePointer) {
       return false
     }
-    surface.parent?.requestDisallowInterceptTouchEvent(true)
-    surface.updatePressUniforms(event.x, event.y, if (mode == FxPressInteractionMode.ACTIVE) 1f else 0f)
-    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
-      surface.updateDragTiltUniforms(event.x, event.y, event.x, event.y, dragAxis)
-    }
+    (host as? android.view.View)?.parent?.requestDisallowInterceptTouchEvent(true)
+    val depth = if (mode == FxPressInteractionMode.ACTIVE) 1 else 0
+    host.handlePressBegin(event.x, event.y, depth)
     if (mode == FxPressInteractionMode.ACTIVE) {
       didBeginActivePress = true
       didFireLongPress = false
-      surface.dispatchShaderPressIn(event.x, event.y)
       handler.postDelayed(longPressRunnable, longPressTimeout)
     }
     return hasActivePointer
@@ -96,12 +93,10 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     }
     lastX = event.x
     lastY = event.y
-    surface.updatePressUniforms(event.x, event.y, if (didBeginActivePress) 1f else 0f)
-    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
-      surface.updateDragTiltUniforms(originX, originY, event.x, event.y, dragAxis)
-    }
+    val depth = if (didBeginActivePress) 1 else 0
+    host.handlePressChanged(event.x, event.y, depth)
     if (shouldFail(event.x, event.y)) {
-      surface.parent?.requestDisallowInterceptTouchEvent(false)
+      (host as? android.view.View)?.parent?.requestDisallowInterceptTouchEvent(false)
       cancel()
       return false
     }
@@ -113,38 +108,25 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
       return false
     }
     handler.removeCallbacks(longPressRunnable)
-    surface.parent?.requestDisallowInterceptTouchEvent(false)
-    surface.updatePressUniforms(event.x, event.y, 0f)
-    settleDragTilt()
+    (host as? android.view.View)?.parent?.requestDisallowInterceptTouchEvent(false)
     val shouldEmitPress = didBeginActivePress
     didBeginActivePress = false
     hasActivePointer = false
-    if (shouldEmitPress) {
-      surface.dispatchShaderPressOut(event.x, event.y)
-      if (!didFireLongPress) {
-        surface.dispatchShaderPress(event.x, event.y)
-      }
-    }
+    host.handlePressEnd(event.x, event.y, includePressEvent = shouldEmitPress && !didFireLongPress)
     return shouldEmitPress
   }
 
   private fun cancel() {
     handler.removeCallbacks(longPressRunnable)
-    surface.parent?.requestDisallowInterceptTouchEvent(false)
-    surface.updatePressUniforms(null, null, 0f)
-    settleDragTilt()
+    (host as? android.view.View)?.parent?.requestDisallowInterceptTouchEvent(false)
     if (didBeginActivePress) {
-      surface.dispatchShaderPressOut(lastX, lastY)
+      host.handlePressCancel(lastX, lastY)
+    } else {
+      host.handlePressEnd(lastX, lastY, includePressEvent = false)
     }
     didBeginActivePress = false
     didFireLongPress = false
     hasActivePointer = false
-  }
-
-  private fun settleDragTilt() {
-    if (mode == FxPressInteractionMode.ACTIVE && dragAxis != null) {
-      surface.updateDragTiltUniforms(null, null, null, null, null)
-    }
   }
 
   private fun shouldFail(x: Float, y: Float): Boolean {
@@ -178,6 +160,6 @@ internal class FxPressHandler(private val surface: FxSurfaceView) {
     // Default: fail on any movement past slop (today's behavior).
     val deltaX = x - originX
     val deltaY = y - originY
-    return deltaX * deltaX + deltaY * deltaY > touchSlop * touchSlop || !surface.containsInteractiveShape(x, y)
+    return deltaX * deltaX + deltaY * deltaY > touchSlop * touchSlop || !host.hitTarget(x, y)
   }
 }

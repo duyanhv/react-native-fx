@@ -1,5 +1,5 @@
 # Surface: FxPresence
-Status: researched (API) · built + handshake device-verified (U7-001, 2026-06-12) · catalog magnitudes device-pending (MOT-001/U7-002)
+Status: researched (API) · built + handshake device-verified (U7-001, 2026-06-12) · `transient` catalog magnitudes device-verified (MOT-001 closed, U7-003)
 Phase: v1 (API) · v2 (the owned runtime behind it)
 Feeds: the public package; consumes 42-presence-and-lifecycle, 41-motion-vocabulary, 55-composition-chain
 Owns: the public `FxPresence` component (the consumer surface for content presence).
@@ -16,7 +16,7 @@ cannot defer unmount; only a wrapping component can.
 
 A platform-idiomatic `preset`, refined by `transition`, or overridden by an explicit
 `motion` map (`50`'s prop language; the shape-native split, `41`). (`tune` — the fourth
-knob — is deferred from the V1 surface, DOC-019; it resurrects with MOT-001.)
+knob — is deferred from the V1 surface, DOC-019; it resurrects with MOT-002, MOT-001 having closed at U7-003 without `tune`.)
 
 ```tsx
 // preset — fx resolves the platform-idiomatic shape + timing per OS
@@ -151,7 +151,7 @@ proves insufficient in practice.
 - ~~The native mechanics (the handshake, the host-view ref) are `open` in `33`/`35`.~~
   **Resolved (U7-001, 2026-06-12):** built (`FxPresence` + `FxPresenceCoordinator` on the
   content driver) and the handshake device-verified on both platforms; the `35` ordering
-  question is answered there. Shape/timing magnitudes stay device-pending (MOT-001/U7-002).
+  question is answered there. The `transient` shape/timing magnitudes are device-verified (MOT-001 closed, U7-003).
 
 ## Sources
 

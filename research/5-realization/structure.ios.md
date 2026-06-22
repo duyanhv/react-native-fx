@@ -137,6 +137,46 @@ layout/hit-testing to a `UIHostingController`.
   content in SwiftUI, which severs RN/RNGH touch. Hence `content-distort` is
   out-of-scope on iOS.
 
+### Recognizer hosts (cooperatively shared via host protocol)
+
+The `FxPressHandler` FSM (recognizer + arbitration) is decoupled from its hosts via a small **host protocol** that receives press begin/change/end/cancel/long-press callbacks and supplies hit-test information. Both hosts implement the protocol; the FSM stays in `FxPressHandler` and never duplicates.
+
+**Host protocol:**
+- `hitTarget(point: CGPoint) -> Bool`: hit-test at a point (effect surface: shader shape via `containsInteractiveShape`; content: full bounds).
+- `handlePressBegin(point: CGPoint, depth: Int)`: called on recognizer state `.began`; surface applies uniforms, content applies feedback.
+- `handlePressChanged(point: CGPoint, depth: Int)`: called on recognizer state `.changed`; surface updates uniforms, content does nothing.
+- `handlePressEnd(point: CGPoint, includePressEvent: Bool)`: called on recognizer state `.ended`; surface resets uniforms, content restores feedback and emits press event if parameter is true.
+- `handlePressCancel(point: CGPoint)`: called on recognizer state `.cancelled`; both reset to idle.
+- `handleLongPress(point: CGPoint)`: called after long-press timer fires; only active surface responds.
+- `attachRecognizer(_:)` / `detachRecognizer(_:)`: add/remove the gesture recognizer from the host's view.
+
+**FxSurfaceView host behavior** (unchanged from U8, now behind protocol):
+- Hit-test: `containsInteractiveShape(point:)` for `active` mode, always true for `passive`.
+- Feedback: `updatePressUniforms(point:, depth:)` on begin/changed, reset on end/cancel.
+- Long-press: `dispatchShaderLongPress(point:)` fires the event.
+- Press end: `dispatchShaderPressOut(point:)` fires on end/cancel; `dispatchShaderPress(point:)` fires press only if `includePressEvent == true` (unless long-press fired); `dispatchShaderPressIn(point:)` fires on begin.
+
+**FxPressableView host behavior** (new, content-press):
+- Hit-test: full view bounds (no shape testing).
+- Feedback: iOS press-in scale ~0.97 + opacity dip on `intermediateContainer` (managed `UIView` wrapping RN children), springs back on end/cancel using `FxSpring` timing (CASpringTimingFunction-based). Android: RippleDrawable foreground on the container.
+- Long-press: emits `onLongPress` event to JS.
+- Press end: emits `onPress` event if `includePressEvent == true`; `onPressIn/Out` fire on begin/end/cancel.
+- Cancellation (slop yield / out-of-bounds): emits `onPressOut` only, no `onPress`.
+
+**iOS feedback (`feedback="native"`):**
+Reuses the `FxSpring` timing primitive (a `CABasicAnimation` with a `CASpringTimingFunction`) for the spring-back. On press-in, scales `intermediateContainer` to 0.97 and opacity to 0.8; on release/cancel, animates both back to 1.0 and 1.0 respectively over the spring curve. The spring parameters (damping, stiffness, mass) match FxSpring's defaults. The container is the sole target; no transform of child RN views.
+
+**Android feedback (`feedback="native"`):**
+A bounded `RippleDrawable` foreground on the container. Ripple uses a radius cap at ~half the smaller of width/height, color from `?colorControlHighlight` or fallback `#20000000`. Transform feedback on Android is **deferred to a future `feedback` variant** if device testing proves necessary.
+
+**FxStateView host behavior** (new, state-driven content motion):
+- Wraps RN children in a Fabric-invisible `intermediateContainer` (`UIView`). `FxAnimationDriver` animates `intermediateContainer`'s `transform`/`alpha` — the same driver used for presence motion, reused as-is.
+- `FxStateViewCoordinator` manages an N-state "current → target" FSM. The first prop application snaps without animation (`isFirstApplication` guard). Same-target re-drives are no-ops. An in-flight retarget fires `onFxStateChange` with `{ state, finished: false, interrupted: true }` for the superseded transition, then retargets the driver; the settled transition fires `{ state, finished: true, interrupted: false }`. Exactly one settle event per drive.
+- `lift` preset (V1): `idle` → identity transform + opacity 1; `selected` → scale 1.03 + `translationY –3 pt`. Device-tuned at the gate. `stateMotion` overrides the preset per-state.
+- Props cross as `state` (string), `preset` (string), `stateMotion` (`[FxStateMotionEntry]`, an array of `{ state, spec }` records — dynamic-key maps cannot cross as Expo Records). `OnViewDidUpdateProps` batches all three before driving.
+- Event name: `onFxStateChange`. Payload: `{ state: String, finished: Bool, interrupted: Bool }`.
+- The `effect` decoration is **not** a native prop on the state host — `FxView` composes it in JS as a `pointerEvents="none"` `<Fx>` first child. The standard child-mount routes it into the `intermediateContainer` behind the content (earlier child = lower z-order), so it lifts with the content under the same transform. Decorative, behind-content only; an on-top overlay is a future composition decision. No deferred-unmount handshake (all states are always mounted).
+
 ### Lifecycle
 
 - Pause the loop off-window/backgrounded; tear down the per-view `MTKView` (drop its
@@ -205,14 +245,13 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
 **primitive/lower · requires · applyVia · clock · behavior · fallback**.
 
 ### `fill`
-- **Gradient family** — `type: linear|radial|angular` → SwiftUI
-  `LinearGradient`/`RadialGradient`/`AngularGradient` (also `EllipticalGradient`) ·
-  `requires {os:13, hosted}` · `applyVia:.overlay` · static by default. The whole gradient
-  family, not one primitive.
-- **MeshGradient** (the `mesh` kind) — `requires {os:18, substrate:hosted}` ·
-  `applyVia:.overlay` · `clock:timeline` (animate vertex positions/colors off `TimelineView`).
-  Behavior: semantic uniforms = grid points + colors, resolved in JS. Mesh degrades to a
-  linear gradient below 18.
+- **V1: static hosted gradient** — `FxFillView` draws a fixed platform-default `MeshGradient`
+  (`requires {os:18, hosted}`) / `LinearGradient` fallback (`requires {os:13, hosted}`),
+  `applyVia:.overlay`. `intensity` drives the layer's opacity; nothing animates and no per-call
+  vertices/colors are read in shipped V1 (no `clock:timeline`, no JS-resolved grid).
+- **Deferred (fill wire-through)** — configurable colors/angle/kind and animated mesh drift (the
+  full gradient family + `TimelineView`-driven `MeshGradient`) are the planned wire-through; not
+  built until it lands.
 
 ### `material`
 - **UIKit glass surface** (the shipped iOS-26 rung) — `UIVisualEffectView` + `UIGlassEffect` ·
@@ -228,10 +267,17 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
   `UIGlassEffect.Style.regular`/`.clear` (unknown values fall back to the regular glass), and
   `interactive` sets `UIGlassEffect.isInteractive` — the system interaction view owns the
   press and its arbitration (`interaction:'self'`; fx installs no recognizer). fx does not
-  adopt an identity/none style (`21` ships `regular`/`clear` only). `GlassEffectContainer` is
-  still the SwiftUI realization of the **`FxGroup`/`FxItem`** compound (`57`) when multiple
-  glass shapes must morph (glass can't sample glass); the morphing compound remains a
-  SwiftUI-side concern, out of this rung's slice.
+  adopt an identity/none style (`21` ships `regular`/`clear` only). The **`FxGroup`/`FxItem`**
+  compound (`57`) uses the UIKit `UIGlassContainerEffect` — not the SwiftUI
+  `GlassEffectContainer` — because the items are UIKit surfaces (`FxGlassSurfaceView`).
+  `FxGroupView` owns a `UIVisualEffectView` carrying `UIGlassContainerEffect` (guarded
+  `@available(iOS 26.0)` + `NSClassFromString("UIGlassContainerEffect") != nil`) and routes
+  children into `containerEffectView.contentView` via `mountChildComponentView`, making
+  sibling glass surfaces direct siblings under the container effect layer so the system can
+  merge them. Below iOS 26 or when the class is absent: a plain passthrough; items render
+  their own glass rung individually (the ratified shape-native divergence, DOC-006). `FxItem`
+  is minimal JS — a React Fragment passthrough with no native view — so the glass mounts as
+  directly as possible under `FxGroupView`.
 - **Glass lifecycle (pinned mechanic)** — `UIGlassEffect` must be (re)created during
   `layoutSubviews()`, not `didMoveToWindow()` (creating it there does not render —
   expo/expo#43732). Toggling `isInteractive` requires clearing the prior effect
@@ -253,6 +299,17 @@ Each section expands the iOS rungs from `02`. Format mirrors a manifest rung:
   uniform radius. If the host layer reports `cornerRadius == 0`, the glass renders as a sharp
   rectangle — the fallback when the layer has no rounded corner (or when Fabric does not set
   it). Radius changes update `cornerConfiguration` in place; they never remount the rung.
+- **`tint` + `colorScheme` (iOS-26 rung)** — `tint` (a `#RGB`/`#RRGGBB`/`#RRGGBBAA` hex
+  string) maps to `UIGlassEffect.tintColor` via a local hex parser (nil/unrecognised → no
+  tint, the untinted system glass). The Android peer parses the same format set + byte order. `colorScheme` maps to `effectView.overrideUserInterfaceStyle`: `system` →
+  `.unspecified`, `light` → `.light`, `dark` → `.dark`; it is applied to the
+  `UIVisualEffectView`, not the `UIGlassEffect` (mirrors
+  `references/expo/packages/expo-glass-effect/ios/GlassView.swift`). Both are applied
+  in-place via the existing `setMaterialConfig` diff path — no remount.
+- **`colorScheme` on the below-26 fallback** — `colorScheme` passes through to
+  `FxMaterialView` as a SwiftUI `ColorScheme?` and is applied via
+  `.environment(\.colorScheme, scheme)`. `tint` has no equivalent on SwiftUI adaptive
+  materials and degrades silently on this rung — the system material has no tint API.
 - **`.ultraThinMaterial`** — `requires {os:15, hosted}` · `applyVia:.background`.
   Fallback below 26.
 

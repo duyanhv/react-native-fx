@@ -118,7 +118,7 @@ export interface Lowering {
 // ── one IR node (capability) ─────────────────────────────────────────
 export interface UniformSpec {
   type: 'number' | 'string' | 'boolean' | 'color' | 'color[]' | 'vec2' | 'vec4' | 'enum';
-  default: unknown;        // 'string' carries open text (a symbol name, a BYO id)
+  default?: unknown;       // 'string' carries open text (a symbol name, a BYO id); absent ⇒ no platform default
   range?: readonly [number, number];
   options?: readonly string[];   // for type:'enum'
 }
@@ -183,27 +183,30 @@ the expo-view rung (plain UIView, G runtime, host-safe hit-testing).
 
 ## Worked examples
 
-### `fill` — an OS fallback ladder, and mesh-as-shader on Android
+### `fill` — an OS fallback ladder (static gradient in V1)
 
 ```ts
 fill: {
   id: 'fill', kind: 'render-target', interaction: 'none', phase: 'v1',
   lower: {
     ios: [
-      { via: 'native', primitive: 'MeshGradient',  applyVia: '.overlay', clock: 'timeline',
+      { via: 'native', primitive: 'MeshGradient',  applyVia: '.overlay',
         requires: { os: 18, substrate: 'hosted' } },
       { via: 'native', primitive: 'LinearGradient', applyVia: '.overlay',
         requires: { os: 13, substrate: 'hosted' }, note: 'pre-18 fallback' },
     ],
     android: [
-      { via: 'shader', asset: 'agsl', applyVia: 'ShaderBrush', clock: 'frame-nanos',
-        requires: { os: 33, substrate: 'hosted' }, note: 'mesh has no native primitive → AGSL' },
-      { via: 'native', primitive: 'Brush.sweepGradient', applyVia: 'background',
-        requires: { os: 21, substrate: 'hosted' }, note: 'pre-33 fallback' },
+      { via: 'native', primitive: 'LinearGradient', applyVia: 'background',
+        requires: { os: 21, substrate: 'hosted' }, note: 'static hosted gradient' },
     ],
   },
 },
 ```
+
+V1 renders a fixed platform-default gradient (`intensity` drives opacity); the node declares no
+per-call uniforms. The configurable colors/angle/kind and the AGSL-mesh-on-Android rung are the
+deferred fill wire-through. (For a node that lowers to a shader on one platform and native on
+another, see the `shader` example below.)
 
 ### `shader` — one node, both substrates; BYO reuses it
 

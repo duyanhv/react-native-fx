@@ -9,6 +9,7 @@ export type {
   SymbolAnimation,
   SymbolConfig,
 } from './effects/catalog';
+export type { EffectId } from './effects/effects';
 export {
   isRegisteredShader,
   type RegisterShaderSpec,
@@ -16,6 +17,14 @@ export {
   registerShader,
   type ShaderSource,
 } from './effects/registry';
+export type {
+  EffectBuilder,
+  EffectStack,
+  EffectStep,
+  EffectStepId,
+  SpringSpec,
+  Transition,
+} from './effects/stack';
 export { fx } from './fx';
 export type { Edge, MotionSpec, Origin, PresenceMotion, Travel } from './motion/types';
 export { FxHostedView, type NativeFxHostedProps } from './runtime/FxHostedView';
@@ -29,12 +38,24 @@ export type {
 } from './runtime/FxSurfaceView.types';
 export type { ScrollAxis, ScrollSourceSpec, SourceSpec } from './source/types';
 export {
+  EdgeGlow,
   Fx,
+  FxGroup,
+  type FxGroupProps,
+  FxItem,
+  type FxItemProps,
   FxPresence,
   type FxPresenceProps,
+  FxPressable,
+  type FxPressableProps,
+  type FxProps,
   type FxScrollProps,
   type FxScrollTile,
+  type FxStateChange,
+  type FxStatePreset,
   type FxTransition,
   type FxTransitionEnd,
+  FxView,
+  type FxViewProps,
   type PresencePreset,
 } from './surface';

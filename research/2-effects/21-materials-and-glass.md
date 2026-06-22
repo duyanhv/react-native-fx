@@ -46,18 +46,20 @@ prior-art libs (so their users feel at home), plus fx-only extensions:
 interface MaterialUniforms {
   variant?: 'regular' | 'clear';       // UIGlassEffect.Style on 26 (NOT the public `effect` id)
   interactive?: boolean;               // system liquid press response (UIGlassEffect.isInteractive)
-  tintColor?: string;                  // blur-preserving tint
-  colorScheme?: 'system' | 'light' | 'dark';
-  intensity?: number;                  // 0–1 presence (fractionComplete), fx-only
-  weight?: 'ultraThin' | 'thin' | 'regular' | 'thick' | 'chrome';  // material fallback weight
+  tint?: string;                       // blur-preserving color cast — #RGB/#RRGGBB/#RRGGBBAA hex (UIGlassEffect.tintColor / Android scrim)
+  colorScheme?: 'system' | 'light' | 'dark'; // appearance override (overrideUserInterfaceStyle / Android base)
+  intensity?: number;                  // 0–1 presence (fractionComplete) — a <Fx> prop, not a MaterialConfig field
 }
 ```
 
-`variant`/`interactive`/`tintColor`/`colorScheme` mirror the prior-art vocabulary
+`variant`/`interactive`/`tint`/`colorScheme` mirror the prior-art vocabulary
 (`variant`, not `effect` — `effect` is reserved for the public `<Fx effect="glass">` id);
-`intensity` and `weight` (material fallback) are fx-only. **Glass morphing/merging is
-`FxGroup`/`FxItem`** — the surface's one honest compound (each item a real glass view that
-merges) — not a `material`-specific component.
+`intensity` is the separate `<Fx>`-level presence prop and is not part of `MaterialConfig`.
+`weight` is struck — `UIGlassEffect` (the primary iOS rung) has no thickness property, so
+a `weight` knob would be silently ignored on the primary path; the honesty bar requires the
+primary rung on each platform to back the field (a2-triage Outcome 1). **Glass
+morphing/merging is `FxGroup`/`FxItem`** — the surface's one honest compound (each item a
+real glass view that merges) — not a `material`-specific component.
 
 ## Lowering (summary — authority is 02 + structure.\*)
 

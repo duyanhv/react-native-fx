@@ -1,5 +1,5 @@
 # Runtime: view state & the presence handshake
-Status: researched (design) · source-audit + U7-001 preflight pass · handshake device-verified (U7-001) · React-semantics rows device-proven (U7-002) · identity proof device-pending (SPINE-009→U9-002)
+Status: researched (design) · source-audit + U7-001 preflight pass · handshake device-verified (U7-001) · React-semantics rows device-proven (U7-002) · identity proof device-proven (SPINE-009 resolved, U9-002, 2026-06-13)
 Phase: v2
 Feeds: 42-presence-and-lifecycle.md, 33-shadow-nodes-and-layout.md, structure.{ios,android}
 

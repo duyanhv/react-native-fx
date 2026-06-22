@@ -420,7 +420,7 @@ Architecture changes begin only when a capability needs one of these:
 - Apple SwiftUI `UnitCurve` DocC JSON: https://developer.apple.com/tutorials/data/documentation/swiftui/unitcurve.json
 - Android `android.view.animation` package reference: https://developer.android.com/reference/android/view/animation/package-summary
 - Local Xcode iOS 26.5 SwiftUICore symbol graph, extracted with `swift-symbolgraph-extract`.
-- `research/wip/capability-boundary-classifier.md` — boundary and regime classifier.
+- `0-spine/04` / `0-spine/05` — the canonical boundary and regime classifier (`research/wip/capability-boundary-classifier.md` is the historical derivation).
 - `research/wip/lane1-signal-grammar.md` — source-driven Lane 1 grammar.
 - `research/wip/interactive-content-distort.md` — a feature applying this chaining API + the Lane 1
   `source` grammar: the interactive water-ripple (gesture-driven effect uniform; impulse animation).

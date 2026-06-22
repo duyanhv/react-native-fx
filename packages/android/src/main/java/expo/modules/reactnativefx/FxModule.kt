@@ -108,5 +108,31 @@ class FxModule : Module() {
         view.applyResolvedConfig()
       }
     }
+
+    View(FxPressableView::class) {
+      Events("onFxPressIn", "onFxPressOut", "onFxPress", "onFxLongPress")
+
+      Prop("feedback") { view: FxPressableView, value: String ->
+        view.setFeedback(value)
+      }
+    }
+
+    View(FxStateView::class) {
+      Events("onFxStateChange")
+
+      Prop("state") { view: FxStateView, value: String ->
+        view.setState(value)
+      }
+      Prop("preset") { view: FxStateView, value: String ->
+        view.setPreset(value)
+      }
+      Prop("stateMotion") { view: FxStateView, value: List<FxStateMotionEntry>? ->
+        view.setStateMotion(value)
+      }
+
+      OnViewDidUpdateProps { view: FxStateView ->
+        view.applyResolvedConfig()
+      }
+    }
   }
 }

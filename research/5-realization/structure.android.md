@@ -34,8 +34,9 @@ component.
    both.
 2. **Effects are draw-time and touch-safe.** `RenderEffect`/AGSL apply on the view's
    `RenderNode`, independent of input dispatch. So shading *over live content* does
-   **not** sever touch — the inverse of iOS. This is why `content-distort` is
-   `planned` on Android while out-of-scope on iOS.
+   **not** sever touch — the inverse of iOS. This is why `content-distort` ships on
+   Android (the curated `ripple` demonstrator, DEF-009, device-proven) while it is
+   out-of-scope on iOS.
 3. **Three capability gaps.** No native `MeshGradient` (use AGSL), no Liquid Glass
    (blur + overlay, or the Haze/Cloudy libs), no SF Symbols (Animated Vector
    Drawables or Lottie). One reverse-freebie: native **shape morph** via M3
@@ -183,6 +184,47 @@ component.
 - Because effects are draw-time, an effect applied to content never interferes with
   `dispatchTouchEvent`/hit-testing.
 
+### Recognizer hosts (cooperatively shared via host interface)
+
+The `FxPressHandler` FSM (recognizer + arbitration) is decoupled from its hosts via a small **host interface** that receives press begin/change/end/cancel/long-press callbacks and supplies hit-test information. Both hosts implement the interface; the FSM stays in `FxPressHandler` and never duplicates.
+
+**Host interface (Kotlin):**
+```kotlin
+internal interface FxPressHost {
+  fun hitTarget(x: Float, y: Float): Boolean
+  fun handlePressBegin(x: Float, y: Float, depth: Int)
+  fun handlePressChanged(x: Float, y: Float, depth: Int)
+  fun handlePressEnd(x: Float, y: Float, includePressEvent: Boolean)
+  fun handlePressCancel(x: Float, y: Float)
+  fun handleLongPress(x: Float, y: Float)
+  fun attachRecognizer(recognizer: GestureDetector)
+  fun detachRecognizer(recognizer: GestureDetector)
+}
+```
+
+**FxSurfaceView host behavior** (unchanged from U8, now behind interface):
+- Hit-test: `containsInteractiveShape(x, y)` for active/passive.
+- Feedback: native shader uniforms on begin/changed, reset on end/cancel.
+- Long-press: `dispatchShaderLongPress(point)` fires the event.
+- Press end: `dispatchShaderPressOut(point)` on end/cancel; `dispatchShaderPress(point)` if `includePressEvent == true`; `dispatchShaderPressIn(point)` on begin.
+
+**FxPressableView host behavior** (new, content-press):
+- Hit-test: full view bounds.
+- Feedback: a `RippleDrawable` foreground on the `intermediateContainer` (FrameLayout wrapper, Fabric-invisible), color from `?colorControlHighlight` or fallback `#20000000`. Because the FSM consumes the touch, the framework never runs its own pressed-state path, so the host proxies it: `intermediateContainer.drawableHotspotChanged(x, y)` + `isPressed = true` on begin, hotspot update on move, `isPressed = false` on end/cancel. The ripple is bounded by an opaque `RectShape` mask (a default `ShapeDrawable()` has a null shape and can let the highlight fill the foreground) and left at `RADIUS_AUTO` so the framework fills the masked bounds (a fixed `min/2` radius inscribes a small circle on a wide control).
+- Long-press: keeps the pressed feedback until the actual up/cancel; emits the long-press event.
+- Press end: emits the press event if `includePressEvent == true`; press-in/out on begin/end/cancel.
+- Cancellation (slop self-fail / out-of-bounds): clears the pressed state, emits press-out only, no press.
+- Events cross as `onFx`-prefixed names (`onFxPressIn`/`onFxPressOut`/`onFxPress`/`onFxLongPress`) to avoid React Native's reserved `topPress`; the public `onPress*` props map onto them in JS (as the shader surface does with `onShaderPress*`).
+
+**FxStateView host behavior** (new, state-driven content motion):
+- Wraps RN children in a Fabric-invisible `intermediateContainer` (`FrameLayout`). `shouldUseAndroidLayout = true` prevents Fabric from sizing the `LinearLayout` shell to 0×0. `FxAnimationDriver` animates `intermediateContainer`'s `scaleX`/`scaleY`/`translationY`/`alpha` — the same driver used for presence motion, reused as-is.
+- `clipChildren = false` + `clipToPadding = false` on both `FxStateView` and the `intermediateContainer`: state motion (the lift/scale) draws past the layout box, and an Android `ViewGroup` clips children by default where the iOS wrapper (`clipsToBounds` false) does not. This allows presentation overdraw without changing Yoga layout — fx unclips only the wrapper it owns; an app ancestor that clips later is layout ownership outside fx.
+- `FxStateViewCoordinator` manages an N-state "current → target" FSM identical to the iOS peer. First application snaps. Same-target re-drives are no-ops. In-flight retarget fires `onFxStateChange` with `interrupted = true`/`finished = false` for the superseded transition, then retargets; settled transition fires `finished = true`/`interrupted = false`.
+- `lift` preset (V1): `idle` → identity; `selected` → `scaleX/Y = 1.04`, `translationY = –6 dp`. Tuned independently from iOS (a platform-native lift, not a cross-platform-uniform seed); still device-tunable. `stateMotion` overrides per-state. `View.translationY` is pixels, so the coordinator scales every fixed travel — preset and `stateMotion` alike — by display density, making a motion value an RN layout unit that lands the same physical distance as iOS points.
+- Props: `state` (String), `preset` (String), `stateMotion` (`List<FxStateMotionEntry>`, an array of `{ state, spec }` records — dynamic-key maps cannot cross as Expo Records). `OnViewDidUpdateProps` batches all three before driving.
+- Event: `onFxStateChange`. Payload: `FxStateChangeEvent { state: String, finished: Boolean, interrupted: Boolean }`.
+- The `effect` decoration is **not** a native prop on the state host — `FxView` composes it in JS as a `pointerEvents="none"` `<Fx>` first child. The standard child-mount routes it into the `intermediateContainer` behind the content (earlier child = lower z-order), so it lifts with the content under the same transform; the `clipChildren = false` unclip above lets a behind-content edge effect overdraw with it. Decorative, behind-content only; an on-top overlay is a future composition decision. No deferred-unmount handshake (all states are always mounted).
+
 ### Lifecycle
 
 - Pause frame callbacks in `onDetachedFromWindow` and while the app is backgrounded. Treat
@@ -243,13 +285,12 @@ event-driven, read-only, no JS round-trip.
 Each section expands the Android rungs from `02`.
 
 ### `fill`
-- **Gradient family** — `type: linear|radial|angular` → Compose
-  `Brush.linearGradient`/`Brush.radialGradient`/`Brush.sweepGradient` · `via:native` ·
-  `requires {os:21, hosted}` · `applyVia:background`. The whole gradient family, not one
-  primitive.
-- **AGSL mesh shader** — the `mesh` kind has no native primitive, so it lowers to a generated
-  shader · `lower:shader, asset:agsl` · `requires {os:33, hosted}` · `applyVia:ShaderBrush` ·
-  `clock:frame-nanos`; degrades to a linear `Brush` below 33.
+- **V1: static hosted gradient** — `FxFillView` draws a fixed platform-default `LinearGradient`
+  on a plain `View` (`Canvas.onDraw`) · `via:native` · `requires {os:21, hosted}`. `intensity`
+  drives paint alpha; no per-call colors/angle/kind are read, and there is no AGSL mesh fill rung
+  in shipped V1.
+- **Deferred (fill wire-through)** — the configurable gradient family (Compose `Brush.*`) and an
+  AGSL mesh shader for the `mesh` kind are the planned wire-through; not built until it lands.
 
 ### `material`
 - **Own-content composition + `RenderEffect.createBlurEffect`** — `via:native` ·
@@ -272,6 +313,16 @@ Each section expands the Android rungs from `02`.
   **`regular` = 0.55** (heavier frost) and **`clear` = 0.28** (lighter, more transparent);
   unknown variants fall back to `regular`. Intensity and variant changes update the live
   view in place (`setIntensity`/`setMaterialConfig` → `invalidate()`), never remount.
+- **`tint` + `colorScheme`** — `tint` (a `#RGB`/`#RRGGBB`/`#RRGGBBAA` hex string, parsed by
+  a local parser matching the iOS format set + alpha-last byte order — `Color.parseColor` is
+  not used: it rejects `#RGB` and reads 8-digit hex as `#AARRGGBB`, alpha-first, which would
+  diverge from iOS) drives the frost-scrim base color directly; unrecognised values fall back
+  to white. When
+  `tint` is absent, `colorScheme` selects the base: `dark` → a near-black gray
+  (`#1C1C1E`-class, `Color.argb(255, 28, 28, 30)`); `light`/`system` → white (the
+  platform default). Both changes redraw in place via the existing `setMaterialConfig` →
+  `invalidate()` path — no remount. The highlight gradient always uses white (simulating
+  the light-reflection layer) regardless of `colorScheme`.
 - **`interactive` is inert on Android.** The press response is the iOS-26 system glass's
   own behavior; Android has no system equivalent, and the law forbids simulating another
   platform's behavior. The knob is accepted silently (the `MaterialConfig` Record carries
@@ -284,6 +335,10 @@ Each section expands the Android rungs from `02`.
   backdrop-blur library rung is documented and deferred until backdrop blur is genuinely
   demanded; when it lands it is an optional peer dependency (`53` decision 6) — no Compose
   dependency and no optional-peer machinery now.
+- **`FxGroup` — passthrough, no morph** — Android has no Liquid Glass and no cross-item glass
+  union (`57`, DOC-006). `FxGroupView` is a plain `FxNativeView` passthrough; each child
+  renders its own material surface individually. No merge threshold, no `spacing` prop
+  (deferred V2). This is the ratified shape-native divergence — not a gap to fill.
 
 ### `shader`
 - **Decorative** — `lower:shader, asset:agsl` · `requires {os:33, hosted}` ·

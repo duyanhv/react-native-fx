@@ -65,8 +65,11 @@ function deviceArgs(): string[] {
 }
 
 function ensureSimulator(): void {
+	// A cold simulator boot on a fresh CI runner can exceed the default 60s timeout
+	// (the first boot creates the device before booting it), so give boot the same
+	// generous budget the XCTest-runner prepare step already uses.
 	console.log(`Booting ${DEVICE}...`);
-	runAgentDevice(["boot", ...deviceArgs()]);
+	runAgentDevice(["boot", ...deviceArgs()], 240_000);
 }
 
 function installApp(): void {
