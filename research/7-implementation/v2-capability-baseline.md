@@ -24,7 +24,7 @@ agnostic names, platform-native defaults).
 | **fill** (`mesh-gradient`) | native | native | `<Fx effect="mesh-gradient">`, `fx.effect.mesh` | intensity only; colors/angle/kind deferred (U3-009) |
 | **material** (`glass`) | native (`UIGlassEffect`; iOS 26 morph) | native fx-drawn scrim | `<Fx effect="glass">`, `fx.effect.glass`, `tint`/`colorScheme` | shape-native divergence: iOS glass morph vs Android flat material (DOC-006) |
 | **shader** (10 curated) | MSL | AGSL | `<Fx effect="<shaderId>">`, runtime BYO `registerShader` (DEF-008) | interactive subset = 5 shaders; Android expo-view interactive raster renderer is a TODO (renders blank — EX-002) |
-| **symbol** | native `.symbolEffect` | — (planned) | `fx.effect.symbol({name, animation, …})` — builder-only (U10-002) | **iOS-only**; no `symbol-*` string id; Android Lottie/AVD deferred |
+| **symbol** | native `.symbolEffect` | lib (Lottie, optional peer) | `fx.effect.symbol({name, animation, …})` + `registerSymbol` for Android assets — builder-only (U10-002, DEF-025) | both; Android = app-supplied Lottie via `registerSymbol`, `feature:'lottie'`-gated; AVD deferred; no `symbol-*` string id |
 | **motion** (driver) | native | native | `fx.motion.*`, `FxPresence` motion map | content + effect targets |
 | **source** (scroll driver) | native (SwiftUI `.scrollTransition`, os17/hosted) | — | `Fx.Scroll`, `fx.source.scroll` (DEF-014) | **iOS-only, hosted rung only**; ambient-RN-scroll tier + Android deferred |
 | **content-distort** | out-of-scope (severs RN touch, rule #4) | shader (`RenderEffect`, draw-time) | mechanical `contentDistortion='ripple'` on `FxSurfaceView` (DEF-009) | **Android-only**; no high-level surface (sugar deferred) |
@@ -44,8 +44,9 @@ Shipped features that are currently single-platform. Each is a deliberate deferr
 trigger, not a defect — close one only when an app screen needs it (product value, not parity for
 its own sake):
 
-- **`symbol` — iOS-only.** Android animated-icon parity needs the Lottie/AVD asset path + renderer
-  (`24` Decisions 2/4; manifest Android rung `status:'planned'`).
+- **`symbol` — CLOSED (DEF-025, 2026-06-28).** Was iOS-only; Android animated-icon parity now
+  ships as app-supplied Lottie via `registerSymbol`, gated by the optional `feature:'lottie'` peer;
+  AVD (`via:'native'`) deferred (`24` FX-010; manifest Android rung selectable).
 - **`source`/scroll — iOS-only, hosted rung only.** Android scroll-linked presentation + the
   ambient-RN-scroll best-effort tier are deferred (DEF-014 scope; manifest Android ladder empty).
 - **`content-distort` — Android-only** (and `shape-morph` — Android-only manifest node, no public

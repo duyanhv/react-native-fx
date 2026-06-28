@@ -179,4 +179,12 @@ export const TASKS: DeviceTask[] = [
     status: "in-progress",
     screen: "drag-axis-spike",
   },
+  {
+    id: "DEF-025",
+    title: "Android symbol (Lottie)",
+    platform: "Android \u00b7 iOS",
+    what: "app-registered Lottie renders + animates \u00b7 discrete play-once \u00b7 indefinite loop \u00b7 missing-asset onError \u00b7 iOS trigger-default re-verify",
+    status: "todo",
+    screen: "symbol",
+  },
 ];

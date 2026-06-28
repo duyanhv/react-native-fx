@@ -26,6 +26,12 @@ export type {
   SymbolStep,
   Transition,
 } from './effects/stack';
+export {
+  isRegisteredSymbol,
+  type RegisterSymbolSpec,
+  registeredSymbolNames,
+  registerSymbol,
+} from './effects/symbolRegistry';
 export { fx } from './fx';
 export type { Edge, MotionSpec, Origin, PresenceMotion, Travel } from './motion/types';
 export { FxHostedView, type NativeFxHostedProps } from './runtime/FxHostedView';

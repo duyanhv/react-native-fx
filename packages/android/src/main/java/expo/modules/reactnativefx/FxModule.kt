@@ -13,10 +13,22 @@ class FxModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ReactNativeFx")
 
+    // Synchronous capability snapshot read at import time by the JS capabilities module.
+    // `lottie` is included when the optional com.airbnb.android:lottie peer is on the classpath.
+    Constant("features") {
+      detectLottieFeatures()
+    }
+
     // Registers bring-your-own shader source for runtime compilation. The source crosses once,
     // here; a null source marks a registered id with no android source (silent `{via:'none'}`).
     Function("registerShader") { id: String, source: String? ->
       FxShaderRegistry.register(id, source)
+    }
+
+    // Registers an app-supplied Lottie JSON for the Android symbol rung. The JSON crosses once,
+    // here; per-view only the name crosses (already in symbolConfig). iOS call is a no-op.
+    Function("registerSymbol") { name: String, json: String ->
+      FxSymbolRegistry.register(name, json)
     }
 
     View(FxHostedView::class) {
@@ -27,6 +39,9 @@ class FxModule : Module() {
       }
       Prop("intensity") { view: FxHostedView, value: Double ->
         view.setIntensity(value)
+      }
+      Prop("symbolConfig") { view: FxHostedView, value: SymbolConfig? ->
+        view.setSymbolConfig(value)
       }
       Prop("materialConfig") { view: FxHostedView, value: MaterialConfig? ->
         view.setMaterialConfig(value)
@@ -133,6 +148,21 @@ class FxModule : Module() {
       OnViewDidUpdateProps { view: FxStateView ->
         view.applyResolvedConfig()
       }
+    }
+  }
+
+  // Resolves the optional Lottie sentinel class once; returns ["lottie"] when present, empty
+  // otherwise. Called from Constants so the result is available synchronously at import time.
+  // The probe must never crash module load: an absent peer throws ClassNotFoundException, but a
+  // half-present or mismatched one can throw a LinkageError — both mean "treat Lottie as absent".
+  private fun detectLottieFeatures(): List<String> {
+    return try {
+      Class.forName("com.airbnb.lottie.LottieComposition")
+      listOf("lottie")
+    } catch (_: ClassNotFoundException) {
+      emptyList()
+    } catch (_: LinkageError) {
+      emptyList()
     }
   }
 }

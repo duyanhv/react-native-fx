@@ -460,13 +460,19 @@ main-thread/UI-thread reader, not render-server fidelity — `02` d14): a Compos
 Compose analogue of SwiftUI's `scrollTransition`/`visualEffect`. It lands with its own task when
 the Android `source` rung is triggered; this is a documented platform asymmetry, not a defect.
 
-### `symbol` — planned / optional (deferred from V1)
-- **AVD / Lottie** — `via:native`(AVD) or `via:lib`(Lottie) · `requires {os:21, hosted}` ·
-  **`status:planned`**. `symbol` stays **iOS-only in V1**; Android AVD/Lottie support is
-  deferred until a future task defines the asset contract and renderer. There is no system
-  symbol vocabulary, so the future Android path is a per-platform-different **lowering /
-  asset contract**, **not a different public component** — the public surface stays `<Fx>`
-  (`24`). Lottie remains a possible `via:'lib'` optional peer dependency (`53`).
+### `symbol` — Lottie via `registerSymbol`, feature-gated (DEF-025)
+
+The Android rung is `via:'lib'`, asset `lottie`, `requires { os:21, substrate:'hosted', feature:'lottie' }`. AVD (`via:'native'`) is deferred as a later rung.
+
+- **Rung:** `via:'lib'`, asset `lottie` · `applyVia:LottieAnimationView` · `requires { os:21, substrate:'hosted', feature:'lottie' }`. The `feature:'lottie'` guard means the rung is skipped (→ `{via:'none'}`) when the optional Lottie peer is absent, before any view mounts.
+- **Mechanic:** a plain-`View` host (`FxSymbolView`, a `FrameLayout`) that creates a child `LottieAnimationView` from the optional `com.airbnb.android:lottie` peer — `compileOnly`, never bundled. Compose is not introduced (V1 Android hosting is plain `View` + draw loop, § Substrates). **`FxSymbolView` must NOT subclass `LottieAnimationView`:** Fabric calls `preallocateView` at tree-diff time, before any prop/selector logic, and `FxHostedView` (a public export) can be driven with a `symbolConfig` directly, past the `<Fx>` selector — so a subclass would link the absent peer and crash at class-load (`NoClassDefFoundError`) before `onError` could fire. The host is a `FrameLayout` so it is always class-loadable/constructible; the `LottieAnimationView` child is created lazily, only behind the availability guard below. A bare `View.layout()` from the parent host does not measure descendants, so `FxSymbolView.onLayout` measures + lays the child out to its bounds explicitly (else it collapses to 0×0).
+- **Asset contract:** the app registers a Lottie JSON by name via `registerSymbol`; the JSON crosses the bridge **once** at registration and is held in a process-wide native registry (`FxSymbolRegistry`) keyed by name — the per-view path passes only the `name` string already in `symbolConfig`. This mirrors the `registerShader` source-crossing contract exactly.
+- **Play-mode mapping:** `trigger:'repeat'`/`'state'` → `LottieDrawable.INFINITE` (loop while active); `trigger:'value'` → `repeatCount = 0` (play once per trigger). The public builder normalizes omitted triggers by animation class — discrete (`bounce|pulse|scale|appear|disappear`) → `trigger:'value'`, indefinite (`variableColor|breathe|rotate|wiggle`) → `trigger:'repeat'` — so the play-mode collapse follows automatically. The Lottie asset defines the look; the enum value does not drive a procedural effect.
+- **Detection — an optional peer, never bundled.** The app installs `com.airbnb.android:lottie`; fx confirms presence at runtime by resolving the sentinel class `com.airbnb.lottie.LottieComposition` via `Class.forName` (caught; no hard runtime dependency). When present, `'lottie'` is added to the `features` set exposed via module `Constants`, which `ctx.features` in the selector reads. This is the same optional-peer pattern the `### shape-morph` "Detection" bullet describes for `m3-expressive`; shape-morph's future implementation reuses this mechanism.
+- **Degradation (two axes), guarded at two levels:**
+  - Peer absent — *selector level (the `<Fx>` path):* `'lottie'` absent from `features` → `requires.feature` skips the rung → `{via:'none'}` before any view mounts, `onError({reason:'unsupported'})` from `Fx.tsx`. *Native level (the direct-`FxHostedView` path + Fabric preallocation, which bypass the selector):* `FxSymbolView.configure` re-checks a one-time `Class.forName` flag and returns before referencing any Lottie type — `onError`, no crash. The native guard is load-bearing; the selector is an optimization, not the sole guard.
+  - Asset unregistered for `name` → `FxSymbolView` renders nothing + a native `Log.w` naming the symbol + `onFxError(FxShaderEvent("symbol","unsupported"))` fires the user's `onError` callback, matching how registered-but-sourceless shaders degrade.
+- **AVD deferred.** Android Vector Drawable playback (`via:'native'`) is a later rung; only `via:'lib'`/`asset:'lottie'` ships here.
 
 ### `content-distort` — ripple demonstrator (Android-only, DEF-009)
 

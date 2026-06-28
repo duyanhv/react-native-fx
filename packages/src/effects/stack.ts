@@ -104,6 +104,26 @@ export type EffectBuilder = EffectStack & {
   defaults(transition: Transition): EffectBuilder;
 };
 
+/**
+ * Returns the default trigger for a symbol animation when the caller omits it.
+ *
+ * Indefinite animations (variableColor|breathe|rotate|wiggle) default to `'repeat'` so
+ * they loop continuously without an explicit prop. Discrete animations default to `'value'`
+ * so they play once on mount. An explicit `trigger` always wins; this function is only
+ * called when `trigger` is absent.
+ */
+function defaultTriggerForAnimation(animation: string): 'value' | 'repeat' {
+  switch (animation) {
+    case 'variableColor':
+    case 'breathe':
+    case 'rotate':
+    case 'wiggle':
+      return 'repeat';
+    default:
+      return 'value';
+  }
+}
+
 /** Clones and deep-freezes a `Transition`, including the per-platform `spring`. */
 function freezeTransition(transition: Transition): Transition {
   const spring = transition.spring
@@ -160,7 +180,11 @@ function makeBuilder(steps: EffectStep[], stackTransition?: Transition): EffectB
       return addRenderTarget(builder, { id: 'mesh-gradient', intensity: config?.intensity });
     },
     symbol(config) {
-      return addRenderTarget(builder, { id: 'symbol', config });
+      const normalizedConfig =
+        config.trigger !== undefined
+          ? config
+          : { ...config, trigger: defaultTriggerForAnimation(config.animation) };
+      return addRenderTarget(builder, { id: 'symbol', config: normalizedConfig });
     },
     animate(transition) {
       if (frozenSteps.length === 0) return builder;
@@ -213,7 +237,15 @@ export function mesh(config?: { intensity?: number }): EffectBuilder {
  * Produces an immutable one-step stack with a symbol step. `config.name` is required —
  * it is the visual identity of the symbol, not optional config. Symbol is terminal:
  * the builder emits a dev warn and no-ops if chained onto an existing render-target.
+ *
+ * When `trigger` is omitted, a default is filled by animation class: indefinite animations
+ * (`variableColor|breathe|rotate|wiggle`) default to `'repeat'`; discrete animations default
+ * to `'value'`. An explicit `trigger` is always honored.
  */
 export function symbol(config: SymbolConfig): EffectBuilder {
-  return makeBuilder([{ id: 'symbol', config }]);
+  const normalizedConfig =
+    config.trigger !== undefined
+      ? config
+      : { ...config, trigger: defaultTriggerForAnimation(config.animation) };
+  return makeBuilder([{ id: 'symbol', config: normalizedConfig }]);
 }

@@ -242,12 +242,15 @@ describe('fx.effect.symbol — factory', () => {
     expect(stack.steps[0].id).toBe('symbol');
   });
 
-  it('carries the SymbolConfig on the step', () => {
+  it('carries the SymbolConfig on the step (trigger normalized to value for discrete animations)', () => {
     const config = { name: 'star', animation: 'pulse' as const };
     const step = fx.effect.symbol(config).steps[0];
     expect(step.id).toBe('symbol');
     if (step.id === 'symbol') {
-      expect(step.config).toEqual(config);
+      expect(step.config.name).toBe('star');
+      expect(step.config.animation).toBe('pulse');
+      // Builder fills trigger:'value' when omitted for discrete animations
+      expect(step.config.trigger).toBe('value');
     }
   });
 
@@ -285,9 +288,61 @@ describe('fx.effect.symbol — resolution conformance', () => {
     expect(rung.via).toBe('none');
   });
 
-  it('symbol node selects {via:none} on Android (planned rung only)', () => {
+  it('symbol node degrades to {via:none} on Android without lottie feature', () => {
     const rung = select(manifest.nodes.symbol, 'android', { deviceOS: 21, wantInteractive: false });
     expect(rung.via).toBe('none');
+  });
+
+  it('symbol node selects the lib rung on Android with lottie feature', () => {
+    const rung = select(manifest.nodes.symbol, 'android', {
+      deviceOS: 21,
+      wantInteractive: false,
+      features: ['lottie'],
+    });
+    expect(rung.via).toBe('lib');
+    expect(rung.asset).toBe('lottie');
+  });
+});
+
+// ── Symbol step — builder trigger normalization ────────────────────────────
+
+describe('fx.effect.symbol — builder trigger normalization', () => {
+  // Discrete: bounce|pulse|scale|appear|disappear → trigger:'value'
+  for (const animation of ['bounce', 'pulse', 'scale', 'appear', 'disappear'] as const) {
+    it(`fills trigger:'value' for discrete '${animation}' when trigger is omitted`, () => {
+      const step = fx.effect.symbol({ name: 'x', animation }).steps[0];
+      expect(step.id).toBe('symbol');
+      if (step.id === 'symbol') {
+        expect(step.config.trigger).toBe('value');
+      }
+    });
+  }
+
+  // Indefinite: variableColor|breathe|rotate|wiggle → trigger:'repeat'
+  for (const animation of ['variableColor', 'breathe', 'rotate', 'wiggle'] as const) {
+    it(`fills trigger:'repeat' for indefinite '${animation}' when trigger is omitted`, () => {
+      const step = fx.effect.symbol({ name: 'x', animation }).steps[0];
+      expect(step.id).toBe('symbol');
+      if (step.id === 'symbol') {
+        expect(step.config.trigger).toBe('repeat');
+      }
+    });
+  }
+
+  it('honors an explicit trigger over the animation-class default', () => {
+    const step = fx.effect.symbol({ name: 'x', animation: 'wiggle', trigger: 'value' }).steps[0];
+    expect(step.id).toBe('symbol');
+    if (step.id === 'symbol') {
+      expect(step.config.trigger).toBe('value');
+    }
+  });
+
+  it('preserves explicit trigger:state', () => {
+    const step = fx.effect.symbol({ name: 'x', animation: 'bounce', trigger: 'state' }).steps[0];
+    expect(step.id).toBe('symbol');
+    if (step.id === 'symbol') {
+      expect(step.config.trigger).toBe('state');
+    }
   });
 });
 

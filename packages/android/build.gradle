@@ -24,4 +24,9 @@ dependencies {
   // own view-system interface; the host app provides react-android at runtime, so it is
   // compiled against but never bundled. Unversioned — the expo-module-gradle-plugin resolves it.
   compileOnly 'com.facebook.react:react-android'
+
+  // Optional Lottie peer for the Android symbol rung. The app installs it; fx confirms
+  // presence at runtime via Class.forName (see FxModule.kt). Never bundled — compileOnly
+  // keeps it off the transitive dependency tree so it cannot become a forced dependency.
+  compileOnly 'com.airbnb.android:lottie:6.+'
 }

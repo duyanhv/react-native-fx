@@ -6,6 +6,7 @@ import type { MaterialConfig } from '../effects/catalog';
 import { compositionStyle, type EffectId, resolveEffect } from '../effects/effects';
 import type { EffectStack } from '../effects/stack';
 import { manifest, select } from '../manifest';
+import { getCapabilityFeatures } from '../runtime/capabilities';
 import { FxHostedView } from '../runtime/FxHostedView';
 import { FxSurfaceView } from '../runtime/FxSurfaceView';
 import type {
@@ -43,8 +44,9 @@ export type FxProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-// Parsed once at module load; the OS version does not change during a session.
+// Parsed once at module load; the OS version and capability set do not change during a session.
 const deviceOS = parseInt(String(Platform.Version), 10);
+const capabilityFeatures = getCapabilityFeatures();
 
 const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
   {
@@ -97,7 +99,7 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
   const platform = Platform.OS;
   const rung =
     platform === 'ios' || platform === 'android'
-      ? select(node, platform, { deviceOS, wantInteractive })
+      ? select(node, platform, { deviceOS, wantInteractive, features: capabilityFeatures })
       : ({ via: 'none' } as const);
 
   // Mirror onError into a ref so the degradation effect reads the current callback
@@ -127,7 +129,7 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
   // Symbol step: pass symbolConfig to FxHostedView; the native side ignores `effect` when
   // symbolConfig is set, so no effect string is passed for this path.
   if (step && step.id === 'symbol') {
-    return <FxHostedView symbolConfig={step.config} style={mergedStyle} />;
+    return <FxHostedView symbolConfig={step.config} onFxError={onError} style={mergedStyle} />;
   }
 
   // Non-symbol path: resolve the hosted effect string and mount on the right substrate.

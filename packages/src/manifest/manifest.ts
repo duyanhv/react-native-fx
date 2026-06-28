@@ -349,10 +349,9 @@ export const manifest = {
           {
             via: 'lib',
             asset: 'lottie',
-            applyVia: 'Lottie',
-            requires: { os: 21, substrate: 'hosted' },
-            status: 'planned',
-            note: 'AVD/Lottie is a planned future lowering',
+            applyVia: 'LottieAnimationView',
+            requires: { os: 21, substrate: 'hosted', feature: 'lottie' },
+            note: 'app-registered Lottie JSON via registerSymbol; `lottie` feature flag gates optional peer detection',
           },
         ],
       },
