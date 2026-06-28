@@ -27,19 +27,23 @@ chain and lifecycle rules live in [`subtask-protocol.md`](./subtask-protocol.md)
 ## Where the project is
 
 Read [`progress.md`](./progress.md) for the authoritative state — the snapshot below rots. As of
-2026-06-18:
+2026-06-28:
 
 - **The native runtime + boundary (Units 1–9) are built, device-proven, and merged** on
   `integration/0.1.x` — effects, materials, shaders, motion, presence, interaction, drag/tilt, the
   hosted scroll `source` (DEF-014), runtime-source BYO (DEF-008), Android content-distort (DEF-009).
-- **The JS public surface (Units 10–14) is the remaining work, and it is unbuilt** — `<Fx effect>`,
-  `fx.effect.*`, `FxView`, `FxPressable`, `FxGroup`/`FxItem`, `EdgeGlow`. The original `blueprint.md`
-  scoped the surface out and delegated it to `1-surface/`; nothing tracked it, so the engine shipped
-  while this front door went untracked (five of the eight `52 §Public exports` contract symbols + the
-  `fx.effect.*` builder are absent in code). It is now decomposed in `blueprint.md` Phase S and tracked
-  in `progress.md` Surface build (all `todo`). **Start with Unit 10.**
-- **Publishing waits on V2 + the surface build** — DEF-016 (the `react-native-fxkit` rename) fires
-  pre-publish, after the surface lands.
+- **The JS public surface (Units 10–15) is COMPLETE and merged** — `<Fx effect>` + `EdgeGlow`,
+  `fx.effect.*`, `FxView`, `FxPressable`, `FxGroup`/`FxItem`, typed material, and the symbol builder
+  (`fx.effect.symbol`, U10-002, the last surface unit). All eight `52 §Public exports` contract
+  symbols ship and are device-verified.
+- **The current shipped capability set is recorded in
+  [`v2-capability-baseline.md`](./v2-capability-baseline.md)** — what's shipped, what's iOS-only /
+  Android-only, what's trigger-gated (build on demand), and what's deliberately rejected. Read it to
+  see the V2 surface area without re-deriving it from the table.
+- **Publishing is PARKED** — the `react-native-fxkit` rename + docs/install alignment + npm packaging
+  + `skills/` polish (DEF-016) stay out of scope until publishing is explicitly reintroduced. Do not
+  start DEF-016. The next useful work is product-value-driven feature work (prioritize cross-platform
+  peer gaps — Android `symbol` / `source` — but only when an app screen needs them), not a release push.
 
 Each active task keeps a `tasks/<id>/notes.md` with what changed, any unverified claims, and a
 one-line "Next:". Start there to see what the last session did.
