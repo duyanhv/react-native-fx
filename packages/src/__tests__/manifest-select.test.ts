@@ -220,7 +220,7 @@ describe('select()', () => {
     expect(result.via).toBe('none');
   });
 
-  // ── symbol: iOS supported, Android planned ─────────────────────
+  // ── symbol: iOS native, Android feature-gated Lottie rung ────────
 
   it('selects symbol rung on iOS 17+', () => {
     const result = select(manifest.nodes.symbol, ios, { deviceOS: 17 });
@@ -234,8 +234,26 @@ describe('select()', () => {
     expect(result.via).toBe('none');
   });
 
-  it('skips planned rung for symbol on Android', () => {
+  it('degrades to via: none for Android symbol without the lottie feature flag', () => {
     const result = select(manifest.nodes.symbol, android, { deviceOS: 34 });
+    expect(result.via).toBe('none');
+  });
+
+  it('selects the Android symbol rung when lottie feature is available', () => {
+    const result = select(manifest.nodes.symbol, android, {
+      deviceOS: 21,
+      features: ['lottie'],
+    });
+    expect(result.via).toBe('lib');
+    expect(result.asset).toBe('lottie');
+    expect(result.requires.substrate).toBe('hosted');
+  });
+
+  it('degrades Android symbol to via: none below api 21 even with lottie feature', () => {
+    const result = select(manifest.nodes.symbol, android, {
+      deviceOS: 20,
+      features: ['lottie'],
+    });
     expect(result.via).toBe('none');
   });
 
@@ -255,8 +273,17 @@ describe('select()', () => {
     expect(result.via).toBe('none');
   });
 
-  it('degrades the scroll source to via: none on Android (empty ladder)', () => {
-    const result = select(manifest.nodes.source, android, { deviceOS: 34 });
+  it('selects the Android best-effort scroll source rung on os 21+', () => {
+    const result = select(manifest.nodes.source, android, { deviceOS: 21 });
+    expect(result.via).toBe('native');
+    expect(result.primitive).toBe('ScrollView');
+    expect(result.applyVia).toBe('onScrollChanged');
+    expect(result.target).toBe('effect');
+    expect(result.requires.substrate).toBe('hosted');
+  });
+
+  it('degrades the Android scroll source to via: none below os 21', () => {
+    const result = select(manifest.nodes.source, android, { deviceOS: 20 });
     expect(result.via).toBe('none');
   });
 

@@ -1,4 +1,4 @@
-import { glass, glow, mesh } from './effects/stack';
+import { glass, glow, mesh, symbol } from './effects/stack';
 import { edgeIn, edgeOut, identity, scale } from './motion/builders';
 import { scroll } from './source/builders';
 
@@ -10,5 +10,5 @@ import { scroll } from './source/builders';
 export const fx = {
   motion: { edgeIn, edgeOut, scale, identity },
   source: { scroll },
-  effect: { glow, glass, mesh },
+  effect: { glow, glass, mesh, symbol },
 } as const;

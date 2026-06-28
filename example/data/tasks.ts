@@ -78,9 +78,9 @@ export const TASKS: DeviceTask[] = [
 	{
 		id: "DEF-014",
 		title: "Scroll-linked source rung",
-		platform: "iOS",
-		what: "hosted ScrollView of fx tiles · render-server scrollTransition · zero per-frame JS · os<17 static",
-		status: "todo",
+		platform: "iOS · Android",
+		what: "hosted scroll of fx tiles · iOS render-server scrollTransition · Android best-effort UI-thread offset→opacity/scale (DEF-026) · zero per-frame JS",
+		status: "verified",
 		screen: "source-scroll",
 	},
 	{
@@ -178,5 +178,13 @@ export const TASKS: DeviceTask[] = [
     what: "dragAxis claims configured axis inside cross-axis scroller \u00b7 horizontal/vertical/both \u00b7 inert without active",
     status: "in-progress",
     screen: "drag-axis-spike",
+  },
+  {
+    id: "DEF-025",
+    title: "Android symbol (Lottie)",
+    platform: "Android \u00b7 iOS",
+    what: "app-registered Lottie renders + animates \u00b7 discrete play-once \u00b7 indefinite loop \u00b7 missing-asset onError \u00b7 iOS trigger-default re-verify",
+    status: "todo",
+    screen: "symbol",
   },
 ];

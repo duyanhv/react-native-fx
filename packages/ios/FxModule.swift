@@ -8,11 +8,21 @@ public class FxModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ReactNativeFx")
 
+    // Synchronous capability snapshot read at import time by the JS capabilities module.
+    // iOS has no optional peers that affect symbol selection — SF Symbols serve that role.
+    Constant("features") {
+      [] as [String]
+    }
+
     // Registers bring-your-own shader source for runtime compilation. The source crosses once,
     // here; a nil source marks a registered id with no iOS source (silent `{via:'none'}`).
     Function("registerShader") { (id: String, source: String?) in
       FxShaderRegistry.shared.register(id: id, source: source)
     }
+
+    // No-op on iOS; symbol assets are registered only on Android (no system symbol
+    // vocabulary on Android — Lottie fills that role; iOS uses SF Symbols natively).
+    Function("registerSymbol") { (_: String, _: String) in }
 
     View(FxHostedView.self) {
       Events("onFxTransitionEnd", "onFxLoad", "onFxError")

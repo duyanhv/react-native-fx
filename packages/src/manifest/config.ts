@@ -84,6 +84,14 @@ export type SymbolConfigConformsToManifest = Expect<
   ConfigMatches<SymbolEffectConfig, Partial<SymbolConfig>>
 >;
 
+// `name` is the symbol's visual identity and is required — a config that omits it must NOT be
+// assignable to `SymbolConfig` (the `fx.effect.symbol` parameter). Fails the build if `name`
+// ever becomes optional. This is the real proof of name-required; the test suite cannot assert
+// it because `__tests__` is excluded from `tsc`.
+export type SymbolNameIsRequired = Expect<
+  { animation: 'bounce' } extends SymbolConfig ? false : true
+>;
+
 // `fill` exposes no per-call config in V1 — the empty-spec branch must derive the exact
 // `Record<string, never>`, not the structurally-loose `{}` (which accepts arbitrary keys), so the
 // effect surface cannot be handed config the renderer ignores. A failure here means the empty

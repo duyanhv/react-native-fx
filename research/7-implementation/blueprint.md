@@ -134,8 +134,8 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 
 ### Unit 14: `FxGroup` / `FxItem` — the morphing compound
 *   **Contract:** `57`, `21`
-*   **Precedent (battle-tested):** the `FxGroupView` substrate binding (exists); iOS `GlassEffectContainer` / Android glass stack (U3-002 / U3-003).
-*   **Decision + flip-trigger:** **adapt** the platform glass-container idiom. `FxGroup` / `FxItem` — the one honest compound (each item a real native morphing view); V1 morph scope is glass-only (DOC-006); explicit `spacing` deferred to V2. → *Flip-trigger: morph beyond glass (a new ledger row).*
+*   **Precedent (battle-tested):** the `FxGroupView` substrate binding (exists); iOS UIKit `UIGlassContainerEffect` container / Android glass stack (U3-002 / U3-003).
+*   **Decision + flip-trigger:** **adapt** the platform glass-container idiom. `FxGroup` / `FxItem` — the one honest compound (each item contributes a real native glass surface; the iOS container is the UIKit `UIGlassContainerEffect`, and `FxItem` is JS-only — no native view of its own); V1 morph scope is glass-only (DOC-006); explicit `spacing` deferred to V2. → *Flip-trigger: morph beyond glass (a new ledger row).*
 *   **Explicit Reject:** a generic `Material` / `GlassContainer` component (`21` Decision 3); morphing arbitrary effects in V1.
 *   **Shape · phase:** `src/surface/FxGroup.tsx` (+ `FxItem`) over `FxGroupView` · **Surface**
 *   **Depends on:** Unit 1, Unit 3 (merged)
@@ -148,10 +148,10 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 
 ### Addendum A1: `source` driver — scroll-linked presentation
 *   **Shipped by:** DEF-014 (merged + device-ratified 2026-06-14) — "the V2 opener," the category's demand center.
-*   **Scope:** the **iOS-hosted render-server rung only** — an fx-owned SwiftUI `ScrollView` with per-item `.scrollTransition`, `requires {os:17, substrate:hosted}`, `target:'effect'`, driving fx's own content (rule #4). The scroll *is* the clock; at rest nothing advances. The ambient-RN-scroll best-effort tier and the Android rung are deferred (each its own later rung).
-*   **Code:** manifest `source` node (`src/manifest/manifest.ts`); JS `src/source/` (`fx.source.scroll`), `src/surface/FxScroll.tsx` (the `Fx` namespace object + `FxScroll`), `src/runtime/FxScrollView.{tsx,android.tsx,web.tsx}` (binding + Android/web static fallbacks); iOS `ios/FxScrollView.swift` (persistent `UIHostingController`) + `ios/FxScrollRootView.swift`.
-*   **Source doc:** `02 §Decision 14` (node), `40 §Decision 7` (Escaping-regime-C route 1), `50 §Decision 9` (surface), `structure.ios.md §source`.
-*   **Enables:** the ambient-RN-scroll best-effort tier and the Android `source` rung (later rungs); the `clock` driver sibling (`02 §Decision 14`, still unbuilt — DOC-025).
+*   **Scope:** the fx-owned scroll tier — an iOS SwiftUI `ScrollView` with per-item `.scrollTransition` and an Android native scroll container that maps `onScrollChanged` offset to opacity/scale. Both drive fx-owned effect tiles (rule #4), not arbitrary RN content. The scroll *is* the clock; at rest nothing advances. The ambient-RN-scroll best-effort tier is deferred as its own cross-platform capability.
+*   **Code:** manifest `source` node (`src/manifest/manifest.ts`); JS `src/source/` (`fx.source.scroll`), `src/surface/FxScroll.tsx` (the `Fx` namespace object + `FxScroll`), `src/runtime/FxScrollView.{tsx,web.tsx}`; iOS `ios/FxScrollView.swift` (persistent `UIHostingController`) + `ios/FxScrollRootView.swift`; Android `android/…/FxScrollView.kt`.
+*   **Source doc:** `02 §Decision 14` (node), `40 §Decision 7` (Escaping-regime-C route 1), `50 §Decision 9` (surface), `structure.{ios,android}.md §source`.
+*   **Enables:** the ambient-RN-scroll best-effort tier; the `clock` driver sibling (`02 §Decision 14`, still unbuilt — DOC-025).
 
 ### Addendum A2: `controlled` mode — view-ref imperative uniform writes
 *   **Shipped by:** DEF-020 (merged + device-spiked 2026-06-15).

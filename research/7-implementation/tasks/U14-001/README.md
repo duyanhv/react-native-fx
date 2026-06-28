@@ -135,11 +135,18 @@ Subtask: FxGroup/FxItem — the glass morph compound (blueprint Phase S, Unit 14
                   CARRIED RISK (spec-anticipated, NOT a review failure): the glass is a grandchild of contentView
                   (nested under FxHostedView), not a direct child as in the reference — whether UIGlassContainerEffect
                   merges nested glass is the spike-first device question. May bounce for an FxItem/composition change.
-[ ] device-verified  SPIKE-FIRST iOS 26 morph (the nested-glass question); then matrix both platforms; evidence/device.md
-[ ] docs-closed   structure.{ios,android}.md (UIKit container correction + routing + divergence) — DONE at headless;
-                  OWED: 57 wording tightened ("real native morphing view" → "contributes a real native glass surface")
-                  + Decision 4; 21 confirmed; 52/index export confirmed; blueprint Unit 14 Shape note
-[ ] merged
+[x] device-verified  2026-06-22 — iOS 26 morph spike PASSED (sibling glass merges through the UIKit
+                  container even nested under FxHostedView; FxItem stays JS-only) + touch-through + content
+                  ride; iOS <26 individual no-crash; Android individual no-morph no-crash + touch-through.
+                  GATE-FOUND ANDROID DEFECT FIXED: first-mount collapse — ExpoView/LinearLayout (and an
+                  intermediate FrameLayout) re-arrange absolute children; routed into a ReactViewGroup
+                  (no-op onLayout) so Fabric frames survive (fix fa95df1). evidence/device.md.
+[x] docs-closed   structure.{ios,android}.md (UIKit container correction + routing + divergence) — DONE at
+                  headless; 57 wording tightened ("real native morphing view" → "contributes a real native
+                  glass surface") + Decision 4 + stale GlassEffectContainer→UIGlassContainerEffect; 21
+                  Decision 5 + resolved note (stale name corrected + shipped); 52/index export confirmed;
+                  blueprint Unit 14 note (UIKit container; FxItem JS); research/README compound row.
+[x] merged        2026-06-22, integration/0.1.x (maintainer-delegated)
 ```
 
 ## Start here

@@ -27,8 +27,9 @@ export type NativeFxScrollProps = {
 
 /**
  * Binds to the named native hosted scroll surface, keyed by Expo as
- * `ReactNativeFx_FxScrollView`. Registered on iOS only — Android and web resolve the
- * degraded static fallback through the platform-specific files alongside this one.
+ * `ReactNativeFx_FxScrollView`. Registered on iOS (render-server .scrollTransition) and
+ * Android (best-effort UI-thread offset→opacity/scale); web resolves the null fallback
+ * through `FxScrollView.web.tsx`.
  */
 export const FxScrollView: ComponentType<NativeFxScrollProps> = requireNativeView(
   'ReactNativeFx',

@@ -240,7 +240,7 @@ const manifest: CapabilityManifest = {
     symbol: {
       id: 'symbol', kind: 'render-target', interaction: 'self', phase: 'v1',   // iOS-native; Android planned
       uniforms: {
-        name:       { type: 'string', default: 'heart' },  // SF Symbol name or drawable ref (open text)
+        name:       { type: 'string' },  // SF Symbol name; no default — name is the visual identity and must be supplied
         animation:  { type: 'enum',   default: 'bounce',
                       options: ['bounce', 'pulse', 'scale', 'variableColor', 'appear', 'disappear', 'breathe', 'rotate', 'wiggle'] },
         trigger:    { type: 'enum',   default: 'value', options: ['value', 'state', 'repeat'] },

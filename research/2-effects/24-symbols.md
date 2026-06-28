@@ -22,7 +22,7 @@ to a per-platform-different **asset/runtime path** behind one unified public sur
 
 ```ts
 interface SymbolConfig {
-  name: string;                         // SF Symbol in V1; future drawable/Lottie ref on Android
+  name: string;                         // iOS: SF Symbol name; Android: registerSymbol() Lottie key
   animation: 'bounce' | 'pulse' | 'scale' | 'variableColor'  // NOT the public `effect` id
            | 'appear' | 'disappear' | 'breathe' | 'rotate' | 'wiggle';
   trigger?: 'value' | 'state' | 'repeat';   // discrete / held / continuous
@@ -38,27 +38,33 @@ interface SymbolConfig {
 
 | | iOS | Android |
 |---|---|---|
-| symbol | `.symbolEffect` (17; `breathe`/`rotate`/`wiggle` need 18), `.contentTransition(.symbolEffect)` | planned AVD/Lottie future path — no system symbols |
+| symbol | `.symbolEffect` (17; `breathe`/`rotate`/`wiggle` need 18), `.contentTransition(.symbolEffect)` | Lottie via `registerSymbol` (`os 21`, `feature:'lottie'` optional peer); AVD deferred |
 
-**iOS-only V1 vocabulary.** Android has no system-symbol equivalent, so V1 does not ship an
-Android `symbol` runtime. AVD/Lottie remain planned future lowerings behind the same public
-surface, not a different public component. The manifest keeps those Android rungs
-non-selectable in V1 so Android degrades gracefully to `{via:'none'}`.
+**iOS native, Android app-supplied Lottie (DEF-025).** iOS draws every glyph from Apple's
+system set through `.symbolEffect`. Android has no system-symbol equivalent, so it lowers to an
+**app-supplied Lottie animation** registered by name through `registerSymbol` — the same public
+surface (`<Fx>` / `fx.effect.symbol`), not a different component. The Android rung is `via:'lib'`,
+asset `lottie`, gated by `feature:'lottie'` (the optional `com.airbnb.android:lottie` peer,
+`compileOnly`, never bundled); absent the peer the rung is unselectable and degrades to
+`{via:'none'}`. AVD (`via:'native'`) remains a deferred later rung.
 
 ## Surface consumption
 
-Mounted by `<Fx>` (or an optional `symbol` effect sugar). Feeds the symbol effect ids
-(bounce/pulse/variable-color/replace). `interaction:'self'` — self-animating. Not a content
-wrapper.
+Mounted by `<Fx>` via `fx.effect.symbol({…})`. `interaction:'self'` — self-animating. Not a
+content wrapper.
 
-Zero-config presets stay as simple string ids; typed config uses the **builder/object
-form** — effect-specific config never leaks onto `<Fx>`'s top-level prop surface:
+The string form of `<Fx effect="…">` is for zero-config effects — effects that draw with no
+required configuration, where a bare id is a complete instruction. Symbol is the one
+render-target with no zero-config tier: `name` is its visual identity, not an optional tweak,
+and there is no truthful default glyph. Therefore symbol uses **the builder form only** — a
+string id `symbol-*` does not exist and will never be added to `EffectId`.
 
 ```tsx
-<Fx effect="symbol-bounce" />                          // zero-config preset id
-<Fx effect={fx.effect.symbol({                         // typed config (builder)
-  name: 'heart', animation: 'bounce', trigger: 'value',
-})} />
+// Builder form — the sole symbol surface. name and animation are required.
+<Fx effect={fx.effect.symbol({ name: 'heart', animation: 'bounce', trigger: 'value' })} />
+
+// Aspirational / deferred: zero-config string preset (e.g. "symbol-bounce") would require
+// a truthful name default, which contradicts the no-default decision above. Not shipped.
 ```
 
 `symbol` is `interaction:'self'` — it does **not** own a recognizer, so `trigger` is
@@ -69,9 +75,9 @@ trigger value (e.g. on your button's `onPress`); the symbol does not capture the
 
 - **kind:** render-target · **interaction:** `self`. **composition:** `surface` /
   self-contained (an icon occupies its own box).
-- **Terminal / self-contained step only** — mountable via `<Fx effect="symbol-…">` as a
-  *single* layer, **not composable in multi-layer stacks** (`55`). A `filter` may apply to
-  it, but it never sits under/over other render-targets.
+- **Terminal / self-contained step only** — mounted as a *single* layer via
+  `fx.effect.symbol({…})`, **not composable in multi-layer stacks** (`55`). A `filter` may
+  apply to it, but it never sits under/over other render-targets.
 - **Does not stack** like `fill`/`shader` — it is a self-contained system element, not a
   composite layer; a `filter` over it is possible but unusual.
 
@@ -83,8 +89,12 @@ trigger value (e.g. on your button's `onPress`); the symbol does not capture the
 
 ## Degradation
 
-- iOS <17 → `{via:'none'}` (graceful). Android V1 → `{via:'none'}` because AVD/Lottie
-  support is planned/deferred, not shipped.
+- iOS <17 → `{via:'none'}` (graceful).
+- Android, two axes (DEF-025): the optional Lottie peer absent → `feature:'lottie'` unmet →
+  `{via:'none'}` (selector-skipped). The native `FxSymbolView` also self-guards (a `Class.forName`
+  probe) so it stays construct-safe even when Fabric preallocates it past the selector — it never
+  links the absent peer. A `name` with no registered asset → renders nothing + dev warn +
+  `onError({reason:'unsupported'})`.
 
 ## Events
 
@@ -95,13 +105,19 @@ can sequence). No per-frame stream.
 
 1. **`symbol` is `interaction: 'self'`** — the system animates it; fx triggers via
    discrete `trigger`, never per-frame.
-2. **iOS-only in V1** — unify the prop shape and the public surface (`<Fx>`), but ship
-   the runtime only through iOS `.symbolEffect`. Android AVD/Lottie stays planned and
-   non-selectable until a later task defines the asset contract and renderer.
+2. **iOS native, Android Lottie (DEF-025)** — one prop shape and public surface (`<Fx>` /
+   `fx.effect.symbol`); iOS ships through `.symbolEffect`, Android through an app-supplied Lottie
+   animation registered by name via `registerSymbol`, gated by the optional `feature:'lottie'`
+   peer. AVD (`via:'native'`) stays a deferred later rung. (Was iOS-only in V1; DEF-025 closed the
+   peer gap.)
 3. **Effect names map to SF Symbols' behavioral classes** (discrete/indefinite/
-   transition/content) — the trigger semantics follow from the class.
-4. **Android asset sourcing is deferred** — SF Symbols are Apple-only. Android AVD/Lottie
-   assets require an app-supplied asset contract, which does not ship in V1.
+   transition/content) — the trigger semantics follow from the class. On Android the class
+   collapses to a play-mode (discrete → play once per trigger; indefinite → loop while active);
+   the Lottie asset carries the look, the enum only selects loop vs once.
+4. **Android asset sourcing is app-supplied Lottie (DEF-025)** — SF Symbols are Apple-only, so
+   Android binds a `name` to an app-registered Lottie JSON via `registerSymbol({ name, android:
+   { type:'lottie', source } })`. fx owns the binding mechanism, never a bundled icon pack. The
+   JSON crosses the bridge once at registration; per-view only `name` crosses.
 
 ## Sources
 

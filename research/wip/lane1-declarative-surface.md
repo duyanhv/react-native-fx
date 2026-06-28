@@ -1,9 +1,14 @@
 # Lane 1 — declarative surface (preset, descriptor, override)
 
-Status: open — WIP, non-authoritative
+Status: historical — architecture promoted to canon (DOC-032); non-authoritative
 Phase: additive (depth-1 Boundary A/B; no rule-break)
 Feeds: `lane1-signal-grammar.md`, `0-spine/04`/`05` (capability-boundary taxonomy; `capability-boundary-classifier.md` historical), `0-spine/02-capability-ir-and-lowering.md`, `5-realization/structure.{ios,android}.md`
 Scope: decide the JS surface a developer authors for a Lane 1 interaction — how much of the `source → mapping → settle → target` graph is exposed before the API stops feeling declarative and starts feeling like worklet programming without worklets.
+
+> **Promoted (DOC-032, 2026-06-28).** The canonical surface direction now lives in
+> `1-surface/50 §Lane 1 interaction surface direction`, with the event handoff in
+> `3-motion/40 §Source-driven interaction events` and the mechanism in `0-spine/05`.
+> This WIP remains derivation history and detailed rationale. Cite the canonical docs.
 
 ## The question
 

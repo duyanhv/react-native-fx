@@ -1,7 +1,7 @@
 # Interactive content-distort (water-ripple)
 Status: open — WIP, non-authoritative
 Phase: post-v2 exploration
-Feeds: `wip/native-animation-api-extraction.md`, `wip/lane1-signal-grammar.md`, `0-spine/04`/`05` (capability-boundary taxonomy; `wip/capability-boundary-classifier.md` historical), `2-effects/23-filters.md`, `5-realization/structure.android.md`
+Feeds: `wip/native-animation-api-extraction.md`, `0-spine/04`/`05` (capability-boundary taxonomy and Lane 1 grammar; `wip/capability-boundary-classifier.md` and `wip/lane1-signal-grammar.md` historical), `3-motion/40`, `2-effects/23-filters.md`, `5-realization/structure.android.md`
 Scope: a named feature exploration — make the Android content-distort shipped by DEF-009 (a stateless, time-driven ripple) *interactive*: a ripple that follows touch like water, and an impulse triggered at a point like a rock dropped in a pond. Captures what it is, which lane it falls in, and what it depends on — so it is a recorded post-v2 target, not re-litigated each time it comes up. **No architecture decision; no ledger row.**
 
 ## Why this matters
@@ -35,9 +35,8 @@ two implementation flavors, and the choice is load-bearing:
 
 The Lane 1 grammar and the boundary classifier already place this shape — it is not novel:
 
-- **Target = an effect uniform → Boundary B.** `lane1-signal-grammar.md`: *"a target is
-  transform/opacity (Boundary A) or an effect uniform (Boundary B)"*; *"effect uniform / intensity
-  (material, edge-glow, shader) → Boundary B."*
+- **Target = an effect uniform → Boundary B.** `04`/`05` place Lane 1 targets inside transform/
+  opacity on an fx-owned wrapper (Boundary A) or effect uniforms (Boundary B).
 - **Driver = `source` (gesture-linked).** `native-animation-api-extraction.md` concept table:
   *"gesture-linked animation → `source` driver"*; *"Native reads the source … drives
   transform/opacity or effect uniforms."*
@@ -97,17 +96,17 @@ not the default.
 - **Source budget:** how many simultaneous ripple sources before the parametric sum costs too much
   — a device-tuning question, like the DEF-009 amplitude.
 - **The falsifying test:** does the parametric mapping actually express a believable drag-trail, or
-  does it fail the Lane-1 ceiling and force regime C? Run the `lane1-signal-grammar.md` ten-case
-  test on the ripple before committing a lane.
+  does it fail the Lane 1 ceiling and force regime C? Run the `05` Lane 1 falsification test on
+  the ripple before committing a lane.
 
 ## Sources
 
 - `wip/native-animation-api-extraction.md` — the post-v2 chaining animation API; `source` driver
   for gesture-linked motion onto effect uniforms; the step-5 sequencing.
-- `wip/lane1-signal-grammar.md` — the native source → mapping → fx-owned-target grammar;
-  Boundary-B effect-uniform targets; the Lane 1 vs Lane 2 (regime C) line.
-- `0-spine/05` — canonical: the two-lane continuous-interaction model and the falsifying test
-  (`wip/capability-boundary-classifier.md` is the historical derivation).
+- `0-spine/04` / `0-spine/05` — canonical: Boundary-B effect-uniform targets, the native source
+  → mapping → fx-owned-target grammar, the two-lane continuous-interaction model, and the
+  falsifying test (`wip/capability-boundary-classifier.md` and `wip/lane1-signal-grammar.md` are
+  historical derivations).
 - `7-implementation/tasks/DEF-009/` — the shipped stateless foundation.
 - decision-ledger DEF-020 (imperative handle), DEF-011 (drag/tilt), DEF-006 (UI-thread channel) —
   the V2 enablers.

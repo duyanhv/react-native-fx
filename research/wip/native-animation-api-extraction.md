@@ -421,7 +421,7 @@ Architecture changes begin only when a capability needs one of these:
 - Android `android.view.animation` package reference: https://developer.android.com/reference/android/view/animation/package-summary
 - Local Xcode iOS 26.5 SwiftUICore symbol graph, extracted with `swift-symbolgraph-extract`.
 - `0-spine/04` / `0-spine/05` — the canonical boundary and regime classifier (`research/wip/capability-boundary-classifier.md` is the historical derivation).
-- `research/wip/lane1-signal-grammar.md` — source-driven Lane 1 grammar.
+- `research/0-spine/05-native-boundary-decision.md` — source-driven Lane 1 grammar.
 - `research/wip/interactive-content-distort.md` — a feature applying this chaining API + the Lane 1
   `source` grammar: the interactive water-ripple (gesture-driven effect uniform; impulse animation).
 - `research/3-motion/41-motion-vocabulary.md` — `preset` / `motion` / `transition` split.

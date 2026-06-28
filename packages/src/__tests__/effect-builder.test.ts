@@ -1,6 +1,14 @@
+import type { EffectId } from '../effects/effects';
 import { resolveEffect } from '../effects/effects';
+import type { EffectStepId } from '../effects/stack';
 import { fx } from '../fx';
 import { manifest, select } from '../manifest';
+
+/** Narrows a builder step id to its string-form `EffectId`; symbol has no string id. */
+function asEffectId(id: EffectStepId): EffectId {
+  if (id === 'symbol') throw new Error('symbol has no string effect id');
+  return id;
+}
 
 // ── Factory functions ───────────────────────────────────────────────────────
 
@@ -24,23 +32,35 @@ describe('fx.effect factory functions', () => {
   });
 
   it('glow forwards intensity into the step', () => {
-    const stack = fx.effect.glow({ intensity: 0.7 });
-    expect(stack.steps[0].intensity).toBe(0.7);
+    const step = fx.effect.glow({ intensity: 0.7 }).steps[0];
+    expect(step.id).toBe('edge-glow');
+    if (step.id === 'edge-glow') {
+      expect(step.intensity).toBe(0.7);
+    }
   });
 
   it('glass forwards MaterialConfig into the step', () => {
-    const stack = fx.effect.glass({ variant: 'clear', interactive: true });
-    expect(stack.steps[0].config).toEqual({ variant: 'clear', interactive: true });
+    const step = fx.effect.glass({ variant: 'clear', interactive: true }).steps[0];
+    expect(step.id).toBe('glass');
+    if (step.id === 'glass') {
+      expect(step.config).toEqual({ variant: 'clear', interactive: true });
+    }
   });
 
   it('glass forwards tint and colorScheme into the step', () => {
-    const stack = fx.effect.glass({ tint: '#ff6b6b', colorScheme: 'dark' });
-    expect(stack.steps[0].config).toEqual({ tint: '#ff6b6b', colorScheme: 'dark' });
+    const step = fx.effect.glass({ tint: '#ff6b6b', colorScheme: 'dark' }).steps[0];
+    expect(step.id).toBe('glass');
+    if (step.id === 'glass') {
+      expect(step.config).toEqual({ tint: '#ff6b6b', colorScheme: 'dark' });
+    }
   });
 
   it('mesh forwards intensity into the step', () => {
-    const stack = fx.effect.mesh({ intensity: 0.5 });
-    expect(stack.steps[0].intensity).toBe(0.5);
+    const step = fx.effect.mesh({ intensity: 0.5 }).steps[0];
+    expect(step.id).toBe('mesh-gradient');
+    if (step.id === 'mesh-gradient') {
+      expect(step.intensity).toBe(0.5);
+    }
   });
 });
 
@@ -87,15 +107,18 @@ describe('EffectBuilder — value semantics', () => {
 
   it('nested config and transition payloads are cloned and deep-frozen', () => {
     const config = { variant: 'clear' as const };
-    const stack = fx.effect
+    const step = fx.effect
       .glass(config)
-      .animate({ duration: 200, spring: { ios: { bounce: 0.2 } } });
-    expect(Object.isFrozen(stack.steps[0].config)).toBe(true);
-    expect(Object.isFrozen(stack.steps[0].transition)).toBe(true);
-    expect(Object.isFrozen(stack.steps[0].transition?.spring)).toBe(true);
-    expect(Object.isFrozen(stack.steps[0].transition?.spring?.ios)).toBe(true);
-    // The stored config is a clone — it is not the caller's object.
-    expect(stack.steps[0].config).not.toBe(config);
+      .animate({ duration: 200, spring: { ios: { bounce: 0.2 } } }).steps[0];
+    expect(step.id).toBe('glass');
+    if (step.id === 'glass') {
+      expect(Object.isFrozen(step.config)).toBe(true);
+      // The stored config is a clone — it is not the caller's object.
+      expect(step.config).not.toBe(config);
+    }
+    expect(Object.isFrozen(step.transition)).toBe(true);
+    expect(Object.isFrozen(step.transition?.spring)).toBe(true);
+    expect(Object.isFrozen(step.transition?.spring?.ios)).toBe(true);
   });
 });
 
@@ -165,7 +188,7 @@ describe('EffectBuilder — animate and defaults', () => {
 describe('EffectBuilder — resolution conformance', () => {
   it('glow step id resolves to node:shader, matching the string form', () => {
     const step = fx.effect.glow().steps[0];
-    const fromBuilder = resolveEffect(step.id);
+    const fromBuilder = resolveEffect(asEffectId(step.id));
     const fromString = resolveEffect('edge-glow');
     expect(fromBuilder).toEqual(fromString);
     expect(fromBuilder.node).toBe('shader');
@@ -173,7 +196,7 @@ describe('EffectBuilder — resolution conformance', () => {
 
   it('glass step id resolves to node:material, matching the string form', () => {
     const step = fx.effect.glass().steps[0];
-    const fromBuilder = resolveEffect(step.id);
+    const fromBuilder = resolveEffect(asEffectId(step.id));
     const fromString = resolveEffect('glass');
     expect(fromBuilder).toEqual(fromString);
     expect(fromBuilder.node).toBe('material');
@@ -181,7 +204,7 @@ describe('EffectBuilder — resolution conformance', () => {
 
   it('mesh step id resolves to node:fill, matching the string form', () => {
     const step = fx.effect.mesh().steps[0];
-    const fromBuilder = resolveEffect(step.id);
+    const fromBuilder = resolveEffect(asEffectId(step.id));
     const fromString = resolveEffect('mesh-gradient');
     expect(fromBuilder).toEqual(fromString);
     expect(fromBuilder.node).toBe('fill');
@@ -189,14 +212,14 @@ describe('EffectBuilder — resolution conformance', () => {
 
   it('each builder step id resolves to an existing manifest node', () => {
     for (const builder of [fx.effect.glow(), fx.effect.glass(), fx.effect.mesh()]) {
-      const { node } = resolveEffect(builder.steps[0].id);
+      const { node } = resolveEffect(asEffectId(builder.steps[0].id));
       expect(manifest.nodes[node]).toBeDefined();
     }
   });
 
   it('glow builder form selects the same substrate as the string form on iOS 17', () => {
     const step = fx.effect.glow().steps[0];
-    const { node } = resolveEffect(step.id);
+    const { node } = resolveEffect(asEffectId(step.id));
     const fromBuilder = select(manifest.nodes[node], 'ios', {
       deviceOS: 17,
       wantInteractive: false,
@@ -207,5 +230,153 @@ describe('EffectBuilder — resolution conformance', () => {
       wantInteractive: false,
     });
     expect(fromBuilder).toEqual(fromString);
+  });
+});
+
+// ── Symbol step — factory ──────────────────────────────────────────────────
+
+describe('fx.effect.symbol — factory', () => {
+  it('produces a one-step stack with id symbol', () => {
+    const stack = fx.effect.symbol({ name: 'heart', animation: 'bounce' });
+    expect(stack.steps).toHaveLength(1);
+    expect(stack.steps[0].id).toBe('symbol');
+  });
+
+  it('carries the SymbolConfig on the step (trigger normalized to value for discrete animations)', () => {
+    const config = { name: 'star', animation: 'pulse' as const };
+    const step = fx.effect.symbol(config).steps[0];
+    expect(step.id).toBe('symbol');
+    if (step.id === 'symbol') {
+      expect(step.config.name).toBe('star');
+      expect(step.config.animation).toBe('pulse');
+      // Builder fills trigger:'value' when omitted for discrete animations
+      expect(step.config.trigger).toBe('value');
+    }
+  });
+
+  // `name` is required at the type level — proven by the tsc-checked `SymbolNameIsRequired`
+  // assertion in `manifest/config.ts` (the test suite cannot assert it; `__tests__` is excluded
+  // from `tsc`).
+
+  it('symbol step and its config are frozen', () => {
+    const stack = fx.effect.symbol({ name: 'heart', animation: 'bounce' });
+    expect(Object.isFrozen(stack)).toBe(true);
+    expect(Object.isFrozen(stack.steps)).toBe(true);
+    const step = stack.steps[0];
+    expect(Object.isFrozen(step)).toBe(true);
+    expect(step.id).toBe('symbol');
+    if (step.id === 'symbol') {
+      expect(Object.isFrozen(step.config)).toBe(true);
+    }
+  });
+});
+
+// ── Symbol step — resolution conformance ──────────────────────────────────
+
+describe('fx.effect.symbol — resolution conformance', () => {
+  it('manifest.nodes.symbol exists', () => {
+    expect(manifest.nodes.symbol).toBeDefined();
+  });
+
+  it('symbol node selects the native rung on iOS 17', () => {
+    const rung = select(manifest.nodes.symbol, 'ios', { deviceOS: 17, wantInteractive: false });
+    expect(rung.via).not.toBe('none');
+  });
+
+  it('symbol node selects {via:none} on iOS below 17', () => {
+    const rung = select(manifest.nodes.symbol, 'ios', { deviceOS: 16, wantInteractive: false });
+    expect(rung.via).toBe('none');
+  });
+
+  it('symbol node degrades to {via:none} on Android without lottie feature', () => {
+    const rung = select(manifest.nodes.symbol, 'android', { deviceOS: 21, wantInteractive: false });
+    expect(rung.via).toBe('none');
+  });
+
+  it('symbol node selects the lib rung on Android with lottie feature', () => {
+    const rung = select(manifest.nodes.symbol, 'android', {
+      deviceOS: 21,
+      wantInteractive: false,
+      features: ['lottie'],
+    });
+    expect(rung.via).toBe('lib');
+    expect(rung.asset).toBe('lottie');
+  });
+});
+
+// ── Symbol step — builder trigger normalization ────────────────────────────
+
+describe('fx.effect.symbol — builder trigger normalization', () => {
+  // Discrete: bounce|pulse|scale|appear|disappear → trigger:'value'
+  for (const animation of ['bounce', 'pulse', 'scale', 'appear', 'disappear'] as const) {
+    it(`fills trigger:'value' for discrete '${animation}' when trigger is omitted`, () => {
+      const step = fx.effect.symbol({ name: 'x', animation }).steps[0];
+      expect(step.id).toBe('symbol');
+      if (step.id === 'symbol') {
+        expect(step.config.trigger).toBe('value');
+      }
+    });
+  }
+
+  // Indefinite: variableColor|breathe|rotate|wiggle → trigger:'repeat'
+  for (const animation of ['variableColor', 'breathe', 'rotate', 'wiggle'] as const) {
+    it(`fills trigger:'repeat' for indefinite '${animation}' when trigger is omitted`, () => {
+      const step = fx.effect.symbol({ name: 'x', animation }).steps[0];
+      expect(step.id).toBe('symbol');
+      if (step.id === 'symbol') {
+        expect(step.config.trigger).toBe('repeat');
+      }
+    });
+  }
+
+  it('honors an explicit trigger over the animation-class default', () => {
+    const step = fx.effect.symbol({ name: 'x', animation: 'wiggle', trigger: 'value' }).steps[0];
+    expect(step.id).toBe('symbol');
+    if (step.id === 'symbol') {
+      expect(step.config.trigger).toBe('value');
+    }
+  });
+
+  it('preserves explicit trigger:state', () => {
+    const step = fx.effect.symbol({ name: 'x', animation: 'bounce', trigger: 'state' }).steps[0];
+    expect(step.id).toBe('symbol');
+    if (step.id === 'symbol') {
+      expect(step.config.trigger).toBe('state');
+    }
+  });
+});
+
+// ── Symbol step — terminal guard ───────────────────────────────────────────
+
+describe('fx.effect.symbol — terminal guard', () => {
+  let warn: jest.SpyInstance;
+  beforeEach(() => {
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
+  it('symbol + second render-target returns the original builder unchanged', () => {
+    const original = fx.effect.symbol({ name: 'heart', animation: 'bounce' });
+    const result = original.glow();
+    expect(result).toBe(original);
+  });
+
+  it('symbol + second render-target does not add a step', () => {
+    const stack = fx.effect.symbol({ name: 'heart', animation: 'bounce' }).glass();
+    expect(stack.steps).toHaveLength(1);
+    expect(stack.steps[0].id).toBe('symbol');
+  });
+
+  it('symbol + second render-target emits a dev warn', () => {
+    fx.effect.symbol({ name: 'heart', animation: 'bounce' }).mesh();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('multi-layer'));
+  });
+
+  it('builder .symbol method goes through the terminal guard', () => {
+    const original = fx.effect.glow();
+    const result = original.symbol({ name: 'heart', animation: 'bounce' });
+    expect(result).toBe(original);
   });
 });

@@ -85,6 +85,36 @@ still scoped by owner** — there is no universal prop:
   your content) — different meaning per owner.
 - `composition` applies **only to effect layers** (where the effect sits), nowhere else.
 
+### Lane 1 interaction surface direction
+
+Lane 1 interactions follow the same layered surface as presence and effects: preset first,
+builder/IR underneath, and typed overrides only where they preserve the preset's ownership.
+
+The authoring surface is an `interaction` preset on the component that owns the target:
+
+```tsx
+<FxPresence
+  visible={open}
+  interaction={{ type: "dragDismiss", direction: "positive", distance: "self" }}
+  onSignalEvent={handleSignal}
+/>
+```
+
+This is a direction for future source-driven interactions, not a shipped blanket prop; the exact
+event prop name is settled with the first feature. The rule it pins is the important part:
+
+- developers choose an interaction shape, not a graph;
+- the lowered `source -> mapping -> settle -> target` descriptor is implementation IR, not the
+  public authoring object;
+- overrides are typed leaf parameters per preset, not descriptor patches;
+- an override may tune thresholds, distance, direction, spring, or enabled state;
+- an override may not change source type, target property, event kinds, lifecycle target,
+  retention, layout participation, or introduce a new React-unowned outcome.
+
+Lifecycle-committing interactions attach to the lifecycle owner (`FxPresence` or a future flow
+slot). Pure continuous mappings attach to the content-motion or effect owner. In both cases the
+surface stays preset-first and platform-native by default.
+
 ## Props by default; compound only for real native layers
 
 > **Compound components are honest only when each subcomponent is a real native view/layer.
@@ -189,8 +219,9 @@ by the runtime.
      content cannot be scroll-linked without hosting it (rule #4 — it would sever RN touch), so
      `Fx.Scroll` takes a `tiles` data prop of fx's own generative effects, not JSX children; the
      `source` binding is container-scoped. A per-`<Fx>`-item source binding can arrive only for
-     fx-owned effect children, never wrapped RN content. iOS-hosted render-server only; the
-     ambient-RN-scroll and Android tiers are deferred (`40`/`02`).
+     fx-owned effect children, never wrapped RN content. iOS ships the render-server tier;
+     Android ships the fx-owned best-effort UI-thread tier; the ambient-RN-scroll tier is
+     deferred (`40`/`02`).
 
 ## Open questions
 

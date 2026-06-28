@@ -26,12 +26,13 @@ class FxHostedView(
 ) : FxNativeView(context, appContext) {
   val onFxTransitionEnd by EventDispatcher<Unit>()
   val onFxLoad by EventDispatcher<Unit>()
-  val onFxError by EventDispatcher<Unit>()
+  val onFxError by EventDispatcher<FxShaderEvent>()
 
   private var effectView: View? = null
   private var mountedEffectId: String? = null
   private var pendingEffect: String? = null
   private var pendingIntensity: Double = 0.8
+  private var pendingSymbolConfig: SymbolConfig? = null
   private var pendingMaterialConfig: MaterialConfig? = null
 
   // A decorative child swapped in on a later prop batch is added outside RN's layout
@@ -55,12 +56,28 @@ class FxHostedView(
     pendingIntensity = value
   }
 
+  fun setSymbolConfig(value: SymbolConfig?) {
+    pendingSymbolConfig = value
+  }
+
   fun setMaterialConfig(value: MaterialConfig?) {
     pendingMaterialConfig = value
   }
 
   override fun applyResolvedConfig() {
     super.applyResolvedConfig()
+
+    // Symbol config takes precedence; update the live FxSymbolView in place or mount a new one.
+    val symbolConfig = pendingSymbolConfig
+    if (symbolConfig != null) {
+      val current = effectView
+      if (current is FxSymbolView) {
+        current.configure(symbolConfig)
+      } else {
+        mountSymbol(symbolConfig)
+      }
+      return
+    }
 
     val effect = pendingEffect
     if (effect == null) {
@@ -84,18 +101,25 @@ class FxHostedView(
     mountEffect(effect, pendingIntensity)
   }
 
+  private fun mountSymbol(config: SymbolConfig) {
+    removeHost()
+    val view = FxSymbolView(context) {
+      onFxError(FxShaderEvent("symbol", "unsupported"))
+    }
+    view.layoutParams = ViewGroup.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT,
+      ViewGroup.LayoutParams.MATCH_PARENT
+    )
+    view.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+    addView(view)
+    effectView = view
+    view.configure(config)
+  }
+
   private fun mountEffect(effect: String, intensity: Double) {
     removeHost()
 
-    val view = when (effect) {
-      "fill" -> FxFillView(context, intensity)
-      "material" -> FxMaterialView(context, intensity, pendingMaterialConfig)
-      "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
-      "aurora", "noise-field", "plasma", "caustics", "edge-glow" -> {
-        FxShaderView(context, effect, intensity)
-      }
-      else -> return
-    }
+    val view = createEffectView(context, effect, intensity, pendingMaterialConfig) ?: return
 
     view.layoutParams = ViewGroup.LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT,
@@ -113,6 +137,27 @@ class FxHostedView(
     effectView = null
     mountedEffectId = null
   }
+}
+
+/**
+ * Creates the appropriate effect view for a given effect id.
+ *
+ * Shared by [FxHostedView] and [FxScrollView] so the curated id → view mapping stays
+ * single-source. Returns null for unknown ids so callers can no-op cleanly.
+ */
+internal fun createEffectView(
+  context: Context,
+  effect: String,
+  intensity: Double,
+  materialConfig: MaterialConfig? = null,
+): View? = when (effect) {
+  "fill" -> FxFillView(context, intensity)
+  "material" -> FxMaterialView(context, intensity, materialConfig)
+  "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
+  "aurora", "noise-field", "plasma", "caustics", "edge-glow" -> {
+    FxShaderView(context, effect, intensity)
+  }
+  else -> null
 }
 
 /**

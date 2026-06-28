@@ -279,11 +279,12 @@ export const manifest = {
 
     // ── source — a native scroll value driving presentation ──────────
     // The third driver node (target / clock / source). A native scroll position maps to
-    // fx's own hosted effect tiles entirely in the render server — zero per-frame JS *and*
-    // zero per-frame main-thread work, the guarantee that holds only on iOS hosted. The
-    // rung drives fx-owned content, never wrapped RN content. Scroll is the clock,
-    // so there is no perpetual loop and no `cadence`. Android's ladder is empty → {via:'none'}
-    // (a separate later rung), as is the ambient-RN-scroll best-effort tier.
+    // fx's own hosted effect tiles with zero per-frame JS. iOS achieves this entirely in
+    // the render server (.scrollTransition, os:17+). Android achieves the same zero-per-frame-JS
+    // guarantee via a UI-thread event-driven ScrollView.onScrollChanged reader (os:21+) —
+    // lower fidelity than the iOS render-server rung, honestly documented. Scroll is the clock,
+    // so there is no perpetual loop and no `cadence`. The ambient-RN-scroll best-effort tier
+    // (a reader over the app's own RN ScrollView/FlatList) stays deferred as its own capability.
     source: {
       id: 'source',
       kind: 'driver',
@@ -305,7 +306,17 @@ export const manifest = {
             note: "render-server scroll-linked presentation of fx's own hosted tiles; SwiftUI's standard edge transition is the default",
           },
         ],
-        android: [],
+        android: [
+          {
+            via: 'native',
+            primitive: 'ScrollView',
+            applyVia: 'onScrollChanged',
+            clock: 'none',
+            target: 'effect',
+            requires: { os: 21, substrate: 'hosted' },
+            note: "best-effort UI-thread scroll-offset reader (ScrollView.onScrollChanged) maps native scroll position to opacity/scale of fx's own hosted tiles; lower fidelity than iOS render-server .scrollTransition. Shader tiles draw on API 33+; fill on API 21+.",
+          },
+        ],
       },
     },
 
@@ -316,7 +327,7 @@ export const manifest = {
       interaction: 'self',
       phase: 'v1',
       uniforms: {
-        name: { type: 'string', default: 'heart' },
+        name: { type: 'string' },
         animation: {
           type: 'enum',
           default: 'bounce',
@@ -349,10 +360,9 @@ export const manifest = {
           {
             via: 'lib',
             asset: 'lottie',
-            applyVia: 'Lottie',
-            requires: { os: 21, substrate: 'hosted' },
-            status: 'planned',
-            note: 'AVD/Lottie is a planned future lowering',
+            applyVia: 'LottieAnimationView',
+            requires: { os: 21, substrate: 'hosted', feature: 'lottie' },
+            note: 'app-registered Lottie JSON via registerSymbol; `lottie` feature flag gates optional peer detection',
           },
         ],
       },

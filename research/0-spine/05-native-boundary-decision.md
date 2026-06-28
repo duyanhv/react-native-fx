@@ -117,8 +117,8 @@ Most "live" interactions (gesture → transition progress, scroll → header tra
 two lanes:
 
 - **Lane 1 — native continuous source** (additive, depth 1, no rule-break): a native source
-  drives a native mapping/preset on a native clock. Build here first; Lane 1's design problem is
-  **preset expressiveness** — a native mapping vocabulary rich enough to keep Lane 2 empty.
+  drives a fixed native mapping/preset on a native clock. Build here first; Lane 1's design problem
+  is **preset expressiveness** — a native mapping vocabulary rich enough to keep Lane 2 empty.
 - **Lane 2 — authored continuous source** (gated regime C, depth 4): the user authors the
   mapping (a worklet) and it runs on the UI thread. Doubly narrow — it earns itself only when
   **native presets cannot express the interaction** *and* the mapping must drive **state only fx
@@ -133,6 +133,43 @@ Before opening Lane 2 / regime C, the interaction must fail **the falsifying tes
 **Yes** → no regime C; build it in Lane 1 (a missing preset is *vocabulary* work, not a
 rule-break). **No, and the mapping must be user-authored per frame against fx-owned state** →
 regime C is justified, and the break is depth-4 (JSI/worklets), not Nitro for its own sake.
+
+### Lane 1 native signal grammar
+
+Lane 1 is a small native signal grammar for fx-owned presentation. It is not a general animation
+language, and it is not a graph API for app code.
+
+```txt
+native source -> normalized signal -> native mapping -> fx-owned target
+```
+
+The target is either transform/opacity on an fx-owned wrapper (Boundary A) or an effect uniform
+(Boundary B). The target is never height, width, flex, child order, or arbitrary app state.
+
+Lane 1 has two phases:
+
+- **Track:** while the source is active, the target follows the mapped value.
+- **Settle:** when the source ends, an optional fixed native operator resolves the rest state.
+
+The track phase is stateless. It can condition and shape the signal with a small vocabulary:
+
+- `smooth` as source-side conditioning for noisy sources only;
+- `range-map`, `curve`, and `deadzone` as pure transforms;
+- `extrapolate: "clamp"` or `extrapolate: "rubberBand"` as the range-edge policy.
+
+The settle phase owns the hidden state. Its operators are fixed, enumerated, and
+parameterized: `threshold`, `hysteresis`, `snap`/`detent`, `spring-to`, and `velocity-settle`.
+Developers pick an operator through a preset's typed parameters; they do not assemble a state
+machine.
+
+Lane 1 falsifies on three edges:
+
+- the consequence must move siblings through Yoga → Boundary L;
+- the consequence changes React child structure or order → cross-tree frontier;
+- the mapping or commit decision needs arbitrary user-authored per-frame math → Lane 2 / regime C.
+
+Most rich interactions split across those edges. Lane 1 can move the driven element, while the
+layout consequence or structural commit stays a separate capability decision.
 
 ## Reference repos to fork / inspect
 
@@ -173,6 +210,10 @@ references for the future lanes and fallback boundary.
    depending on** a worklet / JSI / host-object to drive frames is the depth-4 carve-out —
    **rejected by default**, revisited only under the `33`/`35` triggers. This is the
    depth-1-allowed / depth-4-rejected line drawn in §Capability mechanism above.
+6. **Lane 1 has a fixed native signal grammar, not a user-authored graph.** Native source →
+   mapping → fx-owned target is additive only while the target stays Boundary A or B and the
+   mapping uses the fixed track/settle vocabulary. If a proposed interaction needs layout writes,
+   child reordering, cross-tree identity, or arbitrary per-frame authored math, it leaves Lane 1.
 
 ## Open questions
 

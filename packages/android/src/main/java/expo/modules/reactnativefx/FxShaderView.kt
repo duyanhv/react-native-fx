@@ -105,6 +105,11 @@ internal class FxShaderView(
     invalidate()
   }
 
+  // Called by FxScrollView to fan out pausePresentationLoop/resumePresentationLoop to hosted
+  // shader tiles; each FxShaderView also self-manages via onDetachedFromWindow/onWindowFocusChanged.
+  internal fun pause() = stopLoop()
+  internal fun resume() { if (isAttachedToWindow) startLoop() }
+
   private fun startLoop() {
     if (isCallbackScheduled || shader == null) {
       return

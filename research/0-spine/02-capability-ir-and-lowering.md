@@ -36,7 +36,7 @@ vocabulary. Never name anything `swiftui*` or `compose*` above the manifest.
 | `shader` | render-target | fx | v1 |
 | `filter` | modifier | none | v1 |
 | `motion` | driver | none | v1 |
-| `source` | driver | self | v2 (iOS-hosted shipped) |
+| `source` | driver | self | v2 (iOS render-server + Android best-effort shipped) |
 | `symbol` | render-target | self | v1 |
 | `shape-morph` | render-target | none | v2 (Android-only) |
 | `content-distort` | modifier | none | v2 / out-of-scope on iOS |
@@ -450,9 +450,13 @@ proof — each consumer's needs are fields the schema carries.
      (the `SwiftUI.Spring` solver; below 17 the ladder degrades to `{ via: 'none' }`).
      **The `source` node's iOS-hosted render-server rung is shipped (DEF-014):** a native
      scroll position drives fx's own hosted effect tiles via SwiftUI `.scrollTransition`,
-     `requires {os:17, substrate:hosted}` `target:'effect'`, Android an empty ladder
-     (`{via:'none'}`). The ambient-RN-scroll best-effort tier and the Android rung remain
-     deferred (each its own later rung). The `clock` node is still unbuilt.
+     `requires {os:17, substrate:hosted}` `target:'effect'`. **The Android best-effort
+     UI-thread rung is shipped (DEF-026):** a native `ScrollView.onScrollChanged` reader
+     maps the offset to `opacity`/`scale` on fx-owned hosted tiles,
+     `requires {os:21, substrate:hosted}` `target:'effect'`; lower fidelity than the iOS
+     render-server rung, documented honestly. The ambient-RN-scroll best-effort tier remains
+     deferred (its own cross-platform capability, its own later rung). The `clock` node is
+     still unbuilt.
 15. **Per-effect typed config is canonical in the manifest, derived in TypeScript (U2-003).**
      Every node declares its typed inputs inline (`uniforms`, or a driver's `properties`); the
      config types a developer passes are *generated from* those specs at the type level

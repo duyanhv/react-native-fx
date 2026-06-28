@@ -1,9 +1,14 @@
 # Lane 1 — native signal grammar and expressiveness ceiling
 
-Status: open — WIP, non-authoritative
+Status: historical — architecture promoted to canon (DOC-032); non-authoritative
 Phase: additive (depth-1 Boundary A/B; no rule-break)
 Feeds: `0-spine/04`/`05` (the canonical home for boundaries, lanes, and regimes; `capability-boundary-classifier.md` is the historical derivation), `0-spine/02-capability-ir-and-lowering.md`, `5-realization/structure.{ios,android}.md`
 Scope: define the native mapping vocabulary that lets a native continuous source drive fx-owned presentation declaratively — and find the exact interactions it *cannot* express, because that ceiling is the line that sends a case to Lane 2 (regime C) or Boundary L.
+
+> **Promoted (DOC-032, 2026-06-28).** The canonical architecture now lives in
+> `0-spine/04 §The Lane 1 boundary invariant`, `0-spine/05 §Lane 1 native signal grammar`,
+> `3-motion/40 §Source-driven interaction events`, and `7-implementation/architecture.md §12`.
+> This WIP remains derivation history and stress-test detail. Cite the canonical docs.
 
 ## The hard box
 
