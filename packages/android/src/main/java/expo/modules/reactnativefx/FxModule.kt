@@ -132,6 +132,21 @@ class FxModule : Module() {
       }
     }
 
+    View(FxScrollView::class) {
+      Events("onFxLoad", "onFxError")
+
+      Prop("axis") { view: FxScrollView, value: String? ->
+        view.setAxis(value ?: "vertical")
+      }
+      Prop("tiles") { view: FxScrollView, value: List<FxScrollTile>? ->
+        view.setTiles(value)
+      }
+
+      OnViewDidUpdateProps { view: FxScrollView ->
+        view.applyResolvedConfig()
+      }
+    }
+
     View(FxStateView::class) {
       Events("onFxStateChange")
 

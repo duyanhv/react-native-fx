@@ -119,15 +119,7 @@ class FxHostedView(
   private fun mountEffect(effect: String, intensity: Double) {
     removeHost()
 
-    val view = when (effect) {
-      "fill" -> FxFillView(context, intensity)
-      "material" -> FxMaterialView(context, intensity, pendingMaterialConfig)
-      "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
-      "aurora", "noise-field", "plasma", "caustics", "edge-glow" -> {
-        FxShaderView(context, effect, intensity)
-      }
-      else -> return
-    }
+    val view = createEffectView(context, effect, intensity, pendingMaterialConfig) ?: return
 
     view.layoutParams = ViewGroup.LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT,
@@ -145,6 +137,27 @@ class FxHostedView(
     effectView = null
     mountedEffectId = null
   }
+}
+
+/**
+ * Creates the appropriate effect view for a given effect id.
+ *
+ * Shared by [FxHostedView] and [FxScrollView] so the curated id → view mapping stays
+ * single-source. Returns null for unknown ids so callers can no-op cleanly.
+ */
+internal fun createEffectView(
+  context: Context,
+  effect: String,
+  intensity: Double,
+  materialConfig: MaterialConfig? = null,
+): View? = when (effect) {
+  "fill" -> FxFillView(context, intensity)
+  "material" -> FxMaterialView(context, intensity, materialConfig)
+  "fractal-clouds", "ink-smoke", "liquid-chrome", "loop", "dots",
+  "aurora", "noise-field", "plasma", "caustics", "edge-glow" -> {
+    FxShaderView(context, effect, intensity)
+  }
+  else -> null
 }
 
 /**

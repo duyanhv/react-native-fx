@@ -78,9 +78,9 @@ export const TASKS: DeviceTask[] = [
 	{
 		id: "DEF-014",
 		title: "Scroll-linked source rung",
-		platform: "iOS",
-		what: "hosted ScrollView of fx tiles · render-server scrollTransition · zero per-frame JS · os<17 static",
-		status: "todo",
+		platform: "iOS · Android",
+		what: "hosted scroll of fx tiles · iOS render-server scrollTransition · Android best-effort UI-thread offset→opacity/scale (DEF-026) · zero per-frame JS",
+		status: "verified",
 		screen: "source-scroll",
 	},
 	{

@@ -26,7 +26,7 @@ agnostic names, platform-native defaults).
 | **shader** (10 curated) | MSL | AGSL | `<Fx effect="<shaderId>">`, runtime BYO `registerShader` (DEF-008) | interactive subset = 5 shaders; Android expo-view interactive raster renderer is a TODO (renders blank — EX-002) |
 | **symbol** | native `.symbolEffect` | lib (Lottie, optional peer) | `fx.effect.symbol({name, animation, …})` + `registerSymbol` for Android assets — builder-only (U10-002, DEF-025) | both; Android = app-supplied Lottie via `registerSymbol`, `feature:'lottie'`-gated; AVD deferred; no `symbol-*` string id |
 | **motion** (driver) | native | native | `fx.motion.*`, `FxPresence` motion map | content + effect targets |
-| **source** (scroll driver) | native (SwiftUI `.scrollTransition`, os17/hosted) | — | `Fx.Scroll`, `fx.source.scroll` (DEF-014) | **iOS-only, hosted rung only**; ambient-RN-scroll tier + Android deferred |
+| **source** (scroll driver) | native (SwiftUI `.scrollTransition`, os17/hosted) | native (UI-thread `onScrollChanged` offset→opacity/scale, os21/hosted) | `Fx.Scroll`, `fx.source.scroll` (DEF-014, DEF-026) | both; iOS render-server fidelity vs Android best-effort UI-thread (lower fidelity, documented); ambient-RN-scroll tier deferred |
 | **content-distort** | out-of-scope (severs RN touch, rule #4) | shader (`RenderEffect`, draw-time) | mechanical `contentDistortion='ripple'` on `FxSurfaceView` (DEF-009) | **Android-only**; no high-level surface (sugar deferred) |
 | **presence** | native FSM | native FSM | `FxPresence` + deferred-unmount; `transient` preset (U7) | both |
 | **press feedback** | native | native | `FxPressable`, `<Fx interactionMode>` (U8/U13) | both; RNGH/`@gorhom` coexistence proven (U8-002) |
@@ -47,8 +47,12 @@ its own sake):
 - **`symbol` — CLOSED (DEF-025, 2026-06-28).** Was iOS-only; Android animated-icon parity now
   ships as app-supplied Lottie via `registerSymbol`, gated by the optional `feature:'lottie'` peer;
   AVD (`via:'native'`) deferred (`24` FX-010; manifest Android rung selectable).
-- **`source`/scroll — iOS-only, hosted rung only.** Android scroll-linked presentation + the
-  ambient-RN-scroll best-effort tier are deferred (DEF-014 scope; manifest Android ladder empty).
+- **`source`/scroll — CLOSED for the fx-owned tier (DEF-026, 2026-06-28).** Was iOS-only; Android
+  now ships the best-effort UI-thread rung (`FxScrollView` + `onScrollChanged` offset→opacity/scale
+  over fx-owned tiles, os21/hosted, plain View — no Compose), lower fidelity than the iOS
+  render-server rung by design (`structure.android.md § source`; `24`-equivalent ledger FX-011;
+  manifest Android rung selectable). The **ambient-RN-scroll** best-effort tier (a reader over the
+  app's own RN `ScrollView`/`FlatList`) stays deferred as its own cross-platform capability.
 - **`content-distort` — Android-only** (and `shape-morph` — Android-only manifest node, no public
   surface). These are platform-native capabilities with no peer, not gaps to close: iOS
   `content-distort` is out-of-scope by rule #4; `shape-morph` is M3-Expressive-specific.

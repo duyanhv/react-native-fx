@@ -450,15 +450,47 @@ The driver node (`02`) lowers two ways, by **target**:
   § `shape-morph`; progressive enhancement). The native side of the eased-`transition`
   channel (`40`).
 
-### `source` — deferred (iOS-hosted first)
+### `source` — best-effort UI-thread scroll reader (DEF-026)
 
-The `source` driver (`02` decision 14) ships its render-server-fidelity rung on iOS hosted
-first (structure.ios.md § `source`); Android has **no rung yet** → empty ladder, `{via:'none'}`.
-Android's equivalent is the **best-effort** tier of the same driver (zero per-frame JS, but a
-main-thread/UI-thread reader, not render-server fidelity — `02` d14): a Compose
-`scrollable`/`nestedScroll` offset or a native scroll-offset reader mapped to the effect, the
-Compose analogue of SwiftUI's `scrollTransition`/`visualEffect`. It lands with its own task when
-the Android `source` rung is triggered; this is a documented platform asymmetry, not a defect.
+The `source` driver's iOS-hosted render-server rung (structure.ios.md § `source`) ships
+render-server fidelity via SwiftUI `.scrollTransition`. Android ships the **best-effort**
+tier of the same driver (`02` d14) — zero per-frame JS, but UI-thread rather than
+render-server (`02` d14 records the substrate-tiered fidelity split honestly).
+
+- **Rung:** `via:'native'`, `primitive:'ScrollView'`, `applyVia:'onScrollChanged'`,
+  `clock:'none'` (scroll is the clock — no perpetual loop), `target:'effect'`,
+  `requires { os:21, substrate:'hosted' }`.
+- **Mechanic:** `FxScrollView` (an `FxNativeView`) holds a native scroll container — a private
+  subclass of `android.widget.ScrollView` or `HorizontalScrollView` (plain core views, always
+  class-loadable — safe to subclass, unlike the DEF-025 optional Lottie peer). The scroll
+  container's child is a `LinearLayout` tile column whose children are fx-owned effect tiles
+  (`FxShaderView` / `FxFillView`, built via the shared `createEffectView` factory also used by
+  `FxHostedView`). On each `onScrollChanged`, `applyScrollTransition(offset)` maps each tile's
+  viewport-relative position → `view.alpha` (opacity) and `view.scaleX/scaleY` (scale): tiles
+  fully in view render at identity (alpha=1, scale=1); tiles crossing the viewport boundary
+  fade and shrink toward (alpha=0, scale=0.85) — the platform-native best-effort edge transition
+  (the law: agnostic names, platform-native defaults). Compose is not introduced.
+- **Surface:** `Fx.Scroll` / `fx.source.scroll({ axis })` unchanged (frozen — DEF-014); `axis`
+  and the `tiles` data array cross once per change, never per frame; no JS scroll callback.
+  The static Android fallback (`FxScrollView.android.tsx`) is deleted; Android resolves the
+  platform-default `FxScrollView.tsx` which registers the native view.
+- **Tile rebuild guard:** rebuild the tile column only when the tile set (effect ids +
+  heights) changes — a pure intensity update pushes directly via `FxEffectView.setIntensity`
+  without rebuilding, preserving each `FxShaderView`'s shader clock (`baseTimeNanos`).
+- **Degradation:** the container always mounts and scrolls; `opacity`/`scale` mapping runs
+  on the UI thread with zero per-frame JS; shader tiles draw on API 33+ (existing
+  `FxShaderView` gate), `fill` on API 21+; a below-API-33 shader tile draws transparent
+  (`{via:'none'}`) while the container still scrolls and animates. Explicitly **lower fidelity
+  than iOS render-server `.scrollTransition`** — the divergence is documented, not hidden.
+- **Off-window / background:** each `FxShaderView` self-pauses its `Choreographer` loop via
+  its own `onDetachedFromWindow` / `onWindowFocusChanged`. `FxScrollView` fans
+  `pausePresentationLoop()` / `resumePresentationLoop()` to child shader tiles via
+  `FxShaderView.pause()` / `resume()`. The scroll host adds **no** competing `Choreographer`
+  loop — the offset reader is event-driven.
+- **The ambient-RN-scroll best-effort tier** — a native reader over the app's own RN
+  `ScrollView`/`FlatList` `contentOffset`, feeding a separately-mounted fx effect — remains
+  **deferred** as its own cross-platform capability (its own reader-mechanic risk on both
+  platforms, its own public-surface question). It is **not** part of this rung.
 
 ### `symbol` — Lottie via `registerSymbol`, feature-gated (DEF-025)
 

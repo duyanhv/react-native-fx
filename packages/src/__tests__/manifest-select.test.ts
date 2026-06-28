@@ -273,8 +273,17 @@ describe('select()', () => {
     expect(result.via).toBe('none');
   });
 
-  it('degrades the scroll source to via: none on Android (empty ladder)', () => {
-    const result = select(manifest.nodes.source, android, { deviceOS: 34 });
+  it('selects the Android best-effort scroll source rung on os 21+', () => {
+    const result = select(manifest.nodes.source, android, { deviceOS: 21 });
+    expect(result.via).toBe('native');
+    expect(result.primitive).toBe('ScrollView');
+    expect(result.applyVia).toBe('onScrollChanged');
+    expect(result.target).toBe('effect');
+    expect(result.requires.substrate).toBe('hosted');
+  });
+
+  it('degrades the Android scroll source to via: none below os 21', () => {
+    const result = select(manifest.nodes.source, android, { deviceOS: 20 });
     expect(result.via).toBe('none');
   });
 

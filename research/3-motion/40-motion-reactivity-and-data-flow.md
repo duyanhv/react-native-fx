@@ -226,8 +226,10 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
    `target`+`clock`), substrate-tiered: zero per-frame JS everywhere, render-server
    fidelity only on iOS `hosted`, UI-thread-mapped elsewhere. That tier distinction is
    first-class in the contract, never papered over. **The iOS-hosted render-server tier
-   is shipped (DEF-014)** — `fx.source.scroll` + the `Fx.Scroll` hosted context; the
-   ambient-RN-scroll and Android tiers stay deferred.
+   is shipped (DEF-014)** — `fx.source.scroll` + the `Fx.Scroll` hosted context; **the
+   Android best-effort UI-thread tier is shipped (DEF-026)** — fx-owned tier only,
+   `ScrollView.onScrollChanged` maps offset → opacity/scale on the UI thread; the
+   ambient-RN-scroll tier remains deferred (its own cross-platform capability).
 
 ## Open questions
 

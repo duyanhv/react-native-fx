@@ -125,17 +125,27 @@ describe('manifest source node', () => {
     expect(source.interaction).toBe('self');
   });
 
-  it('ships only the iOS render-server rung; Android is an empty ladder', () => {
+  it('ships the iOS render-server rung and the Android best-effort UI-thread rung', () => {
     const source = manifest.nodes.source;
-    expect(source.lower.android).toEqual([]);
     expect(source.lower.ios).toHaveLength(1);
+    expect(source.lower.android).toHaveLength(1);
 
-    const rung = source.lower.ios[0];
-    expect(rung.target).toBe('effect');
-    expect(rung.requires).toEqual({ os: 17, substrate: 'hosted' });
+    const iosRung = source.lower.ios[0];
+    expect(iosRung.target).toBe('effect');
+    expect(iosRung.requires).toEqual({ os: 17, substrate: 'hosted' });
     // Scroll is the clock — no perpetual loop, so no cadence.
-    expect(rung.clock).toBe('none');
-    expect('cadence' in rung).toBe(false);
+    expect(iosRung.clock).toBe('none');
+    expect('cadence' in iosRung).toBe(false);
+
+    const androidRung = source.lower.android[0];
+    expect(androidRung.via).toBe('native');
+    expect(androidRung.primitive).toBe('ScrollView');
+    expect(androidRung.applyVia).toBe('onScrollChanged');
+    expect(androidRung.target).toBe('effect');
+    expect(androidRung.requires).toEqual({ os: 21, substrate: 'hosted' });
+    // Event-driven offset reader — no perpetual loop, so no cadence.
+    expect(androidRung.clock).toBe('none');
+    expect('cadence' in androidRung).toBe(false);
   });
 });
 
