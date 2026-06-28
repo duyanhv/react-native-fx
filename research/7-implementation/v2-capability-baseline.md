@@ -38,11 +38,11 @@ agnostic names, platform-native defaults).
 The full V1 surface contract is whole: `fx, FxPresence, FxView, FxPressable, Fx, FxGroup, FxItem,
 EdgeGlow` + `fx.effect.*` all shipped.
 
-## Cross-platform peer gaps (rule #6 — iOS and Android are peers)
+## Peer-gap status (rule #6 — iOS and Android are peers)
 
-Shipped features that are currently single-platform. Each is a deliberate deferral with a real
-trigger, not a defect — close one only when an app screen needs it (product value, not parity for
-its own sake):
+Shipped features that were single-platform or remain intentionally single-platform. Closed rows are
+recorded here because they shaped the V2 baseline; remaining single-platform rows are deliberate
+platform-native scope calls, not defects:
 
 - **`symbol` — CLOSED (DEF-025, 2026-06-28).** Was iOS-only; Android animated-icon parity now
   ships as app-supplied Lottie via `registerSymbol`, gated by the optional `feature:'lottie'` peer;
@@ -90,10 +90,14 @@ Decided NO in their owning source docs — not deferrals, design choices:
 
 When an app actually needs a deferred capability, follow the normal path: recommendation-pass
 (if it has a fork) → spec `tasks/<id>/README.md` → executor → device gate → review → docs-closed
-→ merge. Prioritize cross-platform peer gaps over elective new surface, but build only on real
-product demand.
+→ merge. There is no open cross-platform peer gap in the current baseline; prioritize product pull
+over parity-for-parity work.
 
-**Android `symbol` and `source` both REQUIRE a recommendation-pass before spec** — they are not
-mere backend fills. Each involves a real public-API-shape choice (the Android symbol asset
-contract / Lottie-vs-AVD vocabulary; the Android/ambient `source` rung's surface and degradation
-story), so drive the call with prose + a recommendation first, not a straight spec.
+For any deferred row or `wip/` exploration with a real fork, start with a recommendation-pass before
+spec. Do not turn exploratory prose into a task until the public surface, ownership boundary, and
+platform degradation story are settled.
+
+The current `wip/` resolution order lives in [`../wip/README.md`](../wip/README.md). Do not clear
+the trigger-gated DEF backlog first. Promote WIP only when the row's own prerequisite is true:
+source-back the native animation grammar, pick a real anchored reveal, pick a real water-ripple
+consumer, or deliberately choose the reserved-size `FxFlow` fork.

@@ -187,9 +187,11 @@ the optional Reanimated channel (route 2):
    `visualEffect`/`scrollTransition`); a main-thread/UI-thread reader elsewhere.
    **The iOS-hosted render-server tier is shipped (DEF-014):** an fx-owned hosted
    SwiftUI `ScrollView` drives its own effect tiles via `.scrollTransition`, zero
-   per-frame JS *and* zero per-frame main-thread work. The ambient-RN-scroll best-effort
-   tier and the Android rung remain deferred. **fx-owned interaction (drag/tilt) is a native
-   recognizer writing the uniform natively — this route, never route 2.**
+   per-frame JS *and* zero per-frame main-thread work. **The Android fx-owned tier is
+   shipped (DEF-026):** a native scroll container maps `onScrollChanged` offset to tile
+   opacity/scale on the UI thread. The ambient-RN-scroll best-effort tier remains deferred.
+   **fx-owned interaction (drag/tilt) is a native recognizer writing the uniform natively —
+   this route, never route 2.**
 2. **UI-thread channel — app-owned only, optional.** For an **app-owned** continuous source, the
    app's *own* Reanimated shared value drives an fx-exposed UI-thread-animatable prop off the JS
    thread (Reanimated is the caller's transport; fx owns no worklet/JSI — depth-1, `0-spine/05`
@@ -202,6 +204,29 @@ are not banned — they are a **low-frequency / debug / `controlled`-mode escape
 frame source. What's forbidden is *per-frame writes from the JS thread*; a discrete write, or
 a `controlled` surface whose per-frame source is the UI thread (route 2), is exactly the
 sanctioned use. `setUniform` is the escape, never the default channel (`51`).
+
+## Source-driven interaction events
+
+When a Lane 1 interaction drives a target, the source-driven motion has its own event family. It
+does not reuse `onTransitionEnd` for the same motion.
+
+- **Discrete envelope:** `onTransitionEnd` remains the terminal event for `visible`, `state`, or
+  effect-config transitions that fx starts from a discrete target.
+- **Source-driven interaction:** the signal-event family is the terminal and boundary event
+  family for native source → mapping → target interactions. It carries a `kind` such as
+  `enterRange`, `exitRange`, `settle`, `commit`, or `interrupt`. The exact public prop name is
+  settled by the first shipped Lane 1 feature; the native event follows the existing `onFx*`
+  prefix convention.
+
+The non-overlap rule is temporal: one owner can be discrete-driven or source-driven for a given
+motion, never both at the same instant. For a lifecycle-committing interaction, the source-driven
+settle is the exit or enter envelope. The later discrete prop update is an acknowledgement of the
+committed target, not a request to run the envelope again.
+
+This keeps drag-dismiss and related interactions from double-animating: native tracks and settles,
+emits a signal event with `kind: "commit"`, and the app reflects the committed discrete state. If
+a later prop change targets a different state with no active source, the normal discrete envelope
+runs and `onTransitionEnd` applies again.
 
 ## Decisions
 
@@ -230,6 +255,11 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
    Android best-effort UI-thread tier is shipped (DEF-026)** — fx-owned tier only,
    `ScrollView.onScrollChanged` maps offset → opacity/scale on the UI thread; the
    ambient-RN-scroll tier remains deferred (its own cross-platform capability).
+8. **Source-driven interactions have distinct boundary events and no double envelope.** A Lane 1
+   interaction emits signal events (`enterRange`, `exitRange`, `settle`, `commit`, `interrupt`);
+   `onTransitionEnd` remains for discrete envelopes. If a source-driven interaction commits to a
+   lifecycle target, the settle is the lifecycle envelope and the later prop update is an
+   acknowledgement.
 
 ## Open questions
 
@@ -240,10 +270,11 @@ sanctioned use. `setUniform` is the escape, never the default channel (`51`).
   `mood`/`playing` are demoted to effect-specific *uniforms*, never global props.
 - ~~**Native-source-read API** — how an effect declares "track this native scroll/pager"
   (the Regime-C option-1 surface); is it V1 or V2?~~ **Resolved (decision 7, DOC-009)** and
-  **shipped on iOS hosted (DEF-014, 2026-06-14):** the `source` driver, substrate-tiered. The
+  **shipped on iOS hosted (DEF-014, 2026-06-14) and Android fx-owned best-effort
+  (DEF-026, 2026-06-28):** the `source` driver, substrate-tiered. The
   concrete surface is `fx.source.scroll({ axis })` bound to the `Fx.Scroll` hosted scroll
   context (tiles as fx-owned data, never wrapped RN content); `50` owns the surface. The
-  ambient-RN-scroll best-effort tier and the Android rung remain deferred.
+  ambient-RN-scroll best-effort tier remains deferred.
 - ~~**BYO envelope** — how a BYO author declares an intro/outro envelope in `.metal`/`.agsl`
   so it isn't hardcoded to the curated glow.~~ **Resolved by composition (MOT-008, DEF-007,
   2026-06-14): the premise is false — fx hardcodes *no* shader-internal intro/outro envelope,

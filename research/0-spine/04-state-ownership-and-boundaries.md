@@ -119,6 +119,26 @@ The source channel (what *drives* the target) and the substrate depth (how fx *b
 native) are independent of the boundary and are decided separately — both live in
 `05 §Capability mechanism`.
 
+### The Lane 1 boundary invariant
+
+Lane 1 continuous interaction does **not** create a fourth boundary. It is a source-channel
+mechanism for existing Boundary A or Boundary B targets:
+
+- **Boundary A:** a native source drives transform/opacity on an fx-owned wrapper.
+- **Boundary B:** a native source drives an effect uniform or intensity value.
+- **Not Lane 1:** the consequence writes Yoga layout, moves siblings, reorders React children,
+  or needs cross-tree identity.
+
+This split keeps rich interactions honest. A drag can move the dragged element in Boundary A
+while the reorder gap stays Boundary L or the cross-tree frontier. A sticky header can collapse
+visually in Boundary A while any sibling reflow stays Boundary L. The source-driven half is
+additive; the layout or structure consequence is a separate decision.
+
+The `05` mechanism doc owns Lane 1's native signal grammar and the Lane 2 escape. This doc owns
+only the boundary test: if the target remains transform/opacity or effect uniforms on fx-owned
+state, Lane 1 stays inside the existing boundary. If the target becomes layout, child order, or
+cross-tree retention, it moves a boundary.
+
 ### The nine-question gate
 
 Reviewer machinery: every proposed capability answers these before it earns a build slot.
@@ -170,6 +190,10 @@ a decision. The **substrate-depth** a capability needs is likewise a `05` mechan
    source-channel and substrate-depth axes that classify *how* a capability binds are independent
    of the boundary and live in `05`. (Promoted from the capability-boundary classifier — DOC-026;
    DOC-021 §1.)
+9. **Lane 1 is not a boundary.** It is a native source-channel mechanism that can drive Boundary
+   A or Boundary B targets. If an interaction's consequence writes layout, reorders children, or
+   needs cross-tree identity, that consequence leaves Lane 1 and routes to Boundary L or a new
+   boundary decision.
 
 ## Open questions
 

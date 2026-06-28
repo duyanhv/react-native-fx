@@ -42,8 +42,15 @@ Read [`progress.md`](./progress.md) for the authoritative state — the snapshot
   see the V2 surface area without re-deriving it from the table.
 - **Publishing is PARKED** — the `react-native-fxkit` rename + docs/install alignment + npm packaging
   + `skills/` polish (DEF-016) stay out of scope until publishing is explicitly reintroduced. Do not
-  start DEF-016. The next useful work is product-value-driven feature work (prioritize cross-platform
-  peer gaps — Android `symbol` / `source` — but only when an app screen needs them), not a release push.
+  start DEF-016. There is no active feature queued: Android `symbol` and the fx-owned Android
+  `source`/scroll tier are closed. The next useful work is product-value-driven feature work from the
+  trigger-gated backlog or a promoted `wip/` exploration, not a release push.
+- **The WIP cleanup session is wrapped** — DOC-032 promotes the Lane 1 architecture slice, and
+  DOC-033 records the resolution plan for the remaining current WIP explorations. Start from
+  [`research/wip/README.md`](../wip/README.md) when you choose a WIP path. The current order is:
+  native animation grammar first, anchored reveal when triggered, interactive content-distort when a
+  water-ripple consumer exists, and native slot layout transitions only after a reserved-size
+  `FxFlow` fork is deliberately picked.
 
 Each active task keeps a `tasks/<id>/notes.md` with what changed, any unverified claims, and a
 one-line "Next:". Start there to see what the last session did.

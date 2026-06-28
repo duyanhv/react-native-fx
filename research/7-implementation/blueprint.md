@@ -148,10 +148,10 @@ This document defines the strict, build-ordered sequence for the `react-native-f
 
 ### Addendum A1: `source` driver — scroll-linked presentation
 *   **Shipped by:** DEF-014 (merged + device-ratified 2026-06-14) — "the V2 opener," the category's demand center.
-*   **Scope:** the **iOS-hosted render-server rung only** — an fx-owned SwiftUI `ScrollView` with per-item `.scrollTransition`, `requires {os:17, substrate:hosted}`, `target:'effect'`, driving fx's own content (rule #4). The scroll *is* the clock; at rest nothing advances. The ambient-RN-scroll best-effort tier and the Android rung are deferred (each its own later rung).
-*   **Code:** manifest `source` node (`src/manifest/manifest.ts`); JS `src/source/` (`fx.source.scroll`), `src/surface/FxScroll.tsx` (the `Fx` namespace object + `FxScroll`), `src/runtime/FxScrollView.{tsx,android.tsx,web.tsx}` (binding + Android/web static fallbacks); iOS `ios/FxScrollView.swift` (persistent `UIHostingController`) + `ios/FxScrollRootView.swift`.
-*   **Source doc:** `02 §Decision 14` (node), `40 §Decision 7` (Escaping-regime-C route 1), `50 §Decision 9` (surface), `structure.ios.md §source`.
-*   **Enables:** the ambient-RN-scroll best-effort tier and the Android `source` rung (later rungs); the `clock` driver sibling (`02 §Decision 14`, still unbuilt — DOC-025).
+*   **Scope:** the fx-owned scroll tier — an iOS SwiftUI `ScrollView` with per-item `.scrollTransition` and an Android native scroll container that maps `onScrollChanged` offset to opacity/scale. Both drive fx-owned effect tiles (rule #4), not arbitrary RN content. The scroll *is* the clock; at rest nothing advances. The ambient-RN-scroll best-effort tier is deferred as its own cross-platform capability.
+*   **Code:** manifest `source` node (`src/manifest/manifest.ts`); JS `src/source/` (`fx.source.scroll`), `src/surface/FxScroll.tsx` (the `Fx` namespace object + `FxScroll`), `src/runtime/FxScrollView.{tsx,web.tsx}`; iOS `ios/FxScrollView.swift` (persistent `UIHostingController`) + `ios/FxScrollRootView.swift`; Android `android/…/FxScrollView.kt`.
+*   **Source doc:** `02 §Decision 14` (node), `40 §Decision 7` (Escaping-regime-C route 1), `50 §Decision 9` (surface), `structure.{ios,android}.md §source`.
+*   **Enables:** the ambient-RN-scroll best-effort tier; the `clock` driver sibling (`02 §Decision 14`, still unbuilt — DOC-025).
 
 ### Addendum A2: `controlled` mode — view-ref imperative uniform writes
 *   **Shipped by:** DEF-020 (merged + device-spiked 2026-06-15).
