@@ -23,6 +23,7 @@ export type {
   EffectStep,
   EffectStepId,
   SpringSpec,
+  SymbolStep,
   Transition,
 } from './effects/stack';
 export { fx } from './fx';

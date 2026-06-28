@@ -316,7 +316,7 @@ export const manifest = {
       interaction: 'self',
       phase: 'v1',
       uniforms: {
-        name: { type: 'string', default: 'heart' },
+        name: { type: 'string' },
         animation: {
           type: 'enum',
           default: 'bounce',

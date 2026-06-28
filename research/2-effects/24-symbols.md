@@ -47,18 +47,21 @@ non-selectable in V1 so Android degrades gracefully to `{via:'none'}`.
 
 ## Surface consumption
 
-Mounted by `<Fx>` (or an optional `symbol` effect sugar). Feeds the symbol effect ids
-(bounce/pulse/variable-color/replace). `interaction:'self'` — self-animating. Not a content
-wrapper.
+Mounted by `<Fx>` via `fx.effect.symbol({…})`. `interaction:'self'` — self-animating. Not a
+content wrapper.
 
-Zero-config presets stay as simple string ids; typed config uses the **builder/object
-form** — effect-specific config never leaks onto `<Fx>`'s top-level prop surface:
+The string form of `<Fx effect="…">` is for zero-config effects — effects that draw with no
+required configuration, where a bare id is a complete instruction. Symbol is the one
+render-target with no zero-config tier: `name` is its visual identity, not an optional tweak,
+and there is no truthful default glyph. Therefore symbol uses **the builder form only** — a
+string id `symbol-*` does not exist and will never be added to `EffectId`.
 
 ```tsx
-<Fx effect="symbol-bounce" />                          // zero-config preset id
-<Fx effect={fx.effect.symbol({                         // typed config (builder)
-  name: 'heart', animation: 'bounce', trigger: 'value',
-})} />
+// Builder form — the sole symbol surface. name and animation are required.
+<Fx effect={fx.effect.symbol({ name: 'heart', animation: 'bounce', trigger: 'value' })} />
+
+// Aspirational / deferred: zero-config string preset (e.g. "symbol-bounce") would require
+// a truthful name default, which contradicts the no-default decision above. Not shipped.
 ```
 
 `symbol` is `interaction:'self'` — it does **not** own a recognizer, so `trigger` is
@@ -69,9 +72,9 @@ trigger value (e.g. on your button's `onPress`); the symbol does not capture the
 
 - **kind:** render-target · **interaction:** `self`. **composition:** `surface` /
   self-contained (an icon occupies its own box).
-- **Terminal / self-contained step only** — mountable via `<Fx effect="symbol-…">` as a
-  *single* layer, **not composable in multi-layer stacks** (`55`). A `filter` may apply to
-  it, but it never sits under/over other render-targets.
+- **Terminal / self-contained step only** — mounted as a *single* layer via
+  `fx.effect.symbol({…})`, **not composable in multi-layer stacks** (`55`). A `filter` may
+  apply to it, but it never sits under/over other render-targets.
 - **Does not stack** like `fill`/`shader` — it is a self-contained system element, not a
   composite layer; a `filter` over it is possible but unusual.
 

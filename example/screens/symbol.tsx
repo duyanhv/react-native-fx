@@ -5,7 +5,7 @@ import {
 	Text,
 	View,
 } from "react-native";
-import { FxHostedView, type SymbolAnimation } from "react-native-fx";
+import { Fx, FxHostedView, fx, type SymbolAnimation } from "react-native-fx";
 import { NativeSegmented } from "../components/native-segmented";
 import { useTheme } from "../components/theme";
 
@@ -36,6 +36,15 @@ export function SymbolScreen() {
 	const animation = ANIMATIONS[animIndex];
 	const trigger = TRIGGER_MODES[triggerIndex];
 	const replaceWith = SYMBOL_NAMES[replaceWithIndex];
+
+	// One shared config feeds both render paths, so any visual divergence between the
+	// direct host view and the public builder is the builder's doing, not the inputs'.
+	const config = {
+		name,
+		animation,
+		trigger,
+		replaceWith: name !== replaceWith ? replaceWith : undefined,
+	};
 
 	return (
 		<ScrollView
@@ -83,15 +92,20 @@ export function SymbolScreen() {
 				/>
 			</View>
 
-			<FxHostedView
-				style={styles.box}
-				symbolConfig={{
-					name,
-					animation,
-					trigger,
-					replaceWith: name !== replaceWith ? replaceWith : undefined,
-				}}
-			/>
+			<View style={styles.compareRow}>
+				<View style={styles.compareCol}>
+					<Text style={[styles.pathLabel, { color: palette.text }]}>
+						Direct (FxHostedView)
+					</Text>
+					<FxHostedView style={styles.box} symbolConfig={config} />
+				</View>
+				<View style={styles.compareCol}>
+					<Text style={[styles.pathLabel, { color: palette.text }]}>
+						Builder (fx.effect.symbol)
+					</Text>
+					<Fx style={styles.box} effect={fx.effect.symbol(config)} />
+				</View>
+			</View>
 
 			<Text style={[styles.caption, { color: palette.textMuted }]}>
 				{name} · {animation} · {trigger}
@@ -104,6 +118,9 @@ export function SymbolScreen() {
 const styles = StyleSheet.create({
 	row: { gap: 6 },
 	label: { fontSize: 14, fontWeight: "600" },
+	compareRow: { flexDirection: "row", gap: 12 },
+	compareCol: { flex: 1, gap: 6 },
+	pathLabel: { fontSize: 13, fontWeight: "600", textAlign: "center" },
 	box: {
 		width: "100%",
 		height: 200,

@@ -71,16 +71,23 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
   // A hand-built `EffectStack` bypasses the `fx.effect.*` builder's single-render-target guard,
   // so enforce it here too: V1 renders the first step only.
   const stepCount = isStack ? effect.steps.length : 0;
-  // For the empty-stack edge case (not reachable via public API), effectId needs a stable
-  // value for hook deps; 'edge-glow' is a placeholder — the empty-stack null is checked
-  // after all hooks complete.
-  const effectId: EffectId = step?.id ?? (isStack ? 'edge-glow' : (effect as EffectId));
-  const effectIntensity = step ? step.intensity : intensity;
-  const effectConfig = step ? step.config : materialConfig;
 
-  const resolution = resolveEffect(effectId);
-  const node = manifest.nodes[resolution.node];
+  // Symbol steps route through FxHostedView.symbolConfig — they have no effect string id
+  // and are unreachable as a bare <Fx effect="symbol-…"> string (no string id exists).
+  const isSymbol = step?.id === 'symbol';
+
+  // For the symbol step, 'edge-glow' is a stable hook-dep placeholder; the symbol render
+  // path never reads effectId for mounting (it uses symbolConfig instead).
+  // For empty-stack edge cases not reachable via the public API, 'edge-glow' is also used.
+  const effectId: EffectId = isSymbol
+    ? 'edge-glow'
+    : ((step?.id ?? (isStack ? 'edge-glow' : (effect as EffectId))) as EffectId);
+
+  // Symbol selects manifest.nodes.symbol directly; all other steps use resolveEffect,
+  // which stays string-only (symbol is not added to EffectId).
+  const node = isSymbol ? manifest.nodes.symbol : manifest.nodes[resolveEffect(effectId).node];
   const wantInteractive =
+    !isSymbol &&
     (interactionMode === 'passive' ||
       interactionMode === 'active' ||
       interactionMode === 'controlled') &&
@@ -100,8 +107,10 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
 
   useEffect(() => {
     if (rung.via !== 'none') return;
-    onErrorRef.current?.({ nativeEvent: { shader: effectId, reason: 'unsupported' } });
-  }, [rung.via, effectId]);
+    onErrorRef.current?.({
+      nativeEvent: { shader: isSymbol ? 'symbol' : effectId, reason: 'unsupported' },
+    });
+  }, [rung.via, effectId, isSymbol]);
 
   useEffect(() => {
     if (__DEV__ && stepCount > 1) {
@@ -114,6 +123,18 @@ const FxBase = forwardRef<FxSurfaceViewRef, FxProps>(function Fx(
   if ((isStack && !step) || rung.via === 'none') return null;
 
   const mergedStyle = [compositionStyle(composition), style];
+
+  // Symbol step: pass symbolConfig to FxHostedView; the native side ignores `effect` when
+  // symbolConfig is set, so no effect string is passed for this path.
+  if (step && step.id === 'symbol') {
+    return <FxHostedView symbolConfig={step.config} style={mergedStyle} />;
+  }
+
+  // Non-symbol path: resolve the hosted effect string and mount on the right substrate.
+  const resolution = resolveEffect(effectId);
+  // After the symbol early return, step is GlowStep | MeshStep | GlassStep | undefined.
+  const effectIntensity = isStack && step ? step.intensity : intensity;
+  const effectConfig = isStack && step && step.id === 'glass' ? step.config : materialConfig;
 
   if (rung.requires.substrate === 'expo-view') {
     return (

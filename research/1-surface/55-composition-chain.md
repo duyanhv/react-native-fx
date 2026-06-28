@@ -72,10 +72,10 @@ Unit 11 exposes only the **backed** steps until each render target plus an examp
 - `fill` — narrowed to its rendered intensity-driven subset (the native fill renderers ignore
   per-call `colors`/`angle`/`kind` — U3-009); the full typed config does not ship as a builder step.
 - `filter` — **`status:'planned'`** (no native renderer — U3-009); `select()` never offers it.
-- `symbol` — stays the single-layer mount via `<Fx effect="symbol-…">` (the terminal note below),
-  not a composed `fx.effect.*` builder step.
-So Unit 11's builder ships **no `fill` / `symbol` terminal steps and no `filter`** until the render
-targets land.
+- `symbol` — ships as a single-layer terminal step via `fx.effect.symbol({ name, animation, … })`;
+  not a composed multi-layer stack step (the terminal note below). No string id (`symbol-*`) exists
+  or will be added: a string id requires a zero-config default, and `name` is the visual identity.
+So Unit 11's builder ships **no `fill` terminal step and no `filter`** until those render targets land.
 
 **Shipped (Unit 11, device-verified 2026-06-20).** `fx.effect.glow`/`.glass`/`.mesh` ship as the
 immutable `EffectStack` builder, consumed by `<Fx effect={stack}>`, which reuses `<Fx effect="id">`'s
