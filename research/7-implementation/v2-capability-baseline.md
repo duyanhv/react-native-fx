@@ -87,3 +87,8 @@ When an app actually needs a deferred capability, follow the normal path: recomm
 (if it has a fork) → spec `tasks/<id>/README.md` → executor → device gate → review → docs-closed
 → merge. Prioritize cross-platform peer gaps over elective new surface, but build only on real
 product demand.
+
+**Android `symbol` and `source` both REQUIRE a recommendation-pass before spec** — they are not
+mere backend fills. Each involves a real public-API-shape choice (the Android symbol asset
+contract / Lottie-vs-AVD vocabulary; the Android/ambient `source` rung's surface and degradation
+story), so drive the call with prose + a recommendation first, not a straight spec.
