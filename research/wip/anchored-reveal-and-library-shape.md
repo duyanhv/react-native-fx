@@ -1,7 +1,7 @@
 # Anchored reveal and library shape
 Status: open -- WIP, non-authoritative
 Phase: post-v2 exploration
-Feeds: `0-spine/04`/`05` (capability-boundary taxonomy and Lane 1 grammar; `capability-boundary-classifier.md` and `lane1-declarative-surface.md` historical), `1-surface/50`, `native-animation-api-extraction.md`, `4-runtime/33-shadow-nodes-and-layout.md`, `5-realization/structure.{ios,android}.md`
+Feeds: `0-spine/04`/`05` (capability-boundary taxonomy and Lane 1 grammar; `capability-boundary-classifier.md` and `lane1-declarative-surface.md` historical), `1-surface/50`, `3-motion/41` (the canon animation grammar — decision 15; `native-animation-api-extraction.md` historical), `4-runtime/33-shadow-nodes-and-layout.md`, `5-realization/structure.{ios,android}.md`
 Scope: explore geometry-aware presentation from an RN-laid-out anchor rect to an fx-owned target rect, and place that feature in the public library model without turning fx into a generic layout animation API.
 
 ## Why this matters
@@ -158,7 +158,7 @@ the semantic target and geometry, not the internal states.
 
 ## Platform timing model
 
-Use the hybrid timing direction from `native-animation-api-extraction.md`:
+Use the hybrid timing direction from the canon animation grammar (`3-motion/41` decision 15):
 
 ```tsx
 transition={{

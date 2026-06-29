@@ -469,6 +469,20 @@ proof — each consumer's needs are fields the schema carries.
      runtime reads to pause an off-window surface correctly. `clock` still names the concrete
      time source; `cadence` is the band it falls in. Spring-eased driver rungs carry no
      `cadence` (they ease to a target, they do not run a perpetual loop).
+17. **The driver vocabulary is sequenced, and native animation primitives stay private to
+     lowering (DOC-034, 2026-06-29).** The driver layer (decision 14) lands in the order
+     `target → state → clock.phase → clock.keyframes → source`: `state` rides the existing
+     `target` driver (a named discrete state selecting a `motion` shape — no new node);
+     `clock` carries two rungs, `clock.phase` then `clock.keyframes`; `source` is the Lane 1
+     driver already shipped/described in decision 14. Each rung lowers
+     `JS semantic target/config → driver descriptor (IR) → platform resolver → native
+     primitive → native-owned frames → semantic event`. The descriptor is IR, not a public
+     graph. Per decision 2, the native primitives the resolver picks — SwiftUI
+     `PhaseAnimator`/`KeyframeAnimator`/`.animation(value:)`, UIKit/Core Animation, Compose
+     `updateTransition`/`keyframes`, `android.animation`, `androidx.dynamicanimation` — **stay
+     private to lowering**; no `swiftui*`/`compose*` name surfaces above the manifest. The
+     `clock.phase`/`clock.keyframes` rung schemas land with their build tasks; `41` decision 15
+     owns the motion-vocabulary side and the hybrid-timing principle.
 
 ## Open questions
 

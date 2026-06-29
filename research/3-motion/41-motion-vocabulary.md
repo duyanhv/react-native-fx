@@ -132,6 +132,48 @@ Three drivers: **`target`** (discrete state → platform-native spring; what shi
 expands to a `target`-driver binding with platform-native springs; the four-prop front
 door does not change. `target` + `clock` build first; `source` is V2 and substrate-tiered.
 
+### The grammar sequence and the hybrid timing principle
+
+The driver layer rolls out in one canonical order (DOC-034, source-backed against SwiftUI
+and the Android animation stack):
+
+```
+target → state → clock.phase → clock.keyframes → source
+```
+
+- **`target`** is the shipped driver — a discrete value, platform-native spring out.
+- **`state`** is *target semantics, not a new animation API* — a named discrete state
+  (`idle`/`selected`) selects a `motion` shape and rides the **same `target` driver**. Its
+  native counterparts are SwiftUI `.animation(value:)` and Compose `updateTransition`
+  (one state, many properties, per-edge spec). It needs no new driver node.
+- **`clock.phase`** then **`clock.keyframes`** are two rungs of the **`clock`** driver, in
+  that order — phase (a native phase loop / one-shot) before keyframes (an explicit
+  value-at-time timeline), because keyframes are more expressive and easier to over-build.
+  Their native counterparts are known — SwiftUI `PhaseAnimator` / `KeyframeAnimator`, Android
+  `android.animation` `AnimatorSet` + `Keyframe`/`PropertyValuesHolder.ofKeyframe` and Compose
+  `keyframes`/`infiniteRepeatable`. They are **additive future rungs**, not a frozen public
+  API: the Android side is source-backed; the iOS `PhaseAnimator`/`KeyframeAnimator`/`UnitCurve`
+  surfaces are confirmed to exist but their detailed signatures are not yet extracted.
+- **`source`** is the Lane 1 driver — already canon (`40`, `0-spine/05`); the sequence just
+  ends there.
+
+**The hybrid timing principle.** A timing override carries a *combined default intent* that
+the native resolver lowers per platform, plus *optional per-platform expert blocks*. The rules:
+
+- the combined key sets the default intent (the platform-native behavior, the law);
+- a platform block refines **timing only, never shape** — supplying it opts into expert timing,
+  not a cross-platform-uniform geometry (`motion` remains the shape override, Decision 6);
+- omitting a platform side keeps that platform's tuned default;
+- the resolver **rejects** an unsupported combination rather than approximating silently.
+
+The source-backed reason this is hybrid and not one numeric model: Android parameterizes springs
+by **damping ratio + stiffness** across *both* the View-system `androidx.dynamicanimation`
+(`SpringForce`) *and* Compose (`spring()`), while iOS SwiftUI is **duration + bounce**
+(`Spring(duration:bounce:)`). These are different axes with no 1:1 mapping — so the expert blocks
+carry genuinely different shapes per platform (Decision 11). This pass promotes the *principle*;
+the concrete public field names stay derivation history in `research/wip`, unfrozen until a real
+consumer pulls a rung.
+
 ### One driver node, two targets
 
 The vocabulary lowers to a single manifest node — **`motion` (`kind:'driver'`)** — whose
@@ -258,6 +300,21 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
     "platform timing + chosen edge"; and a single `edge=` spanning both phases would imply a
     reverse — conflicting with **no implicit reverse** (Decision 8). Reconsider only if the
     `motion` map demonstrably fails a real use case.
+15. **The animation grammar is sequenced, and timing is hybrid (DOC-034, 2026-06-29).** The
+    driver layer rolls out in the order `target → state → clock.phase → clock.keyframes →
+    source`; `state` is target semantics on the existing `target` driver (SwiftUI
+    `.animation(value:)` / Compose `updateTransition`), not a new node; `clock.phase` precedes
+    `clock.keyframes` as two `clock`-driver rungs; `source` is the already-canon Lane 1 driver
+    (`40`). Timing overrides are **hybrid**: a combined default intent the resolver lowers per
+    platform, plus optional per-platform expert blocks that refine **timing only, not shape** —
+    omit a side to keep its tuned default; the resolver rejects unsupported combinations rather
+    than approximating. The hybrid shape is forced by the source-backed spring-axis divergence
+    (Android `dampingRatio + stiffness` across `dynamicanimation` *and* Compose vs iOS
+    `duration + bounce`; Decision 11). This decision ratifies the **principle and ordering** —
+    `clock.phase`/`clock.keyframes` are additive future rungs with known native counterparts
+    (the iOS `PhaseAnimator`/`KeyframeAnimator`/`UnitCurve` signatures are not yet
+    extracted), and no public type name is frozen; the sketches stay in `research/wip`. A rung
+    builds only when a real consumer pulls it (no implementation row from this pass).
 
 ## Open questions
 

@@ -320,7 +320,7 @@ export const manifest = {
       },
     },
 
-    // ── symbol — SF Symbols on iOS; Android planned ──────────────────
+    // ── symbol — SF Symbols on iOS; app-supplied Lottie on Android ───
     symbol: {
       id: 'symbol',
       kind: 'render-target',

@@ -105,6 +105,19 @@ Ratified with the U6-001 preflight (DOC-009, 2026-06-10; the preflight artifact 
 Design disposition only: RT-016 stays device-pending; U6-002 owns the on-device retarget
 proof.
 
+## Findings — the spring-axis divergence (why authoring is per-platform)
+
+Source-backed (DOC-034, 2026-06-29): the two platforms parameterize springs on different
+axes, with no 1:1 mapping. iOS SwiftUI `Spring(duration:bounce:)` is **perceptual duration +
+normalized bounce**. Android is **damping ratio + stiffness** — and uniformly so across *both*
+realization paths: the View-system `androidx.dynamicanimation` `SpringForce`
+(`STIFFNESS_MEDIUM = 1500`, `DAMPING_RATIO_NO_BOUNCY = 1.0`, …) and Jetpack Compose
+`spring(dampingRatio, stiffness)` share the same constants. This is the concrete reason
+`transition.spring` is authored per platform (`41` decision 11) rather than through one invented
+cross-platform spring, and it compounds the retarget asymmetry above (a stock
+`SpringForce.animateToFinalPosition` on Android; the `FxSpring` integrator only on iOS). The
+internal lossless bridge stays `bounce ≈ 1 − dampingRatio`, `stiffness ≈ (2π/duration)²`.
+
 ## Findings — verified against source (`references/`)
 
 - **The driver animates an fx-owned, Fabric-invisible intermediate container.**

@@ -1,8 +1,18 @@
 # Native animation API extraction
-Status: open — WIP, non-authoritative
+Status: historical — grammar promoted to canon (DOC-034); non-authoritative
 Phase: post-v2 exploration
 Feeds: `0-spine/02-capability-ir-and-lowering.md`, `3-motion/40-motion-reactivity-and-data-flow.md`, `3-motion/41-motion-vocabulary.md`, `4-runtime/34-animation-driver.md`, `5-realization/structure.{ios,android}.md`
 Scope: compare two expansion directions for native animation APIs: expose platform-shaped iOS and Android surfaces first, or combine the shared concepts into an fx vocabulary first. The research extracts both animation concepts and concrete native APIs before deciding what belongs in public JS.
+
+> **Promoted (DOC-034, 2026-06-29).** The durable grammar is now canon: `3-motion/41`
+> decision 15 (the `target → state → clock.phase → clock.keyframes → source` sequence and the
+> hybrid-timing principle), `0-spine/02` decision 17 (the lowering chain + native primitives
+> private to lowering), `4-runtime/34 §The spring-axis divergence`, and the realization tables in
+> `5-realization/structure.{ios,android}.md §motion`. Promotion was **principle-only**: no public
+> API was frozen, no implementation/DEF row spawned. This WIP is retained as derivation history —
+> the source-backed concept/API tables (incl. the §Android API extraction pass) and the
+> `FxTransition`/`FxIosTransition`/`FxAndroidTransition` type sketches stay here, unfrozen, until a
+> real consumer pulls a rung. Cite the canonical docs.
 
 ## Why this matters
 
@@ -40,10 +50,10 @@ it can promote into the canonical motion docs.
 | SwiftUI `KeyframeAnimator` | source-backed for page existence; API extraction pending | Apple DocC JSON: `https://developer.apple.com/tutorials/data/documentation/swiftui/keyframeanimator.json` |
 | SwiftUI `UnitCurve` | source-backed for page existence; API extraction pending | Apple DocC JSON: `https://developer.apple.com/tutorials/data/documentation/swiftui/unitcurve.json` |
 | Android `android.view.animation` | source-backed package inventory | Android reference: `https://developer.android.com/reference/android/view/animation/package-summary` |
-| Android `android.animation` | pending | Needed for property animation and `TimeInterpolator` |
-| Android DynamicAnimation | pending | Needed for `SpringAnimation` / `SpringForce` |
-| Jetpack Compose animation | pending | Needed for `AnimationSpec`, `spring`, `tween`, `keyframes`, `updateTransition`, and `animate*AsState` |
-| Material motion | pending | Needed for Android platform-native default tokens |
+| Android `android.animation` | source-backed | Android reference: `https://developer.android.com/reference/android/animation/package-summary` (+ `ValueAnimator`, `ObjectAnimator`, `AnimatorSet`, `Keyframe` pages). See §Android API extraction. |
+| Android DynamicAnimation | source-backed | AOSP `androidx-main` source (the reference pages are JS-rendered): `SpringForce.java` (the named constants + values), `DynamicAnimation.java`, `FloatPropertyCompat.java`. See §Android API extraction. |
+| Jetpack Compose animation | source-backed | Android docs `develop/ui/compose/animation/{value-based,quick-guide,customize}` + AOSP `androidx-main` `compose/animation/animation-core` (`AnimationSpec.kt`, `VectorizedAnimationSpec.kt`, `Easing.kt`) for verbatim signatures + `Spring` constants. See §Android API extraction. |
+| Material motion | source-backed | `material-foundation/material-tokens` `motion.json` (easing control points + 16 duration tokens) + `material-components-android` `docs/theming/Motion.md` (the Emphasized `PathInterpolator` path) + Compose `androidx.compose.material3.MotionScheme`. See §Android API extraction. |
 
 Apple Developer Documentation pages are backed by DocC JSON at:
 
@@ -54,6 +64,91 @@ https://developer.apple.com/tutorials/data/documentation/<module>/<symbol>.json
 Use the DocC JSON for documentation structure, topic grouping, prose summaries, relationships,
 and symbol references. Use the Xcode symbol graph for compile-accurate signatures against the
 installed SDK.
+
+## Android API extraction
+
+Source-backed pass (2026-06-29) over the four pending Android rows. Each concrete signature
+and numeric value below is cited in the evidence table above; the developer.android.com
+reference pages are client-rendered, so the AOSP `androidx-main` source was used as the primary
+authority where the live pages returned only their navigation shell.
+
+### `android.animation` — the property-animation (tween) system
+
+- `ObjectAnimator.ofFloat(target, propertyName, values…)` / `ValueAnimator.ofFloat(values…)` —
+  discrete-target transition; `setDuration`, `setInterpolator`, `setStartDelay`.
+- `AnimatorSet.playSequentially(…)` / `playTogether(…)` + `AnimatorSet.Builder` (`after`/`before`/
+  `with`) — sequencing and grouping (the timeline-orchestration concept).
+- Repeat: `setRepeatCount(int)` with `INFINITE = -1`; `setRepeatMode(int)` with `RESTART = 1` /
+  `REVERSE = 2`.
+- Keyframe timeline: `Keyframe.ofFloat(fraction, value)` (per-keyframe `setInterpolator`) →
+  `PropertyValuesHolder.ofKeyframe(name, kf…)` → `ObjectAnimator.ofPropertyValuesHolder(target, pvh)`.
+- Completion: `Animator.AnimatorListener` (`onAnimationStart/End/Cancel/Repeat`); per-frame tap via
+  `ValueAnimator.AnimatorUpdateListener` (never bridged per frame in this repo's model).
+- Curves live in `android.view.animation`: `LinearInterpolator`, `AccelerateDecelerateInterpolator`
+  (the common default), `AccelerateInterpolator`, `DecelerateInterpolator`, `OvershootInterpolator`,
+  `AnticipateInterpolator`, `BounceInterpolator`, and `PathInterpolator` (arbitrary cubic-Bézier /
+  Path — how Material easing curves are expressed).
+- **Does NOT cover spring physics** — that is `androidx.dynamicanimation`, a separate library.
+  `Overshoot`/`Anticipate`/`Bounce` interpolators *approximate* spring feel but are
+  time-parameterized, not physics-driven.
+
+### `androidx.dynamicanimation` — the physics (spring/fling) system
+
+- `SpringForce`: `setStiffness(float)` + `setDampingRatio(float)` + `setFinalPosition(float)`.
+  Named constants (verbatim AOSP values): `STIFFNESS_HIGH = 10000`, `STIFFNESS_MEDIUM = 1500`,
+  `STIFFNESS_LOW = 200`, `STIFFNESS_VERY_LOW = 50`; `DAMPING_RATIO_HIGH_BOUNCY = 0.2`,
+  `DAMPING_RATIO_MEDIUM_BOUNCY = 0.5`, `DAMPING_RATIO_LOW_BOUNCY = 0.75`,
+  `DAMPING_RATIO_NO_BOUNCY = 1.0` (critically damped, no overshoot).
+- `SpringAnimation.animateToFinalPosition(float)` — retarget mid-flight, carrying current
+  value + velocity (the spring retarget entry point); `setStartVelocity(float)` — velocity handoff.
+- `FlingAnimation` — friction-decayed momentum (no target; `setFriction`, `setMin/MaxValue`).
+- `DynamicAnimation.OnAnimationEndListener.onAnimationEnd(anim, canceled, value, velocity)` —
+  completion event carrying terminal value + velocity.
+- **Repo confirmation:** the shipped transient-presence spring (`DAMPING_RATIO_NO_BOUNCY` at
+  `STIFFNESS_MEDIUM`) pairs `1.0` / `1500` — a firm, non-overshooting settle. Both constants exist
+  as documented.
+
+### Jetpack Compose animation
+
+- `animate*AsState(targetValue, animationSpec, finishedListener)` — discrete-target transition.
+- `updateTransition(targetState)` + `Transition.animate*(transitionSpec, targetValueByState)` —
+  named-state transition: one enum state fans out to many native-eased properties with per-edge
+  specs (`Segment.isTransitioningTo`). The natural lowering target for a future `FxView state`.
+- `Animatable.animateTo(...)` is a `suspend` returning an `AnimationResult` whose `endReason` is
+  `Finished` / `BoundReached` — the precise await-completion / sequencing model.
+- Specs: `spring(dampingRatio, stiffness)` (the **default** spec), `tween(durationMillis,
+  delayMillis, easing)`, `keyframes { v at t using e }` / `keyframesWithSpline { v atFraction f }`,
+  `snap(delayMillis)`, `repeatable` / `infiniteRepeatable` + `RepeatMode.Restart|Reverse`.
+- `Spring` constants mirror `SpringForce`: `StiffnessMedium = 1500f`, `DampingRatioNoBouncy = 1f`,
+  etc. Named easings are cubic-Béziers: `FastOutSlowInEasing = (0.4,0,0.2,1)`,
+  `LinearOutSlowInEasing = (0,0,0.2,1)`, `FastOutLinearInEasing = (0.4,0,1,1)`.
+
+### Material motion — Android platform-native default tokens
+
+- Easing token families: **Standard** = `cubic-bezier(0.2,0,0,1)` (+ Decelerate `(0,0,0,1)`,
+  Accelerate `(0.3,0,1,1)`); **Emphasized** = a two-segment `PathInterpolator`
+  (`M 0,0 C 0.05,0 0.133333,0.06 0.166666,0.4 C 0.208333,0.82 0.25,1 1,1`), with Decelerate
+  `(0.05,0.7,0.1,1)` / Accelerate `(0.3,0,0.8,0.15)`. Emphasized is not expressible as one
+  cubic-Bézier — Compose approximates it with paired accelerate/decelerate specs.
+- Duration tokens (ms): Short1–4 = 50/100/150/200; Medium1–4 = 250/300/350/400;
+  Long1–4 = 450/500/550/600; ExtraLong1–4 = 700/800/900/1000.
+- `androidx.compose.material3.MotionScheme` (`standard()` / `expressive()`) provides
+  `{default,fast,slow}{Spatial,Effects}Spec()` — the theme-level motion defaults; in M3 Expressive
+  the spatial specs are spring/physics-based, superseding raw easing+duration. (Exact per-spec
+  stiffness/damping live in internal `MotionTokens` and were not extracted — flagged.)
+- **Validates the proposed Android transition presets:** `materialStandard` → the Standard easing
+  family; `materialEmphasized` → the Emphasized family. Both map to real, named Material token
+  families.
+
+### The cross-platform finding that fixes the spring direction
+
+Android parameterizes springs by **damping ratio + stiffness** across *both* the View-system
+`DynamicAnimation`/`SpringForce` *and* Compose `spring()`. iOS SwiftUI `Spring(duration:bounce:)`
+parameterizes by **perceptual duration + normalized bounce**. These are different axes with no 1:1
+mapping. This is the source-backed reason a single numeric cross-platform spring model is wrong, and
+why the iOS / Android expert-timing blocks below carry genuinely different shapes — `FxIosTransition`
+in `{ duration, bounce }`, `FxAndroidTransition` in `{ stiffness, dampingRatio }`. It also matches
+the repo's already-shipped per-platform spring authoring (`DOC-009`).
 
 ## Concept extraction
 

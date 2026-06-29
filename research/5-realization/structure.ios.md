@@ -418,7 +418,11 @@ The driver node (`02`) lowers two ways, by **target**:
 - **effect target** — `phaseAnimator`/`keyframeAnimator`/`.animation`
   (`requires {os:17 · 16 for .animation, hosted}`). Drive a hosted effect's own targets
   (intro/outro/state) — the native side of the eased-`transition` channel (`40`); JS sets
-  discrete targets, SwiftUI animates between them.
+  discrete targets, SwiftUI animates between them. `.animation(value:)` realizes the `state`
+  rung; `PhaseAnimator`/`KeyframeAnimator` are the `clock.phase`/`clock.keyframes` rungs in the
+  grammar sequence (`41` decision 15). Those two are **additive future rungs** — confirmed to
+  exist but not yet signature-extracted (`UnitCurve` likewise); they build when a consumer pulls
+  them, with no public API frozen here.
 
 ### `source`
 

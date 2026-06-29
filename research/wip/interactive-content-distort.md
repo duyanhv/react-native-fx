@@ -1,7 +1,7 @@
 # Interactive content-distort (water-ripple)
 Status: open — WIP, non-authoritative
 Phase: post-v2 exploration
-Feeds: `wip/native-animation-api-extraction.md`, `0-spine/04`/`05` (capability-boundary taxonomy and Lane 1 grammar; `wip/capability-boundary-classifier.md` and `wip/lane1-signal-grammar.md` historical), `3-motion/40`, `2-effects/23-filters.md`, `5-realization/structure.android.md`
+Feeds: `3-motion/41` (the canon animation grammar — decision 15; `wip/native-animation-api-extraction.md` historical), `0-spine/04`/`05` (capability-boundary taxonomy and Lane 1 grammar; `wip/capability-boundary-classifier.md` and `wip/lane1-signal-grammar.md` historical), `3-motion/40`, `2-effects/23-filters.md`, `5-realization/structure.android.md`
 Scope: a named feature exploration — make the Android content-distort shipped by DEF-009 (a stateless, time-driven ripple) *interactive*: a ripple that follows touch like water, and an impulse triggered at a point like a rock dropped in a pond. Captures what it is, which lane it falls in, and what it depends on — so it is a recorded post-v2 target, not re-litigated each time it comes up. **No architecture decision; no ledger row.**
 
 ## Why this matters
@@ -37,9 +37,9 @@ The Lane 1 grammar and the boundary classifier already place this shape — it i
 
 - **Target = an effect uniform → Boundary B.** `04`/`05` place Lane 1 targets inside transform/
   opacity on an fx-owned wrapper (Boundary A) or effect uniforms (Boundary B).
-- **Driver = `source` (gesture-linked).** `native-animation-api-extraction.md` concept table:
-  *"gesture-linked animation → `source` driver"*; *"Native reads the source … drives
-  transform/opacity or effect uniforms."*
+- **Driver = `source` (gesture-linked).** The canon animation grammar (`3-motion/41` decision 15)
+  places gesture-linked motion on the `source` driver — native reads the source and drives
+  transform/opacity or effect uniforms, emitting only boundary events.
 - **The two flavors are the two lanes.** This is the sharp line:
   - **Parametric = Lane 1, additive.** A native continuous source (touch) mapped through the
     enumerated operators (track + range-map + curve + settle) onto an fx-owned Boundary-B uniform.
@@ -72,9 +72,9 @@ not the default.
 - **Gesture trail — DEF-011 + DEF-006:** continuous touch → uniform must be native- or
   UI-thread-driven (never per-frame JS, rule #1). DEF-011 owns gesture claiming/arbitration vs
   scrollers; DEF-006 (Reanimated UI-thread channel) is the continuous source channel.
-- **General home — the Lane 1 `source` grammar (post-v2).** `native-animation-api-extraction.md`
-  sequences *"add `source` interactions through the Lane 1 grammar"* as step 5 — after target,
-  state, phase, and keyframes. The ripple's own animation (impulse decay = `clock.phase`/
+- **General home — the Lane 1 `source` grammar (post-v2).** The canon animation grammar
+  (`3-motion/41` decision 15) sequences `source` last — after `target`, `state`, `clock.phase`, and
+  `clock.keyframes`. The ripple's own animation (impulse decay = `clock.phase`/
   `keyframes`; gesture center = `source`) composes through that same post-v2 chaining grammar, so
   building it now would pre-empt that design.
 
@@ -101,8 +101,9 @@ not the default.
 
 ## Sources
 
-- `wip/native-animation-api-extraction.md` — the post-v2 chaining animation API; `source` driver
-  for gesture-linked motion onto effect uniforms; the step-5 sequencing.
+- `3-motion/41` decision 15 — the canon animation grammar: the `source` driver for gesture-linked
+  motion onto effect uniforms, and the step-5 sequencing. (`wip/native-animation-api-extraction.md`
+  is the historical derivation — source-backed concept/API tables only.)
 - `0-spine/04` / `0-spine/05` — canonical: Boundary-B effect-uniform targets, the native source
   → mapping → fx-owned-target grammar, the two-lane continuous-interaction model, and the
   falsifying test (`wip/capability-boundary-classifier.md` and `wip/lane1-signal-grammar.md` are

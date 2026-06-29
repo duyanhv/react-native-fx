@@ -448,7 +448,11 @@ The driver node (`02`) lowers two ways, by **target**:
   `spring` (`requires {os:21, hosted}`); spring defaults to Compose's standard `spring()`,
   upgrading to **M3 Expressive** `MotionScheme` springs where present (`material3` ≥ 1.4.0 —
   § `shape-morph`; progressive enhancement). The native side of the eased-`transition`
-  channel (`40`).
+  channel (`40`). In the grammar sequence (`41` decision 15) `updateTransition` realizes the
+  `state` rung and Compose `keyframes` / `android.animation` `AnimatorSet` +
+  `PropertyValuesHolder.ofKeyframe` realize the `clock.phase`/`clock.keyframes` rungs — these are
+  source-backed but **additive future rungs**, built when a consumer pulls them; no public API is
+  frozen here.
 
 ### `source` — best-effort UI-thread scroll reader (DEF-026)
 
