@@ -27,7 +27,7 @@ chain and lifecycle rules live in [`subtask-protocol.md`](./subtask-protocol.md)
 ## Where the project is
 
 Read [`progress.md`](./progress.md) for the authoritative state — the snapshot below rots. As of
-2026-06-28:
+2026-06-29 (see [`SESSION-HANDOFF-2026-06-29.md`](./SESSION-HANDOFF-2026-06-29.md)):
 
 - **The native runtime + boundary (Units 1–9) are built, device-proven, and merged** on
   `integration/0.1.x` — effects, materials, shaders, motion, presence, interaction, drag/tilt, the
@@ -45,12 +45,20 @@ Read [`progress.md`](./progress.md) for the authoritative state — the snapshot
   start DEF-016. There is no active feature queued: Android `symbol` and the fx-owned Android
   `source`/scroll tier are closed. The next useful work is product-value-driven feature work from the
   trigger-gated backlog or a promoted `wip/` exploration, not a release push.
-- **The WIP cleanup session is wrapped** — DOC-032 promotes the Lane 1 architecture slice, and
-  DOC-033 records the resolution plan for the remaining current WIP explorations. Start from
-  [`research/wip/README.md`](../wip/README.md) when you choose a WIP path. The current order is:
-  native animation grammar first, anchored reveal when triggered, interactive content-distort when a
-  water-ripple consumer exists, and native slot layout transitions only after a reserved-size
-  `FxFlow` fork is deliberately picked.
+- **First geometry-orchestration component shipped (2026-06-29): `FxReveal` (DEF-027, SURF-011).**
+  The interactive anchored-reveal spine — collapsed slot → bottom-half panel, sharp + cross-faded +
+  interruptible, revealed content touch-reachable — device-verified iOS + Android, merged
+  (`f5c3662`). Preset-first (`anchoredMorph`), Boundary A, via the **app-placed reveal-host** contract
+  (`54`/`50`, DEF-003-compatible — no fx portal). Step 2 (chrome: radius morph + clip) and a
+  foreign-anchor `FxAnchor` (the cross-tree frontier) are future rows. Also this session: **DOC-034**
+  promoted the native-animation hybrid grammar to canon (`41` d15/16, `02` d17, `34`); **DOC-035**
+  swept stale comments.
+- **The WIP queue (`research/wip/README.md` §Resolution plan).** `native-animation-api-extraction`
+  is **done** (DOC-034, historical); `anchored-reveal-and-library-shape` is **partly promoted**
+  (DEF-027 step 1 shipped; chrome / `FxAnchor` / `FxFlow` / Boundary L remain its derivation scope);
+  `interactive-content-distort` (water-ripple) and `native-slot-layout-transitions` (`FxFlow`) stay
+  parked until a product trigger. Lane 1 architecture is canon (DOC-032); the resolution plan is
+  DOC-033.
 
 Each active task keeps a `tasks/<id>/notes.md` with what changed, any unverified claims, and a
 one-line "Next:". Start there to see what the last session did.
