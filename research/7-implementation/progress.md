@@ -92,6 +92,7 @@ the bottom. A row needs a detail block only when it is active or has more than a
 | U3-008 | Unit 3 | rework | merged | yes | — | — | — | critique F1+F10: persistent `UIHostingController` + observed props holder on iOS `FxHostedView` (Expo `SwiftUIHostingView` idiom; the Android sibling and the UIKit glass path already update in place) — unblocks the eased-uniform `transition` channel, symbol state survives prop changes; decorative hosted views default a11y-hidden on both platforms; a11y row added to the Device Verification Guide template. Headless gates + xcodebuild green; agent-device evidence (stills only) in `tasks/U3-008/evidence/device-run-2026-06-10/` — F1 symbol/shader continuity PASS, glass regular/clear + GPU resume PASS, decorative a11y-hidden PASS, interactive-glass reachability PARTIAL (no AX element in either state — the open VoiceOver item, see notes). **device-verified ratified 2026-06-11 (maintainer)** on physical iPhone + POCO F1 (Android 15/API 35): iOS symbol `variableColor`+`repeat` replace-flip and iOS+Android intensity-slider in-place uniform updates PASS (no blank/restart); Android decorative a11y-hidden confirmed via the live accessibility tree (effect view absent, controls present — `FxHostedView.kt:105`); residual — literal Google-TalkBack screen-reader demo needs a TalkBack-equipped device (POCO F1/MIUI ships none); evidence in `tasks/U3-008/evidence/ratify-2026-06-11/`. **Reviewed + docs-closed 2026-06-11** — approved, gates re-run green at `04f77d0`, two non-blocking nits (inert `FxHostedProps.materialConfig`; teardown-wording nuance in `structure.ios.md`) ([review](./reviews/U3-008.md)); **merged 2026-06-11 (maintainer)** on integration/0.1.x ([task](./tasks/U3-008/)) |
 | U4-003 | Unit 4 | rework | merged | yes | — | — | — | critique F2+F11(sharing half): iOS `FxSurfaceView` builds its `MTKView` lazily (first active `shader`) + shares a process-wide static device/queue/library/pipeline cache; Android unaffected (no GPU in the shell). Headless green; `structure.ios.md` §Lifecycle pinned. **device-verified ratified 2026-06-11 (maintainer)** on the agent-device PASS evidence — exactly one `MTKView` allocation per session, zero for content-motion-only, reuse + isolated teardown clean (`tasks/U4-003/evidence/`); multi-instance proof rides EX-002. **Reviewed + docs-closed 2026-06-11** ([review](./reviews/U4-003.md)); **merged 2026-06-11 (maintainer)** on integration/0.1.x. [task](./tasks/U4-003/) · [detail](#u4-003--lazy-metal--shared-static-metal-context) |
 | EX-002 | harness | implement | merged | yes | — | — | — | critique F14: 100-cell mixed-effect stress list shipped in the example (`screens/stress-list.tsx`, FlatList, 4 cell kinds cycling — shader `FxSurfaceView` / fill+material `FxHostedView` / motion-only `FxSurfaceView`); registered as task EX-002; example tsc green, no native touched; **device run 2026-06-11 via agent-device (iOS 26.5 sim, log-instrumented build reverted after; + Android POCO F1) — (a) shared Metal context PASS (1 MTLDevice + 1 MTLCommandQueue process-wide, 5 pipeline compiles = distinct raster ids, repeat-id reuse no recompile), (c) zero MTKView for motion cells PASS (28 allocs all shader-cell), a11y PASS; (b) scroll PASS on Android hardware (59.8 fps, 0 stutters) / partial on iOS sim (no fps tooling)** — `tasks/EX-002/evidence/device.md`. **Finding:** Android expo-view shader cells render blank (`FxSurfaceView.kt` renderer is a TODO; scenario doc's "shader via AGSL" claim inaccurate). **device-verified ratified + reviewed 2026-06-11 (maintainer / reviewer)** ([review](./reviews/device-batch-2026-06-11.md)); the Android-renderer gap is pre-existing (deferred interactive renderer), not an EX-002 defect — scenario doc corrected; **merged 2026-06-11 (maintainer)** on integration/0.1.x. [task](./tasks/EX-002/) · [detail](#ex-002--100-cell-mixed-effect-stress-list) |
+| EX-003 | harness | implement | headless-done | yes | — | — | — | all-public-surface chat harness: `example/screens/all-api-chat.tsx` composes `FxPresence`, `FxView`, `FxPressable`, `<Fx>`, `EdgeGlow`, `FxGroup`/`FxItem`, `FxReveal`, `Fx.Scroll`, runtime shader/symbol registries, `FxHostedView`, and `FxSurfaceView` diagnostics in one ChatGPT-style screen. JS-only; no source-doc decision. `example` tsc + root lint green. Device gate owed on iOS + Android. [task](./tasks/EX-003/) · [detail](#ex-003--all-api-chat-screen) |
 
 ### V2 build — Units 4–9
 
@@ -319,6 +320,44 @@ Proof:
   (c) shader-less cells allocate zero MTKView at scale; plus the a11y row. iOS owns (a)/(c);
   both platforms run (b). The human gate.
 - docs: none — critique-routed, no ledger row.
+
+## EX-003 — all API chat screen
+
+Type: `implement` · State: `headless-done` · Device: yes · Consumes: — · Closes: — (harness-only, no ledger row) · [task](./tasks/EX-003/)
+
+Origin: maintainer-requested example harness. One realistic chat screen that exercises the shipped
+public surface together instead of as isolated task cards.
+
+Checklist:
+- [x] spec'd ([README](./tasks/EX-003/README.md))
+- [x] rules-gated (#1 no per-frame JS; #2 agnostic names + platform-native defaults; #3 hosted vs interactive chosen by the public capability; #4 no hosted RN content sampling on iOS; #5 wraps app content, does not ship a UI kit; #7 Expo Modules boundary only; #9 reads layout, never owns app placement)
+- [x] implemented (`example/screens/all-api-chat.tsx` + task registration)
+- [x] commented (no new comments beyond existing API names; no internal planning ids in code)
+- [x] headless-done (`example` TypeScript green; root lint green)
+- [ ] device-verified (human gate)
+- [ ] reviewed
+- [ ] merged
+
+Change (JS-only — `example/`, no native):
+- **`screens/all-api-chat.tsx`** (`AllApiChatScreen`) — ChatGPT-style transcript with
+  `FxPresence` message lifecycle, `FxView` selected-state lift, `FxPressable` native feedback,
+  `<Fx>` string and builder effects, `EdgeGlow`, `FxGroup`/`FxItem` glass chips, `FxReveal` as
+  an attachment drawer inside an app-owned overlay host, `Fx.Scroll` source tiles, BYO shader and
+  symbol registration, and low-level `FxHostedView` / `FxSurfaceView` diagnostics.
+- **`data/tasks.ts`** — `"all-api-chat"` added to `DemoScreen`; `EX-003` task entry added.
+- **`app/(tasks)/[taskId].tsx`** — `AllApiChatScreen` import + `case "all-api-chat"` in
+  `renderDemo`.
+
+Proof:
+- headless: `bun x tsc --noEmit` from `example/` — green. `bun run lint` from the repo root —
+  green (`packages/src` Biome scope).
+- iOS 26 smoke: `agent-device` on iPhone 17 Pro / iOS 26.5 confirmed the cleaned first viewport
+  after fixing the blocky header overlay, shader-corner bleed, suggestion chips, and composer
+  overlap. Screenshot: `/private/tmp/fx-ios26-ex003-fixed2.png`.
+- device: `tasks/EX-003/evidence/headless.md` — run on iOS and Android. Verify message
+  lifecycle/state/press events, effect rendering, reveal touch reachability, source-scroll tiles,
+  runtime registry diagnostics, controlled writes, content distortion, and graceful degradation.
+- docs: none — harness-only, no ledger row.
 
 ## U1-006 — drop FxGroupView from the public index
 

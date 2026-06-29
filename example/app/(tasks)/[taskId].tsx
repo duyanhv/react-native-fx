@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import type { DemoScreen } from "../../data/tasks";
 import { TASKS } from "../../data/tasks";
 import { AndroidMaterialScreen } from "../../screens/android-material";
+import { AllApiChatScreen } from "../../screens/all-api-chat";
 import { CoexistenceScreen } from "../../screens/coexistence";
 import { ContentDistortScreen } from "../../screens/content-distort";
 import { ContentMotionScreen } from "../../screens/content-motion";
@@ -24,6 +25,8 @@ import { TaskBlankScreen } from "../../screens/task-blank";
 
 function renderDemo(screen: DemoScreen | undefined, label: string) {
 	switch (screen) {
+		case "all-api-chat":
+			return <AllApiChatScreen />;
 		case "fill-material":
 			return <FillMaterialScreen />;
 		case "shaders":
