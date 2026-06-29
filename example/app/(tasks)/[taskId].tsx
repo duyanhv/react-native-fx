@@ -14,6 +14,7 @@ import { FxViewScreen } from "../../screens/fx-view";
 import { GlassMorphScreen } from "../../screens/glass-morph";
 import { HostingParityScreen } from "../../screens/hosting-parity";
 import { PresenceScreen } from "../../screens/presence";
+import { RevealScreen } from "../../screens/reveal";
 import { RuntimeShaderScreen } from "../../screens/runtime-shader";
 import { ShaderCatalogScreen } from "../../screens/shader-catalog";
 import { SourceScrollScreen } from "../../screens/source-scroll";
@@ -41,6 +42,8 @@ function renderDemo(screen: DemoScreen | undefined, label: string) {
 			return <StressListScreen />;
 		case "presence":
 			return <PresenceScreen />;
+		case "reveal":
+			return <RevealScreen />;
 		case "coexistence":
 			return <CoexistenceScreen />;
 		case "controlled-write":

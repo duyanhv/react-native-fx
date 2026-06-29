@@ -315,6 +315,14 @@ auditable; it lives with the preset catalog in `42`/`56` and is filled on device
     (the iOS `PhaseAnimator`/`KeyframeAnimator`/`UnitCurve` signatures are not yet
     extracted), and no public type name is frozen; the sketches stay in `research/wip`. A rung
     builds only when a real consumer pulls it (no implementation row from this pass).
+16. **The `target` driver gained non-uniform `scaleX`/`scaleY` + normalized `origin` channels
+    (DEF-027, 2026-06-29).** The anchored reveal's inverse transform shrinks width and height by
+    different factors about the collapsed corner, so the `motion` node's driver IR (manifest
+    `properties`) carries `scaleX`/`scaleY` (range `[0,4]`) beside the uniform `scale` shorthand,
+    plus a normalized `origin` (default centre). These are **IR / lowering channels, not public
+    `fx.motion` authoring fields** — the public `MotionSpec` keeps uniform `scale`; presence/state
+    callers are unchanged. The reveal consumes them through `FxReveal`, not a `motion` map.
+    Realization: `structure.{ios,android}.md § reveal`.
 
 ## Open questions
 

@@ -99,6 +99,21 @@ public class FxModule: Module {
       }
     }
 
+    View(FxRevealView.self) {
+      Events("onFxTransitionEnd")
+
+      Prop("open") { (view: FxRevealView, value: Bool) in
+        view.setOpen(value)
+      }
+      Prop("placement") { (view: FxRevealView, value: String) in
+        view.setPlacement(value)
+      }
+
+      OnViewDidUpdateProps { (view: FxRevealView) in
+        view.applyResolvedConfig()
+      }
+    }
+
     View(FxScrollView.self) {
       Prop("axis") { (view: FxScrollView, value: String) in
         view.setAxis(value)

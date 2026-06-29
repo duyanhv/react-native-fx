@@ -8,6 +8,13 @@ export {
   type PresencePreset,
 } from './FxPresence';
 export { FxPressable, type FxPressableProps } from './FxPressable';
+export {
+  FxReveal,
+  type FxRevealPreset,
+  type FxRevealProps,
+  type FxRevealTransition,
+  type FxRevealTransitionEnd,
+} from './FxReveal';
 export { FxScroll, type FxScrollProps, type FxScrollTile } from './FxScroll';
 export {
   type FxStateChange,

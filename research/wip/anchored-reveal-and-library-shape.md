@@ -4,6 +4,18 @@ Phase: post-v2 exploration
 Feeds: `0-spine/04`/`05` (capability-boundary taxonomy and Lane 1 grammar; `capability-boundary-classifier.md` and `lane1-declarative-surface.md` historical), `1-surface/50`, `3-motion/41` (the canon animation grammar — decision 15; `native-animation-api-extraction.md` historical), `4-runtime/33-shadow-nodes-and-layout.md`, `5-realization/structure.{ios,android}.md`
 Scope: explore geometry-aware presentation from an RN-laid-out anchor rect to an fx-owned target rect, and place that feature in the public library model without turning fx into a generic layout animation API.
 
+> **Partly promoted (DEF-027 / SURF-011, 2026-06-29).** The boundary + surface direction and the
+> geometric spine are now canon and shipped (device-verified iOS + Android): `FxReveal` —
+> preset-first (`anchoredMorph`), no `anchor`/`placement` prop, Boundary A by construction, with the
+> **app-placed reveal-host** contract (`1-surface/54 §Placement & portal coexistence`,
+> `1-surface/50 §Props by default`); mechanics in `5-realization/structure.{ios,android}.md §reveal`;
+> the inverse-transform driver channels (non-uniform `scaleX`/`scaleY` + `origin`) in `3-motion/41`
+> decision 15 + the manifest; Boundary A / the `FxAnchor` cross-tree deferral in `0-spine/04`. **Still
+> future (derivation history below):** the chrome step (radius morph + clip, then border/background),
+> a *foreign-anchor* `FxAnchor` (the cross-tree frontier, gated by its own `05` decision), `FxFlow`,
+> and any Boundary L reflow. Cite the canonical docs for what shipped; this WIP holds the
+> not-yet-built remainder.
+
 ## Why this matters
 
 A chat input camera reveal exposes a gap between simple content motion and true layout

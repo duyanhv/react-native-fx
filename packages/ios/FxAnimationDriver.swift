@@ -49,6 +49,8 @@ internal final class FxAnimationDriver {
     envelopeIdentifier += 1
     let identifier = envelopeIdentifier
 
+    applyAnchorPoint(target)
+
     if shouldReduceMotion || !isSpringAvailable {
       stopDisplayLink()
       targetView.layer.removeAllAnimations()
@@ -82,6 +84,7 @@ internal final class FxAnimationDriver {
     displayLinkTarget = nil
     renderServerStartTime = nil
     targetView?.layer.removeAllAnimations()
+    applyAnchorPoint(value)
     apply(value)
   }
 
@@ -255,10 +258,13 @@ internal final class FxAnimationDriver {
     }
     return FxAnimationVector(
       opacity: targetView.alpha,
-      scale: targetView.transform.fxScale,
+      scaleX: targetView.transform.fxScaleX,
+      scaleY: targetView.transform.fxScaleY,
       translationX: targetView.transform.tx,
       translationY: targetView.transform.ty,
-      rotation: targetView.transform.fxRotation)
+      rotation: targetView.transform.fxRotation,
+      originX: targetView.layer.anchorPoint.x,
+      originY: targetView.layer.anchorPoint.y)
   }
 
   private func readPresentationValue() -> FxAnimationVector? {
@@ -268,21 +274,53 @@ internal final class FxAnimationDriver {
     let transform = presentation.affineTransform()
     return FxAnimationVector(
       opacity: CGFloat(presentation.opacity),
-      scale: transform.fxScale,
+      scaleX: transform.fxScaleX,
+      scaleY: transform.fxScaleY,
       translationX: transform.tx,
       translationY: transform.ty,
-      rotation: transform.fxRotation)
+      rotation: transform.fxRotation,
+      originX: presentation.anchorPoint.x,
+      originY: presentation.anchorPoint.y)
   }
 
   private func apply(_ value: FxAnimationVector) {
     targetView?.alpha = value.opacity
     targetView?.transform = value.transform()
   }
+
+  /// Pins the target's transform anchor to the envelope's origin, preserving the visual frame so
+  /// changing the anchor does not jump the view. A no-op for the center default (0.5, 0.5) every
+  /// uniform-scale caller uses — only the reveal moves it, to shrink toward the collapsed corner.
+  private func applyAnchorPoint(_ value: FxAnimationVector) {
+    guard let targetView else {
+      return
+    }
+    let anchor = CGPoint(x: value.originX, y: value.originY)
+    let current = targetView.layer.anchorPoint
+    guard current != anchor else {
+      return
+    }
+    let bounds = targetView.bounds
+    let deltaX = (anchor.x - current.x) * bounds.width
+    let deltaY = (anchor.y - current.y) * bounds.height
+    let transform = targetView.transform
+    targetView.layer.anchorPoint = anchor
+    targetView.layer.position = CGPoint(
+      x: targetView.layer.position.x + deltaX * transform.a + deltaY * transform.c,
+      y: targetView.layer.position.y + deltaX * transform.b + deltaY * transform.d)
+  }
 }
 
 extension CGAffineTransform {
-  fileprivate var fxScale: CGFloat {
-    return sqrt(a * a + c * c)
+  // Independent per-axis scale magnitudes recovered from the linear part (`R · S`), so a
+  // non-uniform reveal transform survives the read-back. The old `sqrt(a² + c²)` mixed the two
+  // axes and collapsed any non-uniform scale to a single wrong value.
+  fileprivate var fxScaleX: CGFloat {
+    return sqrt(a * a + b * b)
+  }
+
+  fileprivate var fxScaleY: CGFloat {
+    return sqrt(c * c + d * d)
   }
 
   fileprivate var fxRotation: CGFloat {

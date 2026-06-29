@@ -424,6 +424,39 @@ The driver node (`02`) lowers two ways, by **target**:
   exist but not yet signature-extracted (`UnitCurve` likewise); they build when a consumer pulls
   them, with no public API frozen here.
 
+### `reveal` (anchored reveal — `FxReveal`, DEF-027)
+
+**Shipped step 1 (the geometric spine), device-verified iOS 26.5 2026-06-29.** A dedicated
+expo-view `FxRevealView` (not `FxSurfaceView` — the two-layer routing is isolated from the central
+surface). It hosts two fx-owned layers — a **collapsed** container and an **expanded** (geometry)
+container — driven by two `FxAnimationDriver`s (one geometry + fade, one collapsed counter-fade)
+under an `FxRevealCoordinator` FSM (`collapsed`/`expanding`/`expanded`/`collapsing`), modeled on
+`FxPresenceCoordinator`.
+
+- **The reveal-host model (`54 §Placement & portal coexistence`).** The **app** lays out a
+  bounds-containing host (root overlay / its own portal / RN `Modal`) whose bounds span the
+  collapsed slot and the expanded target; `FxRevealView` **fills** that host. fx creates no overlay
+  window of its own (DEF-003 intact; rule #9). `collapsedFrameInShell()` reads the **first subview
+  of the collapsed container** — the collapsed slot's Fabric-laid-out frame, a self-read, never a
+  descendant search or foreign ref. The expanded layer sizes to the placement *within* the host, so
+  it is touch-reachable.
+- **The inverse-transform reveal.** Lay the expanded layer at the placement; apply the inverse
+  transform — non-uniform `scaleX`/`scaleY` + normalized `origin` pinned to the collapsed corner
+  (the `motion` driver channels added for the reveal, `41` decision 16) — so it visually starts on
+  the collapsed slot frame and rasterizes at full target size; animate to identity; counter-fade the
+  two layers by opacity. One `onTransitionEnd` per settled/cut-short phase; interruption retargets
+  (cut-short `interrupted=true` precedes the retargeted settle).
+- **Touch.** `hitTest` filters container/self hits so empty-space taps pass through; the
+  bounds-containing host makes the expanded content (e.g. a `CameraView` shutter) hittable.
+- **Initial `open=true` (no wrong-size flash).** The coordinator defers the expanded layer's
+  visibility (`setExpandedInteractive`) and seat until host geometry resolves
+  (`hasResolvedContentSize`); JS holds the expanded slot at `0×0`/`opacity:0` until `onLayout`
+  supplies host size. So a non-full-window host mounted open never flashes at the wrong size.
+- **Boundary A by construction** — own frame only, no foreign rect, no Yoga write (the host is an
+  app overlay, so siblings never reflow). Below iOS 17 the motion ladder is empty → instant
+  placement; reduce-motion → instant.
+- **Step 2 (chrome: radius morph + clip) is deferred** — square/unclipped corners in step 1.
+
 ### `source`
 
 **Shipped (DEF-014, device-ratified 2026-06-14).** The third driver node (`02` decision 14) —

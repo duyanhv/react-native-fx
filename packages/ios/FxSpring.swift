@@ -4,10 +4,52 @@ import SwiftUI
 
 internal struct FxAnimationVector: Equatable {
   var opacity: CGFloat
-  var scale: CGFloat
+  var scaleX: CGFloat
+  var scaleY: CGFloat
   var translationX: CGFloat
   var translationY: CGFloat
   var rotation: CGFloat
+
+  // Normalized transform anchor in `[0,1]` of the target's bounds — (0.5, 0.5) is center, the
+  // legacy behavior every uniform-scale caller depends on. It is a static property of the
+  // envelope, not an animated channel: the spring never integrates it (see `update`), so the
+  // origin a target carries is applied once when the driver seats the envelope. The reveal pins
+  // it to the collapsed corner so non-uniform scale shrinks toward that corner, not the center.
+  var originX: CGFloat
+  var originY: CGFloat
+
+  internal init(
+    opacity: CGFloat, scaleX: CGFloat, scaleY: CGFloat, translationX: CGFloat, translationY: CGFloat,
+    rotation: CGFloat, originX: CGFloat = 0.5, originY: CGFloat = 0.5
+  ) {
+    self.opacity = opacity
+    self.scaleX = scaleX
+    self.scaleY = scaleY
+    self.translationX = translationX
+    self.translationY = translationY
+    self.rotation = rotation
+    self.originX = originX
+    self.originY = originY
+  }
+
+  /// Uniform-scale convenience: the shape every pre-reveal caller (presence, state) authors, where
+  /// the two axes move together about the center.
+  internal init(
+    opacity: CGFloat, scale: CGFloat, translationX: CGFloat, translationY: CGFloat, rotation: CGFloat
+  ) {
+    self.init(
+      opacity: opacity, scaleX: scale, scaleY: scale, translationX: translationX,
+      translationY: translationY, rotation: rotation)
+  }
+
+  /// Reads/writes both axes together, so a uniform-scale caller keeps a single `scale` knob.
+  internal var scale: CGFloat {
+    get { return scaleX }
+    set {
+      scaleX = newValue
+      scaleY = newValue
+    }
+  }
 
   internal static let identity = FxAnimationVector(opacity: 1, scale: 1, translationX: 0, translationY: 0, rotation: 0)
   internal static let zero = FxAnimationVector(opacity: 0, scale: 0, translationX: 0, translationY: 0, rotation: 0)
@@ -16,12 +58,13 @@ internal struct FxAnimationVector: Equatable {
     return CGAffineTransform.identity
       .translatedBy(x: translationX, y: translationY)
       .rotated(by: rotation)
-      .scaledBy(x: scale, y: scale)
+      .scaledBy(x: scaleX, y: scaleY)
   }
 
   internal func isResting(at target: FxAnimationVector, velocity: FxAnimationVector) -> Bool {
     return abs(opacity - target.opacity) < 0.001
-      && abs(scale - target.scale) < 0.001
+      && abs(scaleX - target.scaleX) < 0.001
+      && abs(scaleY - target.scaleY) < 0.001
       && abs(translationX - target.translationX) < 0.1
       && abs(translationY - target.translationY) < 0.1
       && abs(rotation - target.rotation) < 0.001
@@ -29,7 +72,7 @@ internal struct FxAnimationVector: Equatable {
   }
 
   private var maximumMagnitude: CGFloat {
-    return [opacity, scale, translationX, translationY, rotation].map(abs).max() ?? 0
+    return [opacity, scaleX, scaleY, translationX, translationY, rotation].map(abs).max() ?? 0
   }
 }
 
@@ -54,7 +97,8 @@ internal struct FxSpring {
     deltaTime: TimeInterval
   ) {
     updateScalar(value: &value.opacity, velocity: &velocity.opacity, target: target.opacity, deltaTime: deltaTime)
-    updateScalar(value: &value.scale, velocity: &velocity.scale, target: target.scale, deltaTime: deltaTime)
+    updateScalar(value: &value.scaleX, velocity: &velocity.scaleX, target: target.scaleX, deltaTime: deltaTime)
+    updateScalar(value: &value.scaleY, velocity: &velocity.scaleY, target: target.scaleY, deltaTime: deltaTime)
     updateScalar(
       value: &value.translationX, velocity: &velocity.translationX, target: target.translationX, deltaTime: deltaTime)
     updateScalar(
@@ -87,7 +131,8 @@ internal struct FxSpring {
   ) -> FxAnimationVector {
     return FxAnimationVector(
       opacity: clippedVelocity(velocity.opacity, value: value.opacity, target: target.opacity),
-      scale: clippedVelocity(velocity.scale, value: value.scale, target: target.scale),
+      scaleX: clippedVelocity(velocity.scaleX, value: value.scaleX, target: target.scaleX),
+      scaleY: clippedVelocity(velocity.scaleY, value: value.scaleY, target: target.scaleY),
       translationX: clippedVelocity(velocity.translationX, value: value.translationX, target: target.translationX),
       translationY: clippedVelocity(velocity.translationY, value: value.translationY, target: target.translationY),
       rotation: clippedVelocity(velocity.rotation, value: value.rotation, target: target.rotation))

@@ -124,6 +124,16 @@ So nearly everything is flat props. The honest compounds are the **`FxGroup`/`Fx
 boundary (each item a real morphing native view — glass containers, `21`/`57`). No
 config-children, no `asChild`.
 
+**Anchored reveal — `FxReveal` (DEF-027).** A geometry-orchestration surface that morphs a
+collapsed slot into an expanded target. It is **preset-first** — `preset="anchoredMorph"` owns
+the target (bottom-half for now, platform-native later); there is **no `anchor`/`from` prop and
+no public `placement` prop** (a typed `target` escape hatch waits for a second real placement,
+not v1). It stays **Boundary A** — fx reads its own collapsed slot frame, never a foreign rect.
+For *interactive* expanded content it carries the **reveal-host requirement**: the app lays out a
+bounds-containing host (root overlay / app portal / RN `Modal`) and `FxReveal` fills it; **the app
+owns the placement host, fx owns the reveal animation inside it** (`54 §Placement & portal
+coexistence`, DEF-003-compatible; without it the panel is not touch-reachable on Android).
+
 ## Presets, palettes, themes — resolved in JS
 
 - A **preset** = a behavior id + a platform-default `motion`/`effect`/`transition` bundle

@@ -102,6 +102,14 @@ conceptually moves between tree locations, and possibly mutation coordination. T
 **refuse to mis-file it as a stretched L**: it is a candidate **new boundary**, gated by its
 own `05` decision.
 
+**Worked case — `FxReveal` (DEF-027).** The anchored reveal stays **Boundary A by construction**:
+fx owns both endpoints (one always-mounted shell), reads only its **own collapsed slot frame** (a
+self-read), and animates its own transform — it discovers and retains no foreign tree endpoint. The
+expanded panel lives in an **app-placed** bounds-containing host (`54 §Placement & portal
+coexistence`), so even the placement is the app's, not fx's. The cross-tree frontier is exactly where
+a *foreign-anchor* `FxAnchor` would land — endpoint discovery + retention of a view across tree
+locations — so `FxAnchor` is **deferred to its own `05` decision**, not shipped in DEF-027.
+
 ### The sorting rule
 
 ```txt

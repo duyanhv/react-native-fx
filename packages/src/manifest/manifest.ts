@@ -224,6 +224,11 @@ export const manifest = {
       properties: {
         opacity: { type: 'number', default: 1, range: [0, 1] },
         scale: { type: 'number', default: 1, range: [0, 4] },
+        // Independent per-axis scale — the reveal's inverse transform shrinks width and height by
+        // different factors. `scale` stays the uniform shorthand presence/state author; a caller
+        // that sets either axis gets non-uniform scale about `origin`.
+        scaleX: { type: 'number', default: 1, range: [0, 4] },
+        scaleY: { type: 'number', default: 1, range: [0, 4] },
         translateX: { type: 'number', default: 0 },
         translateY: { type: 'number', default: 0 },
         rotate: { type: 'number', default: 0 },

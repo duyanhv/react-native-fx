@@ -454,6 +454,40 @@ The driver node (`02`) lowers two ways, by **target**:
   source-backed but **additive future rungs**, built when a consumer pulls them; no public API is
   frozen here.
 
+### `reveal` (anchored reveal — `FxReveal`, DEF-027)
+
+**Shipped step 1 (the geometric spine), device-verified API 35 (POCO F1) 2026-06-29.** A dedicated
+`FxRevealView` (`FxNativeView`) hosting two fx-owned `FxRevealLayer`s — a **collapsed** and an
+**expanded** (geometry) container — driven by two `FxAnimationDriver`s under an `FxRevealCoordinator`
+FSM, the mirror of the iOS implementation (`structure.ios.md § reveal`).
+
+- **The reveal-host model (`54 §Placement & portal coexistence`).** The **app** lays out a
+  bounds-containing host (root overlay / portal / RN `Modal`) whose bounds span the collapsed slot
+  and the expanded target; `FxRevealView` **fills** it. This is load-bearing on Android: RN's
+  `TouchTargetHelper` does **not** descend into a parent for points outside its own bounds (the
+  U8-001 lesson), so a reveal whose panel overflowed a collapsed-sized parent is not touch-reachable.
+  `collapsedFrameInShell()` reads the **first child** of the collapsed container (the slot frame, a
+  self-read). The expanded layer sizes to the placement within the host.
+- **Touch contract.** `FxRevealView` and each `FxRevealLayer` are `ReactPointerEventsView`
+  **`BOX_NONE`** — the full-bounds shell never swallows non-content taps; `TouchTargetHelper`
+  descends to the real RN content (collapsed card, expanded shutter) as the target. Phase-gated
+  expanded interactivity: while collapsed the expanded layer is `INVISIBLE` **and** excluded from the
+  flattened `getChildCount`/`getChildAt` walk, so the hidden panel never intercepts taps.
+- **The inverse-transform reveal.** Non-uniform `scaleX`/`scaleY` (`SCALE_X`/`SCALE_Y`) + `pivot`
+  (the `motion` driver channels, `41` decision 16) map the placement rect onto the collapsed slot
+  frame, animated to identity; opacity counter-fade. One `onTransitionEnd` per settled/cut-short
+  phase; interruption retargets via `SpringAnimation.animateToFinalPosition` (cut-short
+  `interrupted=true` precedes the retargeted settle).
+- **Initial `open=true` (no wrong-size flash).** The coordinator defers the expanded layer's
+  visibility + seat until `hasResolvedContentSize`; JS holds the expanded slot at `0×0`/`opacity:0`
+  until `onLayout`. A non-full-window host mounted open never flashes at the wrong size.
+- **Layout.** `onLayout` does **not** call `super` (the base `ExpoView`/`LinearLayout` casts children
+  to its own LayoutParams — the FxSurfaceView gotcha); the full add/remove/`getChild*` family routes
+  the two slots into the two layers (the `expo-blur`/`ExpoBlurTargetView` pattern).
+- **Boundary A by construction** — own frame only, no Yoga write (the host is an app overlay).
+  Motion floor API 21 (`SpringForce`), M3 Expressive springs where present; reduce-motion → instant.
+- **Step 2 (chrome: radius morph + clip) is deferred** — square/unclipped corners in step 1.
+
 ### `source` — best-effort UI-thread scroll reader (DEF-026)
 
 The `source` driver's iOS-hosted render-server rung (structure.ios.md § `source`) ships

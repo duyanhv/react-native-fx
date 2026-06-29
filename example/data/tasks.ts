@@ -1,5 +1,5 @@
 export type TaskStatus = "verified" | "in-progress" | "todo";
-export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "fx-pressable" | "fx-view" | "glass-morph" | "blank";
+export type DemoScreen = "fill-material" | "shaders" | "content-motion" | "content-distort" | "symbol" | "android-material" | "hosting-parity" | "stress-list" | "presence" | "coexistence" | "source-scroll" | "runtime-shader" | "controlled-write" | "drag-axis-spike" | "effect-surface" | "fx-pressable" | "fx-view" | "glass-morph" | "reveal" | "blank";
 
 export type DeviceTask = {
 	id: string;
@@ -11,6 +11,14 @@ export type DeviceTask = {
 };
 
 export const TASKS: DeviceTask[] = [
+	{
+		id: "DEF-027",
+		title: "FxReveal — anchored reveal (geometric spine)",
+		platform: "iOS · Android",
+		what: "collapsed card → bottom-half panel via inverse transform · sharp content at target size · content cross-fade · interruption · camera-stand-in touch survives",
+		status: "in-progress",
+		screen: "reveal",
+	},
 	{
 		id: "U14-001",
 		title: "FxGroup / FxItem",

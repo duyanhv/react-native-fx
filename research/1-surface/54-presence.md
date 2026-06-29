@@ -115,6 +115,22 @@ This is a documentation + coexistence-verification contract, not a feature — t
 adds no placement API. Revisit only on the original ledger trigger, if app-owned placement
 proves insufficient in practice.
 
+**The reveal-host requirement (DEF-027).** The same split governs `FxReveal`, whose expanded
+panel grows past the collapsed slot's bounds. **The app lays out a bounds-containing host** — a
+root-level overlay, the app's own portal, or RN `Modal` — whose bounds span the collapsed slot
+*and* the expanded target; **`FxReveal` fills that host**, and fx reads the **collapsed slot
+frame inside that host** (one slot/wrapper frame — a self-read, never a descendant search or a
+foreign ref) to drive the reveal animation (inverse transform, cross-fade, interruption,
+completion) within it. The contract sentence: **the app owns the bounds-containing placement
+host; fx owns the reveal animation inside it.** This is mandatory for *interactive* expanded
+content: a reveal whose panel overflows a collapsed-sized parent is visually present but **not
+touch-reachable on Android** — `TouchTargetHelper` does not descend into a parent for points
+outside its own bounds, so the revealed content (e.g. a `CameraView` shutter) receives no touch.
+The app-placed host gives the reveal a real touch-reachable parent without fx creating any
+overlay window of its own — DEF-003 intact (no fx portal; placement is the app's job) and rule #9
+(fx reads layout, never owns tree placement). fx must not size the reveal to the collapsed
+content and rely on overflow.
+
 ## Decisions
 
 1. **`FxPresence` is a stateful coordinator, not a dumb wrapper** — it owns deferred

@@ -132,6 +132,21 @@ class FxModule : Module() {
       }
     }
 
+    View(FxRevealView::class) {
+      Events("onFxTransitionEnd")
+
+      Prop("open") { view: FxRevealView, value: Boolean ->
+        view.setOpen(value)
+      }
+      Prop("placement") { view: FxRevealView, value: String ->
+        view.setPlacement(value)
+      }
+
+      OnViewDidUpdateProps { view: FxRevealView ->
+        view.applyResolvedConfig()
+      }
+    }
+
     View(FxScrollView::class) {
       Events("onFxLoad", "onFxError")
 

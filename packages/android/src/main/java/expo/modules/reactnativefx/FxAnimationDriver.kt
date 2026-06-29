@@ -11,11 +11,27 @@ import kotlin.math.abs
 
 internal data class FxAnimationVector(
   val opacity: Float = 1f,
-  val scale: Float = 1f,
+  val scaleX: Float = 1f,
+  val scaleY: Float = 1f,
   val translationX: Float = 0f,
   val translationY: Float = 0f,
   val rotation: Float = 0f,
-)
+  // Normalized transform pivot in `[0,1]` of the target's bounds — (0.5, 0.5) is center, the
+  // View default every uniform-scale caller relies on. Not an animated channel: the driver pins
+  // the pivot once when it seats an envelope, so non-uniform scale shrinks toward this point. The
+  // reveal pins it to the collapsed corner.
+  val originX: Float = 0.5f,
+  val originY: Float = 0.5f,
+) {
+  /** Uniform-scale convenience: the shape presence and state author, both axes about the center. */
+  constructor(
+    opacity: Float = 1f,
+    scale: Float,
+    translationX: Float = 0f,
+    translationY: Float = 0f,
+    rotation: Float = 0f,
+  ) : this(opacity, scale, scale, translationX, translationY, rotation)
+}
 
 internal data class FxAnimationSpring(
   val stiffness: Float,
@@ -52,10 +68,12 @@ internal class FxAnimationDriver(
       return
     }
 
+    seatPivot(target)
+
     val targets = mapOf(
       animations[0] to target.opacity,
-      animations[1] to target.scale,
-      animations[2] to target.scale,
+      animations[1] to target.scaleX,
+      animations[2] to target.scaleY,
       animations[3] to target.translationX,
       animations[4] to target.translationY,
       animations[5] to target.rotation,
@@ -96,7 +114,18 @@ internal class FxAnimationDriver(
    */
   fun snap(target: FxAnimationVector) {
     cancel()
+    seatPivot(target)
     apply(target)
+  }
+
+  /**
+   * Pins the view's transform pivot to the envelope's normalized origin, in pixels. Changing the
+   * pivot does not move an untransformed view, so the reveal seats it before snapping the inverse
+   * transform. A no-op for the center default the View already uses.
+   */
+  private fun seatPivot(target: FxAnimationVector) {
+    targetView.pivotX = target.originX * targetView.width
+    targetView.pivotY = target.originY * targetView.height
   }
 
   fun cancel() {
@@ -192,8 +221,8 @@ internal class FxAnimationDriver(
 
   private fun apply(target: FxAnimationVector) {
     targetView.alpha = target.opacity
-    targetView.scaleX = target.scale
-    targetView.scaleY = target.scale
+    targetView.scaleX = target.scaleX
+    targetView.scaleY = target.scaleY
     targetView.translationX = target.translationX
     targetView.translationY = target.translationY
     targetView.rotation = target.rotation
