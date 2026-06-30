@@ -229,6 +229,9 @@ export const manifest = {
         // that sets either axis gets non-uniform scale about `origin`.
         scaleX: { type: 'number', default: 1, range: [0, 4] },
         scaleY: { type: 'number', default: 1, range: [0, 4] },
+        // The reveal chrome channel — corner radius morphing from the collapsed-state radius to
+        // the expanded-panel radius. IR/coordinator-private; never a public fx.motion field.
+        cornerRadius: { type: 'number', default: 0, range: [0, 100] },
         translateX: { type: 'number', default: 0 },
         translateY: { type: 'number', default: 0 },
         rotate: { type: 'number', default: 0 },

@@ -35,6 +35,12 @@ internal final class FxRevealCoordinator {
 
   private var placement = "bottom-half"
 
+  // Platform-native radii for the anchoredMorph preset (preset-owned, not public props).
+  // Exaggerated for device-gate G1 visibility (circular under morph vs elliptical); tune to taste
+  // once G1 is confirmed.
+  private let collapsedRadius: CGFloat = 20
+  private let expandedRadius: CGFloat = 36
+
   internal init(surface: FxRevealView) {
     self.surface = surface
   }
@@ -99,10 +105,12 @@ internal final class FxRevealCoordinator {
     switch phase {
     case .collapsed:
       surface.snapExpanded(to: collapsedGeometry())
+      surface.snapChrome(to: collapsedChrome())
       surface.snapCollapsedOpacity(to: 1)
       surface.setExpandedInteractive(false)
     case .expanded:
       surface.snapExpanded(to: expandedGeometry())
+      surface.snapChrome(to: expandedChrome())
       surface.snapCollapsedOpacity(to: 0)
       surface.setExpandedInteractive(true)
     default:
@@ -123,15 +131,18 @@ internal final class FxRevealCoordinator {
       surface.snapCollapsedOpacity(to: 0)
       if !surface.hasResolvedContentSize {
         surface.setExpandedInteractive(false)
+        surface.snapChrome(to: collapsedChrome())
         pendingTarget = open
         return
       }
       surface.setExpandedInteractive(true)
       surface.snapExpanded(to: expandedGeometry())
+      surface.snapChrome(to: expandedChrome())
     } else {
       phase = .collapsed
       surface.setExpandedInteractive(false)
       surface.snapExpanded(to: collapsedGeometry())
+      surface.snapChrome(to: collapsedChrome())
       surface.snapCollapsedOpacity(to: 1)
       if !surface.hasResolvedContentSize {
         pendingTarget = open
@@ -151,8 +162,10 @@ internal final class FxRevealCoordinator {
     // the current animated value so the spring retargets rather than snapping back.
     if !fromCollapsing {
       surface.snapExpanded(to: collapsedGeometry())
+      surface.snapChrome(to: collapsedChrome())
     }
     surface.animateExpanded(to: expandedGeometry())
+    surface.animateChrome(to: expandedChrome())
     surface.animateCollapsedOpacity(to: 0)
   }
 
@@ -163,6 +176,7 @@ internal final class FxRevealCoordinator {
       return
     }
     surface.animateExpanded(to: collapsedGeometry())
+    surface.animateChrome(to: collapsedChrome())
     surface.animateCollapsedOpacity(to: 1)
   }
 
@@ -197,6 +211,16 @@ internal final class FxRevealCoordinator {
       rotation: 0,
       originX: 0,
       originY: 0)
+  }
+
+  private func collapsedChrome() -> FxRevealView.ChromeTarget {
+    return FxRevealView.ChromeTarget(
+      rect: surface.collapsedFrameInShell(), radius: collapsedRadius)
+  }
+
+  private func expandedChrome() -> FxRevealView.ChromeTarget {
+    return FxRevealView.ChromeTarget(
+      rect: surface.resolvedPlacementRect(placement), radius: expandedRadius)
   }
 
   private func emit(_ phase: EnvelopePhase, finished: Bool, interrupted: Bool) {

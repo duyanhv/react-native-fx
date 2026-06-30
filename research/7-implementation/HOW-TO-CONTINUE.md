@@ -27,7 +27,14 @@ chain and lifecycle rules live in [`subtask-protocol.md`](./subtask-protocol.md)
 ## Where the project is
 
 Read [`progress.md`](./progress.md) for the authoritative state — the snapshot below rots. As of
-2026-06-29 (see [`SESSION-HANDOFF-2026-06-29.md`](./SESSION-HANDOFF-2026-06-29.md)):
+2026-06-30 (see [`SESSION-HANDOFF-2026-06-30.md`](./SESSION-HANDOFF-2026-06-30.md)):
+
+- **One task is in flight: `FxReveal` chrome step 2 (DEF-028, `device-pending`).** The scale-free
+  radius-morph + clip chrome is implemented both platforms and now **runs on Android for the first
+  time** (a construction crash was fixed) — G1 round + G2 clip visibly pass, iOS all-pass — but a
+  real **collapsed first-mount position** bug remains, with a named prime fix candidate (re-apply the
+  reverted `updateViewLayout` slot-routing, validate on device). **Resume DEF-028 before anything
+  else;** the 2026-06-30 handoff has the resume steps and the remaining gates.
 
 - **The native runtime + boundary (Units 1–9) are built, device-proven, and merged** on
   `integration/0.1.x` — effects, materials, shaders, motion, presence, interaction, drag/tilt, the

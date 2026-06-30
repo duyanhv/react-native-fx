@@ -7,7 +7,7 @@ import { useTheme } from "../components/theme";
 type LogLine = { id: number; text: string };
 
 /**
- * FxReveal device harness — the anchored-reveal geometric spine (step 1).
+ * FxReveal device harness — the anchored-reveal geometric spine (step 2).
  *
  * The collapsed card (a chat-input stand-in) reveals into a bottom-half panel holding a camera
  * stand-in (no camera peer is wired in the example; the stand-in is a plain tappable panel so the
@@ -20,8 +20,10 @@ type LogLine = { id: number; text: string };
  * is what makes the expanded panel touch-reachable on Android (TouchTargetHelper does not descend
  * into a parent for out-of-bounds points).
  *
- * Step 1 proves geometry, content cross-fade, completion, and interruption — square corners are
- * accepted; no radius morph or clip yet.
+ * Step 2 adds the chrome channel: the collapsed card reveals with its corner radius (12pt) morphing
+ * to the expanded panel radius (20pt), clipped throughout. The radius must stay circular under the
+ * non-uniform morph (G1); clip must not overflow (G2); Shutter must stay tappable through the clip
+ * (G3).
  */
 export function RevealScreen() {
 	const { palette } = useTheme();
@@ -47,7 +49,7 @@ export function RevealScreen() {
 			]}
 		>
 			<Text style={{ color: palette.textMuted, fontSize: 13 }}>
-				FxReveal · collapsed card → bottom-half panel
+				FxReveal · radius morph + clip (step 2)
 			</Text>
 
 			<View style={styles.controls}>
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
 	// Fixed-height non-full-window host for W8. `bottom` is dynamic (adds insets).
 	w8Host: { position: "absolute", left: 0, right: 0, height: 420 },
 	card: {
-		borderRadius: 12,
+		borderRadius: 20,
 		paddingHorizontal: 16,
 		paddingVertical: 12,
 		justifyContent: "center",

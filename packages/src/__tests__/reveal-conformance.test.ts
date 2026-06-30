@@ -94,3 +94,44 @@ describe('reveal surface constraint — preset-owned target, no anchor prop', ()
     expect(surface).not.toMatch(/anchor=\{/);
   });
 });
+
+describe('reveal chrome channel — IR-only, no public leakage', () => {
+  it('has a cornerRadius property in manifest motion.properties', () => {
+    const properties = manifest.nodes.motion.properties as Record<string, unknown>;
+    expect(properties.cornerRadius).toBeDefined();
+    expect((properties.cornerRadius as { type: string }).type).toBe('number');
+  });
+
+  it('does not expose cornerRadius as a public fx.motion field', () => {
+    // The chrome channel is IR-only (like scaleX/scaleY). It must not appear in the
+    // public fx.motion builder type or any exported surface API.
+    const fxSrc = read('src', 'fx.ts');
+    expect(fxSrc).not.toMatch(/\bcornerRadius\b/);
+  });
+
+  it('exposes no new public props on FxReveal', () => {
+    const surface = read('src', 'surface', 'FxReveal.tsx');
+    // Step 2 adds no public props — no radius, clip, chrome, border, or background prop.
+    expect(surface).not.toMatch(/\bradius\??\s*:/);
+    expect(surface).not.toMatch(/\bclip\??\s*:/);
+    expect(surface).not.toMatch(/\bchrome\??\s*:/);
+    expect(surface).not.toMatch(/\bborder\??\s*:/);
+    expect(surface).not.toMatch(/\bbackground\??\s*:/);
+  });
+
+  it('installs Android chrome SpringForce before configuring it', () => {
+    const view = read(
+      'android',
+      'src',
+      'main',
+      'java',
+      'expo',
+      'modules',
+      'reactnativefx',
+      'FxRevealView.kt'
+    );
+
+    expect(view).toContain('anim.spring = SpringForce().apply');
+    expect(view).not.toContain('anim.spring.stiffness');
+  });
+});

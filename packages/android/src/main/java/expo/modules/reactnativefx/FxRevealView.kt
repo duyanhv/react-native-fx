@@ -1,13 +1,24 @@
 package expo.modules.reactnativefx
 
+import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Outline
 import android.graphics.Rect
+import android.graphics.RectF
+import android.os.Build
+import android.provider.Settings
 import android.view.View
+import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.widget.FrameLayout
+import androidx.dynamicanimation.animation.FloatValueHolder
+import androidx.dynamicanimation.animation.SpringAnimation
+import androidx.dynamicanimation.animation.SpringForce
 import com.facebook.react.uimanager.PointerEvents
 import com.facebook.react.uimanager.ReactPointerEventsView
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
+import kotlin.math.roundToInt
 
 /**
  * The expo-view substrate for an anchored reveal: an fx-owned shell that fills the app-placed
@@ -42,6 +53,28 @@ class FxRevealView(
   // Holds the expanded content, sized to the resolved placement; the layer the geometry drives.
   private val expandedContainer = FxRevealLayer(context)
 
+  // Scale-free chrome/clip boundary wrapping the inner content-motion layer. The outline clip
+  // grows from the collapsed slot's rounded rect to the placement rounded rect alongside the
+  // inverse-transform animation, so the radius never rides the non-uniform transform.
+  private val chromeContainer = FxRevealChromeContainer(context)
+
+  // Spring animations for the chrome outline rect and radius. Stiffness and damping must match the
+  // geometry driver defaults (STIFFNESS_MEDIUM + DAMPING_RATIO_MEDIUM_BOUNCY) so chrome and
+  // transform settle on the same trajectory and do not visibly desync at the tail of the morph.
+  private val chromeLeftHolder = FloatValueHolder(0f)
+  private val chromeTopHolder = FloatValueHolder(0f)
+  private val chromeRightHolder = FloatValueHolder(0f)
+  private val chromeBottomHolder = FloatValueHolder(0f)
+  private val chromeRadiusHolder = FloatValueHolder(0f)
+  private val chromeLeftAnim = SpringAnimation(chromeLeftHolder)
+  private val chromeTopAnim = SpringAnimation(chromeTopHolder)
+  private val chromeRightAnim = SpringAnimation(chromeRightHolder)
+  private val chromeBottomAnim = SpringAnimation(chromeBottomHolder)
+  private val chromeRadiusAnim = SpringAnimation(chromeRadiusHolder)
+  private val chromeAnims = listOf(
+    chromeLeftAnim, chromeTopAnim, chromeRightAnim, chromeBottomAnim, chromeRadiusAnim
+  )
+
   private val geometryDriver = FxAnimationDriver(expandedContainer) {
     revealCoordinator.handleDriverCompletion()
   }
@@ -59,10 +92,29 @@ class FxRevealView(
       collapsedContainer,
       LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
     )
-    super.addView(
+    // expandedContainer lives inside the chrome boundary so the outline clips it.
+    chromeContainer.addView(
       expandedContainer,
       LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
     )
+    super.addView(
+      chromeContainer,
+      LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+    )
+    // Wire chrome spring update listeners so every frame tick updates the outline clip.
+    chromeAnims.forEach { anim ->
+      anim.spring = SpringForce().apply {
+        stiffness = SpringForce.STIFFNESS_MEDIUM
+        dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
+      }
+      anim.addUpdateListener { _, _, _ ->
+        chromeContainer.setChrome(
+          chromeLeftHolder.value, chromeTopHolder.value,
+          chromeRightHolder.value, chromeBottomHolder.value,
+          chromeRadiusHolder.value
+        )
+      }
+    }
   }
 
   // MARK: - Props
@@ -101,6 +153,10 @@ class FxRevealView(
       MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
       MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY)
     )
+    chromeContainer.measure(
+      MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
+      MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY)
+    )
     // `width`/`height` are zero until layout settles; use the spec values for the initial measure
     // of the expanded container so it is measured at full target size on the first pass.
     val to = if (w > 0 && h > 0) Rect(0, h / 2, w, h) else Rect(0, 0, 0, 0)
@@ -115,6 +171,7 @@ class FxRevealView(
    */
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
     collapsedContainer.layout(0, 0, right - left, bottom - top)
+    chromeContainer.layout(0, 0, right - left, bottom - top)
     revealCoordinator.handleContentLayout()
   }
 
@@ -223,6 +280,46 @@ class FxRevealView(
   // device-tuned at the gate, like the presence presets.
   private fun presetSpring(): FxAnimationSpring? = null
 
+  // MARK: - Chrome (coordinator-private)
+
+  internal fun snapChrome(rect: Rect, radius: Float) {
+    chromeAnims.forEach { it.cancel() }
+    chromeLeftHolder.value = rect.left.toFloat()
+    chromeTopHolder.value = rect.top.toFloat()
+    chromeRightHolder.value = rect.right.toFloat()
+    chromeBottomHolder.value = rect.bottom.toFloat()
+    chromeRadiusHolder.value = radius
+    chromeContainer.setChrome(
+      rect.left.toFloat(), rect.top.toFloat(),
+      rect.right.toFloat(), rect.bottom.toFloat(),
+      radius
+    )
+  }
+
+  internal fun animateChrome(rect: Rect, radius: Float) {
+    if (shouldReduceMotion()) {
+      snapChrome(rect, radius)
+      return
+    }
+    chromeLeftAnim.animateToFinalPosition(rect.left.toFloat())
+    chromeTopAnim.animateToFinalPosition(rect.top.toFloat())
+    chromeRightAnim.animateToFinalPosition(rect.right.toFloat())
+    chromeBottomAnim.animateToFinalPosition(rect.bottom.toFloat())
+    chromeRadiusAnim.animateToFinalPosition(radius)
+  }
+
+  private fun shouldReduceMotion(): Boolean {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !ValueAnimator.areAnimatorsEnabled()) return true
+    val resolver = context.contentResolver
+    val animatorScale = try {
+      Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+    } catch (_: Settings.SettingNotFoundException) { 1f }
+    val transitionScale = try {
+      Settings.Global.getFloat(resolver, Settings.Global.TRANSITION_ANIMATION_SCALE, 1f)
+    } catch (_: Settings.SettingNotFoundException) { 1f }
+    return animatorScale == 0f || transitionScale == 0f
+  }
+
   // MARK: - Events
 
   /**
@@ -245,7 +342,7 @@ class FxRevealView(
   }
 
   override fun addView(child: View?, index: Int) {
-    if (child === collapsedContainer || child === expandedContainer) {
+    if (child === collapsedContainer || child === chromeContainer) {
       super.addView(child, index)
       return
     }
@@ -261,7 +358,7 @@ class FxRevealView(
   }
 
   override fun addView(child: View?, index: Int, params: android.view.ViewGroup.LayoutParams?) {
-    if (child === collapsedContainer || child === expandedContainer) {
+    if (child === collapsedContainer || child === chromeContainer) {
       super.addView(child, index, params)
       return
     }
@@ -280,14 +377,14 @@ class FxRevealView(
   // order the flat accessors present.
   private inline fun routeAdd(child: View?, add: (FrameLayout, View?) -> Unit) {
     when {
-      child === collapsedContainer || child === expandedContainer -> super.addView(child)
+      child === collapsedContainer || child === chromeContainer -> super.addView(child)
       collapsedContainer.childCount == 0 -> add(collapsedContainer, child)
       else -> add(expandedContainer, child)
     }
   }
 
   override fun removeView(view: View?) {
-    if (view === collapsedContainer || view === expandedContainer) {
+    if (view === collapsedContainer || view === chromeContainer) {
       super.removeView(view)
       return
     }
@@ -345,6 +442,50 @@ class FxRevealView(
   override fun resumePresentationLoop() {
     geometryDriver.resume()
     collapsedDriver.resume()
+  }
+}
+
+/**
+ * Outer scale-free chrome/clip boundary. Wraps the inner content-motion layer and clips it
+ * to an animated rounded rect that grows from the collapsed slot's frame to the placement target.
+ * BOX_NONE keeps it out of TouchTargetHelper's search; the outline clip is purely visual.
+ */
+private class FxRevealChromeContainer(context: Context) : ViewGroup(context), ReactPointerEventsView {
+  private var outlineLeft = 0f
+  private var outlineTop = 0f
+  private var outlineRight = 0f
+  private var outlineBottom = 0f
+  private var outlineRadius = 0f
+
+  init {
+    clipToOutline = true
+    clipToPadding = false
+    outlineProvider = object : ViewOutlineProvider() {
+      override fun getOutline(view: View, outline: Outline) {
+        val l = outlineLeft.roundToInt()
+        val t = outlineTop.roundToInt()
+        val r = outlineRight.roundToInt()
+        val b = outlineBottom.roundToInt()
+        if (r > l && b > t) {
+          outline.setRoundRect(l, t, r, b, outlineRadius)
+        }
+      }
+    }
+  }
+
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec))
+  }
+
+  // Children are laid out by FxRevealView.seatExpandedFrame() — no delegate needed here.
+  override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) = Unit
+
+  override val pointerEvents: PointerEvents = PointerEvents.BOX_NONE
+
+  fun setChrome(left: Float, top: Float, right: Float, bottom: Float, radius: Float) {
+    outlineLeft = left; outlineTop = top; outlineRight = right
+    outlineBottom = bottom; outlineRadius = radius
+    invalidateOutline()
   }
 }
 

@@ -24,8 +24,17 @@ internal final class FxRevealView: FxNativeView {
   private let collapsedContainer = UIView()
 
   /// Holds the expanded content, sized to the resolved placement and driven by the inverse
-  /// transform. This is the layer whose geometry the reveal animates.
+  /// transform. This is the inner content-motion layer whose geometry the reveal animates.
   private let expandedContainer = UIView()
+
+  /// Outer scale-free chrome/clip boundary. Hosts the inner content-motion layer and clips it
+  /// to an animated rounded-rect mask — in the shell's own coordinate space, so the corner
+  /// radius never rides the non-uniform inverse transform.
+  private let chromeLayer = UIView()
+
+  /// The animated clip mask on `chromeLayer`. Path grows from the collapsed slot's rounded rect
+  /// to the placement rounded rect alongside the inverse-transform geometry animation.
+  private let chromeMask = CAShapeLayer()
 
   // MARK: - Drivers
 
@@ -57,13 +66,22 @@ internal final class FxRevealView: FxNativeView {
 
   // MARK: - Setup
 
-  /// Adds the two content layers. The expanded layer overflows the shell when expanded, so the
-  /// shell must not clip — the default `clipsToBounds == false` is relied on deliberately.
+  /// Adds the two content layers. The chrome layer fills the shell so its mask can address any
+  /// rect within it; the expanded content-motion layer lives inside the chrome boundary so the
+  /// mask clips it throughout the reveal flight.
   private func setUpLayers() {
     collapsedContainer.frame = bounds
-    expandedContainer.frame = bounds
     addSubview(collapsedContainer)
-    addSubview(expandedContainer)
+
+    // The chrome layer matches the shell bounds so mask coordinates are shell-local.
+    chromeLayer.frame = bounds
+    chromeLayer.clipsToBounds = false
+    chromeMask.fillColor = UIColor.black.cgColor
+    chromeLayer.layer.mask = chromeMask
+    addSubview(chromeLayer)
+
+    // The expanded content lives inside the chrome boundary, clipped by the mask above.
+    chromeLayer.addSubview(expandedContainer)
   }
 
   // MARK: - Props
@@ -93,6 +111,9 @@ internal final class FxRevealView: FxNativeView {
   internal override func layoutSubviews() {
     super.layoutSubviews()
     collapsedContainer.frame = bounds
+    // Keep the chrome layer and its mask frame in sync with the shell on every layout pass.
+    chromeLayer.frame = bounds
+    chromeMask.frame = chromeLayer.bounds
     // The collapsed slot wrapper is a Fabric-managed child; its frame is set by the layout engine
     // and reflects the app-specified position within the host. Do not override it — the coordinator
     // reads it via collapsedFrameInShell() to derive fromRect.
@@ -175,6 +196,53 @@ internal final class FxRevealView: FxNativeView {
       opacity: opacity, scale: 1, translationX: 0, translationY: 0, rotation: 0)
   }
 
+  // MARK: - Chrome (coordinator-private)
+
+  /// The clip target for one endpoint of the radius morph. Both rect and radius are in the
+  /// shell's own coordinate space — never in the inverse-transformed content layer's space.
+  internal struct ChromeTarget {
+    let rect: CGRect
+    let radius: CGFloat
+  }
+
+  /// Snaps the chrome mask to a target with no animation.
+  internal func snapChrome(to target: ChromeTarget) {
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    chromeMask.path = chromePath(target)
+    CATransaction.commit()
+  }
+
+  /// Animates the chrome mask toward a target using a critically-damped spring that approximates
+  /// the geometry driver's timing, so radius + clip stay visually in lockstep with the transform.
+  internal func animateChrome(to target: ChromeTarget) {
+    let toPath = chromePath(target)
+    let fromPath = (chromeMask.presentation() as? CAShapeLayer)?.path ?? chromeMask.path
+    // Set the model layer immediately so reads after this call reflect the target.
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    chromeMask.path = toPath
+    CATransaction.commit()
+    guard #available(iOS 17, *), !UIAccessibility.isReduceMotionEnabled else {
+      return  // already snapped to target above
+    }
+    let animation = CASpringAnimation(keyPath: "path")
+    animation.fromValue = fromPath
+    animation.toValue = toPath
+    // Critically-damped spring (damping == 2·√(stiffness·mass)) that settles in ~0.5 s,
+    // close to the geometry driver's UIKit smooth-spring timing.
+    animation.mass = 1
+    animation.stiffness = 100
+    animation.damping = 20
+    animation.initialVelocity = 0
+    animation.isRemovedOnCompletion = true
+    chromeMask.add(animation, forKey: "fxChromePath")
+  }
+
+  private func chromePath(_ target: ChromeTarget) -> CGPath {
+    return UIBezierPath(roundedRect: target.rect, cornerRadius: target.radius).cgPath
+  }
+
   // MARK: - Events
 
   /// Emits the reveal lifecycle completion the coordinator produces, remapped to the public
@@ -214,7 +282,8 @@ internal final class FxRevealView: FxNativeView {
   /// container's `isHidden` gate already prevents it from being traversed while collapsed.
   internal override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
     let result = super.hitTest(point, with: event)
-    guard result !== self, result !== collapsedContainer, result !== expandedContainer else {
+    guard result !== self, result !== collapsedContainer, result !== chromeLayer,
+          result !== expandedContainer else {
       return nil
     }
     return result
